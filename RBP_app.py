@@ -17,9 +17,12 @@ from tkinter import messagebox
 import configparser
 from datetime import datetime, timedelta, time
 from colorama import Fore, Back, Style
+import pika
 
 LARGE_FONT= ("Verdana", 12)
-
+OUTLET_OFF = 1
+OUTLET_AUTO = 2
+OUTLET_ON = 3
 
 class RBP_app(tk.Tk):
 
@@ -96,6 +99,17 @@ class DashBoard(tk.Frame):
 
         self.img=PhotoImage(file="images/reefberrypi_logo2.gif")
         logocanvas.create_image(0,0,image=self.img, anchor=NW)
+
+        #initialize the messaging queues      
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        channel = connection.channel()
+
+        #queue for current probe values  
+        channel.queue_declare(queue='current_state')
+        #queue for posting outlet changes
+        channel.queue_declare(queue='outlet_change')
+        
+        #print(' [*] Waiting for messages.')
         
         #create toolbar frame
         frame_toolbar = tk.LabelFrame(frame_left_column, relief = tk.FLAT)
@@ -129,17 +143,29 @@ class DashBoard(tk.Frame):
                 curstate.write(configfile)
 
         def select_heater_state():
-            if heater_state.get() == 1:
+            if heater_state.get() == OUTLET_OFF:
                 lbl_heater_status.config(text="OFF", foreground="RED")
                 #GPIO.output(relay_switch1, True)
                 writeCurrentState('relays','relay_heater', "OFF")
-            elif heater_state.get() == 2:
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("outlet_1" + "," + str(OUTLET_OFF)))
+            elif heater_state.get() == OUTLET_AUTO:
                 lbl_heater_status.config(text="AUTO", foreground="DARK ORANGE")
                 writeCurrentState('relays','relay_heater', "AUTO")
-            elif heater_state.get() == 3:
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("outlet_1" + "," + str(OUTLET_AUTO)))
+            elif heater_state.get() == OUTLET_ON:
                 lbl_heater_status.config(text="ON", foreground="GREEN")
                 #GPIO.output(relay_switch1, False)
                 writeCurrentState('relays','relay_heater', "ON")
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("outlet_1" + "," + str(OUTLET_ON)))
             else:
                 lbl_heater_status.config(text="UNKNOWN", foreground="BLACK")
                 writeCurrentState('relays','relay_heater', "OFF")
@@ -147,14 +173,14 @@ class DashBoard(tk.Frame):
             print(selection)
 
         def select_return_state():
-            if return_state.get() == 1:
+            if return_state.get() == OUTLET_OFF:
                 lbl_return_status.config(text="OFF", foreground="RED")
                 #GPIO.output(relay_switch2, True)
                 writeCurrentState('relays','relay_return', "OFF")
-            elif return_state.get() == 2:
+            elif return_state.get() == OUTLET_AUTO:
                 lbl_return_status.config(text="AUTO", foreground="DARK ORANGE")
                 writeCurrentState('relays','relay_return', "AUTO")
-            elif return_state.get() == 3:
+            elif return_state.get() == OUTLET_ON:
                 lbl_return_status.config(text="ON", foreground="GREEN")
                 #GPIO.output(relay_switch2, False)
                 writeCurrentState('relays','relay_return', "ON")
@@ -165,14 +191,14 @@ class DashBoard(tk.Frame):
             print(selection) 
 
         def select_lights_state():
-            if lights_state.get() == 1:
+            if lights_state.get() == OUTLET_OFF:
                 lbl_lights_status.config(text="OFF", foreground="RED")
                 #GPIO.output(relay_switch3, True)
                 writeCurrentState('relays','relay_lights', "OFF")
-            elif lights_state.get() == 2:
+            elif lights_state.get() == OUTLET_AUTO:
                 lbl_lights_status.config(text="AUTO", foreground="DARK ORANGE")
                 writeCurrentState('relays','relay_lights', "AUTO")
-            elif lights_state.get() == 3:
+            elif lights_state.get() == OUTLET_ON:
                 lbl_lights_status.config(text="ON", foreground="GREEN")
                 writeCurrentState('relays','relay_lights', "ON")
                 #GPIO.output(relay_switch3, False)
@@ -183,14 +209,14 @@ class DashBoard(tk.Frame):
             print(selection) 
             
         def select_skimmer_state():
-            if skimmer_state.get() == 1:
+            if skimmer_state.get() == OUTLET_OFF:
                 lbl_skimmer_status.config(text="OFF", foreground="RED")
                 writeCurrentState('relays','relay_skimmer', "OFF")
                 #GPIO.output(relay_switch4, True)
-            elif skimmer_state.get() == 2:
+            elif skimmer_state.get() == OUTLET_AUTO:
                 lbl_skimmer_status.config(text="AUTO", foreground="DARK ORANGE")
                 writeCurrentState('relays','relay_skimmer', "AUTO")
-            elif skimmer_state.get() == 3:
+            elif skimmer_state.get() == OUTLET_ON:
                 lbl_skimmer_status.config(text="ON", foreground="GREEN")
                 writeCurrentState('relays','relay_skimmer', "ON")
                 #GPIO.output(relay_switch4, False)
@@ -457,29 +483,63 @@ class DashBoard(tk.Frame):
 #############
         
 
+##        def updateCurrentState():
+##            try:
+##                currentStateFile = 'RBP_currentstate.ini'
+##                curstate = configparser.ConfigParser()
+##                curstate.read(currentStateFile)
+##                probe_temperature.set(curstate['probes']['temp1'])
+##                print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " current temperature = " + str(probe_temperature.get()))
+##
+##                probe_temperature_ext.set(curstate['probes']['ext_temp'])
+##                print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " current external temperature = " + str(probe_temperature_ext.get()))
+##
+##                probe_humidity.set(curstate['probes']['humidity'] + "%")
+##                print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " current humidity = " + str(probe_humidity.get()))
+##
+##                probe_ph.set(curstate['probes']['ph'])
+##                print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " current ph = " + str(probe_ph.get()))
+##                
+##                #repeat the loop
+##                self.after(5000,updateCurrentState)
+##            except:
+##                print(Back.RED + Fore.WHITE +str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
+##                      " Error setting current state." + Style.RESET_ALL)
+##                self.after(5000,updateCurrentState)
+
+        ##update the display with current probe values        
+        #connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        #channel = connection.channel()
+        
+        #channel.queue_declare(queue='current_state')
+
+        #print(' [*] Waiting for messages.')
         def updateCurrentState():
-            try:
-                currentStateFile = 'RBP_currentstate.ini'
-                curstate = configparser.ConfigParser()
-                curstate.read(currentStateFile)
-                probe_temperature.set(curstate['probes']['temp1'])
-                print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " current temperature = " + str(probe_temperature.get()))
+            method_frame, header_frame, body = channel.basic_get(queue='current_state',
+                              no_ack=True)
+            if body != None:
+                body = body.decode()
+                probe = body.split(",")[0]
+                value = body.split(",")[2]
+                if probe == "ds18b20_1":
+                    probe_temperature.set(value)
+                    print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
+                          " received temperature = " + str(value) + "F")
+                elif probe == "dht11_t":
+                    probe_temperature_ext.set(value)
+                    print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
+                          " received external temperature = " + str(value) + "F")
+                elif probe == "dht11_h":
+                    probe_humidity.set(value + "%")
+                    print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
+                          " received humidity = " + str(value) + "%")
+                elif probe == "mcp3008_0":
+                    probe_ph.set(value)
+                    print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
+                          " received ph = " + str(value))
 
-                probe_temperature_ext.set(curstate['probes']['ext_temp'])
-                print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " current external temperature = " + str(probe_temperature_ext.get()))
-
-                probe_humidity.set(curstate['probes']['humidity'] + "%")
-                print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " current humidity = " + str(probe_humidity.get()))
-
-                probe_ph.set(curstate['probes']['ph'])
-                print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " current ph = " + str(probe_ph.get()))
-                
-                #repeat the loop
-                self.after(5000,updateCurrentState)
-            except:
-                print(Back.RED + Fore.WHITE +str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
-                      " Error setting current state." + Style.RESET_ALL)
-                self.after(5000,updateCurrentState)
+            #repeat the loop
+            self.after(1000,updateCurrentState)
 
               
         #some definitions for the plots
@@ -525,8 +585,11 @@ class DashBoard(tk.Frame):
 
         #update the display with current probe values
         updateCurrentState()
-        
-
+##        channel.basic_consume(updateCurrentState,
+##                      queue='current_state',
+##                      no_ack=True)
+##        print(' [*] Waiting for messages.')
+##        channel.start_consuming()
 
 
 
@@ -693,22 +756,7 @@ class PageThree(tk.Frame):
 ##        frame_graphtype.pack(side=tk.TOP, fill=tk.X)
         frame_graphtype_alt = tk.LabelFrame(frame_left_column, relief = tk.FLAT)
         frame_graphtype_alt.pack(side=tk.TOP, fill=tk.X)
-##        #radio buttons for graph type
-##        rdoTemp = Radiobutton(frame_graphtype, text="Temperature", variable=graphType, value="Temperature",
-##                             command=select_graph_type)
-##        rdoTemp.pack(side=LEFT)
-##
-##        rdoExtTemp = Radiobutton(frame_graphtype, text="External Temperature", variable=graphType, value="External Temperature",
-##                             command=select_graph_type)
-##        rdoExtTemp.pack(side=LEFT)
-##
-##        rdoPH = Radiobutton(frame_graphtype, text="PH", variable=graphType, value="PH",
-##                             command=select_graph_type)
-##        rdoPH.pack(side=LEFT)
-##
-##        rdoHum = Radiobutton(frame_graphtype, text="Humidity", variable=graphType, value="Humidity",
-##                            command=select_graph_type)
-##        rdoHum.pack(side=LEFT)
+
         # drop down list for main graph
         maingraphmenu = OptionMenu(frame_graphtype_alt,maingraphchoice,*maingraphlist,
                                    command=select_main_graph_type)
@@ -728,63 +776,6 @@ class PageThree(tk.Frame):
             #animate("i")
             plotGraph(str(graphType.get()), str(graphAltType.get()), int(graphTimeFrame.get()))
             canvas.show()
-
-##        def animate(i):
-##            a.clear()
-##            
-##            if graphType.get() == "Temperature":
-##                LogFileName = config['logs']['temp1_log_prefix']
-##            elif graphType.get() == "PH":
-##                LogFileName = config['logs']['ph_log_prefix'] 
-##            elif graphType.get() == "Humidity":
-##                LogFileName = config['logs']['humidity_log_prefix']
-##            elif graphType.get() =="External Temperature":
-##                LogFileName = config['logs']['extemp1_log_prefix']
-##            else:
-##                LogFileName = config['logs']['temp1_log_prefix']
-##            
-##            print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Refreshing large graph")
-##            # primary graph
-##            for x in range(0,int(graphTimeFrame.get())):
-##                DateSeed = datetime.now() - timedelta(days=x)
-##                #TmpLogFileName = "log_temperature_" + DateSeed.strftime("%Y-%m-%d") + ".txt"
-##                TmpLogFileName = LogFileName + DateSeed.strftime("%Y-%m-%d") + ".txt"
-##                #print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Reading data points from: %s" % TmpLogFileName)
-##                try:
-##                    pullData = open("logs/" + TmpLogFileName,"r").read()    
-##                    dataList = pullData.split('\n')
-##                    xList = []
-##                    yList = []
-##                    for index, eachLine in enumerate(dataList):
-##                        if len(eachLine) > 1:
-##                            x, y = eachLine.split(',')
-##                            x = datetime.strptime(x,'%Y-%m-%d %H:%M:%S')
-##                            xList.append(x)
-##                            yList.append(y)
-##                            #print(index, y)       
-##                    a.plot(xList, yList, "-", picker=TRUE, color='cornflowerblue')
-####                    if alt == True:   
-####                        a2.set_visible(True)
-####                        a2.set_ylabel(altgraphchoice.get())
-####                    elif alt == False:
-####                        a2.set_visible(False)
-##                    #print("plt a")
-##                    if graphTimeFrame.get() > 1:
-##                        myFmt = mdates.DateFormatter('%b-%d')
-##                        a.xaxis.set_major_formatter(myFmt)
-##                    else:
-##                        myFmt = mdates.DateFormatter('%I:%M%p')
-##                        a.xaxis.set_major_formatter(myFmt)
-##                    #a.set_ylabel('Temperature')
-##                    
-##                    a.set_ylabel(graphType.get())
-##                    a.set_xlabel('Time')
-##                    f.autofmt_xdate()
-##                    #ymin, ymax = a.get_ylim()
-##                    #a.set_ylim(ymin - .1, ymax + .1)
-##                except:
-##                    print("Error: Log not available. (large graph) " + TmpLogFileName) 
-
 
                     
 ### START NEW GRAPH FUNC
@@ -942,4 +933,5 @@ def on_closing():
         app.destroy()
 
 app.protocol("WM_DELETE_WINDOW", on_closing)
+
 app.mainloop()

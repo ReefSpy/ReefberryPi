@@ -26,16 +26,10 @@ import pika
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
 channel = connection.channel()
 
-
-channel.queue_declare(queue='hello' )
-
-channel.basic_publish(exchange='',
-                      routing_key='hello',
-                      properties=pika.BasicProperties(
-                      expiration='10000'),
-                      body='Hello World again!')
-
-#connection.close()
+# queue for posting state update
+channel.queue_declare(queue='current_state' )
+# queue for reading outlet state change requests
+channel.queue_declare(queue='outlet_change' )
 
 
 # initialize config file
@@ -54,6 +48,8 @@ dht11_SamplingInterval = int(config['dht11']['dht11_SamplingInterval']) # millis
 dht11_LogInterval = int(config['dht11']['dht11_LogInterval']) # milliseconds
 ds18b20_SamplingInterval = int(config['ds18b20']['ds18b20_SamplingInterval']) # milliseconds
 ds18b20_LogInterval = int(config['ds18b20']['ds18b20_LogInterval']) # milliseconds
+outlet_SamplingInterval = int(config['outlets']['outlet_SamplingInterval']) # milliseconds
+outlet_1_buttonstate = config['outlet_1']['button_state']
 
 
 # set up the GPIO
@@ -75,12 +71,17 @@ dht11_LastLogTime = int(round(time.time()*1000)) #convert time to milliseconds
 dht11_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 ds18b20_LastLogTime = int(round(time.time()*1000)) #convert time to milliseconds
 ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+outlet_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 
 def writeCurrentState(section, key, value):
     curstate[section][key] = str(value)
     with open(currentStateFile,'w') as configfile:
         curstate.write(configfile)
 
+def writeConfig(section, key, value):
+    config[section][key] = str(value)
+    with open('ReefberryPi.ini','w') as configfile:
+        config.write(configfile)
 
 while True:
     ##########################################################################################
@@ -136,6 +137,10 @@ while True:
                 print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " pH = "
                       + "{:.2f}".format(ph_AvgFiltered))
                 writeCurrentState('probes','ph', str("{:.2f}".format(ph_AvgFiltered)))
+                channel.basic_publish(exchange='',
+                    routing_key='current_state',
+                    properties=pika.BasicProperties(expiration='10000'),
+                    body=str("mcp3008_0" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "{:.2f}".format(ph_AvgFiltered)))
 
             # clear the list so we can populate it with new data for the next data set
             ph_dvlist.clear()
@@ -168,6 +173,14 @@ while True:
                 print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " Humidity: %d %%" % hum)
                 writeCurrentState('probes','ext_temp', str(temp_f))
                 writeCurrentState('probes','humidity', str(hum))
+                channel.basic_publish(exchange='',
+                    routing_key='current_state',
+                    properties=pika.BasicProperties(expiration='10000'),
+                    body=str("dht11_t" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "%.1f" % temp_f))
+                channel.basic_publish(exchange='',
+                    routing_key='current_state',
+                    properties=pika.BasicProperties(expiration='10000'),
+                    body=str("dht11_h" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(hum)))
                                   
             # record the new sampling time
             dht11_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
@@ -190,15 +203,50 @@ while True:
                 writeCurrentState('probes','temp1', str(dstemp))
                 # publish the temperature via rabbitmq
                 channel.basic_publish(exchange='',
-                    routing_key='hello',
+                    routing_key='current_state',
                     properties=pika.BasicProperties(expiration='10000'),
-                    body=str(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " Temperature: %.1f F" % dstemp))
+                    body=str("ds18b20_1" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "%.1f" % dstemp))
         except:
             print(Back.RED + Fore.WHITE + timestamp.strftime("%Y-%m-%d %H:%M:%S") +
                   " <<<Error>>> Can not read ds18b20 temperature data!" + Style.RESET_ALL)
             
         # record the new sampling time
         ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
-        
+
+    ##########################################################################################
+    # handle any state changes requested for the outlets
+    #
+    ##########################################################################################
+    
+    method_frame, header_frame, body = channel.basic_get(queue='outlet_change',
+                              no_ack=True)
+    if body != None:
+        body = body.decode()
+        outlet = body.split(",")[0]
+        value = body.split(",")[1]
+        print(Fore.YELLOW + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+              " outlet state change: " + outlet + " to " + value + Style.RESET_ALL)
+        if outlet == "outlet_1":
+            writeConfig(outlet, "button_state", value)
+            #print("Write configfile " + outlet + " " + value)
+            outlet_1_buttonstate = value
+    ##########################################################################################
+    # broadcast current state of outlets
+    #
+    ##########################################################################################
+    if (int(round(time.time()*1000)) - outlet_SamplingTimeSeed) > outlet_SamplingInterval:
+        # Outlet 1
+        channel.basic_publish(exchange='',
+                        routing_key='current_state',
+                        properties=pika.BasicProperties(expiration='10000'),
+                        body=str("outlet_1" + "," + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + 
+                                 "," + outlet_1_buttonstate ))
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+              " Outlet_1 button state: " + outlet_1_buttonstate)
+
+        outlet_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+
+    ##########################################################################################
     # pause to slow down the loop, otherwise CPU usage spikes as program is busy waiting
+    ##########################################################################################
     time.sleep(1)
