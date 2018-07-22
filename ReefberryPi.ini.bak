@@ -1,0 +1,26 @@
+[logs]
+log_dir = logs
+temp1_log_prefix = log_temp1_
+extemp1_log_prefix = log_extemp1_
+ph_log_prefix = log_ph_
+humidity_log_prefix = log_rh_
+
+[ph]
+ph_numsamples = 10
+ph_SamplingInterval = 1000
+ph_Sigma = 1
+ph_LogInterval = 300000
+
+[dht11]
+dht11_SamplingInterval = 5000
+dht11_LogInterval = 300000
+
+[ds18b20]
+ds18b20_SamplingInterval = 5000
+ds18b20_LogInterval = 300000
+
+[outlets]
+outlet_SamplingInterval = 3000
+
+[outlet_1]
+button_state = AUTO
