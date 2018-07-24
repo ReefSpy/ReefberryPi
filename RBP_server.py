@@ -61,8 +61,14 @@ dht_sensor = dht11.DHT11(pin=GPIO_config.dht11)
 # list to hold the raw ph data
 ph_dvlist = []             
 
-# give these an initial value in case we fail to get a valid reading it will just report 0
+# give these an initial value in case we fail to get a valid reading it will just report -1
 temp_f, temp_c = -1, -1
+
+# some variables to hold the latest probe data
+ds18b20_1 = None
+dht11_t = None
+dht_11_h = None
+mcp3008_0 = None
 
 # need the initial probe time seed to compare our sampling intervals against
 ph_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
@@ -82,6 +88,31 @@ def writeConfig(section, key, value):
     config[section][key] = str(value)
     with open('ReefberryPi.ini','w') as configfile:
         config.write(configfile)
+
+#Outlet Control
+def outlet1_control():
+    #print("outlet control 1 " + outlet_1_buttonstate + " " + str(GPIO_config.relay_1))
+    if int(outlet_1_buttonstate) == 1:
+        GPIO.output(GPIO_config.relay_1, True)
+        return "OFF"
+    elif int(outlet_1_buttonstate) == 2:
+        try:
+            if float(ds18b20_1) <= 77:
+                GPIO.output(GPIO_config.relay_1, False)
+                #lbl_heater_status.config(text="ON (77-78)", foreground="GREEN")
+                return "ON (77-78)"
+            elif float(ds18b20_1) >= 78:
+                GPIO.output(GPIO_config.relay_1, True)
+                #lbl_heater_status.config(text="OFF (77-78)", foreground="RED")
+                return "OFF (77-78)"
+            #else:
+            #    lbl_heater_status.config(text="ON (77-78)", foreground="GREEN")
+
+        except:
+            return    
+    elif int(outlet_1_buttonstate) == 3:
+        GPIO.output(GPIO_config.relay_1, False)
+        return "ON"
 
 while True:
     ##########################################################################################
@@ -198,14 +229,16 @@ while True:
                 RBP_commons.logprobedata(config['logs']['temp1_log_prefix'], "{:.1f}".format(dstemp))
                 print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** Temperature: %.1f F" % dstemp + Style.RESET_ALL)
                 ds18b20_LastLogTime = int(round(time.time()*1000))
+                ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
             else:
                 print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " Temperature: %.1f F" % dstemp)
-                writeCurrentState('probes','temp1', str(dstemp))
+                #writeCurrentState('probes','temp1', str(dstemp))
                 # publish the temperature via rabbitmq
                 channel.basic_publish(exchange='',
                     routing_key='current_state',
                     properties=pika.BasicProperties(expiration='10000'),
                     body=str("ds18b20_1" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "%.1f" % dstemp))
+                ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
         except:
             print(Back.RED + Fore.WHITE + timestamp.strftime("%Y-%m-%d %H:%M:%S") +
                   " <<<Error>>> Can not read ds18b20 temperature data!" + Style.RESET_ALL)
@@ -231,18 +264,25 @@ while True:
             #print("Write configfile " + outlet + " " + value)
             outlet_1_buttonstate = value
     ##########################################################################################
+    # handle outlet states (turn outlets on or off)
+    #
+    ##########################################################################################
+    outlet1_control()
+    
+    ##########################################################################################
     # broadcast current state of outlets
     #
     ##########################################################################################
     if (int(round(time.time()*1000)) - outlet_SamplingTimeSeed) > outlet_SamplingInterval:
         # Outlet 1
+        status = outlet1_control()
         channel.basic_publish(exchange='',
                         routing_key='current_state',
                         properties=pika.BasicProperties(expiration='10000'),
                         body=str("outlet_1" + "," + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + 
-                                 "," + outlet_1_buttonstate ))
+                                 "," + outlet_1_buttonstate + "," + str(status)))
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-              " Outlet_1 button state: " + outlet_1_buttonstate)
+              " Outlet_1 button state: " + outlet_1_buttonstate + " " + str(status))
 
         outlet_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 
