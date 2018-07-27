@@ -10,12 +10,12 @@ import mcp3008
 
 # these are the calibration points of the Ph probe.  Change the
 # digital values as necessary
-dv_ph4 = 938
-dv_ph7 = 779
-dv_ph10 = 624
+dv_ph4 = 932
+dv_ph7 = 775
+dv_ph10 = 621
 
 # data collection variables
-ph_ListLength = 120     # how many ph samples to collect
+ph_ListLength = 10     # how many ph samples to collect
 ph_SamplingInterval = 1 # seconds
 ph_Sigma = 1            # how many standard deviations to include 
                         # (and throw out the outliers)

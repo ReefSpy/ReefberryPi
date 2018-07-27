@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # The code for changing pages was derived from: http://stackoverflow.com/questions/7546050/switch-between-two-frames-in-tkinter
 # License: http://creativecommons.org/licenses/by-sa/3.0/	
 
@@ -18,12 +20,17 @@ import configparser
 from datetime import datetime, timedelta, time
 from colorama import Fore, Back, Style
 import pika
+import os,sys
 #import RBP_outletcfg
 
 LARGE_FONT= ("Verdana", 12)
 OUTLET_OFF = 1
 OUTLET_AUTO = 2
 OUTLET_ON = 3
+
+# change to current directory or else could have trouble when
+# executing script form another location ie: a Desktop icon
+os.chdir(os.path.dirname(sys.argv[0]))
 
 class RBP_app(tk.Tk):
 
@@ -140,13 +147,13 @@ class DashBoard(tk.Frame):
                             compound=TOP, command=lambda: controller.show_frame(PageThree))
         button3.pack(side=LEFT)
 
-        def writeCurrentState(section, key, value):
-            currentStateFile = 'RBP_currentstate.ini'
-            curstate = configparser.ConfigParser()
-            curstate.read(currentStateFile)
-            curstate[section][key] = str(value)
-            with open(currentStateFile,'w') as configfile:
-                curstate.write(configfile)
+##        def writeCurrentState(section, key, value):
+##            currentStateFile = 'RBP_currentstate.ini'
+##            curstate = configparser.ConfigParser()
+##            curstate.read(currentStateFile)
+##            curstate[section][key] = str(value)
+##            with open(currentStateFile,'w') as configfile:
+##                curstate.write(configfile)
 
 ##        def select_outlet1_state():
 ##            if heater_state.get() == OUTLET_OFF:
@@ -232,35 +239,35 @@ class DashBoard(tk.Frame):
             if lights_state.get() == OUTLET_OFF:
                 lbl_lights_status.config(text="OFF", foreground="RED")
                 #GPIO.output(relay_switch3, True)
-                writeCurrentState('relays','relay_lights', "OFF")
+                #writeCurrentState('relays','relay_lights', "OFF")
             elif lights_state.get() == OUTLET_AUTO:
                 lbl_lights_status.config(text="AUTO", foreground="DARK ORANGE")
-                writeCurrentState('relays','relay_lights', "AUTO")
+                #writeCurrentState('relays','relay_lights', "AUTO")
             elif lights_state.get() == OUTLET_ON:
                 lbl_lights_status.config(text="ON", foreground="GREEN")
-                writeCurrentState('relays','relay_lights', "ON")
+                #writeCurrentState('relays','relay_lights', "ON")
                 #GPIO.output(relay_switch3, False)
             else:
                 lbl_lights_status.config(text="UNKNOWN", foreground="BLACK")
-                writeCurrentState('relays','relay_lights', "OFF")
+                #writeCurrentState('relays','relay_lights', "OFF")
             selection = "You selected lights option " + lbl_lights_status.cget("text")
             print(selection) 
             
         def select_skimmer_state():
             if skimmer_state.get() == OUTLET_OFF:
                 lbl_skimmer_status.config(text="OFF", foreground="RED")
-                writeCurrentState('relays','relay_skimmer', "OFF")
+                #writeCurrentState('relays','relay_skimmer', "OFF")
                 #GPIO.output(relay_switch4, True)
             elif skimmer_state.get() == OUTLET_AUTO:
                 lbl_skimmer_status.config(text="AUTO", foreground="DARK ORANGE")
-                writeCurrentState('relays','relay_skimmer', "AUTO")
+                #writeCurrentState('relays','relay_skimmer', "AUTO")
             elif skimmer_state.get() == OUTLET_ON:
                 lbl_skimmer_status.config(text="ON", foreground="GREEN")
-                writeCurrentState('relays','relay_skimmer', "ON")
+                #writeCurrentState('relays','relay_skimmer', "ON")
                 #GPIO.output(relay_switch4, False)
             else:
                 lbl_skimmer_status.config(text="UNKNOWN", foreground="BLACK")
-                writeCurrentState('relays','relay_skimmer', "OFF")
+                #writeCurrentState('relays','relay_skimmer', "OFF")
             selection = "You selected skimmer option " + lbl_skimmer_status.cget("text")
             print(selection)
 

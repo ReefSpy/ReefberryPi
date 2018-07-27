@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 ##############################################################################
 # RBP_probes.py
 #
@@ -85,6 +87,7 @@ def writeCurrentState(section, key, value):
         curstate.write(configfile)
 
 def writeConfig(section, key, value):
+    config.read('ReefberryPi.ini')
     config[section][key] = str(value)
     with open('ReefberryPi.ini','w') as configfile:
         config.write(configfile)
@@ -151,8 +154,7 @@ while True:
             except:
                 ph_AvgCountsFiltered = 1  # need to revisit this error handling. Exception thrown when all
                                           # values were 1023
-                print("Error collecting data")
-                      
+                print("Error collecting data")  
             #convert digital value to ph
             ph_AvgFiltered = ph.dv2ph(ph_AvgCountsFiltered)
 

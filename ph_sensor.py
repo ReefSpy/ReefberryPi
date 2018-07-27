@@ -1,8 +1,8 @@
 # these are the calibration points of the Ph probe.  Change the
 # digital values as necessary
-dv_ph4 = 938
-dv_ph7 = 779
-dv_ph10 = 624
+dv_ph4 = 932
+dv_ph7 = 775
+dv_ph10 = 621
 
 
 # check the digital counts vs the counts at 7.0 ph calibration value
