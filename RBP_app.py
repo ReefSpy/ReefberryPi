@@ -1016,6 +1016,7 @@ class PageThree(tk.Frame):
 #################################
 app = RBP_app()
 
+
 def on_closing():
     if messagebox.askokcancel("Quit", "Do you want to quit?"):
         #turn off all relays when exiting
