@@ -18,10 +18,10 @@ class PageGlobal(tk.Frame):
         self.frame_toolbar = LabelFrame(self, relief= FLAT)
         self.frame_toolbar.pack(fill=X, side=TOP)
         # save button
-        self.saveimg=PhotoImage(file="images/upload-to-cloud-24.png")
+        self.saveimg=PhotoImage(file="images/save-blue-24.png")
         self.btn_save = Button(self.frame_toolbar, text="Save", image=self.saveimg,
-                               compound='left', relief=FLAT, command=self.saveChanges)
-        self.btn_save.pack(side=TOP, anchor=W)
+                               compound='left', relief=RAISED, command=self.saveChanges)
+        self.btn_save.pack(side=TOP, anchor=W, pady=5)
 
         # setting for temperature scale, F or C
         self.tempscale = IntVar() 
@@ -40,7 +40,7 @@ class PageGlobal(tk.Frame):
         # read value from config file
         scalesetting = cfg_common.readINIfile("global", "tempscale", cfg_common.SCALE_F,
                                               cfg_common.SCALE_F)
-        print(scalesetting)
+        #print(scalesetting)
         
         if str(scalesetting) == str(cfg_common.SCALE_C):
             self.tempscale.set(str(cfg_common.SCALE_C))

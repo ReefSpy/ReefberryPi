@@ -1,5 +1,6 @@
 import os.path
 import configparser
+from datetime import datetime
 
 CONFIGFILENAME = "config.ini"
 SCALE_C = 0
@@ -7,13 +8,13 @@ SCALE_F = 1
 
 def checkifconfigexists():
     if os.path.isfile(CONFIGFILENAME):
-        print (CONFIGFILENAME + " exists")
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
+                      CONFIGFILENAME + " exists, reading file")
     else:
-        print (CONFIGFILENAME + " does not exist")
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
+                      CONFIGFILENAME + " does not exists, creating file")
         f = open(CONFIGFILENAME,"w+")
         f.close()
-        print (CONFIGFILENAME + " does not exist")
-        print (CONFIGFILENAME + " created")
         
         
 def readINIfile(section, key, value, default):
@@ -39,10 +40,10 @@ def readINIfile(section, key, value, default):
             config.write(configfile)
                    
     value = config[section][key]   
-    print ("readINIfile: " + "\n" +
-           "    [section] = " + section + "\n" +
-           "    [key] = " + key + "\n" +
-           "    [value] = " + value)
+    print (datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " readINIfile: " + "\n" +
+           "                        [section] = " + section + "\n" +
+           "                        [key] = " + key + "\n" +
+           "                        [value] = " + value)
     return config[section][key] 
     
     
@@ -51,7 +52,8 @@ def writeINIfile(section, key, value):
     try:
         config = configparser.ConfigParser()
         config.read(CONFIGFILENAME)
-        config[str(section)][str(key)] = str(value)
+        #config[str(section)][str(key)] = str(value)
+        config[str(section)] = {str(key):str(value)}
         with open(CONFIGFILENAME,'w') as configfile:
             config.write(configfile)
         return True

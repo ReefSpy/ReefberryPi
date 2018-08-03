@@ -152,7 +152,7 @@ class RBP_configurator(tk.Tk):
             selection.show_frame(cfg_pwm.PagePWM)
         
     def show_frame(self, cont):
-        print("show_frame" + str(cont))
+        #print("show_frame" + str(cont))
         frame = self.frames[cont]
         frame.tkraise()
 

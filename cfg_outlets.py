@@ -37,13 +37,13 @@ class PageOutlets(tk.Frame):
         # read in config file
         config = configparser.ConfigParser()
         config.read('ReefberryPi.ini')
-        print(config.sections())
+        #print(config.sections())
 
     def readinifile(self,section,key):
         # read in config file
         config = configparser.ConfigParser()
         config.read('ReefberryPi.ini')
-        print(config.sections())
+        #print(config.sections())
         return config[section][key]
     
     def select_controltype(self,control):

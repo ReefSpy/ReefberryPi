@@ -103,7 +103,7 @@ while True:
         n, dvbins, patches = ax.hist(ph_ListCounts, bins)
         #n, dvbins, patches = ax.hist(ph_ListCounts, bins, normed=True)
         y = ((1 / (numpy.sqrt(2 * numpy.pi) * ph_FlteredSD)) *
-             numpy.exp(-0.5 * (1 / ph_FlteredSD * (bins - ph_FilteredMean))**2)) * 100 * n.max()
+             numpy.exp(-0.5 * (1 / ph_FlteredSD * (bins - ph_FilteredMean))**2)) 
         ax.plot(bins,y,'--')
         
         plt.axvline(x=(ph_FilteredMean - ph_Sigma * ph_FlteredSD), color='red')
