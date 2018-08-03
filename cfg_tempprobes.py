@@ -14,7 +14,10 @@ class PageTempProbes(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         # create dictionary to hold assigned probes
+        # these are probes that are already saved in config file
         self.probeDict = {}
+        # and these are the new unsaved probes
+        self.newprobeDict = {}
 
         label = tk.Label(self, text="Temperature Probes", font=LARGE_FONT)
         label.pack(side=TOP, pady=10, anchor=W)
@@ -69,24 +72,18 @@ class PageTempProbes(tk.Frame):
             newprobeID = ""
             for d in device_folder:
                 newprobeid = d.split("/")[-1]
-                print("looking to match: " + newprobeid)
+                #print("looking to match: " + newprobeid)
                 for p in self.probeDict:
-                    print("testing against = " + self.probeDict[p].probeid)
-                    #print("d.split = " + d.split("/")[-1])
+                    #print("testing against = " + self.probeDict[p].probeid)
                     if str(d.split("/")[-1]) == str(self.probeDict[p].probeid):
                         addtolist = False
                         #print("addtolist = " + str(addtolist))
                         break
-                        #print (str(self.probeDict[p].probeid))
-                        #print(d.split("/")[-1])
-                        #self.lst_probes.insert(END, d.split("/")[-1])
                     else:
                         addtolist = True
-                        print("Match = " + str(addtolist))
+                        #print("Match = " + str(addtolist))
                 if addtolist == True:
-                    #print("addtolist = " + str(addtolist))
-                    print ("Inserting " + newprobeid + " to list")
-                    #self.lst_probes.insert(END, d.split("/")[-1])
+                    #print ("Inserting " + newprobeid + " to list")
                     self.lst_probes.insert(END, newprobeid)
 
             # set back to what was slected
@@ -94,20 +91,23 @@ class PageTempProbes(tk.Frame):
                 self.lst_probes.activate(selection)
                 self.lst_probes.selection_set(selection)
             except:
-                print("Error selecting listbox index")
+                #print("Error selecting listbox index")
+                pass
         except:
-            print("Exception getProbes(self):")
-            #pass
+            #print("Exception getProbes(self):")
+            pass
         
         self.after(2000,self.getConnectedProbes)
 
     def assignProbe(self):
-        probe = ProbeClass()
-        probe.probeid = self.lst_probes.get(ACTIVE)
-        probe.name = "Temperature"
-        self.probeDict[self.lst_probes.get(ACTIVE)]=probe
+        self.probe = ProbeClass()
+        self.probe.probeid = self.lst_probes.get(ACTIVE)
+        self.probe.name = "Temperature"
+        self.newprobeDict[self.lst_probes.get(ACTIVE)]=self.probe
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
-                      "Assigned probe: " + "ID = " + probe.probeid + ", Name = " + probe.name)
+                      "Assigned probe: " + "ID = " + self.probe.probeid + ", Name = " + self.probe.name)
+        print(self.newprobeDict[self.probe.probeid].probeid)
+        print(self.newprobeDict[self.probe.probeid].name)
         # probe frame
         self.probeframe = LabelFrame(self.frame_DS18B20, relief= SUNKEN)
         self.probeframe.pack(fill=X, side=TOP)
@@ -127,16 +127,24 @@ class PageTempProbes(tk.Frame):
         self.lbl_probestatecur.pack(side=LEFT, anchor=W, padx=10)
         
     def saveChanges(self):
-        for probe in self.probeDict:
+        print("Enter saveChanges")
+        print(self.newprobeDict)
+        for probe in self.newprobeDict:
+            print(self.newprobeDict[probe].probeid)
             #cfg_common.writeINIfile('ds18b20_' + probe, probe, 0)
-            if cfg_common.writeINIfile('ds18b20_' + probe, probe, 1):
+            if cfg_common.writeINIfile('ds18b20_' + self.newprobeDict[probe].probeid, "name", "1"):
                 messagebox.showinfo("Global Settings",
                                 "New configuration saved succesfully.")
+                # remove this key from unsaved probe list
+                del self.newprobeDict[probe]
             else:
                 messagebox.showerror("Global Settings",
                                  "Error: Could not save changes! \nNew configuration not saved.")
         
             print(probe)
+            print(self.frame_DS18B20.winfo_children())
+
+        
 
     def readExistingProbes(self):
         # clear out the old probe dictionary
@@ -146,14 +154,14 @@ class PageTempProbes(tk.Frame):
         # loop through each section and see if it is a ds18b20 temp probe
         for section in config:
             if section.split("_")[0] == "ds18b20":
-                print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
-                      "Read existing temp probe: " + section.split("_")[1])
+                #print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
+                #      "Read existing temp probe: " + section.split("_")[1])
                 #print (section.split("_")[1])
                 probe = ProbeClass()
                 probe.probeid = section.split("_")[1]
                 self.probeDict [section.split("_")[1]] = probe
-                print("probe class id: " + probe.probeid)
-                print("probe class name: " + probe.name)
+                #print("probe class id: " + probe.probeid)
+                #print("probe class name: " + probe.name)
             
             
 
