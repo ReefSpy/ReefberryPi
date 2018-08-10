@@ -17,7 +17,7 @@ def checkifconfigexists():
         f.close()
         
         
-def readINIfile(section, key, value, default):
+def readINIfile(section, key, default):
     # try to read the value from the config file
     # if the value does not exist, lets write the default value into the
     # file and return the default, otherwise return what is saved
@@ -34,29 +34,42 @@ def readINIfile(section, key, value, default):
             config.write(configfile)   
     if config[section][key] == "":
         #print ("value is empty")
-        value = default
+        #value = default
         config[section][key] = str(default)
         with open(CONFIGFILENAME,'w') as configfile:
             config.write(configfile)
                    
-    value = config[section][key]   
+    #value = config[section][key]   
     print (datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " readINIfile: " + "\n" +
            "                        [section] = " + section + "\n" +
            "                        [key] = " + key + "\n" +
-           "                        [value] = " + value)
+           "                        [value] = " + config[section][key])
     return config[section][key] 
-    
-    
 
+    
 def writeINIfile(section, key, value):
     try:
         config = configparser.ConfigParser()
         config.read(CONFIGFILENAME)
-        #config[str(section)][str(key)] = str(value)
-        config[str(section)] = {str(key):str(value)}
+        
+        #config[str(section)] = {str(key):str(value)}
+        config[str(section)].update({str(key):str(value)})
         with open(CONFIGFILENAME,'w') as configfile:
             config.write(configfile)
         return True
     except:
         return False
     
+
+def removesectionfromINIfile(section):
+    p = configparser.SafeConfigParser()
+    with open(CONFIGFILENAME, "r") as f:
+        p.readfp(f)
+
+    print(p.sections())
+    p.remove_section(section)
+    print(p.sections())
+
+    with open(CONFIGFILENAME, "w") as f:
+        p.write(f)
+

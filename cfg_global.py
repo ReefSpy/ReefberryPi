@@ -21,12 +21,12 @@ class PageGlobal(tk.Frame):
         self.saveimg=PhotoImage(file="images/save-blue-24.png")
         self.btn_save = Button(self.frame_toolbar, text="Save", image=self.saveimg,
                                compound='left', relief=RAISED, command=self.saveChanges)
-        self.btn_save.pack(side=TOP, anchor=W, pady=5)
+        self.btn_save.pack(side=TOP, anchor=W)
 
         # setting for temperature scale, F or C
         self.tempscale = IntVar() 
-        tempscaleframe = LabelFrame(self, text="Temperature Scale", relief=RAISED)
-        tempscaleframe.pack(fill=X, side=TOP)
+        tempscaleframe = LabelFrame(self, text="Temperature Scale", relief=GROOVE)
+        tempscaleframe.pack(anchor=W, side=TOP, pady=10)
 
         lbltempscale = tk.Label(tempscaleframe, text="Units:")
         lbltempscale.pack(pady=10, side=LEFT)
@@ -38,8 +38,7 @@ class PageGlobal(tk.Frame):
         rdofahrenheitscale.pack(pady=10, side=LEFT)
 
         # read value from config file
-        scalesetting = cfg_common.readINIfile("global", "tempscale", cfg_common.SCALE_F,
-                                              cfg_common.SCALE_F)
+        scalesetting = cfg_common.readINIfile("global", "tempscale", cfg_common.SCALE_F)
         #print(scalesetting)
         
         if str(scalesetting) == str(cfg_common.SCALE_C):

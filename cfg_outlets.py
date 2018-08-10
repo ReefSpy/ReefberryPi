@@ -12,9 +12,12 @@ class PageOutlets(tk.Frame):
 
         label = tk.Label(self, text="Outlet Configuration", font=LARGE_FONT)
         label.pack(side=TOP, pady=10, anchor=W)
+        #label.grid(row=0, column=0, pady=10, sticky=W)
+        
         # top frame for toolbar
         self.frame_toolbar = LabelFrame(self, relief= FLAT)
         self.frame_toolbar.pack(fill=X, side=TOP)
+        #self.frame_toolbar.grid(row=1, column=0, sticky=W)
                 
         # drop down list for outlets
         self.outletchoice = StringVar()
