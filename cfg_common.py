@@ -52,7 +52,8 @@ def writeINIfile(section, key, value):
         config = configparser.ConfigParser()
         config.read(CONFIGFILENAME)
         
-        #config[str(section)] = {str(key):str(value)}
+        #config[str(section)] = {str(key):str(value)} # need this line if the key
+                                                     # is not found so it will create it
         config[str(section)].update({str(key):str(value)})
         with open(CONFIGFILENAME,'w') as configfile:
             config.write(configfile)
