@@ -12,6 +12,7 @@ import cfg_analog
 import cfg_feedtimers
 import cfg_pwm
 import cfg_common
+import cfg_alerts
 
 LARGE_FONT= ("Verdana", 12)
 
@@ -23,6 +24,7 @@ PAGE_SWITCHES   = 4
 PAGE_ANALOG     = 5
 PAGE_FEEDTIMERS = 6
 PAGE_PWM        = 7
+PAGE_ALERTS     = 8
 
 
 class RBP_configurator(tk.Tk):
@@ -66,7 +68,8 @@ class RBP_configurator(tk.Tk):
                   cfg_switches.PageSwitches,
                   cfg_analog.PageAnalogProbes,
                   cfg_feedtimers.PageFeedTimers,
-                  cfg_pwm.PagePWM):
+                  cfg_pwm.PagePWM,
+                  cfg_alerts.PageAlerts):
 
             frame = F(container, self)
 
@@ -132,6 +135,13 @@ class RBP_configurator(tk.Tk):
                             compound=TOP, width=90, command=self.change_tab)
         rdopwm.pack(side=LEFT)
 
+        # button for alerts settings
+        self.img_alerts = PhotoImage(file="images/alarm-64.png")
+        rdoalerts = Radiobutton(toolbarframe, text="Alerts", variable=self.ConfigSelection,
+                            image=self.img_alerts, value=PAGE_ALERTS, indicatoron=0,
+                            compound=TOP, width=90, command=self.change_tab)
+        rdoalerts.pack(side=LEFT)
+
     def change_tab(selection):
         tab = selection.ConfigSelection.get()
         if tab == PAGE_GLOBAL:
@@ -150,6 +160,8 @@ class RBP_configurator(tk.Tk):
             selection.show_frame(cfg_feedtimers.PageFeedTimers)
         elif tab == PAGE_PWM:
             selection.show_frame(cfg_pwm.PagePWM)
+        elif tab == PAGE_ALERTS:
+            selection.show_frame(cfg_alerts.PageAlerts)
         
     def show_frame(self, cont):
         #print("show_frame" + str(cont))

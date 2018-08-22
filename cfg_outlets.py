@@ -3,6 +3,8 @@ from tkinter import *
 from tkinter import ttk
 import configparser
 import cfg_common
+from tkinter import font
+import cfg_tempprobes
 
 LARGE_FONT = ("Verdana", 12)
 BUS_INTERNAL = 0
@@ -121,7 +123,7 @@ class InternalBus(tk.Frame):
         self.rdoOutlet1.invoke()
 
     def selectOutlet(self, parent, outletNum):
-        print("Selected Internal Outlet Num: " + str(outletNum))
+        #print("Selected Internal Outlet Num: " + str(outletNum))
         #print(parent.winfo_children()[0].winfo_children()[4].winfo_children()[0].winfo_children()[0].winfo_children())
         self.outlet.setOutletNum(outletNum, BUS_INTERNAL)
         parent.outletnum.set(outletNum)
@@ -187,7 +189,7 @@ class ExternalBus(tk.Frame):
         self.rdoOutlet1.invoke()
 
     def selectOutlet(self, parent, outletNum):
-        print("Selected External Outlet Num: " + str(outletNum))
+        #print("Selected External Outlet Num: " + str(outletNum))
         self.outlet.setOutletNum(outletNum, BUS_EXTERNAL)
 
 class Outlet(tk.Frame):
@@ -198,6 +200,7 @@ class Outlet(tk.Frame):
 
         self.BusType = BusType
         self.outletnum = IntVar()
+
 
 ##        if self.BusType == BUS_INTERNAL:
 ##            self.section = "int_outlet_" + str(self.outletnum.get())
@@ -237,11 +240,12 @@ class Outlet(tk.Frame):
         self.controltypemenu.pack(side=LEFT, anchor=W)
 
         # logging
+        self.logenabled = IntVar()
         self.logframe = LabelFrame(self.frame_outlet, relief= FLAT)
         self.logframe.pack(fill=X, side=TOP)
         self.lbl_log = Label(self.logframe,text="Log:")
         self.lbl_log.pack(side=LEFT, anchor=W)
-        self.chk_log = Checkbutton(self.logframe, text="Enable")
+        self.chk_log = Checkbutton(self.logframe, text="Enable", variable=self.logenabled)
         self.chk_log.pack(side=LEFT, anchor=W)
 
         # Save button
@@ -251,7 +255,7 @@ class Outlet(tk.Frame):
 
     def setOutletNum(self, outletnum, bustype):
         self.outletnum.set(outletnum)
-        print("Outlet::setOutletNum: " + str(outletnum) + " Bus: " + str(self.BusType))
+        #print("Outlet::setOutletNum: " + str(outletnum) + " Bus: " + str(self.BusType))
         
 
         if bustype == BUS_INTERNAL:
@@ -281,9 +285,133 @@ class Outlet(tk.Frame):
         self.txt_outletname.insert(0, "test123")
         
     def saveOutlet(self):
-        print("Save: BusType = " + str(self.BusType))
-        self.setOutletName()
-        print("Save: Outlet = " + str(self.outletnum.get()))
+        if self.BusType == BUS_INTERNAL:
+            section = "int_outlet_" + str(self.outletnum.get())
+        elif self.BusType == BUS_EXTERNAL:
+            section = "ext_outlet_" + str(self.outletnum.get())
+
+        # outlet name
+        cfg_common.writeINIfile(section, "name", self.txt_outletname.get())
+        # control type
+        cfg_common.writeINIfile(section, "control_type", self.controltypechoice.get())
+        # enable log
+        if self.logenabled.get() == True:
+            chkstate = "True"
+        else:
+            chkstate = "False"    
+        cfg_common.writeINIfile(section, "enable_log", str(chkstate))
+
+        # configurations
+        if self.controltypechoice.get() == "Always": # Always
+            cfg_common.writeINIfile(section, "always_state", str(self.statechoice.get()))
+
+        elif self.controltypechoice.get() == "Light": # Light
+            # on time
+            valH = self.spn_ontimeHH.get()
+            if int(valH) > 23:
+                valH = 23
+            elif int(valH) < 0:
+                valH = 0     
+            self.spn_ontimeHH.delete(0, "end")
+            self.spn_ontimeHH.insert(0, valH)
+
+            valM = self.spn_ontimeMM.get()
+            if int(valM) > 59:
+                valM = 59
+            elif int(valM) < 0:
+                valM = 0
+            self.spn_ontimeMM.delete(0, "end")
+            self.spn_ontimeMM.insert(0, valM)
+            
+            val = str(valH) + ":" + str(valM)
+            cfg_common.writeINIfile(section, "light_on", str(val))
+
+            # off time
+            valH = self.spn_offtimeHH.get()
+            if int(valH) > 23:
+                valH = 23
+            elif int(valH) < 0:
+                valH = 0     
+            self.spn_offtimeHH.delete(0, "end")
+            self.spn_offtimeHH.insert(0, valH)
+            
+            valM = self.spn_offtimeMM.get()
+            if int(valM) > 59:
+                valM = 59
+            elif int(valM) < 0:
+                valM = 0
+            self.spn_offtimeMM.delete(0, "end")
+            self.spn_offtimeMM.insert(0, valM)
+            
+            val = str(valH) + ":" + str(valM)
+            cfg_common.writeINIfile(section, "light_off", str(val))
+
+        elif self.controltypechoice.get() == "Return Pump": # Return Pump
+            # feed a
+            cfg_common.writeINIfile(section, "return_feed_delay_a", str(self.spn_returnFeeddelayA.get()))
+            if self.rtnFeedenabledA.get() == True:
+                cfg_common.writeINIfile(section, "return_enable_feed_a", "True")
+            else:
+                cfg_common.writeINIfile(section, "return_enable_feed_a", "False")
+            # feed b
+            cfg_common.writeINIfile(section, "return_feed_delay_b", str(self.spn_returnFeeddelayB.get()))
+            if self.rtnFeedenabledB.get() == True:
+                cfg_common.writeINIfile(section, "return_enable_feed_b", "True")
+            else:
+                cfg_common.writeINIfile(section, "return_enable_feed_b", "False")
+            # feed c
+            cfg_common.writeINIfile(section, "return_feed_delay_c", str(self.spn_returnFeeddelayC.get()))
+            if self.rtnFeedenabledC.get() == True:
+                cfg_common.writeINIfile(section, "return_enable_feed_c", "True")
+            else:
+                cfg_common.writeINIfile(section, "return_enable_feed_c", "False")
+            # feed d
+            cfg_common.writeINIfile(section, "return_feed_delay_d", str(self.spn_returnFeeddelayD.get()))
+            if self.rtnFeedenabledD.get() == True:
+                cfg_common.writeINIfile(section, "return_enable_feed_d", "True")
+            else:
+                cfg_common.writeINIfile(section, "return_enable_feed_d", "False")
+            
+        elif self.controltypechoice.get() == "Skimmer": # Skimmer
+            # feed a
+            cfg_common.writeINIfile(section, "skimmer_feed_delay_a", str(self.spn_skimmerFeeddelayA.get()))
+            if self.skmFeedenabledA.get() == True:
+                cfg_common.writeINIfile(section, "skimmer_enable_feed_a", "True")
+            else:
+                cfg_common.writeINIfile(section, "skimmer_enable_feed_a", "False")
+            # feed b
+            cfg_common.writeINIfile(section, "skimmer_feed_delay_b", str(self.spn_skimmerFeeddelayB.get()))
+            if self.skmFeedenabledB.get() == True:
+                cfg_common.writeINIfile(section, "skimmer_enable_feed_b", "True")
+            else:
+                cfg_common.writeINIfile(section, "skimmer_enable_feed_b", "False")
+            # feed c
+            cfg_common.writeINIfile(section, "skimmer_feed_delay_c", str(self.spn_skimmerFeeddelayC.get()))
+            if self.skmFeedenabledC.get() == True:
+                cfg_common.writeINIfile(section, "skimmer_enable_feed_c", "True")
+            else:
+                cfg_common.writeINIfile(section, "skimmer_enable_feed_c", "False")
+            # feed d
+            cfg_common.writeINIfile(section, "skimmer_feed_delay_d", str(self.spn_skimmerFeeddelayD.get()))
+            if self.skmFeedenabledD.get() == True:
+                cfg_common.writeINIfile(section, "skimmer_enable_feed_d", "True")
+            else:
+                cfg_common.writeINIfile(section, "skimmer_enable_feed_d", "False")    
+
+        elif self.controltypechoice.get() == "Heater": # Heater
+            tempscale = cfg_common.readINIfile("global", "tempscale", cfg_common.SCALE_F)
+            if int(tempscale) == int(cfg_common.SCALE_C):
+                cfg_common.writeINIfile(section, "heater_on", self.spn_ontemp.get())
+                cfg_common.writeINIfile(section, "heater_off", self.spn_offtemp.get())
+            elif int(tempscale) == int(cfg_common.SCALE_F):
+                val = cfg_common.convertFtoC(self.spn_ontemp.get())
+                cfg_common.writeINIfile(section, "heater_on", val)
+                val = cfg_common.convertFtoC(self.spn_offtemp.get())
+                cfg_common.writeINIfile(section, "heater_off", val)
+
+            val = self.tempprobechoice.get().rsplit("[")[1]
+            val=val[:-1] # strip last character from string because it will be "]"
+            cfg_common.writeINIfile(section, "heater_probe", val)
 
     def select_controltype(self, control):
         OutletNumber = self.outletnum.get()
@@ -293,15 +421,16 @@ class Outlet(tk.Frame):
             section = "ext_outlet_" + str(OutletNumber)
 
         #print(self.outletnum.get())
-        print("you selected control type: " + control + " in section " + str(section))
+        #print("you selected control type: " + control + " in section " + str(section))
         try:
             self.frame_cfg.destroy()
-            print("destroy")
+            #print("destroy")
         except:
             pass    
 
         # registering validation command
         vldt_ifnum_cmd = (self.register(self.ValidateIfNum),'%s', '%S')
+        vldt_iffloat_cmd = (self.register(self.ValidateIfFloat),'%s', '%S')        
 
         ###########################################################################
         # frame for outlet configuration
@@ -321,43 +450,81 @@ class Outlet(tk.Frame):
 
         ##
         if control=="Heater":
+            
+            probeDict = self.readExistingProbes()
+            print(probeDict)
+            probelist = []
+            for k in probeDict.keys():
+                #probelist.append(probeDict.get("28-0316479150ff").name + " (" +
+                #                 probeDict.get("28-0316479150ff").probeid + ")")
+                probelist.append(probeDict.get(k).name + " [" +
+                                 probeDict.get(k).probeid + "]")
+            
             #drop down list for probes
-            probechoice = StringVar()
-            probelist = ["ds18b20_1", "ds18b20_2", "ds18b20_3"]
-            probechoice.set("ds18b20_1") # default value
+            self.tempprobechoice = StringVar()
+            #probelist = ["ds18b20_1", "ds18b20_2", "ds18b20_3"]
+            #probechoice.set("ds18b20_1") # default value
             self.lbl_probe = Label(self.frame_cfg,text="Probe Name:")
             self.lbl_probe.grid(row=1, column=0, sticky=E, padx=5)
-            self.probemenu = OptionMenu(self.frame_cfg,probechoice,*probelist)
+            self.probemenu = OptionMenu(self.frame_cfg,self.tempprobechoice,*probelist)
             self.probemenu.configure(indicatoron=True, relief=GROOVE)
             self.probemenu.grid(row=1, column=1, sticky=W, padx=5)
             # spinbox for on temperature
             self.lbl_ontemp = Label(self.frame_cfg,text="On Temperature:")
             self.lbl_ontemp.grid(row=2, column=0, sticky=E, padx=5, pady=5)
-            self.spn_ontemp = Spinbox(self.frame_cfg, from_=32,to=212, increment=.1,
-                                      validate='all', validatecommand=vldt_ifnum_cmd,
+            self.spn_ontemp = Spinbox(self.frame_cfg, from_=0,to=212, increment=.1,
+                                      validate='all', 
                                       width=6)
             self.spn_ontemp.grid(row=2, column=1, sticky=W, padx=5, pady=5)
             # spinbox for off temperature
             self.lbl_offtemp = Label(self.frame_cfg,text="Off Temperature:")
             self.lbl_offtemp.grid(row=3, column=0, sticky=E, padx=5, pady=5)
-            self.spn_offtemp = Spinbox(self.frame_cfg, from_=32,to=212, increment=.1,
-                                       validate='all', validatecommand=vldt_ifnum_cmd,
+            self.spn_offtemp = Spinbox(self.frame_cfg, from_=0,to=212, increment=.1,
+                                       validate='all',
                                        width=6)
             self.spn_offtemp.grid(row=3, column=1, sticky=W, padx=5, pady=5)
+
+            # read saved values
+            val = cfg_common.readINIfile(section, "heater_probe", "")
+            if val != "":
+                self.tempprobechoice.set(probeDict[val].name + " [" +
+                                 probeDict[val].probeid + "]")
+
+            tempscale = cfg_common.readINIfile("global", "tempscale", cfg_common.SCALE_F)
+            if int(tempscale) == int(cfg_common.SCALE_C):
+                val = cfg_common.readINIfile(section, "heater_on", "25.0")
+                self.spn_ontemp.delete(0, END)
+                self.spn_ontemp.insert(0, '{0:.1f}'.format(float(val)))
+                val = cfg_common.readINIfile(section, "heater_off", "25.5")
+                self.spn_offtemp.delete(0, END)
+                self.spn_offtemp.insert(0, '{0:.1f}'.format(float(val)))
+            else:
+                val = cfg_common.readINIfile(section, "heater_on", "25.0")
+                val = cfg_common.convertCtoF(val)
+                self.spn_ontemp.delete(0, END)
+                self.spn_ontemp.insert(0, '{0:.1f}'.format(float(val)))
+                val = cfg_common.readINIfile(section, "heater_off", "25.5")
+                val = cfg_common.convertCtoF(val)
+                self.spn_offtemp.delete(0, END)
+                self.spn_offtemp.insert(0, '{0:.1f}'.format(float(val)))
+                
+            
         elif control=="Always":
             #drop dwn list for Always
-            statechoice = StringVar()
-            statelist = ["ON", "OFF"]
-            statechoice.set("ON") # default value
+            self.statechoice = StringVar()
+            self.statelist = ["ON", "OFF"]
+            self.statechoice.set("ON") # default value
             self.lbl_state = Label(self.frame_cfg,text="State:")
             self.lbl_state.grid(row=1, column=0, padx=5, sticky=E)
-            self.statemenu = OptionMenu(self.frame_cfg,statechoice,*statelist)
+            self.statemenu = OptionMenu(self.frame_cfg,self.statechoice,*self.statelist)
             self.statemenu.configure(indicatoron=True, relief=GROOVE)
             self.statemenu.grid(row=1, column=1, padx=5, sticky=W)
             # read saved state
             val = cfg_common.readINIfile(section, "always_state", "ON")
-            statechoice.set(val)
-            print("select_controltype Always: " + val)
+            self.statechoice.set(val)
+            #print("select_controltype Always: " + val)
+
+            
         elif control=="Light":
             # spinbox for on time
             self.lbl_ontime = Label(self.frame_cfg,text="On Time:")
@@ -394,73 +561,273 @@ class Outlet(tk.Frame):
             self.spn_offtimeMM.pack(side=LEFT)
             self.lbl_offHHMM = Label(self.frame_offFrame, text="(HH:MM)")
             self.lbl_offHHMM.pack(side=LEFT)
-        elif control=="Return Pump":
-            self.lbl_returnFeedtime = Label(self.frame_cfg,text="Feed Timer:")
-            self.lbl_returnFeedtime.grid(row=2, column=0, padx=5, pady=5, sticky=E)
-            returnFeedchoice = StringVar()
-            returnFeedlist = ["A", "B", "C", "D"]
-            returnFeedchoice.set("A") # default value
-            self.returnFeedmenu = OptionMenu(self.frame_cfg,returnFeedchoice,*returnFeedlist)
-            self.returnFeedmenu.configure(indicatoron=True, relief=GROOVE)
-            self.returnFeedmenu.grid(row=2, column=1, sticky=W, padx=5)
-            self.lbl_returnFeeddelay = Label(self.frame_cfg,text="Feed Timer Delay:")
-            self.lbl_returnFeeddelay.grid(row=3, column=0, padx=5, pady=5, sticky=E)
-            self.spn_returnFeeddelay = Spinbox(self.frame_cfg, from_=00, to=120, increment=1,
-                                        validate='all', validatecommand=vldt_ifnum_cmd,
-                                        wrap=True, width=4)
-            self.spn_returnFeeddelay.grid(row=3, column=1, padx=5, pady=5)
-            self.lbl_returnFeedmins = Label(self.frame_cfg,text="(minutes)")
-            self.lbl_returnFeedmins.grid(row=3, column=2, padx=5, pady=5)
-        elif control=="Skimmer":
-            self.lbl_skimmerFeedtime = Label(self.frame_cfg,text="Feed Timer:")
-            self.lbl_skimmerFeedtime.grid(row=2, column=0, padx=5, pady=5, sticky=E)
-            skimmerFeedchoice = StringVar()
-            skimmerFeedlist = ["A", "B", "C", "D"]
-            skimmerFeedchoice.set("A") # default value
-            self.skimmerFeedmenu = OptionMenu(self.frame_cfg,skimmerFeedchoice,*skimmerFeedlist)
-            self.skimmerFeedmenu.configure(indicatoron=True, relief=GROOVE)
-            self.skimmerFeedmenu.grid(row=2, column=1, sticky=W, padx=5)
-            self.lbl_skimmerFeeddelay = Label(self.frame_cfg,text="Feed Timer Delay:")
-            self.lbl_skimmerFeeddelay.grid(row=3, column=0, padx=5, pady=5, sticky=E)
-            self.spn_skimmerFeeddelay = Spinbox(self.frame_cfg, from_=00, to=120, increment=1,
-                                        validate='all', validatecommand=vldt_ifnum_cmd,
-                                        wrap=True, width=4)
-            self.spn_skimmerFeeddelay.grid(row=3, column=1, padx=5, pady=5)
-            self.lbl_skimmerFeedmins = Label(self.frame_cfg,text="(minutes)")
-            self.lbl_skimmerFeedmins.grid(row=3, column=2, padx=5, pady=5)
+
+            # read saved states
+            # on time 
+            val = cfg_common.readINIfile(section, "light_on", "08:00")
+            val = val.split(":")
+            self.spn_ontimeHH.delete(0, "end")
+            self.spn_ontimeHH.insert(0, val[0])
+            self.spn_ontimeMM.delete(0, "end")
+            self.spn_ontimeMM.insert(0, val[1])
+            # off time
+            val = cfg_common.readINIfile(section, "light_off", "17:00")
+            val = val.split(":")
+            self.spn_offtimeHH.delete(0, "end")
+            self.spn_offtimeHH.insert(0, val[0])
+            self.spn_offtimeMM.delete(0, "end")
+            self.spn_offtimeMM.insert(0, val[1])
             
-##            #drop dwn list for shutdown probe
-##            shutdownchoice = StringVar()
-##            shutdownlist = ["ds18b20_1", "ds18b20_2", "ds18b20_3"]
-##            shutdownchoice.set("ds18b20_1") # default value
-##            self.lbl_shutdownprobe = Label(self.frame_cfg,text="Shutdown Probe:")
-##            self.lbl_shutdownprobe.grid(row=3, column=0, padx=5, sticky=E)
-##            self.shutdownmenu = OptionMenu(self.frame_cfg,shutdownchoice,*shutdownlist)
-##            self.shutdownmenu.configure(indicatoron=True, relief=GROOVE)
-##            self.shutdownmenu.grid(row=3, column=1, padx=5, sticky=W, columnspan=2)
-##            # spinbox for shutdown temperature
-##            self.lbl_shutdowntemp = Label(self.frame_cfg,text="Shutdown Temperature:")
-##            self.lbl_shutdowntemp.grid(row=4, column=0, padx=5, pady=5, sticky=E)
-##            self.spn_shutdowntemp = Spinbox(self.frame_cfg, from_=32,to=212, increment=.1,
-##                                            validate='all', validatecommand=vldt_ifnum_cmd,
-##                                            width=6)
-##            self.spn_shutdowntemp.grid(row=4, column=1, padx=5, pady=5, sticky=W, columnspan=1)
-##            # spin for hysteresis
-##            self.lbl_hysteresis = Label(self.frame_cfg,text="Hysteresis:")
-##            self.lbl_hysteresis.grid(row=5, column=0, padx=5, pady=5, sticky=E)
-##            self.spn_hysteresis = Spinbox(self.frame_cfg, from_=0,to=120, increment=1,
-##                                            validate='all', validatecommand=vldt_ifnum_cmd,
-##                                            width=6)
-##            self.spn_hysteresis.grid(row=5, column=1, padx=5, pady=5, sticky=W)
+            
+        elif control=="Skimmer":
+            self.lbl_skimmerFeedtimer = Label(self.frame_cfg,text="Feed Timer")
+            self.lbl_skimmerFeedtimer.grid(row=2, column=0, padx=5, pady=5, sticky=E)
+            self.lbl_enableSkmFeedtimer = Label(self.frame_cfg,text="Enable")
+            self.lbl_enableSkmFeedtimer.grid(row=2, column=1, padx=5, pady=5, sticky=E)
+            self.lbl_delaySkmFeedtimer = Label(self.frame_cfg,text="Additional Feed Timer Delay (seconds)",
+                                            wraplength=150)
+            self.lbl_delaySkmFeedtimer.grid(row=2, column=2, padx=5, pady=5, sticky=E)
+            # we want to underline the header, so:
+            # clone the font, set the underline attribute,
+            # and assign it to our widget
+            f = font.Font(self.lbl_skimmerFeedtimer, self.lbl_skimmerFeedtimer.cget("font"))
+            f.configure(underline = True)
+            self.lbl_skimmerFeedtimer.configure(font=f)
+            self.lbl_enableSkmFeedtimer.configure(font=f)
+            self.lbl_delaySkmFeedtimer.configure(font=f)
+
+            # row for timer A
+            self.lbl_skimmerFeedtimerA = Label(self.frame_cfg,text="A")
+            self.lbl_skimmerFeedtimerA.grid(row=3, column=0, padx=5, pady=2)
+            self.skmFeedenabledA = IntVar()
+            self.chk_skmFeedenabledA = Checkbutton(self.frame_cfg, variable=self.skmFeedenabledA)
+            self.chk_skmFeedenabledA.grid(row=3, column=1, padx=5, pady=2)
+            self.spn_skimmerFeeddelayA = Spinbox(self.frame_cfg, from_=0, to=3600, increment=1,
+                                        validate='all', validatecommand=vldt_ifnum_cmd,
+                                        wrap=True, width=8)
+            self.spn_skimmerFeeddelayA.grid(row=3, column=2, padx=5, pady=2)    
+            val = cfg_common.readINIfile(section, "skimmer_enable_feed_a", str(False)) # enabled feed delay
+            if str(val) == "True":
+                self.chk_skmFeedenabledA.select()
+            else:
+                self.chk_skmFeedenabledA.deselect()
+            val = cfg_common.readINIfile(section, "skimmer_feed_delay_a", "0") # feed delay timer
+            self.spn_skimmerFeeddelayA.delete(0, "end")
+            self.spn_skimmerFeeddelayA.insert(0, val)
+           
+            # row for timer B
+            self.lbl_skimmerFeedtimerB = Label(self.frame_cfg,text="B")
+            self.lbl_skimmerFeedtimerB.grid(row=4, column=0, padx=5, pady=2)
+            self.skmFeedenabledB = IntVar()
+            self.chk_skmFeedenabledB = Checkbutton(self.frame_cfg, variable=self.skmFeedenabledB)
+            self.chk_skmFeedenabledB.grid(row=4, column=1, padx=5, pady=2)
+            self.spn_skimmerFeeddelayB = Spinbox(self.frame_cfg, from_=0, to=3600, increment=1,
+                                        validate='all', validatecommand=vldt_ifnum_cmd,
+                                        wrap=True, width=8)
+            self.spn_skimmerFeeddelayB.grid(row=4, column=2, padx=5, pady=2)
+            val = cfg_common.readINIfile(section, "skimmer_enable_feed_b", str(False)) # enabled feed delay
+            if str(val) == "True":
+                self.chk_skmFeedenabledB.select()
+            else:
+                self.chk_skmFeedenabledB.deselect()
+            val = cfg_common.readINIfile(section, "skimmer_feed_delay_b", "0") # feed delay timer
+            self.spn_skimmerFeeddelayB.delete(0, "end")
+            self.spn_skimmerFeeddelayB.insert(0, val)
+            # row for timer C
+            self.lbl_skimmerFeedtimerC = Label(self.frame_cfg,text="C")
+            self.lbl_skimmerFeedtimerC.grid(row=5, column=0, padx=5, pady=2)
+            self.skmFeedenabledC = IntVar()
+            self.chk_skmFeedenabledC = Checkbutton(self.frame_cfg, variable=self.skmFeedenabledC)
+            self.chk_skmFeedenabledC.grid(row=5, column=1, padx=5, pady=2)
+            self.spn_skimmerFeeddelayC = Spinbox(self.frame_cfg, from_=0, to=3600, increment=1,
+                                        validate='all', validatecommand=vldt_ifnum_cmd,
+                                        wrap=True, width=8)
+            self.spn_skimmerFeeddelayC.grid(row=5, column=2, padx=5, pady=2)
+            val = cfg_common.readINIfile(section, "skimmer_enable_feed_c", str(False)) # enabled feed delay
+            if str(val) == "True":
+                self.chk_skmFeedenabledC.select()
+            else:
+                self.chk_skmFeedenabledC.deselect()
+            val = cfg_common.readINIfile(section, "skimmer_feed_delay_c", "0") # feed delay timer
+            self.spn_skimmerFeeddelayC.delete(0, "end")
+            self.spn_skimmerFeeddelayC.insert(0, val)
+            # row for timer D
+            self.lbl_skimmerFeedtimerD = Label(self.frame_cfg,text="D")
+            self.lbl_skimmerFeedtimerD.grid(row=6, column=0, padx=5, pady=2)
+            self.skmFeedenabledD = IntVar()
+            self.chk_skmFeedenabledD = Checkbutton(self.frame_cfg, variable=self.skmFeedenabledD)
+            self.chk_skmFeedenabledD.grid(row=6, column=1, padx=5, pady=2)
+            self.spn_skimmerFeeddelayD = Spinbox(self.frame_cfg, from_=0, to=3600, increment=1,
+                                        validate='all', validatecommand=vldt_ifnum_cmd,
+                                        wrap=True, width=8)
+            self.spn_skimmerFeeddelayD.grid(row=6, column=2, padx=5, pady=2)
+            val = cfg_common.readINIfile(section, "skimmer_enable_feed_d", str(False)) # enabled feed delay
+            if str(val) == "True":
+                self.chk_skmFeedenabledD.select()
+            else:
+                self.chk_skmFeedenabledD.deselect()
+            val = cfg_common.readINIfile(section, "skimmer_feed_delay_d", "0") # feed delay timer
+            self.spn_skimmerFeeddelayD.delete(0, "end")
+            self.spn_skimmerFeeddelayD.insert(0, val)
+            
+        elif control=="Return Pump":
+            self.lbl_returnFeedtimer = Label(self.frame_cfg,text="Feed Timer")
+            self.lbl_returnFeedtimer.grid(row=2, column=0, padx=5, pady=5, sticky=E)
+            self.lbl_enableRtnFeedtimer = Label(self.frame_cfg,text="Enable")
+            self.lbl_enableRtnFeedtimer.grid(row=2, column=1, padx=5, pady=5, sticky=E)
+            self.lbl_delayFeedtimer = Label(self.frame_cfg,text="Additional Feed Timer Delay (seconds)",
+                                            wraplength=150)
+            self.lbl_delayFeedtimer.grid(row=2, column=2, padx=5, pady=5, sticky=E)
+            # we want to underline the header, so:
+            # clone the font, set the underline attribute,
+            # and assign it to our widget
+            f = font.Font(self.lbl_returnFeedtimer, self.lbl_returnFeedtimer.cget("font"))
+            f.configure(underline = True)
+            self.lbl_returnFeedtimer.configure(font=f)
+            self.lbl_enableRtnFeedtimer.configure(font=f)
+            self.lbl_delayFeedtimer.configure(font=f)
+
+            # row for timer A
+            self.lbl_returnFeedtimerA = Label(self.frame_cfg,text="A")
+            self.lbl_returnFeedtimerA.grid(row=3, column=0, padx=5, pady=2)
+            self.rtnFeedenabledA = IntVar()
+            self.chk_rtnFeedenabledA = Checkbutton(self.frame_cfg, variable=self.rtnFeedenabledA)
+            self.chk_rtnFeedenabledA.grid(row=3, column=1, padx=5, pady=2)
+            self.spn_returnFeeddelayA = Spinbox(self.frame_cfg, from_=0, to=3600, increment=1,
+                                        validate='all', validatecommand=vldt_ifnum_cmd,
+                                        wrap=True, width=8)
+            self.spn_returnFeeddelayA.grid(row=3, column=2, padx=5, pady=2)    
+            val = cfg_common.readINIfile(section, "return_enable_feed_a", str(False)) # enabled feed delay
+            if str(val) == "True":
+                self.chk_rtnFeedenabledA.select()
+            else:
+                self.chk_rtnFeedenabledA.deselect()
+            val = cfg_common.readINIfile(section, "return_feed_delay_a", "0") # feed delay timer
+            self.spn_returnFeeddelayA.delete(0, "end")
+            self.spn_returnFeeddelayA.insert(0, val)
+           
+            # row for timer B
+            self.lbl_returnFeedtimerB = Label(self.frame_cfg,text="B")
+            self.lbl_returnFeedtimerB.grid(row=4, column=0, padx=5, pady=2)
+            self.rtnFeedenabledB = IntVar()
+            self.chk_rtnFeedenabledB = Checkbutton(self.frame_cfg, variable=self.rtnFeedenabledB)
+            self.chk_rtnFeedenabledB.grid(row=4, column=1, padx=5, pady=2)
+            self.spn_returnFeeddelayB = Spinbox(self.frame_cfg, from_=0, to=3600, increment=1,
+                                        validate='all', validatecommand=vldt_ifnum_cmd,
+                                        wrap=True, width=8)
+            self.spn_returnFeeddelayB.grid(row=4, column=2, padx=5, pady=2)
+            val = cfg_common.readINIfile(section, "return_enable_feed_b", str(False)) # enabled feed delay
+            if str(val) == "True":
+                self.chk_rtnFeedenabledB.select()
+            else:
+                self.chk_rtnFeedenabledB.deselect()
+            val = cfg_common.readINIfile(section, "return_feed_delay_b", "0") # feed delay timer
+            self.spn_returnFeeddelayB.delete(0, "end")
+            self.spn_returnFeeddelayB.insert(0, val)
+            # row for timer C
+            self.lbl_returnFeedtimerC = Label(self.frame_cfg,text="C")
+            self.lbl_returnFeedtimerC.grid(row=5, column=0, padx=5, pady=2)
+            self.rtnFeedenabledC = IntVar()
+            self.chk_rtnFeedenabledC = Checkbutton(self.frame_cfg, variable=self.rtnFeedenabledC)
+            self.chk_rtnFeedenabledC.grid(row=5, column=1, padx=5, pady=2)
+            self.spn_returnFeeddelayC = Spinbox(self.frame_cfg, from_=0, to=3600, increment=1,
+                                        validate='all', validatecommand=vldt_ifnum_cmd,
+                                        wrap=True, width=8)
+            self.spn_returnFeeddelayC.grid(row=5, column=2, padx=5, pady=2)
+            val = cfg_common.readINIfile(section, "return_enable_feed_c", str(False)) # enabled feed delay
+            if str(val) == "True":
+                self.chk_rtnFeedenabledC.select()
+            else:
+                self.chk_rtnFeedenabledC.deselect()
+            val = cfg_common.readINIfile(section, "return_feed_delay_c", "0") # feed delay timer
+            self.spn_returnFeeddelayC.delete(0, "end")
+            self.spn_returnFeeddelayC.insert(0, val)
+            # row for timer D
+            self.lbl_returnFeedtimerD = Label(self.frame_cfg,text="D")
+            self.lbl_returnFeedtimerD.grid(row=6, column=0, padx=5, pady=2)
+            self.rtnFeedenabledD = IntVar()
+            self.chk_rtnFeedenabledD = Checkbutton(self.frame_cfg, variable=self.rtnFeedenabledD)
+            self.chk_rtnFeedenabledD.grid(row=6, column=1, padx=5, pady=2)
+            self.spn_returnFeeddelayD = Spinbox(self.frame_cfg, from_=0, to=3600, increment=1,
+                                        validate='all', validatecommand=vldt_ifnum_cmd,
+                                        wrap=True, width=8)
+            self.spn_returnFeeddelayD.grid(row=6, column=2, padx=5, pady=2)
+            val = cfg_common.readINIfile(section, "return_enable_feed_d", str(False)) # enabled feed delay
+            if str(val) == "True":
+                self.chk_rtnFeedenabledD.select()
+            else:
+                self.chk_rtnFeedenabledD.deselect()
+            val = cfg_common.readINIfile(section, "return_feed_delay_d", "0") # feed delay timer
+            self.spn_returnFeeddelayD.delete(0, "end")
+            self.spn_returnFeeddelayD.insert(0, val)
+##            self.lbl_skimmerFeedtime = Label(self.frame_cfg,text="Feed Timer:")
+##            self.lbl_skimmerFeedtime.grid(row=2, column=0, padx=5, pady=5, sticky=E)
+##            skimmerFeedchoice = StringVar()
+##            skimmerFeedlist = ["A", "B", "C", "D"]
+##            skimmerFeedchoice.set("A") # default value
+##            self.skimmerFeedmenu = OptionMenu(self.frame_cfg,skimmerFeedchoice,*skimmerFeedlist)
+##            self.skimmerFeedmenu.configure(indicatoron=True, relief=GROOVE)
+##            self.skimmerFeedmenu.grid(row=2, column=1, sticky=W, padx=5)
+##            self.lbl_skimmerFeeddelay = Label(self.frame_cfg,text="Feed Timer Delay:")
+##            self.lbl_skimmerFeeddelay.grid(row=3, column=0, padx=5, pady=5, sticky=E)
+##            self.spn_skimmerFeeddelay = Spinbox(self.frame_cfg, from_=00, to=120, increment=1,
+##                                        validate='all', validatecommand=vldt_ifnum_cmd,
+##                                        wrap=True, width=6)
+##            self.spn_skimmerFeeddelay.grid(row=3, column=1, padx=5, pady=5)
+##            self.lbl_skimmerFeedsecs = Label(self.frame_cfg,text="(seconds)")
+##            self.lbl_skimmerFeedsecs.grid(row=3, column=2, padx=5, pady=5)
+##            # read saved states
+##            # feed timer
+##            val = cfg_common.readINIfile(section, "skimmer_feed_selection", "A")
+##            skimmerFeedchoice.set(val)
+##            if val == "A":
+##                val = cfg_common.readINIfile(section, "skimmer_feed_delay_a", "0")
+##                self.spn_skimmerFeeddelay.delete(0, "end")
+##                self.spn_skimmerFeeddelay.insert(0, val)
+##            elif val == "B":
+##                val = cfg_common.readINIfile(section, "skimmer_feed_delay_b", "0")
+##                self.spn_skimmerFeeddelay.delete(0, "end")
+##                self.spn_skimmerFeeddelay.insert(0, val)
+##            elif val == "C":
+##                val = cfg_common.readINIfile(section, "skimmer_feed_delay_c", "0")
+##                self.spn_skimmerFeeddelay.delete(0, "end")
+##                self.spn_skimmerFeeddelay.insert(0, val)
+##            elif val == "D":
+##                val = cfg_common.readINIfile(section, "skimmer_feed_delay_d", "0")
+##                self.spn_skimmerFeeddelay.delete(0, "end")
+##                self.spn_skimmerFeeddelay.insert(0, val)
+            
+
            
 
     def ValidateIfNum(self, s, S):
         # disallow anything but numbers
-        print(s)
+        #print(s)
         valid = S == '' or S.isdigit()
         if not valid:
             self.bell()
         return valid
 
+    def ValidateIfFloat(self, s, S):
+        # disallow anything but numbers
+        #print(s)
+        valid = S == '' or S.isdigit() or S == '.'
+        if not valid:
+            self.bell()
+        return valid
 
-
+    def readExistingProbes(self):
+        # create dictionary to hold assigned temperature probes
+        # these are probes that are already saved in config file
+        probeDict = {}
+        probeDict.clear()
+        config = configparser.ConfigParser()
+        config.read(cfg_common.CONFIGFILENAME)
+        # loop through each section and see if it is a ds18b20 temp probe
+        for section in config:
+            if section.split("_")[0] == "ds18b20":
+                probe = cfg_tempprobes.ProbeClass()
+                probe.probeid = section.split("_")[1]
+                probe.name = config[section]["name"]
+                probeDict [section.split("_")[1]] = probe
+        return probeDict

@@ -29,7 +29,8 @@ class PageEnvironmental(tk.Frame):
 
         # enable sensor
         self.dhtEnabled = IntVar()
-        self.chk_dhtenable = Checkbutton(self.dhtframe,text="Enable Sensor", variable=self.dhtEnabled)
+        self.chk_dhtenable = Checkbutton(self.dhtframe,text="Enable Sensor",
+                                         variable=self.dhtEnabled, command=self.enableControls)
         self.chk_dhtenable.grid(row=0, column=0, sticky=W, padx=5, pady=5)
         
         # temperature
@@ -58,7 +59,26 @@ class PageEnvironmental(tk.Frame):
         humname = cfg_common.readINIfile("dht11/22", "humidity_name", "Humidity")
         self.txt_dhthum.delete(0,END)
         self.txt_dhthum.insert(0,humname)
+
+        # enable/disable controls
+        self.enableControls()
         
+    def enableControls(self):
+        #print('dhtEnabled = ' + str(self.dhtEnabled.get()))
+        if self.dhtEnabled.get() == True:
+            self.lbl_dhttemp.config(state='normal')
+            self.txt_dhttemp.config(state='normal')
+            self.lbl_dhthum.config(state='normal')
+            self.txt_dhthum.config(state='normal')
+        else:
+            self.lbl_dhttemp.config(state='disabled')
+            self.txt_dhttemp.config(state='disabled')
+            self.lbl_dhthum.config(state='disabled')
+            self.txt_dhthum.config(state='disabled')
+            
+            
+            
+
     def saveChanges(self):
         # enabled setting
         if self.dhtEnabled.get() == True:

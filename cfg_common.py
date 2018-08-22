@@ -40,10 +40,10 @@ def readINIfile(section, key, default):
             config.write(configfile)
                    
     #value = config[section][key]   
-    print (datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " readINIfile: " + "\n" +
-           "                        [section] = " + section + "\n" +
-           "                        [key] = " + key + "\n" +
-           "                        [value] = " + config[section][key])
+##    print (datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " readINIfile: " + "\n" +
+##           "                        [section] = " + section + "\n" +
+##           "                        [key] = " + key + "\n" +
+##           "                        [value] = " + config[section][key])
     return config[section][key] 
 
     
@@ -67,10 +67,17 @@ def removesectionfromINIfile(section):
     with open(CONFIGFILENAME, "r") as f:
         p.readfp(f)
 
-    print(p.sections())
+    #print(p.sections())
     p.remove_section(section)
-    print(p.sections())
+    #print(p.sections())
 
     with open(CONFIGFILENAME, "w") as f:
         p.write(f)
 
+def convertCtoF(degreesC):
+    val = float(degreesC)*(9/5)+32
+    return val
+
+def convertFtoC(degreesF):
+    val = (float(degreesF)-32) * (5/9)
+    return val

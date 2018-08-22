@@ -27,7 +27,7 @@ class PageAnalogProbes(tk.Frame):
         self.adcframe.grid(row=2, column=0, pady=10, sticky=W)
 
         # channel 0 frame
-        self.adcch0frame = LabelFrame(self.adcframe, relief=SUNKEN, text="Channel 0")
+        self.adcch0frame = LabelFrame(self.adcframe, relief=GROOVE, text="Channel 0")
         #self.adcch0frame.pack(fill=X, side=TOP)
         self.adcch0frame.grid(row=0, column=0, padx=10, pady=10)
 
@@ -55,12 +55,13 @@ class PageAnalogProbes(tk.Frame):
         self.ch0Enabled = IntVar()
         self.ch0enableframe = LabelFrame(self.adcch0frame, relief=FLAT)
         self.ch0enableframe.pack(fill=X, side=TOP)
-        self.chk_ch0enable = Checkbutton(self.ch0enableframe,text="Enable", variable=self.ch0Enabled)
+        self.chk_ch0enable = Checkbutton(self.ch0enableframe,text="Enable",
+                                         variable=self.ch0Enabled, command=self.enableControls)
         self.chk_ch0enable.pack(side=LEFT, anchor=W, padx=20)
 
 
         # channel 1 frame
-        self.adcch1frame = LabelFrame(self.adcframe, relief=SUNKEN, text="Channel 1")
+        self.adcch1frame = LabelFrame(self.adcframe, relief=GROOVE, text="Channel 1")
         #self.adcch1frame.pack(fill=X, side=TOP)
         self.adcch1frame.grid(row=0, column=1, padx=10, pady=10)
 
@@ -88,7 +89,8 @@ class PageAnalogProbes(tk.Frame):
         self.ch1Enabled = IntVar()
         self.ch1enableframe = LabelFrame(self.adcch1frame, relief=FLAT)
         self.ch1enableframe.pack(fill=X, side=TOP)
-        self.chk_ch1enable = Checkbutton(self.ch1enableframe,text="Enable", variable=self.ch1Enabled)
+        self.chk_ch1enable = Checkbutton(self.ch1enableframe,text="Enable",
+                                         variable=self.ch1Enabled, command=self.enableControls)
         self.chk_ch1enable.pack(side=LEFT, anchor=W, padx=20)
 
         # read values from config file
@@ -120,6 +122,33 @@ class PageAnalogProbes(tk.Frame):
         # Ch1 type
         val = cfg_common.readINIfile("mcp3008", "ch1_type", "pH")
         self.ch1sensortype.set(val)
+
+        # enable/disable controls
+        self.enableControls()
+
+    def enableControls(self):
+        # ch 0
+        if self.ch0Enabled.get() == True:
+            self.lbl_ch0name.config(state='normal')
+            self.txt_ch0name.config(state='normal')
+            self.lbl_ch0sensortype.config(state='normal')
+            self.ch0sensortypemenu.config(state='normal')
+        else:
+            self.lbl_ch0name.config(state='disabled')
+            self.txt_ch0name.config(state='disabled')
+            self.lbl_ch0sensortype.config(state='disabled')
+            self.ch0sensortypemenu.config(state='disabled')
+        # ch 1
+        if self.ch1Enabled.get() == True:
+            self.lbl_ch1name.config(state='normal')
+            self.txt_ch1name.config(state='normal')
+            self.lbl_ch1sensortype.config(state='normal')
+            self.ch1sensortypemenu.config(state='normal')
+        else:
+            self.lbl_ch1name.config(state='disabled')
+            self.txt_ch1name.config(state='disabled')
+            self.lbl_ch1sensortype.config(state='disabled')
+            self.ch1sensortypemenu.config(state='disabled')
 
     def saveChanges(self):
         # Channel 0

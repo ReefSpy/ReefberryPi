@@ -302,7 +302,7 @@ class NewProbeDialog():
             except:
                 pass
         else:
-            messagebox.showerror("Global Settings",
+            messagebox.showerror("Temp Probe Settings",
                                  "Error: Could not save changes! \nNew configuration not saved.")
         self.dlg.destroy()
 
