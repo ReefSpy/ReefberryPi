@@ -22,7 +22,7 @@ import GPIO_config
 import ph_sensor as ph
 import configparser
 import RBP_commons
-
+import cfg_common
 import pika
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -42,17 +42,27 @@ curstate = configparser.ConfigParser()
 curstate.read(currentStateFile)
 
 # read in the preferences
-ph_numsamples = int(config['ph']['ph_numsamples']) # how many samples to collect before averaging
-ph_SamplingInterval = int(config['ph']['ph_SamplingInterval']) # milliseconds
-ph_Sigma = int(config['ph']['ph_Sigma']) # how many standard deviations to clean up outliers
-ph_LogInterval = int(config['ph']['ph_LogInterval']) # milliseconds
-dht11_SamplingInterval = int(config['dht11']['dht11_SamplingInterval']) # milliseconds
-dht11_LogInterval = int(config['dht11']['dht11_LogInterval']) # milliseconds
-ds18b20_SamplingInterval = int(config['ds18b20']['ds18b20_SamplingInterval']) # milliseconds
-ds18b20_LogInterval = int(config['ds18b20']['ds18b20_LogInterval']) # milliseconds
-outlet_SamplingInterval = int(config['outlets']['outlet_SamplingInterval']) # milliseconds
+#ph_numsamples = int(config['ph']['ph_numsamples']) # how many samples to collect before averaging
+#ph_SamplingInterval = int(config['ph']['ph_SamplingInterval']) # milliseconds
+#ph_Sigma = int(config['ph']['ph_Sigma']) # how many standard deviations to clean up outliers
+#ph_LogInterval = int(config['ph']['ph_LogInterval']) # milliseconds
+#dht11_SamplingInterval = int(config['dht11']['dht11_SamplingInterval']) # milliseconds
+#dht11_LogInterval = int(config['dht11']['dht11_LogInterval']) # milliseconds
+#ds18b20_SamplingInterval = int(config['ds18b20']['ds18b20_SamplingInterval']) # milliseconds
+#ds18b20_LogInterval = int(config['ds18b20']['ds18b20_LogInterval']) # milliseconds
+#outlet_SamplingInterval = int(config['outlets']['outlet_SamplingInterval']) # milliseconds
 outlet_1_buttonstate = config['outlet_1']['button_state']
 
+# read in the preferences
+ph_numsamples = int(cfg_common.readINIfile('ph', 'ph_numsamples', "10")) # how many samples to collect before averaging
+ph_SamplingInterval = int(cfg_common.readINIfile('ph', 'ph_samplinginterval', "1000")) # milliseconds
+ph_Sigma = int(cfg_common.readINIfile('ph', 'ph_sigma', "1")) # how many standard deviations to clean up outliers
+ph_LogInterval = int(cfg_common.readINIfile('ph', 'ph_loginterval', "300000")) # milliseconds
+dht11_SamplingInterval = int(cfg_common.readINIfile('dht11/22', 'dht11_samplinginterval', "5000")) # milliseconds
+dht11_LogInterval = int(cfg_common.readINIfile('dht11/22', 'dht11_loginterval', "300000")) # milliseconds
+ds18b20_SamplingInterval = int(cfg_common.readINIfile('probes_ds18b20', 'ds18b20_samplinginterval', "5000")) # milliseconds
+ds18b20_LogInterval = int(cfg_common.readINIfile('probes_ds18b20', 'ds18b20_loginterval', "300000")) # milliseconds
+outlet_SamplingInterval = int(cfg_common.readINIfile('outlets', 'outlet_samplinginterval', "5000")) # milliseconds
 
 # set up the GPIO
 GPIO_config.initGPIO()
@@ -116,7 +126,18 @@ def outlet1_control():
     elif int(outlet_1_buttonstate) == 3:
         GPIO.output(GPIO_config.relay_1, False)
         return "ON"
+    
+def outlet_control(bus, outletnum): # bus = "int" or "ext"
 
+    outlet = str(bus + "_outlet_" + outletnum)
+    controltype = cfg_common.readINIfile(outlet, "control_type", "Always")
+
+    if controltype == "Always":
+        pass
+    elif controltype == "Heater":
+        pass
+
+    
 while True:
     ##########################################################################################
     # read ph probe

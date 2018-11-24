@@ -10,9 +10,9 @@ import mcp3008
 
 # these are the calibration points of the Ph probe.  Change the
 # digital values as necessary
-dv_ph4 = 932
-dv_ph7 = 775
-dv_ph10 = 621
+dv_ph4 = 980
+dv_ph7 = 819
+dv_ph10 = 663
 
 # data collection variables
 ph_ListLength = 120     # how many ph samples to collect

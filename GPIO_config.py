@@ -6,7 +6,9 @@ SPICLK = 18       # for MCP3008 ADC
 SPIMISO = 23      # for MCP3008 ADC
 SPIMOSI = 24      # for MCP3008 ADC
 SPICS = 25        # for MCP3008 ADC
-relay_1 = 19     
+relay_1 = 19
+int_outlet_1 = 19
+
 
 # MCP3008 pins
 ph_adc = 0

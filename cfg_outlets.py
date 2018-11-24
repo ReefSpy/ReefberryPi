@@ -459,7 +459,8 @@ class Outlet(tk.Frame):
                 #                 probeDict.get("28-0316479150ff").probeid + ")")
                 probelist.append(probeDict.get(k).name + " [" +
                                  probeDict.get(k).probeid + "]")
-            
+            if len(probeDict) == 0:
+                probelist.append(" ") # no probes defined, just add an empty list entry so it wont error
             #drop down list for probes
             self.tempprobechoice = StringVar()
             #probelist = ["ds18b20_1", "ds18b20_2", "ds18b20_3"]
@@ -487,8 +488,12 @@ class Outlet(tk.Frame):
             # read saved values
             val = cfg_common.readINIfile(section, "heater_probe", "")
             if val != "":
-                self.tempprobechoice.set(probeDict[val].name + " [" +
-                                 probeDict[val].probeid + "]")
+                try:
+                    self.tempprobechoice.set(probeDict[val].name + " [" +
+                                             probeDict[val].probeid + "]")
+                except:
+                    self.tempprobechoice.set(val) # if a selection was made, but probe later deleted
+                                                  # it won't find the name so just use the ID
 
             tempscale = cfg_common.readINIfile("global", "tempscale", cfg_common.SCALE_F)
             if int(tempscale) == int(cfg_common.SCALE_C):
