@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 ##############################################################################
-# RBP_probes.py
+# RBP_server.py
 #
 # this module will pull data from the various input probes and record data
 # to the log files
@@ -63,6 +63,16 @@ dht11_LogInterval = int(cfg_common.readINIfile('dht11/22', 'dht11_loginterval', 
 ds18b20_SamplingInterval = int(cfg_common.readINIfile('probes_ds18b20', 'ds18b20_samplinginterval', "5000")) # milliseconds
 ds18b20_LogInterval = int(cfg_common.readINIfile('probes_ds18b20', 'ds18b20_loginterval', "300000")) # milliseconds
 outlet_SamplingInterval = int(cfg_common.readINIfile('outlets', 'outlet_samplinginterval', "5000")) # milliseconds
+int_outlet2_buttonstate = cfg_common.readINIfile("int_outlet_2", "button_state", "OFF")
+int_outlet3_buttonstate = cfg_common.readINIfile("int_outlet_3", "button_state", "OFF")
+int_outlet4_buttonstate = cfg_common.readINIfile("int_outlet_4", "button_state", "OFF")
+
+int_outlet_buttonstates = {
+    "int_outlet2_buttonstate":cfg_common.readINIfile("int_outlet_2", "button_state", "OFF"),
+    "int_outlet3_buttonstate":cfg_common.readINIfile("int_outlet_3", "button_state", "OFF"),
+    "int_outlet4_buttonstate":cfg_common.readINIfile("int_outlet_4", "button_state", "OFF"),
+    }
+
 
 # set up the GPIO
 GPIO_config.initGPIO()
@@ -131,12 +141,50 @@ def outlet_control(bus, outletnum): # bus = "int" or "ext"
 
     outlet = str(bus + "_outlet_" + outletnum)
     controltype = cfg_common.readINIfile(outlet, "control_type", "Always")
+    pin = GPIO_config.int_outletpins.get(outlet)
+    
+    if outlet == "int_outlet_2":
+        button_state = int_outlet_buttonstates.get("int_outlet2_buttonstate")
+    elif outlet == "int_outlet_3":
+        button_state = int_outlet_buttonstates.get("int_outlet3_buttonstate")
+    elif outlet == "int_outlet_4":
+        button_state = int_outlet_buttonstates.get("int_outlet4_buttonstate")
+    else:
+        button_state = "OFF"
 
+    # control type ALWAYS
     if controltype == "Always":
-        pass
+        return handle_outlet_always(outlet, button_state, pin)   
+    # control type HEATER    
     elif controltype == "Heater":
         pass
+    # control type RETURN PUMP
+    elif controltype == "Return Pump":
+        pass
+    elif controltype == "Skimmer":
+        pass
+    elif controltype == "Light":
+        pass
 
+def handle_outlet_always(outlet, button_state, pin):
+    if button_state == "OFF":
+        GPIO.output(pin, True)
+        return "OFF"
+    elif button_state == "ON":
+        GPIO.output(pin, False)
+        return "ON"
+    elif button_state == "AUTO":
+        state = cfg_common.readINIfile(outlet, "always_state", "OFF")
+        if state == "OFF":
+            GPIO.output(pin, True)
+            return "OFF"
+        elif state == "ON":
+            GPIO.output(pin, False)
+            return "ON"
+    else:
+        GPIO.output(pin, True)
+        return "OFF"
+    
     
 while True:
     ##########################################################################################
@@ -183,10 +231,12 @@ while True:
             # otherwise just print it to console
             timestamp = datetime.now()
             if (int(round(time.time()*1000)) - ph_LastLogTime) > ph_LogInterval:
-                RBP_commons.logprobedata(config['logs']['ph_log_prefix'], "{:.2f}".format(ph_AvgFiltered))
-                print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** pH = "
-                      + "{:.2f}".format(ph_AvgFiltered) + Style.RESET_ALL)
-                ph_LastLogTime = int(round(time.time()*1000))
+                # sometimes a high value, like 22.4 gets recorded, i need to fix this, but for now don't log that
+                if ph_AvgFiltered < 14.0:  
+                    RBP_commons.logprobedata(config['logs']['ph_log_prefix'], "{:.2f}".format(ph_AvgFiltered))
+                    print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** pH = "
+                          + "{:.2f}".format(ph_AvgFiltered) + Style.RESET_ALL)
+                    ph_LastLogTime = int(round(time.time()*1000))
             else:
                 print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " pH = "
                       + "{:.2f}".format(ph_AvgFiltered))
@@ -286,18 +336,34 @@ while True:
             writeConfig(outlet, "button_state", value)
             #print("Write configfile " + outlet + " " + value)
             outlet_1_buttonstate = value
+        elif outlet =="int_outlet_2":
+            cfg_common.writeINIfile(outlet, "button_state", value)
+            #int_outlet2_buttonstate = value
+            int_outlet_buttonstates["int_outlet2_buttonstate"] = value
+        elif outlet =="int_outlet_3":
+            cfg_common.writeINIfile(outlet, "button_state", value)
+            #int_outlet3_buttonstate = value
+            int_outlet_buttonstates["int_outlet3_buttonstate"] = value
+        elif outlet =="int_outlet_4":
+            cfg_common.writeINIfile(outlet, "button_state", value)
+            #int_outlet4_buttonstate = value
+            int_outlet_buttonstates["int_outlet4_buttonstate"] = value
+            
     ##########################################################################################
     # handle outlet states (turn outlets on or off)
     #
     ##########################################################################################
     outlet1_control()
-    
+    # do each of the outlets on the internal bus (outlets 1-4)
+    for x in range (2,5):
+        status = outlet_control("int", str(x))
+    #    #print (str(x) + " " + str(status))
     ##########################################################################################
     # broadcast current state of outlets
     #
     ##########################################################################################
     if (int(round(time.time()*1000)) - outlet_SamplingTimeSeed) > outlet_SamplingInterval:
-        # Outlet 1
+        # internal outlet 1
         status = outlet1_control()
         channel.basic_publish(exchange='',
                         routing_key='current_state',
@@ -306,6 +372,22 @@ while True:
                                  "," + outlet_1_buttonstate + "," + str(status)))
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
               " Outlet_1 button state: " + outlet_1_buttonstate + " " + str(status))
+
+        # do each of the outlets on the internal bus (outlets 1-4)
+        for x in range (2,5):
+            status = outlet_control("int", str(x))
+            channel.basic_publish(exchange='',
+                            routing_key='current_state',
+                            properties=pika.BasicProperties(expiration='10000'),
+                            body=str("int_outlet_" + str(x) + "," + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + 
+                                 "," + int_outlet_buttonstates.get("int_outlet" + str(x) + "_buttonstate") + "," + str(status)))
+            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") +    
+                " int_outlet_" + str(x) +
+                " [" + cfg_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed") +
+                "] [button: " + cfg_common.readINIfile("int_outlet_" + str(x), "button_state", "OFF") +  
+                "] [status: " + str(status) + "]" +
+                " [pin: " + str(GPIO_config.int_outletpins.get("int_outlet_" + str(x))) + "]")
+
 
         outlet_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 

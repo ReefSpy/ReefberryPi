@@ -7,7 +7,16 @@ SPIMISO = 23      # for MCP3008 ADC
 SPIMOSI = 24      # for MCP3008 ADC
 SPICS = 25        # for MCP3008 ADC
 relay_1 = 19
-int_outlet_1 = 19
+#int_outlet_1 = 19
+#int_outlet_2 = 13
+
+int_outletpins = {
+        "int_outlet_1":19,
+        "int_outlet_2":13,
+        "int_outlet_3":6,
+        "int_outlet_4":5,
+    }
+
 
 
 # MCP3008 pins
@@ -28,3 +37,6 @@ def initGPIO():
 
     # set up pins for relay controls
     GPIO.setup(relay_1, GPIO.OUT)
+    GPIO.setup(int_outletpins.get("int_outlet_2"), GPIO.OUT)
+    GPIO.setup(int_outletpins.get("int_outlet_3"), GPIO.OUT)
+    GPIO.setup(int_outletpins.get("int_outlet_4"), GPIO.OUT)

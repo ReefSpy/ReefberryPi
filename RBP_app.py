@@ -87,9 +87,13 @@ class DashBoard(tk.Frame):
         return_state = IntVar()
         lights_state = IntVar()
         skimmer_state = IntVar()
+        int_outlet2_state = StringVar()
         heater_freezeupdate = BooleanVar()
         outlet1_state = IntVar()
         outlet1_freezeupdate = BooleanVar()
+        int_outlet2_freezeupdate = BooleanVar()
+        int_outlet3_freezeupdate = BooleanVar()
+        int_outlet4_freezeupdate = BooleanVar()
         
         #initialize the default values
         probe_temperature.set("-1")
@@ -99,6 +103,9 @@ class DashBoard(tk.Frame):
         #humidity_display.set("-1")
         heater_freezeupdate.set(True)
         outlet1_freezeupdate.set(True)
+        int_outlet2_freezeupdate.set(True)
+        int_outlet3_freezeupdate.set(True)
+        int_outlet4_freezeupdate.set(True)
 
         #populate the GUI
         #use two frames to set up two columns
@@ -219,57 +226,100 @@ class DashBoard(tk.Frame):
 
         def select_return_state():
             if return_state.get() == OUTLET_OFF:
+            #if int_outlet2_state.get() == "OFF":
                 lbl_return_status.config(text="OFF", foreground="RED")
                 #GPIO.output(relay_switch2, True)
                 #writeCurrentState('relays','relay_return', "OFF")
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("int_outlet_2" + "," + "OFF"))
             elif return_state.get() == OUTLET_AUTO:
+            #elif int_outlet2_stete.get() == "AUTO":
                 lbl_return_status.config(text="AUTO", foreground="DARK ORANGE")
                 #writeCurrentState('relays','relay_return', "AUTO")
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("int_outlet_2" + "," + "AUTO"))
             elif return_state.get() == OUTLET_ON:
+            #elif int_outlet2_state.get() == "ON":
                 lbl_return_status.config(text="ON", foreground="GREEN")
                 #GPIO.output(relay_switch2, False)
                 #writeCurrentState('relays','relay_return', "ON")
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("int_outlet_2" + "," + "ON"))
             else:
                 lbl_return_status.config(text="UNKNOWN", foreground="BLACK")
                 #writeCurrentState('relays','relay_return', "OFF")
+                
             selection = "You selected return pump option " + lbl_return_status.cget("text")
-            print(selection) 
+            print(selection)
+            int_outlet2_freezeupdate.set(True)
 
         def select_lights_state():
             if lights_state.get() == OUTLET_OFF:
                 lbl_lights_status.config(text="OFF", foreground="RED")
                 #GPIO.output(relay_switch3, True)
                 #writeCurrentState('relays','relay_lights', "OFF")
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("int_outlet_3" + "," + "OFF"))
             elif lights_state.get() == OUTLET_AUTO:
                 lbl_lights_status.config(text="AUTO", foreground="DARK ORANGE")
                 #writeCurrentState('relays','relay_lights', "AUTO")
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("int_outlet_3" + "," + "AUTO"))
             elif lights_state.get() == OUTLET_ON:
                 lbl_lights_status.config(text="ON", foreground="GREEN")
                 #writeCurrentState('relays','relay_lights', "ON")
                 #GPIO.output(relay_switch3, False)
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("int_outlet_3" + "," + "ON"))
             else:
                 lbl_lights_status.config(text="UNKNOWN", foreground="BLACK")
                 #writeCurrentState('relays','relay_lights', "OFF")
             selection = "You selected lights option " + lbl_lights_status.cget("text")
-            print(selection) 
+            print(selection)
+            int_outlet3_freezeupdate.set(True)
             
         def select_skimmer_state():
             if skimmer_state.get() == OUTLET_OFF:
                 lbl_skimmer_status.config(text="OFF", foreground="RED")
                 #writeCurrentState('relays','relay_skimmer', "OFF")
                 #GPIO.output(relay_switch4, True)
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("int_outlet_4" + "," + "OFF"))
             elif skimmer_state.get() == OUTLET_AUTO:
                 lbl_skimmer_status.config(text="AUTO", foreground="DARK ORANGE")
                 #writeCurrentState('relays','relay_skimmer', "AUTO")
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("int_outlet_4" + "," + "AUTO"))
             elif skimmer_state.get() == OUTLET_ON:
                 lbl_skimmer_status.config(text="ON", foreground="GREEN")
                 #writeCurrentState('relays','relay_skimmer', "ON")
                 #GPIO.output(relay_switch4, False)
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("int_outlet_4" + "," + "ON"))
             else:
                 lbl_skimmer_status.config(text="UNKNOWN", foreground="BLACK")
                 #writeCurrentState('relays','relay_skimmer', "OFF")
             selection = "You selected skimmer option " + lbl_skimmer_status.cget("text")
             print(selection)
+            int_outlet4_freezeupdate.set(True)
 
         self.img_cfg16 = PhotoImage(file="images/settings-16.png")
 
@@ -580,24 +630,33 @@ class DashBoard(tk.Frame):
                 body = body.decode()
                 probe = body.split(",")[0]
                 value = body.split(",")[2]
+
                 
                 if probe == "ds18b20_1":
                     probe_temperature.set(value)
                     print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
                           " received: temperature = " + str(value) + "F")
-                elif probe == "dht11_t":
+                if probe == "dht11_t":
                     probe_temperature_ext.set(value)
                     print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
                           " received: external temperature = " + str(value) + "F")
-                elif probe == "dht11_h":
+                if probe == "dht11_h":
                     probe_humidity.set(value + "%")
                     print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
                           " received: humidity = " + str(value) + "%")
-                elif probe == "mcp3008_0":
+                if probe == "mcp3008_0":
                     probe_ph.set(value)
                     print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
                           " received: ph = " + str(value))
-                elif probe == "outlet_1":
+
+                if value == "OFF":
+                    value = OUTLET_OFF
+                elif value == "ON":
+                    value = OUTLET_ON
+                elif value == "AUTO":
+                    value = OUTLET_AUTO
+
+                if probe == "outlet_1":
                     status = body.split(",")[3]
                     #print(body)
                     if heater_freezeupdate.get() != True:
@@ -629,9 +688,114 @@ class DashBoard(tk.Frame):
                                 lbl_heater_status.config(text="ON", foreground="GREEN")
                     else:
                         #print ("set it to false")
-                        heater_freezeupdate.set(False) 
+                        heater_freezeupdate.set(False)
+                if probe == "int_outlet_2":
+                    status = body.split(",")[3]
+                    #print(body)
+                    if int_outlet2_freezeupdate.get() != True:
+                        print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
+                              " received: int_outlet_2 = " + str(value) + " Status: " + status)
+                        #print (value, heater_state.get(), str(heater_freezeupdate.get()))
+                        #heater_state.set(int(value))
+                        if "ON" in status:
+                            lbl_return_status.config(text=status, foreground="GREEN")
+                        elif "OFF" in status:
+                            lbl_return_status.config(text=status, foreground="RED")
+
+                        # if the value is same as current state dont do anything
+                        #print("value = " + str(value))
+                        if int(value) != int(return_state.get()):      
+                            print ("enter if " + str(value) + " " + str(return_state.get()))
+                            if int(value) == int(OUTLET_OFF):
+                                rdo_return_off.invoke()
+                                lbl_return_status.config(text="OFF", foreground="RED")
+                            elif int(value) == int(OUTLET_AUTO):
+                                rdo_return_auto.invoke()
+                                #if "ON" in status:
+                                #    lbl_heater_status.config(text=status, foreground="GREEN")
+                                #    print("green")
+                                #elif "OFF" in status:
+                                #    lbl_heater_status.config(text=status, foreground="RED")
+                                #    print("red")
+                            elif int(value) == int(OUTLET_ON):
+                                rdo_return_on.invoke()
+                                lbl_return_status.config(text="ON", foreground="GREEN")
+                    else:
+                        #print ("set it to false")
+                        int_outlet2_freezeupdate.set(False)
+
+                if probe == "int_outlet_3":
+                    status = body.split(",")[3]
+                    #print(body)
+                    if int_outlet3_freezeupdate.get() != True:
+                        print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
+                              " received: int_outlet_3 = " + str(value) + " Status: " + status)
+                        #print (value, heater_state.get(), str(heater_freezeupdate.get()))
+                        #heater_state.set(int(value))
+                        if "ON" in status:
+                            lbl_lights_status.config(text=status, foreground="GREEN")
+                        elif "OFF" in status:
+                            lbl_lights_status.config(text=status, foreground="RED")
+
+                        # if the value is same as current state dont do anything
+                        #print("value = " + str(value))
+                        if int(value) != int(lights_state.get()):      
+                            print ("enter if " + str(value) + " " + str(lights_state.get()))
+                            if int(value) == int(OUTLET_OFF):
+                                rdo_lights_off.invoke()
+                                lbl_lights_status.config(text="OFF", foreground="RED")
+                            elif int(value) == int(OUTLET_AUTO):
+                                rdo_lights_auto.invoke()
+                                #if "ON" in status:
+                                #    lbl_heater_status.config(text=status, foreground="GREEN")
+                                #    print("green")
+                                #elif "OFF" in status:
+                                #    lbl_heater_status.config(text=status, foreground="RED")
+                                #    print("red")
+                            elif int(value) == int(OUTLET_ON):
+                                rdo_lights_on.invoke()
+                                lbl_lights_status.config(text="ON", foreground="GREEN")
+                    else:
+                        #print ("set it to false")
+                        int_outlet3_freezeupdate.set(False)
+
+                if probe == "int_outlet_4":
+                    status = body.split(",")[3]
+                    #print(body)
+                    if int_outlet4_freezeupdate.get() != True:
+                        print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
+                              " received: int_outlet_4 = " + str(value) + " Status: " + status)
+                        #print (value, heater_state.get(), str(heater_freezeupdate.get()))
+                        #heater_state.set(int(value))
+                        if "ON" in status:
+                            lbl_skimmer_status.config(text=status, foreground="GREEN")
+                        elif "OFF" in status:
+                            lbl_skimmer_status.config(text=status, foreground="RED")
+
+                        # if the value is same as current state dont do anything
+                        #print("value = " + str(value))
+                        if int(value) != int(skimmer_state.get()):      
+                            print ("enter if " + str(value) + " " + str(skimmer_state.get()))
+                            if int(value) == int(OUTLET_OFF):
+                                rdo_skimmer_off.invoke()
+                                lbl_skimmer_status.config(text="OFF", foreground="RED")
+                            elif int(value) == int(OUTLET_AUTO):
+                                rdo_skimmer_auto.invoke()
+                                #if "ON" in status:
+                                #    lbl_heater_status.config(text=status, foreground="GREEN")
+                                #    print("green")
+                                #elif "OFF" in status:
+                                #    lbl_heater_status.config(text=status, foreground="RED")
+                                #    print("red")
+                            elif int(value) == int(OUTLET_ON):
+                                rdo_skimmer_on.invoke()
+                                lbl_skimmer_status.config(text="ON", foreground="GREEN")
+                    else:
+                        #print ("set it to false")
+                        int_outlet4_freezeupdate.set(False)
+                        
             #repeat the loop
-            self.after(1000,updateCurrentState)
+            self.after(100,updateCurrentState)
 
               
         #some definitions for the plots
