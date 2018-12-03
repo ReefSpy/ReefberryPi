@@ -51,7 +51,7 @@ curstate.read(currentStateFile)
 #ds18b20_SamplingInterval = int(config['ds18b20']['ds18b20_SamplingInterval']) # milliseconds
 #ds18b20_LogInterval = int(config['ds18b20']['ds18b20_LogInterval']) # milliseconds
 #outlet_SamplingInterval = int(config['outlets']['outlet_SamplingInterval']) # milliseconds
-outlet_1_buttonstate = config['outlet_1']['button_state']
+#outlet_1_buttonstate = config['outlet_1']['button_state']
 
 # read in the preferences
 ph_numsamples = int(cfg_common.readINIfile('ph', 'ph_numsamples', "10")) # how many samples to collect before averaging
@@ -63,11 +63,12 @@ dht11_LogInterval = int(cfg_common.readINIfile('dht11/22', 'dht11_loginterval', 
 ds18b20_SamplingInterval = int(cfg_common.readINIfile('probes_ds18b20', 'ds18b20_samplinginterval', "5000")) # milliseconds
 ds18b20_LogInterval = int(cfg_common.readINIfile('probes_ds18b20', 'ds18b20_loginterval', "300000")) # milliseconds
 outlet_SamplingInterval = int(cfg_common.readINIfile('outlets', 'outlet_samplinginterval', "5000")) # milliseconds
-int_outlet2_buttonstate = cfg_common.readINIfile("int_outlet_2", "button_state", "OFF")
-int_outlet3_buttonstate = cfg_common.readINIfile("int_outlet_3", "button_state", "OFF")
-int_outlet4_buttonstate = cfg_common.readINIfile("int_outlet_4", "button_state", "OFF")
+#int_outlet2_buttonstate = cfg_common.readINIfile("int_outlet_2", "button_state", "OFF")
+#int_outlet3_buttonstate = cfg_common.readINIfile("int_outlet_3", "button_state", "OFF")
+#int_outlet4_buttonstate = cfg_common.readINIfile("int_outlet_4", "button_state", "OFF")
 
 int_outlet_buttonstates = {
+    "int_outlet1_buttonstate":cfg_common.readINIfile("int_outlet_1", "button_state", "OFF"),
     "int_outlet2_buttonstate":cfg_common.readINIfile("int_outlet_2", "button_state", "OFF"),
     "int_outlet3_buttonstate":cfg_common.readINIfile("int_outlet_3", "button_state", "OFF"),
     "int_outlet4_buttonstate":cfg_common.readINIfile("int_outlet_4", "button_state", "OFF"),
@@ -113,29 +114,29 @@ def writeConfig(section, key, value):
         config.write(configfile)
 
 #Outlet Control
-def outlet1_control():
-    #print("outlet control 1 " + outlet_1_buttonstate + " " + str(GPIO_config.relay_1))
-    if int(outlet_1_buttonstate) == 1:
-        GPIO.output(GPIO_config.relay_1, True)
-        return "OFF"
-    elif int(outlet_1_buttonstate) == 2:
-        try:
-            if float(ds18b20_1) <= 77:
-                GPIO.output(GPIO_config.relay_1, False)
-                #lbl_heater_status.config(text="ON (77-78)", foreground="GREEN")
-                return "ON (77-78)"
-            elif float(ds18b20_1) >= 78:
-                GPIO.output(GPIO_config.relay_1, True)
-                #lbl_heater_status.config(text="OFF (77-78)", foreground="RED")
-                return "OFF (77-78)"
-            #else:
-            #    lbl_heater_status.config(text="ON (77-78)", foreground="GREEN")
-
-        except:
-            return    
-    elif int(outlet_1_buttonstate) == 3:
-        GPIO.output(GPIO_config.relay_1, False)
-        return "ON"
+##def outlet1_control():
+##    #print("outlet control 1 " + outlet_1_buttonstate + " " + str(GPIO_config.relay_1))
+##    if int(outlet_1_buttonstate) == 1:
+##        GPIO.output(GPIO_config.relay_1, True)
+##        return "OFF"
+##    elif int(outlet_1_buttonstate) == 2:
+##        try:
+##            if float(ds18b20_1) <= 77:
+##                GPIO.output(GPIO_config.relay_1, False)
+##                #lbl_heater_status.config(text="ON (77-78)", foreground="GREEN")
+##                return "ON (77-78)"
+##            elif float(ds18b20_1) >= 78:
+##                GPIO.output(GPIO_config.relay_1, True)
+##                #lbl_heater_status.config(text="OFF (77-78)", foreground="RED")
+##                return "OFF (77-78)"
+##            #else:
+##            #    lbl_heater_status.config(text="ON (77-78)", foreground="GREEN")
+##
+##        except:
+##            return    
+##    elif int(outlet_1_buttonstate) == 3:
+##        GPIO.output(GPIO_config.relay_1, False)
+##        return "ON"
     
 def outlet_control(bus, outletnum): # bus = "int" or "ext"
 
@@ -143,7 +144,10 @@ def outlet_control(bus, outletnum): # bus = "int" or "ext"
     controltype = cfg_common.readINIfile(outlet, "control_type", "Always")
     pin = GPIO_config.int_outletpins.get(outlet)
     
-    if outlet == "int_outlet_2":
+
+    if outlet == "int_outlet_1":
+        button_state = int_outlet_buttonstates.get("int_outlet1_buttonstate")
+    elif outlet == "int_outlet_2":
         button_state = int_outlet_buttonstates.get("int_outlet2_buttonstate")
     elif outlet == "int_outlet_3":
         button_state = int_outlet_buttonstates.get("int_outlet3_buttonstate")
@@ -332,10 +336,12 @@ while True:
         value = body.split(",")[1]
         print(Fore.YELLOW + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
               " outlet state change: " + outlet + " to " + value + Style.RESET_ALL)
-        if outlet == "outlet_1":
-            writeConfig(outlet, "button_state", value)
+        if outlet == "int_outlet_1":
+            #writeConfig(outlet, "button_state", value)
+            cfg_common.writeINIfile(outlet, "button_state", value)
             #print("Write configfile " + outlet + " " + value)
-            outlet_1_buttonstate = value
+            #outlet_1_buttonstate = value
+            int_outlet_buttonstates["int_outlet1_buttonstate"] = value
         elif outlet =="int_outlet_2":
             cfg_common.writeINIfile(outlet, "button_state", value)
             #int_outlet2_buttonstate = value
@@ -353,9 +359,9 @@ while True:
     # handle outlet states (turn outlets on or off)
     #
     ##########################################################################################
-    outlet1_control()
+    #outlet1_control()
     # do each of the outlets on the internal bus (outlets 1-4)
-    for x in range (2,5):
+    for x in range (1,5):
         status = outlet_control("int", str(x))
     #    #print (str(x) + " " + str(status))
     ##########################################################################################
@@ -363,24 +369,25 @@ while True:
     #
     ##########################################################################################
     if (int(round(time.time()*1000)) - outlet_SamplingTimeSeed) > outlet_SamplingInterval:
-        # internal outlet 1
-        status = outlet1_control()
-        channel.basic_publish(exchange='',
-                        routing_key='current_state',
-                        properties=pika.BasicProperties(expiration='10000'),
-                        body=str("outlet_1" + "," + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + 
-                                 "," + outlet_1_buttonstate + "," + str(status)))
-        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-              " Outlet_1 button state: " + outlet_1_buttonstate + " " + str(status))
+##        # internal outlet 1
+##        status = outlet1_control()
+##        channel.basic_publish(exchange='',
+##                        routing_key='current_state',
+##                        properties=pika.BasicProperties(expiration='10000'),
+##                        body=str("outlet_1" + "," + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + 
+##                                 "," + outlet_1_buttonstate + "," + str(status) + "," + "Out1Heater"))
+##        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+##              " Outlet_1 button state: " + outlet_1_buttonstate + " " + str(status))
 
         # do each of the outlets on the internal bus (outlets 1-4)
-        for x in range (2,5):
+        for x in range (1,5):
             status = outlet_control("int", str(x))
             channel.basic_publish(exchange='',
                             routing_key='current_state',
                             properties=pika.BasicProperties(expiration='10000'),
                             body=str("int_outlet_" + str(x) + "," + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + 
-                                 "," + int_outlet_buttonstates.get("int_outlet" + str(x) + "_buttonstate") + "," + str(status)))
+                                 "," + int_outlet_buttonstates.get("int_outlet" + str(x) + "_buttonstate") + "," + str(status) +
+                                     "," + cfg_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed")))
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") +    
                 " int_outlet_" + str(x) +
                 " [" + cfg_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed") +
