@@ -176,8 +176,9 @@ class DashBoard(tk.Frame):
                                       body=str("int_outlet_1" + "," + "ON"))
             else:
                 lbl_int_outlet1_status.config(text="UNKNOWN", foreground="BLACK")
-            selection = "You selected heater option " + lbl_int_outlet1_status.cget("text")
-            print(selection)
+            selection = "Select int_outlet_1 option " + lbl_int_outlet1_status.cget("text")
+            print(Fore.YELLOW + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+              " " + selection + Style.RESET_ALL)
             int_outlet1_freezeupdate.set(True)
 
         def select_int_outlet2_state():
@@ -202,8 +203,9 @@ class DashBoard(tk.Frame):
             else:
                 lbl_int_outlet2_status.config(text="UNKNOWN", foreground="BLACK")
                 
-            selection = "You selected return pump option " + lbl_int_outlet2_status.cget("text")
-            print(selection)
+            selection = "Select int_outlet_2 option " + lbl_int_outlet2_status.cget("text")
+            print(Fore.YELLOW + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+              " " + selection + Style.RESET_ALL)
             int_outlet2_freezeupdate.set(True)
 
         def select_int_outlet3_state():
@@ -227,8 +229,9 @@ class DashBoard(tk.Frame):
                                       body=str("int_outlet_3" + "," + "ON"))
             else:
                 lbl_int_outlet3_status.config(text="UNKNOWN", foreground="BLACK")
-            selection = "You selected lights option " + lbl_int_outlet3_status.cget("text")
-            print(selection)
+            selection = "Select int_outlet_3 option " + lbl_int_outlet3_status.cget("text")
+            print(Fore.YELLOW + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+              " " + selection + Style.RESET_ALL)
             int_outlet3_freezeupdate.set(True)
             
         def select_int_outlet4_state():
@@ -252,14 +255,65 @@ class DashBoard(tk.Frame):
                                       body=str("int_outlet_4" + "," + "ON"))
             else:
                 lbl_int_outlet4_status.config(text="UNKNOWN", foreground="BLACK")
-            selection = "You selected skimmer option " + lbl_int_outlet4_status.cget("text")
-            print(selection)
+            selection = "Select int_outlet_4 option " + lbl_int_outlet4_status.cget("text")
+            print(Fore.YELLOW + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+              " " + selection + Style.RESET_ALL)
             int_outlet4_freezeupdate.set(True)
 
         self.img_cfg16 = PhotoImage(file="images/settings-16.png")
 
-        
+        def select_feed_mode(mode):
+            #DefClr = app.cget("bg")
+            #btn_feedA.configure(bg=DefClr)
+            #btn_feedB.configure(bg=DefClr)
+            #btn_feedC.configure(bg=DefClr)
+            #btn_feedD.configure(bg=DefClr)
+            #btn_feedCancel.configure(bg=DefClr)
+
+            if mode == "A":
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("feed_mode" + "," + "A"))
+            if mode == "B":
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("feed_mode" + "," + "B"))
+            if mode == "C":
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("feed_mode" + "," + "C"))
+            if mode == "D":
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("feed_mode"+ "," + "D"))
+            if mode == "CANCEL":
+                channel.basic_publish(exchange='',
+                                      routing_key='outlet_change',
+                                      properties=pika.BasicProperties(expiration='30000'),
+                                      body=str("feed_mode"+ "," + "CANCEL"))
+
+            print(Fore.YELLOW + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+              " Press Feed Mode: " + mode + Style.RESET_ALL)
             
+        # frame for feed timers
+        frame_feedtimers = LabelFrame(frame_right_column, text="Feed Cycle", relief= RAISED)
+        frame_feedtimers.pack(fill=X, side=TOP)
+        lbl_feedtimers_status = Label(frame_feedtimers, text = " ", relief = FLAT)
+        lbl_feedtimers_status.pack(side=TOP, anchor=E)
+        btn_feedA = Button(frame_feedtimers, text="A", width=2, command=lambda:select_feed_mode("A"))
+        btn_feedA.pack(side=LEFT, padx=2)
+        btn_feedB = Button(frame_feedtimers, text="B", width=2, command=lambda:select_feed_mode("B"))
+        btn_feedB.pack(side=LEFT, padx=2)
+        btn_feedC = Button(frame_feedtimers, text="C", width=2, command=lambda:select_feed_mode("C"))
+        btn_feedC.pack(side=LEFT, padx=2)
+        btn_feedD = Button(frame_feedtimers, text="D", width=2, command=lambda:select_feed_mode("D"))
+        btn_feedD.pack(side=LEFT, padx=2)
+        btn_feedCancel = Button(frame_feedtimers, text="Cancel", width=6, command=lambda:select_feed_mode("CANCEL"))
+        btn_feedCancel.pack(side=RIGHT, anchor=E, padx=2)
         
         # frame for internal outlet 1 control
         frame_int_outlet1 = LabelFrame(frame_right_column, text="waiting...", relief= RAISED)
@@ -769,7 +823,45 @@ class DashBoard(tk.Frame):
                     else:
                         #print ("set it to false")
                         int_outlet4_freezeupdate.set(False)
-                        
+
+                if probe == "feed_timer":
+                    print (body)
+                    status = body.split(",")[3]
+                    DefClr = btn_feedCancel.cget("bg")
+                    lbl_feedtimers_status.config(text=str(timedelta(seconds=int(status))))
+                    if value == "A":
+                        #print ("A")
+                        btn_feedA.config(background="red")
+                        btn_feedB.config(background=DefClr)
+                        btn_feedC.config(background=DefClr)
+                        btn_feedD.config(background=DefClr)
+                    elif value == "B":
+                        #print("B")
+                        btn_feedA.config(background=DefClr)
+                        btn_feedB.config(background="red")
+                        btn_feedC.config(background=DefClr)
+                        btn_feedD.config(background=DefClr)
+                    elif value == "C":
+                        #print("C")
+                        btn_feedA.config(background=DefClr)
+                        btn_feedB.config(background=DefClr)
+                        btn_feedC.config(background="red")
+                        btn_feedD.config(background=DefClr)
+                    elif value == "D":
+                        #print("D")
+                        btn_feedA.config(background=DefClr)
+                        btn_feedB.config(background=DefClr)
+                        btn_feedC.config(background=DefClr)
+                        btn_feedD.config(background="red")
+                    else:
+                        #print ("retun default")
+                        btn_feedA.config(background=DefClr)
+                        btn_feedB.config(background=DefClr)
+                        btn_feedC.config(background=DefClr)
+                        btn_feedD.config(background=DefClr)
+                        lbl_feedtimers_status.config(text="")
+                    
+                    
             #repeat the loop
             self.after(100,updateCurrentState)
 
@@ -855,16 +947,16 @@ class PageOne(tk.Frame):
                             compound=TOP, command=lambda: controller.show_frame(PageThree))
         button3.pack(side=LEFT)
 ###
-        label = tk.Label(self, text="Page One!!!", font=LARGE_FONT)
+        label = tk.Label(self, text="Coming Soon!", font=LARGE_FONT)
         label.pack(pady=10,padx=10)
 
         button1 = ttk.Button(self, text="Back to Home",
                             command=lambda: controller.show_frame(DashBoard))
-        button1.pack()
+        #button1.pack()
 
         button2 = ttk.Button(self, text="Page Two",
                             command=lambda: controller.show_frame(PageTwo))
-        button2.pack()
+        #button2.pack()
         
 
 class PageTwo(tk.Frame):
@@ -896,16 +988,16 @@ class PageTwo(tk.Frame):
         button3.pack(side=LEFT)
 ###
 
-        label = tk.Label(self, text="Page Two!!!", font=LARGE_FONT)
+        label = tk.Label(self, text="Coming Soon!", font=LARGE_FONT)
         label.pack(pady=10,padx=10)
 
         button1 = ttk.Button(self, text="Back to Home",
                             command=lambda: controller.show_frame(DashBoard))
-        button1.pack()
+        #button1.pack()
 
         button2 = ttk.Button(self, text="Page One",
                             command=lambda: controller.show_frame(PageOne))
-        button2.pack()
+        #button2.pack()
 
 
 class PageThree(tk.Frame):

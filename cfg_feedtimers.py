@@ -83,7 +83,7 @@ class PageFeedTimers(tk.Frame):
         # Feed A
         val = self.ValidateMinMax(self.spn_A.get())
         self.spn_A.delete(0, END)
-        self.spn_A.insert(0, "50")
+        self.spn_A.insert(0, val)
         cfg_common.writeINIfile('feed_timers', 'feed_a', str(self.spn_A.get()))
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " + "Saved Feed A: " + val)
 

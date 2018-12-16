@@ -102,6 +102,10 @@ ds18b20_LastLogTime = int(round(time.time()*1000)) #convert time to milliseconds
 ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 outlet_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 
+# need initial feed timer seed to compare our times against
+feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+feed_CurrentMode = "CANCEL" #initialize with feed mode off or cancel
+
 def writeCurrentState(section, key, value):
     curstate[section][key] = str(value)
     with open(currentStateFile,'w') as configfile:
@@ -324,6 +328,46 @@ while True:
         ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 
     ##########################################################################################
+    # check if Feed mode is enabled
+    #
+    ##########################################################################################
+    
+    if feed_CurrentMode == "A":
+        feed_ModeTotaltime = cfg_common.readINIfile("feed_timers", "feed_a", "60")
+    elif feed_CurrentMode == "B":
+        feed_ModeTotaltime = cfg_common.readINIfile("feed_timers", "feed_b", "60")
+    elif feed_CurrentMode == "C":
+        feed_ModeTotaltime = cfg_common.readINIfile("feed_timers", "feed_c", "60")
+    elif feed_CurrentMode == "D":
+        feed_ModeTotaltime = cfg_common.readINIfile("feed_timers", "feed_d", "60")
+    else:
+        feed_ModeTotaltime = "0"
+
+    if feed_CurrentMode != "CANCEL":
+        feedTimeLeft = (int(feed_ModeTotaltime)*1000) - (int(round(time.time()*1000)) - feed_SamplingTimeSeed)
+        if feedTimeLeft <=0:
+            print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                   " Feed Mode: " + feed_CurrentMode + " COMPLETE" + Style.RESET_ALL)
+            feed_CurrentMode = "CANCEL"
+            timestamp = datetime.now()
+            channel.basic_publish(exchange='',
+                    routing_key='current_state',
+                    properties=pika.BasicProperties(expiration='10000'),
+                    body=str("feed_timer" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(feed_CurrentMode) + "," + str(0)))
+        else:    
+            print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                   " Feed Mode: " + feed_CurrentMode + " (" + feed_ModeTotaltime + "s) " + "Time Remaining: " + str(round(feedTimeLeft/1000)) + "s"
+                   + Style.RESET_ALL)
+            timestamp = datetime.now()
+            channel.basic_publish(exchange='',
+                    routing_key='current_state',
+                    properties=pika.BasicProperties(expiration='10000'),
+                    body=str("feed_timer" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(feed_CurrentMode) + "," + str(round(feedTimeLeft/1000))))
+    
+           
+        
+
+    ##########################################################################################
     # handle any state changes requested for the outlets
     #
     ##########################################################################################
@@ -354,6 +398,22 @@ while True:
             cfg_common.writeINIfile(outlet, "button_state", value)
             #int_outlet4_buttonstate = value
             int_outlet_buttonstates["int_outlet4_buttonstate"] = value
+
+        if outlet =="feed_mode":
+            feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+            feed_CurrentMode = value
+            print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                   " Feed Mode: " + feed_CurrentMode + " Start" + Style.RESET_ALL)
+            #print ("feed mode: " + value)
+            if feed_CurrentMode == "CANCEL":
+                timestamp=datetime.now()
+                channel.basic_publish(exchange='',
+                    routing_key='current_state',
+                    properties=pika.BasicProperties(expiration='10000'),
+                    body=str("feed_timer" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(feed_CurrentMode) + "," + str(0)))
+            
+
+            
             
     ##########################################################################################
     # handle outlet states (turn outlets on or off)
