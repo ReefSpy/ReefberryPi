@@ -825,10 +825,12 @@ class DashBoard(tk.Frame):
                         int_outlet4_freezeupdate.set(False)
 
                 if probe == "feed_timer":
-                    print (body)
+                    #print (body)
                     status = body.split(",")[3]
                     DefClr = btn_feedCancel.cget("bg")
                     lbl_feedtimers_status.config(text=str(timedelta(seconds=int(status))))
+                    print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
+                              " received: feed_timer: " + str(value) + ", Time Remaining: " + status + "s")
                     if value == "A":
                         #print ("A")
                         btn_feedA.config(background="red")

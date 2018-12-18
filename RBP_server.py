@@ -104,7 +104,10 @@ outlet_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to millisec
 
 # need initial feed timer seed to compare our times against
 feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
-feed_CurrentMode = "CANCEL" #initialize with feed mode off or cancel
+feed_CurrentMode = "CANCEL" #initialize with feed mode cancel to it is off
+feed_PreviousMode = "CANCEL"
+feed_ExtraTimeSeed = int(round(time.time()*1000))  #extra time after feed is over
+feed_ExtraTimeAdded = 0 # initialze to 0 extra time added
 
 def writeCurrentState(section, key, value):
     curstate[section][key] = str(value)
@@ -168,9 +171,9 @@ def outlet_control(bus, outletnum): # bus = "int" or "ext"
         pass
     # control type RETURN PUMP
     elif controltype == "Return Pump":
-        pass
+        return handle_outlet_returnpump(outlet, button_state, pin)
     elif controltype == "Skimmer":
-        pass
+        return handle_outlet_skimmer(outlet, button_state, pin)
     elif controltype == "Light":
         pass
 
@@ -192,7 +195,151 @@ def handle_outlet_always(outlet, button_state, pin):
     else:
         GPIO.output(pin, True)
         return "OFF"
-    
+
+def handle_outlet_returnpump (outlet, button_state, pin):  
+    global feed_PreviousMode
+    if feed_PreviousMode == "A":
+        feed_ExtraTimeAdded = cfg_common.readINIfile(outlet, "return_feed_delay_a", "0") 
+    elif feed_PreviousMode == "B":
+        feed_ExtraTimeAdded = cfg_common.readINIfile(outlet, "return_feed_delay_b", "0")
+    elif feed_PreviousMode == "C":
+        feed_ExtraTimeAdded = cfg_common.readINIfile(outlet, "return_feed_delay_c", "0")
+    elif feed_PreviousMode == "D":
+        feed_ExtraTimeAdded = cfg_common.readINIfile(outlet, "return_feed_delay_d", "0")
+    else:
+        feed_ExtraTimeAdded = 0
+        
+    if button_state == "OFF":
+        GPIO.output(pin, True)
+        return "OFF"
+    elif button_state == "ON":
+        GPIO.output(pin, False)
+        return "ON"
+    elif button_state == "AUTO":
+        if feed_CurrentMode == "A":
+            return_enable_feed_a = cfg_common.readINIfile(outlet, "return_enable_feed_a", "False")
+            feed_PreviousMode = "A"
+            if return_enable_feed_a == "True":
+                GPIO.output(pin, True)
+                return "OFF (feed)"
+            elif return_enable_feed_a == "False":
+                GPIO.output(pin, False)
+                return "ON"
+        elif feed_CurrentMode == "B":
+            return_enable_feed_b = cfg_common.readINIfile(outlet, "return_enable_feed_b", "False")
+            feed_PreviousMode = "B"
+            if return_enable_feed_b == "True":
+                GPIO.output(pin, True)
+                return "OFF (feed)"
+            elif return_enable_feed_b == "False":
+                GPIO.output(pin, False)
+                return "ON"
+        elif feed_CurrentMode == "C":
+            return_enable_feed_c = cfg_common.readINIfile(outlet, "return_enable_feed_c", "False")
+            feed_PreviousMode = "C"
+            if return_enable_feed_c == "True":
+                GPIO.output(pin, True)
+                return "OFF (feed)"
+            elif return_enable_feed_c == "False":
+                GPIO.output(pin, False)
+                return "ON"
+        elif feed_CurrentMode == "D":
+            return_enable_feed_d = cfg_common.readINIfile(outlet, "return_enable_feed_d", "False")
+            feed_PreviousMode = "D"
+            if return_enable_feed_d == "True":
+                GPIO.output(pin, True)
+                return "OFF (feed)"
+            elif return_enable_feed_d == "False":
+                GPIO.output(pin, False)
+                return "ON"
+        else:
+            difference = round(((int(feed_ExtraTimeSeed) + (int(feed_ExtraTimeAdded)*1000)) - int(round(time.time())*1000))/1000)
+            
+            if int(round(time.time())*1000) <= int(feed_ExtraTimeSeed) + (int(feed_ExtraTimeAdded)*1000):
+                #print("Extra feed time remaining: " + str(difference) + "s")
+                print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                   " Delay Mode: " + outlet + " (" + str(feed_ExtraTimeAdded) + "s) " + " Delay Time Remaining: " + str(round(difference)) + "s"
+                   + Style.RESET_ALL)
+                GPIO.output(pin, True)
+                return "OFF (delay)"
+            else:
+                GPIO.output(pin, False)
+                return "ON"
+    else:
+        GPIO.output(pin, True)
+        return "OFF"
+
+def handle_outlet_skimmer (outlet, button_state, pin):  
+    global feed_PreviousMode
+    if feed_PreviousMode == "A":
+        feed_ExtraTimeAdded = cfg_common.readINIfile(outlet, "skimmer_feed_delay_a", "0") 
+    elif feed_PreviousMode == "B":
+        feed_ExtraTimeAdded = cfg_common.readINIfile(outlet, "skimmer_feed_delay_b", "0")
+    elif feed_PreviousMode == "C":
+        feed_ExtraTimeAdded = cfg_common.readINIfile(outlet, "skimmer_feed_delay_c", "0")
+    elif feed_PreviousMode == "D":
+        feed_ExtraTimeAdded = cfg_common.readINIfile(outlet, "skimmer_feed_delay_d", "0")
+    else:
+        feed_ExtraTimeAdded = 0
+
+    if button_state == "OFF":
+        GPIO.output(pin, True)
+        return "OFF"
+    elif button_state == "ON":
+        GPIO.output(pin, False)
+        return "ON"
+    elif button_state == "AUTO":
+        if feed_CurrentMode == "A":
+            skimmer_enable_feed_a = cfg_common.readINIfile(outlet, "skimmer_enable_feed_a", "False")
+            feed_PreviousMode = "A"
+            if skimmer_enable_feed_a == "True":
+                GPIO.output(pin, True)
+                return "OFF (feed)"
+            elif skimmer_enable_feed_a == "False":
+                GPIO.output(pin, False)
+                return "ON"
+        elif feed_CurrentMode == "B":
+            skimmer_enable_feed_b = cfg_common.readINIfile(outlet, "skimmer_enable_feed_b", "False")
+            feed_PreviousMode = "B"
+            if skimmer_enable_feed_b == "True":
+                GPIO.output(pin, True)
+                return "OFF (feed)"
+            elif skimmer_enable_feed_b == "False":
+                GPIO.output(pin, False)
+                return "ON"
+        elif feed_CurrentMode == "C":
+            skimmer_enable_feed_c = cfg_common.readINIfile(outlet, "skimmer_enable_feed_c", "False")
+            feed_PreviousMode = "C"
+            if skimmer_enable_feed_c == "True":
+                GPIO.output(pin, True)
+                return "OFF (feed)"
+            elif skimmer_enable_feed_c == "False":
+                GPIO.output(pin, False)
+                return "ON"
+        elif feed_CurrentMode == "D":
+            skimmer_enable_feed_d = cfg_common.readINIfile(outlet, "skimmer_enable_feed_d", "False")
+            feed_PreviousMode = "D"
+            if skimmer_enable_feed_d == "True":
+                GPIO.output(pin, True)
+                return "OFF (feed)"
+            elif skimmer_enable_feed_d == "False":
+                GPIO.output(pin, False)
+                return "ON"
+        else:
+            difference = round(((int(feed_ExtraTimeSeed) + (int(feed_ExtraTimeAdded)*1000)) - int(round(time.time())*1000))/1000)
+            if int(round(time.time())*1000) <= int(feed_ExtraTimeSeed) + (int(feed_ExtraTimeAdded)*1000):
+                #print("Extra feed time remaining: " + str(difference) + "s")
+                print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                   " Delay Mode: " + outlet + " (" + str(feed_ExtraTimeAdded) + "s) " + " Delay Time Remaining: " + str(round(difference)) + "s"
+                   + Style.RESET_ALL)
+                GPIO.output(pin, True)
+                return "OFF (delay)"
+            else:
+                GPIO.output(pin, False)
+                return "ON"
+    else:
+        GPIO.output(pin, True)
+        return "OFF"
     
 while True:
     ##########################################################################################
@@ -354,6 +501,9 @@ while True:
                     routing_key='current_state',
                     properties=pika.BasicProperties(expiration='10000'),
                     body=str("feed_timer" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(feed_CurrentMode) + "," + str(0)))
+
+            feed_ExtraTimeSeed = int(round(time.time()*1000))
+            print ("Extra time starts at: " + str(feed_ExtraTimeSeed) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         else:    
             print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
                    " Feed Mode: " + feed_CurrentMode + " (" + feed_ModeTotaltime + "s) " + "Time Remaining: " + str(round(feedTimeLeft/1000)) + "s"
@@ -404,6 +554,7 @@ while True:
             feed_CurrentMode = value
             print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
                    " Feed Mode: " + feed_CurrentMode + " Start" + Style.RESET_ALL)
+            feed_PreviousMode = "CANCEL"
             #print ("feed mode: " + value)
             if feed_CurrentMode == "CANCEL":
                 timestamp=datetime.now()
