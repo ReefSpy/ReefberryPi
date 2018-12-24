@@ -175,7 +175,8 @@ def outlet_control(bus, outletnum): # bus = "int" or "ext"
     elif controltype == "Skimmer":
         return handle_outlet_skimmer(outlet, button_state, pin)
     elif controltype == "Light":
-        pass
+        return handle_outlet_light(outlet, button_state, pin)
+
 
 def handle_outlet_always(outlet, button_state, pin):
     if button_state == "OFF":
@@ -192,6 +193,43 @@ def handle_outlet_always(outlet, button_state, pin):
         elif state == "ON":
             GPIO.output(pin, False)
             return "ON"
+    else:
+        GPIO.output(pin, True)
+        return "OFF"
+
+def handle_outlet_light(outlet, button_state, pin):
+    if button_state == "OFF":
+        GPIO.output(pin, True)
+        return "OFF"
+    elif button_state == "ON":
+        GPIO.output(pin, False)
+        return "ON"
+    elif button_state == "AUTO":
+        on_time = cfg_common.readINIfile(outlet, "light_on", "08:00")
+        off_time = cfg_common.readINIfile(outlet, "light_off", "17:00")
+        now = datetime.now()
+        now_time = now.time()
+        on_time = datetime.strptime(on_time, '%H:%M')
+        off_time = datetime.strptime(off_time, '%H:%M')
+        # on time before off time
+        if datetime.time(on_time) < datetime.time(off_time):
+            if now_time >= datetime.time(on_time) and now_time <= datetime.time(off_time):
+                GPIO.output(pin, False) #turn on light
+                status = "ON" + " (" + str(datetime.strftime(on_time, '%H:%M')) + " - " + str(datetime.strftime(off_time, '%H:%M')) +")"
+                return status
+            else:
+                GPIO.output(pin, True) #turn on light
+                status = "OFF" + " (" + str(datetime.strftime(on_time, '%H:%M')) + " - " + str(datetime.strftime(off_time, '%H:%M')) +")"
+                return status
+        else: # on time after off time
+            if now_time <= datetime.time(on_time) and now_time >= datetime.time(off_time):
+                GPIO.output(pin, True) #turn off light
+                status = "OFF" + " (" + str(datetime.strftime(on_time, '%H:%M')) + " - " + str(datetime.strftime(off_time, '%H:%M')) +")"
+                return status
+            else:
+                GPIO.output(pin, False) #turn on light
+                status = "ON" + " (" + str(datetime.strftime(on_time, '%H:%M')) + " - " + str(datetime.strftime(off_time, '%H:%M')) +")"
+                return status
     else:
         GPIO.output(pin, True)
         return "OFF"
@@ -601,7 +639,8 @@ while True:
                                      "," + cfg_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed")))
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") +    
                 " int_outlet_" + str(x) +
-                " [" + cfg_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed") +
+                " [label: " + cfg_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed") +
+                "] [type: " + cfg_common.readINIfile("int_outlet_" + str(x), "control_type", "Always") +
                 "] [button: " + cfg_common.readINIfile("int_outlet_" + str(x), "button_state", "OFF") +  
                 "] [status: " + str(status) + "]" +
                 " [pin: " + str(GPIO_config.int_outletpins.get("int_outlet_" + str(x))) + "]")
