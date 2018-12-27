@@ -17,3 +17,6 @@ def logprobedata(log_prefix, data):
     fh.close()
         
     
+def convertCtoF(temp_c):
+    temp_f = temp_c * 9.0 / 5.0 + 32.0
+    return "{:.1f}".format(temp_f)

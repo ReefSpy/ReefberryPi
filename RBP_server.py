@@ -25,7 +25,7 @@ import RBP_commons
 import cfg_common
 import pika
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', socket_timeout=15))
 channel = connection.channel()
 
 # queue for posting state update
@@ -74,7 +74,15 @@ int_outlet_buttonstates = {
     "int_outlet4_buttonstate":cfg_common.readINIfile("int_outlet_4", "button_state", "OFF"),
     }
 
+# dictionary to hold all the temperature probes
+tempProbeDict = {}
 
+class tempProbeClass():
+    name = ""
+    probeid = ""
+    lastTemperature = ""
+    lastLogTime = ""
+    
 # set up the GPIO
 GPIO_config.initGPIO()
 
@@ -99,6 +107,7 @@ ph_LastLogTime = int(round(time.time()*1000)) #convert time to milliseconds
 dht11_LastLogTime = int(round(time.time()*1000)) #convert time to milliseconds
 dht11_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 ds18b20_LastLogTime = int(round(time.time()*1000)) #convert time to milliseconds
+ds18b20_LastLogTimeDict = int(round(time.time()*1000)) #convert time to milliseconds
 ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 outlet_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 
@@ -168,7 +177,7 @@ def outlet_control(bus, outletnum): # bus = "int" or "ext"
         return handle_outlet_always(outlet, button_state, pin)   
     # control type HEATER    
     elif controltype == "Heater":
-        pass
+        return handle_outlet_heater(outlet, button_state, pin)
     # control type RETURN PUMP
     elif controltype == "Return Pump":
         return handle_outlet_returnpump(outlet, button_state, pin)
@@ -193,6 +202,47 @@ def handle_outlet_always(outlet, button_state, pin):
         elif state == "ON":
             GPIO.output(pin, False)
             return "ON"
+    else:
+        GPIO.output(pin, True)
+        return "OFF"
+
+def handle_outlet_heater(outlet, button_state, pin):
+    global tempProbeDict
+    if button_state == "OFF":
+        GPIO.output(pin, True)
+        return "OFF"
+    elif button_state == "ON":
+        GPIO.output(pin, False)
+        return "ON"
+    elif button_state == "AUTO":
+        probe = cfg_common.readINIfile(outlet, "heater_probe", "28-000000000000")
+        on_temp = cfg_common.readINIfile(outlet, "heater_on", "25.0")
+        off_temp = cfg_common.readINIfile(outlet, "heater_off", "25.5")
+
+
+        for p in tempProbeDict:
+            if tempProbeDict[p].probeid == probe:
+                if tempProbeDict[p].lastTemperature <= float(on_temp):
+                    GPIO.output(pin, False)
+                    tempScale = cfg_common.readINIfile("global", "tempscale", "0")
+                    if  tempScale == str(cfg_common.SCALE_F):
+                        on_temp = cfg_common.convertCtoF(on_temp)
+                        off_temp = cfg_common.convertCtoF(off_temp)                   
+                    return "ON (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"  
+                if tempProbeDict[p].lastTemperature >= float(off_temp):
+                    GPIO.output(pin, True)
+                    tempScale = cfg_common.readINIfile("global", "tempscale", "0")
+                    if tempScale == str(cfg_common.SCALE_F):
+                        on_temp = cfg_common.convertCtoF(on_temp)
+                        off_temp = cfg_common.convertCtoF(off_temp)
+                    return "OFF (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"
+                break
+##        if state == "OFF":
+##            GPIO.output(pin, True)
+##            return "OFF"
+##        elif state == "ON":
+##            GPIO.output(pin, False)
+##            return "ON"
     else:
         GPIO.output(pin, True)
         return "OFF"
@@ -378,6 +428,27 @@ def handle_outlet_skimmer (outlet, button_state, pin):
     else:
         GPIO.output(pin, True)
         return "OFF"
+
+def readTempProbes(tempProbeDict):
+    tempProbeDict.clear()
+    config = configparser.ConfigParser()
+    config.read(cfg_common.CONFIGFILENAME)
+    # loop through each section and see if it is a ds18b20 temp probe
+    for section in config:
+        if section.split("_")[0] == "ds18b20":
+            #print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
+            #      "Temperature probe: " + section.split("_")[1])
+            #print (section.split("_")[1])
+            probe = tempProbeClass()
+            probe.probeid = section.split("_")[1]
+            probe.name = config[section]["name"]
+            tempProbeDict [section.split("_")[1]] = probe
+
+            #print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
+            #      "ds18b20 [id: " + probe.probeid + "] [label: " + probe.name + "]")
+            #print("probe class id: " + probe.probeid)
+            #print("probe class name: " + probe.name)
+    
     
 while True:
     ##########################################################################################
@@ -454,7 +525,7 @@ while True:
         # let's read the dht11 temp and humidity data
         result = dht_sensor.read()
         if result.is_valid():
-            #print("Last valid input: " + str(datetiml;./e.datetime.now()))
+            #print("Last valid input: " + str(datetime.datetime.now()))
             #print("Temperature: %.1f C" % result.temperature)
             temp_f = result.temperature * 9.0 / 5.0 + 32.0
             hum = result.humidity
@@ -487,6 +558,9 @@ while True:
     # it is possible to support multiple probes but we will use just one for now
     ##########################################################################################
     if (int(round(time.time()*1000)) - ds18b20_SamplingTimeSeed) > ds18b20_SamplingInterval:
+        readTempProbes(tempProbeDict)
+        for p in tempProbeDict:
+            tempProbeDict[p].lastLogTime = ds18b20_LastLogTimeDict
         # let's read the ds18b20 temperature
         try:
             timestamp = datetime.now()
@@ -509,6 +583,39 @@ while True:
             print(Back.RED + Fore.WHITE + timestamp.strftime("%Y-%m-%d %H:%M:%S") +
                   " <<<Error>>> Can not read ds18b20 temperature data!" + Style.RESET_ALL)
             
+#######################
+        # read data from the temperature probes
+        for p in tempProbeDict:
+            try:
+                timestamp = datetime.now()
+                dstemp =  float(ds18b20.read_temp("C"))
+                
+                if (int(round(time.time()*1000)) - tempProbeDict[p].lastLogTime) > ds18b20_LogInterval:
+                    tempData = str("{:.1f}".format(dstemp)) + "," + str(RBP_commons.convertCtoF(dstemp))
+                    RBP_commons.logprobedata("ds18b20_" + tempProbeDict[p].probeid + "_", tempData)
+                    print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** Temperature: %.1f" % dstemp + " C, "
+                          + RBP_commons.convertCtoF(dstemp) + " F" + " [" + tempProbeDict[p].name + "] [" + tempProbeDict[p].probeid + "]" + Style.RESET_ALL)
+                    #ds18b20_LastLogTime = int(round(time.time()*1000))
+                    ds18b20_LastLogTimeDict = int(round(time.time()*1000))
+                    #ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
+                    tempProbeDict[p].lastTemperature = dstemp
+                else:
+                    #print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " Temperature: %.1f" % dstemp)
+                    print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
+                        "ds18b20 [label: " + tempProbeDict[p].name + "] [id: " + tempProbeDict[p].probeid + "]" + " [value: " + str(dstemp) + " C, " + str(RBP_commons.convertCtoF(dstemp)) + " F]")
+                    #writeCurrentState('probes','temp1', str(dstemp))
+                    # publish the temperature via rabbitmq
+                    channel.basic_publish(exchange='',
+                        routing_key='current_state',
+                        properties=pika.BasicProperties(expiration='10000'),
+                        body=str("ds18b20_" + tempProbeDict[p].probeid + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "%.1f" % dstemp + "," + RBP_commons.convertCtoF(dstemp)))
+                    #ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
+                    tempProbeDict[p].lastTemperature = dstemp
+            except:
+                print(Back.RED + Fore.WHITE + timestamp.strftime("%Y-%m-%d %H:%M:%S") +
+                      " <<<Error>>> Can not read ds18b20_" + tempProbeDict[p].probeid + " temperature data!" + Style.RESET_ALL)
+#######################
+
         # record the new sampling time
         ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 
