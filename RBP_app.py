@@ -21,6 +21,7 @@ from datetime import datetime, timedelta, time
 from colorama import Fore, Back, Style
 import pika
 import os,sys
+import cfg_common
 #import RBP_outletcfg
 
 LARGE_FONT= ("Verdana", 12)
@@ -29,7 +30,7 @@ OUTLET_AUTO = 2
 OUTLET_ON = 3
 
 # change to current directory or else could have trouble when
-# executing script form another location ie: a Desktop icon
+# executing script from another location ie: a Desktop icon
 os.chdir(os.path.dirname(sys.argv[0]))
 
 class RBP_app(tk.Tk):
@@ -65,6 +66,12 @@ class RBP_app(tk.Tk):
         frame.tkraise()
 
 
+
+class ProbeClass():
+    name = ""
+    probeid = ""
+    probetype = ""
+    probeval = ""
 
 class DashBoard(tk.Frame):
 
@@ -108,10 +115,19 @@ class DashBoard(tk.Frame):
         int_outlet3_freezeupdate.set(True)
         int_outlet4_freezeupdate.set(True)
 
+        # create dictionary to hold assigned probes
+        # these are probes that are saved in config file
+        self.probeDict = {}
+
         #populate the GUI
         #use two frames to set up two columns
-        frame_left_column=LabelFrame(self, relief = RAISED)
-        frame_left_column.pack(side=LEFT, anchor=N, fill=X, expand=True)
+        self.frame_left_column=LabelFrame(self, relief = RAISED)
+        #self.frame_left_column=Canvas(self, relief=RAISED)
+        #leftVScroll=Scrollbar(self.frame_left_column, orient=VERTICAL, command=self.frame_left_column.yview)
+        #leftVScroll.pack(side=RIGHT, fill=Y)
+        #self.frame_left_column.configure(yscrollcommand=leftVScroll.set)
+        self.frame_left_column.pack(side=LEFT, anchor=N, fill=X, expand=True)
+        
         frame_right_column=LabelFrame(self, relief = RAISED)
         frame_right_column.pack(side=RIGHT, anchor=N)
 
@@ -133,7 +149,7 @@ class DashBoard(tk.Frame):
         #print(' [*] Waiting for messages.')
         
         #create toolbar frame
-        frame_toolbar = tk.LabelFrame(frame_left_column, relief = tk.FLAT)
+        frame_toolbar = tk.LabelFrame(self.frame_left_column, relief = tk.FLAT)
         frame_toolbar.pack(side=tk.TOP, fill=tk.X)
         self.img_dashboard = PhotoImage(file="images/dashboard-64.png")
         btn_DashBoard = ttk.Button(frame_toolbar, text="Dashboard", image=self.img_dashboard, 
@@ -154,6 +170,17 @@ class DashBoard(tk.Frame):
         button3 = ttk.Button(frame_toolbar, text="Graphs", image=self.img_graph,
                             compound=TOP, command=lambda: controller.show_frame(PageThree))
         button3.pack(side=LEFT)
+
+        # read the existing probes saved in the config file, we will use these to create the
+        # small charts on the GUI
+        self.readExistingProbes()
+        for i in self.probeDict:
+            print("Probe dict id: " + str(self.probeDict[i].probeid))
+            print("Probe dict name: " + str(self.probeDict[i].name))
+            self.createProbeFrame(self.probeDict[i])
+
+            
+      
 
         def select_int_outlet1_state():
             if int_outlet1_state.get() == OUTLET_OFF:    
@@ -393,33 +420,34 @@ class DashBoard(tk.Frame):
 
 
         #create temperature frame
-        frame_temperature = LabelFrame(frame_left_column, text="Temperature", relief = RAISED)
+        frame_temperature = LabelFrame(self.frame_left_column, text="Temperature", relief = RAISED)
         frame_temperature.pack(side=TOP, fill=X)
         lbl_Temperature = Label(frame_temperature, textvariable = probe_temperature, relief = FLAT,
                                 font=("Helvetica",44), padx=10)
         lbl_Temperature.pack(side=LEFT)
 
         #create external temperature frame
-        frame_temperature_ext = LabelFrame(frame_left_column, text="Temperature External", relief = RAISED)
+        frame_temperature_ext = LabelFrame(self.frame_left_column, text="Temperature External", relief = RAISED)
         frame_temperature_ext.pack(side=TOP, fill=X)
         lbl_Temperature_ext = Label(frame_temperature_ext, textvariable = probe_temperature_ext, relief = FLAT,
                                     font=("Helvetica",44), padx=10)
         lbl_Temperature_ext.pack(side=LEFT)
 
         #create ph frame
-        frame_ph = LabelFrame(frame_left_column, text="PH", relief = RAISED)
+        frame_ph = LabelFrame(self.frame_left_column, text="PH", relief = RAISED)
         frame_ph.pack(side=TOP, fill=X)
         lbl_ph = Label(frame_ph, textvariable = probe_ph, relief = FLAT,
                                     font=("Helvetica",44), padx=10)
         lbl_ph.pack(side=LEFT)
 
         #create humidity frame
-        frame_humidity = LabelFrame(frame_left_column, text="Humidity", relief = RAISED)
+        frame_humidity = LabelFrame(self.frame_left_column, text="Humidity", relief = RAISED)
         frame_humidity.pack(side=TOP, fill=X)
         lbl_humidity = Label(frame_humidity, textvariable = probe_humidity, relief = FLAT,
                                     font=("Helvetica",44), padx=10)
         lbl_humidity.pack(side=LEFT)
-
+            
+        
         # internal temperature graph  
         def animate_temp_mini(i):
             anitemp.clear()
@@ -637,6 +665,26 @@ class DashBoard(tk.Frame):
                     probe_ph.set(value)
                     print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
                           " received: ph = " + str(value))
+                if probe.split("_")[0] == "ds18b20":
+                    # the label for the probe val is nested within a few labelframes,
+                    # so need to loop down to find it
+                    for widget in self.frame_left_column.winfo_children():
+                        for childwidget in widget.winfo_children():
+                            if childwidget.winfo_class() == "Labelframe":
+                                for targetwidget in childwidget.winfo_children():     
+                                    try:
+                                        if targetwidget.cget("text")==probe.split("_")[1]:
+                                            for w in childwidget.winfo_children():
+                                                #print (probe.split("_")[1])
+                                                #print (w.cget("text"))
+                                                if w.cget("text") != probe.split("_")[1]:
+                                                    w.config(text = str(value))
+                                                    print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
+                                                        " received: " + probe.split("_")[1] + " [" + widget.cget("text") + "] = " + str(value))
+                                                    break
+                                    except:
+                                        pass
+
 
                 if value == "OFF":
                     value = OUTLET_OFF
@@ -908,7 +956,7 @@ class DashBoard(tk.Frame):
         ani3 = animation.FuncAnimation(figtempext, animate_temp_ext_mini, interval=300000) 
         ani4 = animation.FuncAnimation(fighum, animate_hum_mini, interval=300000)
         ani5 = animation.FuncAnimation(figph, animate_ph_mini, interval=300000)
-
+        
         #update the display with current probe values
         updateCurrentState()
 ##        channel.basic_consume(updateCurrentState,
@@ -918,7 +966,99 @@ class DashBoard(tk.Frame):
 ##        channel.start_consuming()
 
 
+    def readExistingProbes(self):
+        # clear out the old probe dictionary
+        self.probeDict.clear()
+        config = configparser.ConfigParser()
+        config.read(cfg_common.CONFIGFILENAME)
+        # loop through each section and see if it is a ds18b20 temp probe
+        for section in config:
+            if section.split("_")[0] == "ds18b20":
+                #print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
+                #      "Read existing temp probe: " + section.split("_")[1])
+                #print (section.split("_")[1])
+                probe = ProbeClass()
+                probe.probeid = section.split("_")[1]
+                probe.name = config[section]["name"]
+                probe.type = section.split("_")[0]
+                self.probeDict [section.split("_")[1]] = probe
+                print("probe class id: " + probe.probeid)
+                print("probe class name: " + probe.name)
+                print("probe type: " + probe.type) 
 
+    # animate probe graph
+    def animate_probe(self,i, figprobe, aniprobe, probe):
+        aniprobe.clear()
+        print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Refreshing probe mini graph")
+        days_to_plot = 2
+        for x in range(0,days_to_plot):
+            DateSeed = datetime.now() - timedelta(days=x)
+            #LogFileName = config['logs']['humidity_log_prefix'] + DateSeed.strftime("%Y-%m-%d") + ".txt"
+            LogFileName = probe.type + "_" + probe.probeid + "_" + DateSeed.strftime("%Y-%m-%d") + ".txt"
+            #LogFileName = "log_extemp1_2018-11-28.txt"
+            print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Reading data points from: %s" % LogFileName)
+            try:
+                pullData = open("logs/" + LogFileName,"r").read()    
+                dataList = pullData.split('\n')
+                xList = []
+                yList = []
+                for index, eachLine in enumerate(dataList):
+                    if len(eachLine) > 1:
+                        x, y, z = eachLine.split(',')
+                        x = datetime.strptime(x,'%Y-%m-%d %H:%M:%S')
+                        xList.append(x)
+                        yList.append(y)    
+                aniprobe.plot(xList, yList, "-", color='GREEN')
+                #if self.graphTimeFrame.get() > 1:
+                #    myFmt = mdates.DateFormatter('%b-%d')
+                #    aniprobe.xaxis.set_major_formatter(myFmt)
+                #else:
+                myFmt = mdates.DateFormatter('%I:%M%p')
+                aniprobe.xaxis.set_major_formatter(myFmt)
+
+                figprobe.autofmt_xdate()
+                aniprobe.axes.tick_params(axis='x', labelsize=1, pad=50)
+                aniprobe.axes.tick_params(axis='y', labelsize=8) 
+            except:
+                figprobe.autofmt_xdate()
+                aniprobe.axes.tick_params(axis='x', labelsize=1, pad=50)
+                aniprobe.axes.tick_params(axis='y', labelsize=8) 
+                print("Error: %s not available." % LogFileName)
+                return
+
+
+    # create probe frame dynamically
+    def createProbeFrame(self, probe):
+        self.probeframe = LabelFrame(self.frame_left_column, text=probe.name, relief = RAISED)
+        self.probeframe.pack(fill=X, side=TOP)
+        frame_probeval = LabelFrame(self.probeframe, relief = FLAT)
+        frame_probeval.pack(side=LEFT)
+        lbl_probeval = Label(frame_probeval, text="00.0", relief = FLAT, 
+                                    font=("Helvetica",44), padx=10)
+        lbl_probeval.pack(side=TOP)
+        lbl_probeSN = Label(frame_probeval,text=probe.probeid, padx=10)
+        lbl_probeSN.pack(side=TOP) # dont display this, but its used to math the probe values on update
+        
+
+        #set up mini plot
+        #some definitions for the plots
+        LARGE_FONT= ("Verdana", 12)
+        style.use("ggplot")
+        figprobe = Figure(figsize=(1,1), dpi=100)
+        figprobe.set_facecolor("gainsboro")
+        aniprobe = figprobe.add_subplot(111, axisbg="gainsboro")
+        canvasprobe = FigureCanvasTkAgg(figprobe, self.probeframe)
+        canvasprobe.show()
+        canvasprobe.get_tk_widget().pack(side=LEFT, fill=BOTH, expand=True)
+        #canvasprobe.get_tk_widget().grid(padx=10, sticky=W, row=0, column=2, columnspan=2)
+
+        try:
+            aniprobe = animation.FuncAnimation(figprobe, self.animate_probe(self, figprobe, aniprobe, probe), interval=300000)
+        except:
+            print("error aniprobe")
+        
+
+                
 class PageOne(tk.Frame):
 
     def __init__(self, parent, controller):

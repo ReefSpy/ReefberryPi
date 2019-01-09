@@ -223,6 +223,7 @@ def handle_outlet_heater(outlet, button_state, pin):
         for p in tempProbeDict:
             if tempProbeDict[p].probeid == probe:
                 if tempProbeDict[p].lastTemperature <= float(on_temp):
+                    #print(str(tempProbeDict[p].lastTemperature) + " " + str(on_temp))
                     GPIO.output(pin, False)
                     tempScale = cfg_common.readINIfile("global", "tempscale", "0")
                     if  tempScale == str(cfg_common.SCALE_F):
