@@ -68,10 +68,92 @@ class RBP_app(tk.Tk):
 
 
 class ProbeClass():
-    name = ""
-    probeid = ""
-    probetype = ""
-    probeval = ""
+    
+    def __init__(self, master):
+        self.probeid = StringVar()
+        self.name = StringVar()
+        self.probetype = StringVar()
+        self.probeval = StringVar()
+        
+        self.figprobe = Figure(figsize=(1,1), dpi=100)
+        self.aniprobe = self.figprobe.add_subplot(111, axisbg="gainsboro")
+        self.probeframe = LabelFrame(master, text=self.name, relief = RAISED)
+        self.probeframe.pack(fill=X, side=TOP)
+        self.frame_probeval = LabelFrame(self.probeframe, relief = FLAT)
+        self.frame_probeval.pack(side=LEFT)
+        self.lbl_probeval = Label(self.frame_probeval, text="00.0", relief = FLAT, 
+                                    font=("Helvetica",44), padx=10)
+        self.lbl_probeval.pack(side=TOP)
+        self.lbl_probeSN = Label(self.frame_probeval,textvariable=self.probeid, padx=10)
+        self.lbl_probeSN.pack(side=TOP) # dont display this, but its used to math the probe values on update
+
+        #set up mini plot
+        #some definitions for the plots
+        LARGE_FONT= ("Verdana", 12)
+        style.use("ggplot")
+        self.figprobe = Figure(figsize=(1,1), dpi=100)
+        self.figprobe.set_facecolor("gainsboro")
+        self.aniprobe = self.figprobe.add_subplot(111, axisbg="gainsboro")
+        self.canvasprobe = FigureCanvasTkAgg(self.figprobe, self.probeframe)
+        self.canvasprobe.show()
+        self.canvasprobe.get_tk_widget().pack(side=LEFT, fill=BOTH, expand=True)
+        #canvasprobe.get_tk_widget().grid(padx=10, sticky=W, row=0, column=2, columnspan=2)
+        
+        ani = animation.FuncAnimation(self.figprobe, self.animate_probe, interval=3000)
+        
+    def updateProbeFrameName(self):
+        self.probeframe.config(text = self.name.get())
+        
+    # plot probe data
+    def animate_probe(self, i):
+        self.aniprobe.clear()
+        print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Refreshing " + self.name.get() + " mini graph")
+        days_to_plot = 2
+        for x in range(0,days_to_plot):
+            DateSeed = datetime.now() - timedelta(days=x)
+            #LogFileName = config['logs']['humidity_log_prefix'] + DateSeed.strftime("%Y-%m-%d") + ".txt"
+            LogFileName = self.probetype.get() + "_" + self.probeid.get() + "_" + DateSeed.strftime("%Y-%m-%d") + ".txt"
+            #LogFileName = "log_extemp1_2018-11-28.txt"
+            print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Reading data points from: %s" % LogFileName)
+            try:
+                pullData = open("logs/" + LogFileName,"r").read()    
+                dataList = pullData.split('\n')
+                xList = []
+                yList = []
+                for index, eachLine in enumerate(dataList):
+                    if len(eachLine) > 1:
+                        x, y, z = eachLine.split(',')
+                        x = datetime.strptime(x,'%Y-%m-%d %H:%M:%S')
+                        xList.append(x)
+                        yList.append(y)    
+                self.aniprobe.plot(xList, yList, "-", color='GREEN')
+                #if self.graphTimeFrame.get() > 1:
+                #    myFmt = mdates.DateFormatter('%b-%d')
+                #    aniprobe.xaxis.set_major_formatter(myFmt)
+                #else:
+                myFmt = mdates.DateFormatter('%I:%M%p')
+                self.aniprobe.xaxis.set_major_formatter(myFmt)
+
+                self.figprobe.autofmt_xdate()
+                self.aniprobe.axes.tick_params(axis='x', labelsize=1, pad=50)
+                self.aniprobe.axes.tick_params(axis='y', labelsize=8) 
+            except:
+                self.figprobe.autofmt_xdate()
+                self.aniprobe.axes.tick_params(axis='x', labelsize=1, pad=50)
+                self.aniprobe.axes.tick_params(axis='y', labelsize=8) 
+                print("Error: %s not available." % LogFileName)
+        return
+            
+
+    
+##    def startanimation(self):
+##        try:
+##            self.ani = animation.FuncAnimation(self.figprobe, self.animate_probe(), interval=3000)
+##        except:
+##            pass
+
+    
+    
 
 class DashBoard(tk.Frame):
 
@@ -174,11 +256,11 @@ class DashBoard(tk.Frame):
         # read the existing probes saved in the config file, we will use these to create the
         # small charts on the GUI
         self.readExistingProbes()
-        for i in self.probeDict:
-            print("Probe dict id: " + str(self.probeDict[i].probeid))
-            print("Probe dict name: " + str(self.probeDict[i].name))
-            self.createProbeFrame(self.probeDict[i])
-
+        #for i in self.probeDict:
+            #print("Probe dict id: " + str(self.probeDict[i].probeid))
+            #print("Probe dict name: " + str(self.probeDict[i].name))
+        #    self.createProbeFrame(self.probeDict[i])
+       
             
       
 
@@ -910,11 +992,22 @@ class DashBoard(tk.Frame):
                         btn_feedC.config(background=DefClr)
                         btn_feedD.config(background=DefClr)
                         lbl_feedtimers_status.config(text="")
-                    
-                    
+            
             #repeat the loop
             self.after(100,updateCurrentState)
 
+##        def updateMiniGraphs():
+##            for i in self.probeDict:
+##                #print("Probe dict id: " + str(self.probeDict[i].probeid))
+##                #print("Probe dict name: " + str(self.probeDict[i].name))
+##                ani = animation.FuncAnimation(self.probeDict[i].figprobe, self.probeDict[i].animate_probe(), interval=3000)
+##                #self.probeDict[i].animate_probe()
+##                try:            
+##                    #self.animate_probe(self, self.probeDict[i])
+##                    self.probeDict[i].animate_probe()
+##                except:
+##                    pass
+##            self.after(10000,updateMiniGraphs)
               
         #some definitions for the plots
         LARGE_FONT= ("Verdana", 12)
@@ -956,9 +1049,17 @@ class DashBoard(tk.Frame):
         ani3 = animation.FuncAnimation(figtempext, animate_temp_ext_mini, interval=300000) 
         ani4 = animation.FuncAnimation(fighum, animate_hum_mini, interval=300000)
         ani5 = animation.FuncAnimation(figph, animate_ph_mini, interval=300000)
+
+#        for i in self.probeDict:
+##                #print("Probe dict id: " + str(self.probeDict[i].probeid))
+##                #print("Probe dict name: " + str(self.probeDict[i].name))
+#            self.probeDict[i].startanimation()
         
         #update the display with current probe values
         updateCurrentState()
+        #updateMiniGraphs()
+        
+            
 ##        channel.basic_consume(updateCurrentState,
 ##                      queue='current_state',
 ##                      no_ack=True)
@@ -977,86 +1078,88 @@ class DashBoard(tk.Frame):
                 #print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
                 #      "Read existing temp probe: " + section.split("_")[1])
                 #print (section.split("_")[1])
-                probe = ProbeClass()
-                probe.probeid = section.split("_")[1]
-                probe.name = config[section]["name"]
-                probe.type = section.split("_")[0]
+                probe = ProbeClass(self.frame_left_column)
+                probe.probeid.set(section.split("_")[1])
+                probe.name.set(config[section]["name"])
+                probe.updateProbeFrameName()
+                probe.probetype.set(section.split("_")[0])
+                
                 self.probeDict [section.split("_")[1]] = probe
-                print("probe class id: " + probe.probeid)
-                print("probe class name: " + probe.name)
-                print("probe type: " + probe.type) 
+                print("probe class id: " + probe.probeid.get())
+                print("probe class name: " + probe.name.get())
+                print("probe class type: " + probe.probetype.get()) 
 
-    # animate probe graph
-    def animate_probe(self,i, figprobe, aniprobe, probe):
-        aniprobe.clear()
-        print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Refreshing probe mini graph")
-        days_to_plot = 2
-        for x in range(0,days_to_plot):
-            DateSeed = datetime.now() - timedelta(days=x)
-            #LogFileName = config['logs']['humidity_log_prefix'] + DateSeed.strftime("%Y-%m-%d") + ".txt"
-            LogFileName = probe.type + "_" + probe.probeid + "_" + DateSeed.strftime("%Y-%m-%d") + ".txt"
-            #LogFileName = "log_extemp1_2018-11-28.txt"
-            print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Reading data points from: %s" % LogFileName)
-            try:
-                pullData = open("logs/" + LogFileName,"r").read()    
-                dataList = pullData.split('\n')
-                xList = []
-                yList = []
-                for index, eachLine in enumerate(dataList):
-                    if len(eachLine) > 1:
-                        x, y, z = eachLine.split(',')
-                        x = datetime.strptime(x,'%Y-%m-%d %H:%M:%S')
-                        xList.append(x)
-                        yList.append(y)    
-                aniprobe.plot(xList, yList, "-", color='GREEN')
-                #if self.graphTimeFrame.get() > 1:
-                #    myFmt = mdates.DateFormatter('%b-%d')
-                #    aniprobe.xaxis.set_major_formatter(myFmt)
-                #else:
-                myFmt = mdates.DateFormatter('%I:%M%p')
-                aniprobe.xaxis.set_major_formatter(myFmt)
+##    # animate probe graph
+##    def animate_probe(self,i, probe):
+##        probe.aniprobe.clear()
+##        print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Refreshing " + probe.name + " mini graph")
+##        days_to_plot = 2
+##        for x in range(0,days_to_plot):
+##            DateSeed = datetime.now() - timedelta(days=x)
+##            #LogFileName = config['logs']['humidity_log_prefix'] + DateSeed.strftime("%Y-%m-%d") + ".txt"
+##            LogFileName = probe.type + "_" + probe.probeid + "_" + DateSeed.strftime("%Y-%m-%d") + ".txt"
+##            #LogFileName = "log_extemp1_2018-11-28.txt"
+##            print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Reading data points from: %s" % LogFileName)
+##            try:
+##                pullData = open("logs/" + LogFileName,"r").read()    
+##                dataList = pullData.split('\n')
+##                xList = []
+##                yList = []
+##                for index, eachLine in enumerate(dataList):
+##                    if len(eachLine) > 1:
+##                        x, y, z = eachLine.split(',')
+##                        x = datetime.strptime(x,'%Y-%m-%d %H:%M:%S')
+##                        xList.append(x)
+##                        yList.append(y)    
+##                probe.aniprobe.plot(xList, yList, "-", color='GREEN')
+##                #if self.graphTimeFrame.get() > 1:
+##                #    myFmt = mdates.DateFormatter('%b-%d')
+##                #    aniprobe.xaxis.set_major_formatter(myFmt)
+##                #else:
+##                myFmt = mdates.DateFormatter('%I:%M%p')
+##                probe.aniprobe.xaxis.set_major_formatter(myFmt)
+##
+##                probe.figprobe.autofmt_xdate()
+##                probe.aniprobe.axes.tick_params(axis='x', labelsize=1, pad=50)
+##                probe.aniprobe.axes.tick_params(axis='y', labelsize=8) 
+##            except:
+##                probe.figprobe.autofmt_xdate()
+##                probe.aniprobe.axes.tick_params(axis='x', labelsize=1, pad=50)
+##                probe.aniprobe.axes.tick_params(axis='y', labelsize=8) 
+##                print("Error: %s not available." % LogFileName)
+##                return
 
-                figprobe.autofmt_xdate()
-                aniprobe.axes.tick_params(axis='x', labelsize=1, pad=50)
-                aniprobe.axes.tick_params(axis='y', labelsize=8) 
-            except:
-                figprobe.autofmt_xdate()
-                aniprobe.axes.tick_params(axis='x', labelsize=1, pad=50)
-                aniprobe.axes.tick_params(axis='y', labelsize=8) 
-                print("Error: %s not available." % LogFileName)
-                return
 
-
-    # create probe frame dynamically
-    def createProbeFrame(self, probe):
-        self.probeframe = LabelFrame(self.frame_left_column, text=probe.name, relief = RAISED)
-        self.probeframe.pack(fill=X, side=TOP)
-        frame_probeval = LabelFrame(self.probeframe, relief = FLAT)
-        frame_probeval.pack(side=LEFT)
-        lbl_probeval = Label(frame_probeval, text="00.0", relief = FLAT, 
-                                    font=("Helvetica",44), padx=10)
-        lbl_probeval.pack(side=TOP)
-        lbl_probeSN = Label(frame_probeval,text=probe.probeid, padx=10)
-        lbl_probeSN.pack(side=TOP) # dont display this, but its used to math the probe values on update
-        
-
-        #set up mini plot
-        #some definitions for the plots
-        LARGE_FONT= ("Verdana", 12)
-        style.use("ggplot")
-        figprobe = Figure(figsize=(1,1), dpi=100)
-        figprobe.set_facecolor("gainsboro")
-        aniprobe = figprobe.add_subplot(111, axisbg="gainsboro")
-        canvasprobe = FigureCanvasTkAgg(figprobe, self.probeframe)
-        canvasprobe.show()
-        canvasprobe.get_tk_widget().pack(side=LEFT, fill=BOTH, expand=True)
+##    # create probe frame dynamically
+##    def createProbeFrame(self, probe):
+##        self.probeframe = LabelFrame(self.frame_left_column, text=probe.name, relief = RAISED)
+##        self.probeframe.pack(fill=X, side=TOP)
+##        frame_probeval = LabelFrame(self.probeframe, relief = FLAT)
+##        frame_probeval.pack(side=LEFT)
+##        lbl_probeval = Label(frame_probeval, text="00.0", relief = FLAT, 
+##                                    font=("Helvetica",44), padx=10)
+##        lbl_probeval.pack(side=TOP)
+##        lbl_probeSN = Label(frame_probeval,text=probe.probeid, padx=10)
+##        lbl_probeSN.pack(side=TOP) # dont display this, but its used to math the probe values on update
+##        
+##
+##        #set up mini plot
+##        #some definitions for the plots
+##        LARGE_FONT= ("Verdana", 12)
+##        style.use("ggplot")
+##        probe.figprobe = Figure(figsize=(1,1), dpi=100)
+##        probe.figprobe.set_facecolor("gainsboro")
+##        probe.aniprobe = probe.figprobe.add_subplot(111, axisbg="gainsboro")
+##        self.canvasprobe = FigureCanvasTkAgg(probe.figprobe, self.probeframe)
+##        self.canvasprobe.show()
+##        self.canvasprobe.get_tk_widget().pack(side=LEFT, fill=BOTH, expand=True)
         #canvasprobe.get_tk_widget().grid(padx=10, sticky=W, row=0, column=2, columnspan=2)
 
-        try:
-            aniprobe = animation.FuncAnimation(figprobe, self.animate_probe(self, figprobe, aniprobe, probe), interval=300000)
-        except:
-            print("error aniprobe")
-        
+       # try:
+#            probe.aniprobe = animation.FuncAnimation(probe.figprobe, self.animate_probe(self, probe), interval=300000)
+#        except:
+#            print("error aniprobe")
+        #probe.aniprobe = animation.FuncAnimation(probe.figprobe, self.animate_probe(self, probe), interval=300000)
 
                 
 class PageOne(tk.Frame):
