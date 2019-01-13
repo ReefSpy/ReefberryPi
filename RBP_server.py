@@ -10,7 +10,7 @@
 # www.youtube.com/reefspy
 ##############################################################################
 
-from datetime import datetime
+from datetime import datetime, timedelta, time
 from colorama import Fore, Back, Style
 import time
 import RPi.GPIO as GPIO
@@ -24,6 +24,9 @@ import configparser
 import RBP_commons
 import cfg_common
 import pika
+import threading
+import json
+
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', socket_timeout=15))
 channel = connection.channel()
@@ -32,6 +35,8 @@ channel = connection.channel()
 channel.queue_declare(queue='current_state' )
 # queue for reading outlet state change requests
 channel.queue_declare(queue='outlet_change' )
+# queue for handling graph update requests
+channel.queue_declare(queue='graph_data')
 
 
 # initialize config file
@@ -77,6 +82,78 @@ int_outlet_buttonstates = {
 # dictionary to hold all the temperature probes
 tempProbeDict = {}
 
+threads=[]
+
+def handle_rpc(channel):    
+   channel.queue_declare(queue='rpc_queue')
+   print (' [*] Waiting for rpc messages. To exit press CTRL+C')
+
+
+   def callback(ch, method, props, body):
+       
+       body = body.decode()
+       body = json.loads(body)
+       print (Fore.GREEN + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
+                   + " RPC: " + str(body["rpc"]) + " [" + str(body["probetype"]) + ", " + str(body["probeid"]) 
+                   + "]" + Style.RESET_ALL)
+       response = "got rpc request"
+       # handle the RPC calls
+       if str(body["rpc"]) == "get_probedata24h":
+              get_probedata24h(str(body["probetype"]), str(body["probeid"]))
+
+
+       ch.basic_publish(exchange='',
+                     routing_key=props.reply_to,
+                     properties=pika.BasicProperties(correlation_id = \
+                                                         props.correlation_id),
+                     body=str(response))
+       ch.basic_ack(delivery_tag = method.delivery_tag)
+
+   channel.basic_qos(prefetch_count=1)
+   channel.basic_consume(callback, queue='rpc_queue')
+   channel.start_consuming()
+
+def get_probedata24h(probetype, probeid):
+    days_to_plot = 2
+    for x in range(0,days_to_plot):
+        DateSeed = datetime.now() - timedelta(days=x)
+        LogFileName = probetype + "_" + probeid + "_" + DateSeed.strftime("%Y-%m-%d") + ".txt"
+        print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Reading data points from: %s" % LogFileName)
+        
+        try:
+            pullData = open("logs/" + LogFileName,"r").read()    
+            dataList = pullData.split('\n')
+            xList = []
+            yList = []
+            for index, eachLine in enumerate(dataList):
+                if len(eachLine) > 1:
+                    x, y, z = eachLine.split(',')
+                    x = datetime.strptime(x,'%Y-%m-%d %H:%M:%S')
+                    xList.append(x)
+                    yList.append(y)    
+            
+        except:
+            print("Error: %s not available." % LogFileName)
+    return
+
+def threadManager():
+    connection1= pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    channel1 = connection1.channel()
+    connection2= pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    channel2 = connection2.channel()
+    t1 = threading.Thread(target=handle_rpc, args=(channel1,))
+    t1.daemon = True
+    threads.append(t1)
+    t1.start()
+    
+    t2 = threading.Thread(target=main, args=(channel2,))
+    t2.daemon = True
+    threads.append(t2)
+    t2.start()
+
+    for t in threads:
+      t.join()
+   
 class tempProbeClass():
     name = ""
     probeid = ""
@@ -450,313 +527,329 @@ def readTempProbes(tempProbeDict):
             #print("probe class id: " + probe.probeid)
             #print("probe class name: " + probe.name)
     
+
+def main(self):
+    global ph_SamplingTimeSeed
+    global dht11_SamplingTimeSeed
+    global ds18b20_SamplingTimeSeed
+    global feed_CurrentMode
+    global outlet_SamplingTimeSeed
+    global dht11_LastLogTime
+    global ds18b20_LastLogTimeDict
+    global ds18b20_LastLogTime
+    global ph_LastLogTime
     
-while True:
-    ##########################################################################################
-    # read ph probe
-    #
-    # this probe is suseptable to noise and interference, we will take a suffiently large data
-    # set and filter out the bad data, or outliers so we can get a better data point
-    ##########################################################################################
-    # only read the ph data at every ph_SamplingInterval (ie: 500ms or 1000ms)
-    if (int(round(time.time()*1000)) - ph_SamplingTimeSeed) > ph_SamplingInterval:
-        # read the analog pin
-        ph_dv = mcp3008.readadc(GPIO_config.ph_adc, GPIO_config.SPICLK, GPIO_config.SPIMOSI,
-                                 GPIO_config.SPIMISO, GPIO_config.SPICS)
-        ph_dvlist.append(ph_dv)
-        #print (len(ph_ListCounts),":", ph_dv)
+    while True:
+        ##########################################################################################
+        # read ph probe
+        #
+        # this probe is suseptable to noise and interference, we will take a suffiently large data
+        # set and filter out the bad data, or outliers so we can get a better data point
+        ##########################################################################################
+        # only read the ph data at every ph_SamplingInterval (ie: 500ms or 1000ms)
+        if (int(round(time.time()*1000)) - ph_SamplingTimeSeed) > ph_SamplingInterval:
+            # read the analog pin
+            ph_dv = mcp3008.readadc(GPIO_config.ph_adc, GPIO_config.SPICLK, GPIO_config.SPIMOSI,
+                                     GPIO_config.SPIMISO, GPIO_config.SPICS)
+            ph_dvlist.append(ph_dv)
+            #print (len(ph_ListCounts),":", ph_dv)
 
-        # once we hit our desired sample size of ph_numsamples (ie: 120)
-        # then calculate the average value
-        if len(ph_dvlist) >= ph_numsamples:
-            # The ph probe may pick up noise and read very high or
-            # very low values that we know are not good values. We are going to use numpy
-            # to calculate the standard deviation and remove the outlying data that is
-            # ph_Sigma standard deviations away from the mean.  This way these outliers
-            # do not affect our ph results
-            ph_FilteredCounts = numpy.array(ph_dvlist)
-            ph_FilteredMean = numpy.mean(ph_FilteredCounts, axis=0)
-            ph_FlteredSD = numpy.std(ph_FilteredCounts, axis=0)
-            ph_dvlistfiltered = [x for x in ph_FilteredCounts if
-                                    (x > ph_FilteredMean - ph_Sigma * ph_FlteredSD)]
-            ph_dvlistfiltered = [x for x in ph_dvlistfiltered if
-                                    (x < ph_FilteredMean + ph_Sigma * ph_FlteredSD)]
-            
-            # calculate the average of our filtered list
-            try:
-                ph_AvgCountsFiltered = int(sum(ph_dvlistfiltered)/len(ph_dvlistfiltered))
-            except:
-                ph_AvgCountsFiltered = 1  # need to revisit this error handling. Exception thrown when all
-                                          # values were 1023
-                print("Error collecting data")  
-            #convert digital value to ph
-            ph_AvgFiltered = ph.dv2ph(ph_AvgCountsFiltered)
+            # once we hit our desired sample size of ph_numsamples (ie: 120)
+            # then calculate the average value
+            if len(ph_dvlist) >= ph_numsamples:
+                # The ph probe may pick up noise and read very high or
+                # very low values that we know are not good values. We are going to use numpy
+                # to calculate the standard deviation and remove the outlying data that is
+                # ph_Sigma standard deviations away from the mean.  This way these outliers
+                # do not affect our ph results
+                ph_FilteredCounts = numpy.array(ph_dvlist)
+                ph_FilteredMean = numpy.mean(ph_FilteredCounts, axis=0)
+                ph_FlteredSD = numpy.std(ph_FilteredCounts, axis=0)
+                ph_dvlistfiltered = [x for x in ph_FilteredCounts if
+                                        (x > ph_FilteredMean - ph_Sigma * ph_FlteredSD)]
+                ph_dvlistfiltered = [x for x in ph_dvlistfiltered if
+                                        (x < ph_FilteredMean + ph_Sigma * ph_FlteredSD)]
+                
+                # calculate the average of our filtered list
+                try:
+                    ph_AvgCountsFiltered = int(sum(ph_dvlistfiltered)/len(ph_dvlistfiltered))
+                except:
+                    ph_AvgCountsFiltered = 1  # need to revisit this error handling. Exception thrown when all
+                                              # values were 1023
+                    print("Error collecting data")  
+                #convert digital value to ph
+                ph_AvgFiltered = ph.dv2ph(ph_AvgCountsFiltered)
 
-            # if enough time has passed (ph_LogInterval) then log the data to file
-            # otherwise just print it to console
-            timestamp = datetime.now()
-            if (int(round(time.time()*1000)) - ph_LastLogTime) > ph_LogInterval:
-                # sometimes a high value, like 22.4 gets recorded, i need to fix this, but for now don't log that
-                if ph_AvgFiltered < 14.0:  
-                    RBP_commons.logprobedata(config['logs']['ph_log_prefix'], "{:.2f}".format(ph_AvgFiltered))
-                    print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** pH = "
-                          + "{:.2f}".format(ph_AvgFiltered) + Style.RESET_ALL)
-                    ph_LastLogTime = int(round(time.time()*1000))
-            else:
-                print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " pH = "
-                      + "{:.2f}".format(ph_AvgFiltered))
-                writeCurrentState('probes','ph', str("{:.2f}".format(ph_AvgFiltered)))
-                channel.basic_publish(exchange='',
-                    routing_key='current_state',
-                    properties=pika.BasicProperties(expiration='10000'),
-                    body=str("mcp3008_0" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "{:.2f}".format(ph_AvgFiltered)))
+                # if enough time has passed (ph_LogInterval) then log the data to file
+                # otherwise just print it to console
+                timestamp = datetime.now()
+                if (int(round(time.time()*1000)) - ph_LastLogTime) > ph_LogInterval:
+                    # sometimes a high value, like 22.4 gets recorded, i need to fix this, but for now don't log that
+                    if ph_AvgFiltered < 14.0:  
+                        RBP_commons.logprobedata(config['logs']['ph_log_prefix'], "{:.2f}".format(ph_AvgFiltered))
+                        print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** pH = "
+                              + "{:.2f}".format(ph_AvgFiltered) + Style.RESET_ALL)
+                        ph_LastLogTime = int(round(time.time()*1000))
+                else:
+                    print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " pH = "
+                          + "{:.2f}".format(ph_AvgFiltered))
+                    writeCurrentState('probes','ph', str("{:.2f}".format(ph_AvgFiltered)))
+                    channel.basic_publish(exchange='',
+                        routing_key='current_state',
+                        properties=pika.BasicProperties(expiration='10000'),
+                        body=str("mcp3008_0" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "{:.2f}".format(ph_AvgFiltered)))
 
-            # clear the list so we can populate it with new data for the next data set
-            ph_dvlist.clear()
-            # record the new sampling time
-            ph_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+                # clear the list so we can populate it with new data for the next data set
+                ph_dvlist.clear()
+                # record the new sampling time
+                ph_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 
-    ##########################################################################################
-    # read dht11 temperature and humidity sensor
-    #
-    # these sensors are slow to refresh and should not be read more
-    # than once every second or two (ie: dht_SamplingInterval = 3000ms or 5000ms)
-    ##########################################################################################
-    if (int(round(time.time()*1000)) - dht11_SamplingTimeSeed) > dht11_SamplingInterval:
-        # let's read the dht11 temp and humidity data
-        result = dht_sensor.read()
-        if result.is_valid():
-            #print("Last valid input: " + str(datetime.datetime.now()))
-            #print("Temperature: %.1f C" % result.temperature)
-            temp_f = result.temperature * 9.0 / 5.0 + 32.0
-            hum = result.humidity
-            timestamp = datetime.now()
-            if (int(round(time.time()*1000)) - dht11_LastLogTime) > dht11_LogInterval:
-                RBP_commons.logprobedata(config['logs']['extemp1_log_prefix'], "{:.1f}".format(temp_f))
-                RBP_commons.logprobedata(config['logs']['humidity_log_prefix'], "{:.0f}".format(hum))
-                print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** External Temperature: %.1f F" % temp_f + Style.RESET_ALL)
-                print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** Humidity: %d %%" % hum + Style.RESET_ALL)
-                dht11_LastLogTime = int(round(time.time()*1000))
-            else:
-                print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " External Temperature: %.1f F" % temp_f)
-                print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " Humidity: %d %%" % hum)
-                writeCurrentState('probes','ext_temp', str(temp_f))
-                writeCurrentState('probes','humidity', str(hum))
-                channel.basic_publish(exchange='',
-                    routing_key='current_state',
-                    properties=pika.BasicProperties(expiration='10000'),
-                    body=str("dht11_t" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "%.1f" % temp_f))
-                channel.basic_publish(exchange='',
-                    routing_key='current_state',
-                    properties=pika.BasicProperties(expiration='10000'),
-                    body=str("dht11_h" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(hum)))
-                                  
-            # record the new sampling time
-            dht11_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
-    ##########################################################################################
-    # read ds18b20 temperature sensor
-    #
-    # it is possible to support multiple probes but we will use just one for now
-    ##########################################################################################
-    if (int(round(time.time()*1000)) - ds18b20_SamplingTimeSeed) > ds18b20_SamplingInterval:
-        readTempProbes(tempProbeDict)
-        for p in tempProbeDict:
-            tempProbeDict[p].lastLogTime = ds18b20_LastLogTimeDict
-        # let's read the ds18b20 temperature
-        try:
-            timestamp = datetime.now()
-            dstemp = float(ds18b20.read_temp("F"))      
-            if (int(round(time.time()*1000)) - ds18b20_LastLogTime) > ds18b20_LogInterval:
-                RBP_commons.logprobedata(config['logs']['temp1_log_prefix'], "{:.1f}".format(dstemp))
-                print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** Temperature: %.1f F" % dstemp + Style.RESET_ALL)
-                ds18b20_LastLogTime = int(round(time.time()*1000))
-                ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
-            else:
-                print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " Temperature: %.1f F" % dstemp)
-                #writeCurrentState('probes','temp1', str(dstemp))
-                # publish the temperature via rabbitmq
-                channel.basic_publish(exchange='',
-                    routing_key='current_state',
-                    properties=pika.BasicProperties(expiration='10000'),
-                    body=str("ds18b20_1" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "%.1f" % dstemp))
-                ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
-        except:
-            print(Back.RED + Fore.WHITE + timestamp.strftime("%Y-%m-%d %H:%M:%S") +
-                  " <<<Error>>> Can not read ds18b20 temperature data!" + Style.RESET_ALL)
-            
-#######################
-        # read data from the temperature probes
-        for p in tempProbeDict:
+        ##########################################################################################
+        # read dht11 temperature and humidity sensor
+        #
+        # these sensors are slow to refresh and should not be read more
+        # than once every second or two (ie: dht_SamplingInterval = 3000ms or 5000ms)
+        ##########################################################################################
+        if (int(round(time.time()*1000)) - dht11_SamplingTimeSeed) > dht11_SamplingInterval:
+            # let's read the dht11 temp and humidity data
+            result = dht_sensor.read()
+            if result.is_valid():
+                #print("Last valid input: " + str(datetime.datetime.now()))
+                #print("Temperature: %.1f C" % result.temperature)
+                temp_f = result.temperature * 9.0 / 5.0 + 32.0
+                hum = result.humidity
+                timestamp = datetime.now()
+                if (int(round(time.time()*1000)) - dht11_LastLogTime) > dht11_LogInterval:
+                    RBP_commons.logprobedata(config['logs']['extemp1_log_prefix'], "{:.1f}".format(temp_f))
+                    RBP_commons.logprobedata(config['logs']['humidity_log_prefix'], "{:.0f}".format(hum))
+                    print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** External Temperature: %.1f F" % temp_f + Style.RESET_ALL)
+                    print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** Humidity: %d %%" % hum + Style.RESET_ALL)
+                    dht11_LastLogTime = int(round(time.time()*1000))
+                else:
+                    print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " External Temperature: %.1f F" % temp_f)
+                    print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " Humidity: %d %%" % hum)
+                    writeCurrentState('probes','ext_temp', str(temp_f))
+                    writeCurrentState('probes','humidity', str(hum))
+                    channel.basic_publish(exchange='',
+                        routing_key='current_state',
+                        properties=pika.BasicProperties(expiration='10000'),
+                        body=str("dht11_t" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "%.1f" % temp_f))
+                    channel.basic_publish(exchange='',
+                        routing_key='current_state',
+                        properties=pika.BasicProperties(expiration='10000'),
+                        body=str("dht11_h" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(hum)))
+                                      
+                # record the new sampling time
+                dht11_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+        ##########################################################################################
+        # read ds18b20 temperature sensor
+        #
+        # it is possible to support multiple probes but we will use just one for now
+        ##########################################################################################
+        if (int(round(time.time()*1000)) - ds18b20_SamplingTimeSeed) > ds18b20_SamplingInterval:
+            readTempProbes(tempProbeDict)
+            for p in tempProbeDict:
+                tempProbeDict[p].lastLogTime = ds18b20_LastLogTimeDict
+            # let's read the ds18b20 temperature
             try:
                 timestamp = datetime.now()
-                dstemp =  float(ds18b20.read_temp("C"))
-                
-                if (int(round(time.time()*1000)) - tempProbeDict[p].lastLogTime) > ds18b20_LogInterval:
-                    tempData = str("{:.1f}".format(dstemp)) + "," + str(RBP_commons.convertCtoF(dstemp))
-                    RBP_commons.logprobedata("ds18b20_" + tempProbeDict[p].probeid + "_", tempData)
-                    print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** Temperature: %.1f" % dstemp + " C, "
-                          + RBP_commons.convertCtoF(dstemp) + " F" + " [" + tempProbeDict[p].name + "] [" + tempProbeDict[p].probeid + "]" + Style.RESET_ALL)
-                    #ds18b20_LastLogTime = int(round(time.time()*1000))
-                    ds18b20_LastLogTimeDict = int(round(time.time()*1000))
-                    #ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
-                    tempProbeDict[p].lastTemperature = dstemp
+                dstemp = float(ds18b20.read_temp("F"))      
+                if (int(round(time.time()*1000)) - ds18b20_LastLogTime) > ds18b20_LogInterval:
+                    RBP_commons.logprobedata(config['logs']['temp1_log_prefix'], "{:.1f}".format(dstemp))
+                    print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** Temperature: %.1f F" % dstemp + Style.RESET_ALL)
+                    ds18b20_LastLogTime = int(round(time.time()*1000))
+                    ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
                 else:
-                    #print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " Temperature: %.1f" % dstemp)
-                    print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
-                        "ds18b20 [label: " + tempProbeDict[p].name + "] [id: " + tempProbeDict[p].probeid + "]" + " [value: " + str(dstemp) + " C, " + str(RBP_commons.convertCtoF(dstemp)) + " F]")
+                    print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " Temperature: %.1f F" % dstemp)
                     #writeCurrentState('probes','temp1', str(dstemp))
                     # publish the temperature via rabbitmq
                     channel.basic_publish(exchange='',
                         routing_key='current_state',
                         properties=pika.BasicProperties(expiration='10000'),
-                        body=str("ds18b20_" + tempProbeDict[p].probeid + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "%.1f" % dstemp + "," + RBP_commons.convertCtoF(dstemp)))
-                    #ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
-                    tempProbeDict[p].lastTemperature = dstemp
+                        body=str("ds18b20_1" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "%.1f" % dstemp))
+                    ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
             except:
                 print(Back.RED + Fore.WHITE + timestamp.strftime("%Y-%m-%d %H:%M:%S") +
-                      " <<<Error>>> Can not read ds18b20_" + tempProbeDict[p].probeid + " temperature data!" + Style.RESET_ALL)
-#######################
+                      " <<<Error>>> Can not read ds18b20 temperature data!" + Style.RESET_ALL)
+                
+    #######################
+            # read data from the temperature probes
+            for p in tempProbeDict:
+                try:
+                    timestamp = datetime.now()
+                    dstemp =  float(ds18b20.read_temp("C"))
+                    
+                    if (int(round(time.time()*1000)) - tempProbeDict[p].lastLogTime) > ds18b20_LogInterval:
+                        tempData = str("{:.1f}".format(dstemp)) + "," + str(RBP_commons.convertCtoF(dstemp))
+                        RBP_commons.logprobedata("ds18b20_" + tempProbeDict[p].probeid + "_", tempData)
+                        print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** Temperature: %.1f" % dstemp + " C, "
+                              + RBP_commons.convertCtoF(dstemp) + " F" + " [" + tempProbeDict[p].name + "] [" + tempProbeDict[p].probeid + "]" + Style.RESET_ALL)
+                        #ds18b20_LastLogTime = int(round(time.time()*1000))
+                        ds18b20_LastLogTimeDict = int(round(time.time()*1000))
+                        #ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
+                        tempProbeDict[p].lastTemperature = dstemp
+                    else:
+                        #print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " Temperature: %.1f" % dstemp)
+                        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
+                            "ds18b20 [label: " + tempProbeDict[p].name + "] [id: " + tempProbeDict[p].probeid + "]" + " [value: " + str(dstemp) + " C, " + str(RBP_commons.convertCtoF(dstemp)) + " F]")
+                        #writeCurrentState('probes','temp1', str(dstemp))
+                        # publish the temperature via rabbitmq
+                        channel.basic_publish(exchange='',
+                            routing_key='current_state',
+                            properties=pika.BasicProperties(expiration='10000'),
+                            body=str("ds18b20_" + tempProbeDict[p].probeid + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "%.1f" % dstemp + "," + RBP_commons.convertCtoF(dstemp)))
+                        #ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
+                        tempProbeDict[p].lastTemperature = dstemp
+                except:
+                    print(Back.RED + Fore.WHITE + timestamp.strftime("%Y-%m-%d %H:%M:%S") +
+                          " <<<Error>>> Can not read ds18b20_" + tempProbeDict[p].probeid + " temperature data!" + Style.RESET_ALL)
+    #######################
 
-        # record the new sampling time
-        ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+            # record the new sampling time
+            ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 
-    ##########################################################################################
-    # check if Feed mode is enabled
-    #
-    ##########################################################################################
-    
-    if feed_CurrentMode == "A":
-        feed_ModeTotaltime = cfg_common.readINIfile("feed_timers", "feed_a", "60")
-    elif feed_CurrentMode == "B":
-        feed_ModeTotaltime = cfg_common.readINIfile("feed_timers", "feed_b", "60")
-    elif feed_CurrentMode == "C":
-        feed_ModeTotaltime = cfg_common.readINIfile("feed_timers", "feed_c", "60")
-    elif feed_CurrentMode == "D":
-        feed_ModeTotaltime = cfg_common.readINIfile("feed_timers", "feed_d", "60")
-    else:
-        feed_ModeTotaltime = "0"
-
-    if feed_CurrentMode != "CANCEL":
-        feedTimeLeft = (int(feed_ModeTotaltime)*1000) - (int(round(time.time()*1000)) - feed_SamplingTimeSeed)
-        if feedTimeLeft <=0:
-            print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-                   " Feed Mode: " + feed_CurrentMode + " COMPLETE" + Style.RESET_ALL)
-            feed_CurrentMode = "CANCEL"
-            timestamp = datetime.now()
-            channel.basic_publish(exchange='',
-                    routing_key='current_state',
-                    properties=pika.BasicProperties(expiration='10000'),
-                    body=str("feed_timer" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(feed_CurrentMode) + "," + str(0)))
-
-            feed_ExtraTimeSeed = int(round(time.time()*1000))
-            print ("Extra time starts at: " + str(feed_ExtraTimeSeed) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        else:    
-            print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-                   " Feed Mode: " + feed_CurrentMode + " (" + feed_ModeTotaltime + "s) " + "Time Remaining: " + str(round(feedTimeLeft/1000)) + "s"
-                   + Style.RESET_ALL)
-            timestamp = datetime.now()
-            channel.basic_publish(exchange='',
-                    routing_key='current_state',
-                    properties=pika.BasicProperties(expiration='10000'),
-                    body=str("feed_timer" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(feed_CurrentMode) + "," + str(round(feedTimeLeft/1000))))
-    
-           
+        ##########################################################################################
+        # check if Feed mode is enabled
+        #
+        ##########################################################################################
         
+        if feed_CurrentMode == "A":
+            feed_ModeTotaltime = cfg_common.readINIfile("feed_timers", "feed_a", "60")
+        elif feed_CurrentMode == "B":
+            feed_ModeTotaltime = cfg_common.readINIfile("feed_timers", "feed_b", "60")
+        elif feed_CurrentMode == "C":
+            feed_ModeTotaltime = cfg_common.readINIfile("feed_timers", "feed_c", "60")
+        elif feed_CurrentMode == "D":
+            feed_ModeTotaltime = cfg_common.readINIfile("feed_timers", "feed_d", "60")
+        else:
+            feed_ModeTotaltime = "0"
 
-    ##########################################################################################
-    # handle any state changes requested for the outlets
-    #
-    ##########################################################################################
-    
-    method_frame, header_frame, body = channel.basic_get(queue='outlet_change',
-                              no_ack=True)
-    if body != None:
-        body = body.decode()
-        outlet = body.split(",")[0]
-        value = body.split(",")[1]
-        print(Fore.YELLOW + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-              " outlet state change: " + outlet + " to " + value + Style.RESET_ALL)
-        if outlet == "int_outlet_1":
-            #writeConfig(outlet, "button_state", value)
-            cfg_common.writeINIfile(outlet, "button_state", value)
-            #print("Write configfile " + outlet + " " + value)
-            #outlet_1_buttonstate = value
-            int_outlet_buttonstates["int_outlet1_buttonstate"] = value
-        elif outlet =="int_outlet_2":
-            cfg_common.writeINIfile(outlet, "button_state", value)
-            #int_outlet2_buttonstate = value
-            int_outlet_buttonstates["int_outlet2_buttonstate"] = value
-        elif outlet =="int_outlet_3":
-            cfg_common.writeINIfile(outlet, "button_state", value)
-            #int_outlet3_buttonstate = value
-            int_outlet_buttonstates["int_outlet3_buttonstate"] = value
-        elif outlet =="int_outlet_4":
-            cfg_common.writeINIfile(outlet, "button_state", value)
-            #int_outlet4_buttonstate = value
-            int_outlet_buttonstates["int_outlet4_buttonstate"] = value
-
-        if outlet =="feed_mode":
-            feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
-            feed_CurrentMode = value
-            print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-                   " Feed Mode: " + feed_CurrentMode + " Start" + Style.RESET_ALL)
-            feed_PreviousMode = "CANCEL"
-            #print ("feed mode: " + value)
-            if feed_CurrentMode == "CANCEL":
-                timestamp=datetime.now()
+        if feed_CurrentMode != "CANCEL":
+            feedTimeLeft = (int(feed_ModeTotaltime)*1000) - (int(round(time.time()*1000)) - feed_SamplingTimeSeed)
+            if feedTimeLeft <=0:
+                print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                       " Feed Mode: " + feed_CurrentMode + " COMPLETE" + Style.RESET_ALL)
+                feed_CurrentMode = "CANCEL"
+                timestamp = datetime.now()
                 channel.basic_publish(exchange='',
-                    routing_key='current_state',
-                    properties=pika.BasicProperties(expiration='10000'),
-                    body=str("feed_timer" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(feed_CurrentMode) + "," + str(0)))
+                        routing_key='current_state',
+                        properties=pika.BasicProperties(expiration='10000'),
+                        body=str("feed_timer" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(feed_CurrentMode) + "," + str(0)))
+
+                feed_ExtraTimeSeed = int(round(time.time()*1000))
+                print ("Extra time starts at: " + str(feed_ExtraTimeSeed) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            else:    
+                print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                       " Feed Mode: " + feed_CurrentMode + " (" + feed_ModeTotaltime + "s) " + "Time Remaining: " + str(round(feedTimeLeft/1000)) + "s"
+                       + Style.RESET_ALL)
+                timestamp = datetime.now()
+                channel.basic_publish(exchange='',
+                        routing_key='current_state',
+                        properties=pika.BasicProperties(expiration='10000'),
+                        body=str("feed_timer" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(feed_CurrentMode) + "," + str(round(feedTimeLeft/1000))))
+        
+               
             
 
-            
-            
-    ##########################################################################################
-    # handle outlet states (turn outlets on or off)
-    #
-    ##########################################################################################
-    #outlet1_control()
-    # do each of the outlets on the internal bus (outlets 1-4)
-    for x in range (1,5):
-        status = outlet_control("int", str(x))
-    #    #print (str(x) + " " + str(status))
-    ##########################################################################################
-    # broadcast current state of outlets
-    #
-    ##########################################################################################
-    if (int(round(time.time()*1000)) - outlet_SamplingTimeSeed) > outlet_SamplingInterval:
-##        # internal outlet 1
-##        status = outlet1_control()
-##        channel.basic_publish(exchange='',
-##                        routing_key='current_state',
-##                        properties=pika.BasicProperties(expiration='10000'),
-##                        body=str("outlet_1" + "," + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + 
-##                                 "," + outlet_1_buttonstate + "," + str(status) + "," + "Out1Heater"))
-##        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-##              " Outlet_1 button state: " + outlet_1_buttonstate + " " + str(status))
+        ##########################################################################################
+        # handle any state changes requested for the outlets
+        #
+        ##########################################################################################
+        
+        method_frame, header_frame, body = channel.basic_get(queue='outlet_change',
+                                  no_ack=True)
+        if body != None:
+            body = body.decode()
+            outlet = body.split(",")[0]
+            value = body.split(",")[1]
+            print(Fore.YELLOW + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                  " outlet state change: " + outlet + " to " + value + Style.RESET_ALL)
+            if outlet == "int_outlet_1":
+                #writeConfig(outlet, "button_state", value)
+                cfg_common.writeINIfile(outlet, "button_state", value)
+                #print("Write configfile " + outlet + " " + value)
+                #outlet_1_buttonstate = value
+                int_outlet_buttonstates["int_outlet1_buttonstate"] = value
+            elif outlet =="int_outlet_2":
+                cfg_common.writeINIfile(outlet, "button_state", value)
+                #int_outlet2_buttonstate = value
+                int_outlet_buttonstates["int_outlet2_buttonstate"] = value
+            elif outlet =="int_outlet_3":
+                cfg_common.writeINIfile(outlet, "button_state", value)
+                #int_outlet3_buttonstate = value
+                int_outlet_buttonstates["int_outlet3_buttonstate"] = value
+            elif outlet =="int_outlet_4":
+                cfg_common.writeINIfile(outlet, "button_state", value)
+                #int_outlet4_buttonstate = value
+                int_outlet_buttonstates["int_outlet4_buttonstate"] = value
 
+            if outlet =="feed_mode":
+                feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+                feed_CurrentMode = value
+                print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                       " Feed Mode: " + feed_CurrentMode + " Start" + Style.RESET_ALL)
+                feed_PreviousMode = "CANCEL"
+                #print ("feed mode: " + value)
+                if feed_CurrentMode == "CANCEL":
+                    timestamp=datetime.now()
+                    channel.basic_publish(exchange='',
+                        routing_key='current_state',
+                        properties=pika.BasicProperties(expiration='10000'),
+                        body=str("feed_timer" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(feed_CurrentMode) + "," + str(0)))
+                
+
+                
+                
+        ##########################################################################################
+        # handle outlet states (turn outlets on or off)
+        #
+        ##########################################################################################
+        #outlet1_control()
         # do each of the outlets on the internal bus (outlets 1-4)
         for x in range (1,5):
             status = outlet_control("int", str(x))
-            channel.basic_publish(exchange='',
-                            routing_key='current_state',
-                            properties=pika.BasicProperties(expiration='10000'),
-                            body=str("int_outlet_" + str(x) + "," + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + 
-                                 "," + int_outlet_buttonstates.get("int_outlet" + str(x) + "_buttonstate") + "," + str(status) +
-                                     "," + cfg_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed")))
-            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") +    
-                " int_outlet_" + str(x) +
-                " [label: " + cfg_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed") +
-                "] [type: " + cfg_common.readINIfile("int_outlet_" + str(x), "control_type", "Always") +
-                "] [button: " + cfg_common.readINIfile("int_outlet_" + str(x), "button_state", "OFF") +  
-                "] [status: " + str(status) + "]" +
-                " [pin: " + str(GPIO_config.int_outletpins.get("int_outlet_" + str(x))) + "]")
+        #    #print (str(x) + " " + str(status))
+        
 
 
-        outlet_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+        ##########################################################################################
+        # broadcast current state of outlets
+        #
+        ##########################################################################################
+        if (int(round(time.time()*1000)) - outlet_SamplingTimeSeed) > outlet_SamplingInterval:
+    ##        # internal outlet 1
+    ##        status = outlet1_control()
+    ##        channel.basic_publish(exchange='',
+    ##                        routing_key='current_state',
+    ##                        properties=pika.BasicProperties(expiration='10000'),
+    ##                        body=str("outlet_1" + "," + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + 
+    ##                                 "," + outlet_1_buttonstate + "," + str(status) + "," + "Out1Heater"))
+    ##        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+    ##              " Outlet_1 button state: " + outlet_1_buttonstate + " " + str(status))
 
-    ##########################################################################################
-    # pause to slow down the loop, otherwise CPU usage spikes as program is busy waiting
-    ##########################################################################################
-    time.sleep(1)
+            # do each of the outlets on the internal bus (outlets 1-4)
+            for x in range (1,5):
+                status = outlet_control("int", str(x))
+                channel.basic_publish(exchange='',
+                                routing_key='current_state',
+                                properties=pika.BasicProperties(expiration='10000'),
+                                body=str("int_outlet_" + str(x) + "," + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + 
+                                     "," + int_outlet_buttonstates.get("int_outlet" + str(x) + "_buttonstate") + "," + str(status) +
+                                         "," + cfg_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed")))
+                print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") +    
+                    " int_outlet_" + str(x) +
+                    " [label: " + cfg_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed") +
+                    "] [type: " + cfg_common.readINIfile("int_outlet_" + str(x), "control_type", "Always") +
+                    "] [button: " + cfg_common.readINIfile("int_outlet_" + str(x), "button_state", "OFF") +  
+                    "] [status: " + str(status) + "]" +
+                    " [pin: " + str(GPIO_config.int_outletpins.get("int_outlet_" + str(x))) + "]")
+
+
+            outlet_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+
+        ##########################################################################################
+        # pause to slow down the loop, otherwise CPU usage spikes as program is busy waiting
+        ##########################################################################################
+        time.sleep(1)
+        
+threadManager()
