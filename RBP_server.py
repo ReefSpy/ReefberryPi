@@ -85,56 +85,92 @@ tempProbeDict = {}
 threads=[]
 
 def handle_rpc(channel):    
-   channel.queue_declare(queue='rpc_queue')
-   print (' [*] Waiting for rpc messages. To exit press CTRL+C')
+    channel.queue_declare(queue='rpc_queue')
+    print (' [*] Waiting for rpc messages. To exit press CTRL+C')
 
 
-   def callback(ch, method, props, body):
+    def callback(ch, method, props, body):
        
-       body = body.decode()
-       body = json.loads(body)
-       print (Fore.GREEN + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
-                   + " RPC: " + str(body["rpc"]) + " [" + str(body["probetype"]) + ", " + str(body["probeid"]) 
-                   + "]" + Style.RESET_ALL)
-       response = "got rpc request"
-       # handle the RPC calls
-       if str(body["rpc"]) == "get_probedata24h":
-              get_probedata24h(str(body["probetype"]), str(body["probeid"]))
+        body = body.decode()
+        body = json.loads(body)
+        print (Fore.GREEN + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
+                    + " RPC: " + str(body["rpc"]) + " [" + str(body["probetype"]) + ", " + str(body["probeid"]) 
+                    + "]" + Style.RESET_ALL)
+        response = "new rpc request"
+        # handle the RPC calls
+        if str(body["rpc"]) == "get_probedata24h":
+            probelogdata = get_probedata24h(str(body["probetype"]), str(body["probeid"]))
 
+            try:
+                response = {
+                           "datetime": probelogdata[0],
+                           "probevalue": probelogdata[1],
+                        }
+                response = json.dumps(response)
+            except:
+               pass
 
-       ch.basic_publish(exchange='',
-                     routing_key=props.reply_to,
-                     properties=pika.BasicProperties(correlation_id = \
+            #print (response)
+
+        ch.basic_publish(exchange='',
+                      routing_key=props.reply_to,
+                      properties=pika.BasicProperties(correlation_id = \
                                                          props.correlation_id),
-                     body=str(response))
-       ch.basic_ack(delivery_tag = method.delivery_tag)
+                      body=str(response))
+        ch.basic_ack(delivery_tag = method.delivery_tag)
 
-   channel.basic_qos(prefetch_count=1)
-   channel.basic_consume(callback, queue='rpc_queue')
-   channel.start_consuming()
+    channel.basic_qos(prefetch_count=1)
+    channel.basic_consume(callback, queue='rpc_queue')
+    channel.start_consuming()
 
 def get_probedata24h(probetype, probeid):
+    if probetype == "":
+       return
+      
     days_to_plot = 2
-    for x in range(0,days_to_plot):
-        DateSeed = datetime.now() - timedelta(days=x)
+    xList = [] # datetime
+    yList = [] # temp in C or other probe data
+    zList = [] # temp in F
+    for d in reversed(range(0,days_to_plot)):
+        
+        DateSeed = datetime.now() - timedelta(days=d)
+        TimeSeed = datetime.now()
         LogFileName = probetype + "_" + probeid + "_" + DateSeed.strftime("%Y-%m-%d") + ".txt"
         print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Reading data points from: %s" % LogFileName)
         
-        try:
-            pullData = open("logs/" + LogFileName,"r").read()    
-            dataList = pullData.split('\n')
-            xList = []
-            yList = []
-            for index, eachLine in enumerate(dataList):
-                if len(eachLine) > 1:
+        #try:
+        pullData = open("logs/" + LogFileName,"r").read()    
+        dataList = pullData.split('\n')
+        
+        for index, eachLine in enumerate(dataList):
+            if len(eachLine) > 1:
+                if probetype == "ds18b20":
                     x, y, z = eachLine.split(',')
-                    x = datetime.strptime(x,'%Y-%m-%d %H:%M:%S')
-                    xList.append(x)
-                    yList.append(y)    
+                else:
+                    x, y = eachLine.split(',')
+                x = datetime.strptime(x,'%Y-%m-%d %H:%M:%S')
+                if d==1: # in yesterdays log file (0 is today, 1 is yesterday etc...)
+                    if x.strftime("%H:%M:%S") >= TimeSeed.strftime("%H:%M:%S"): # we only want data for last 24 hours, so ignore values created before that
+                        #print("D=0" + " x= " + str(x.strftime("%H:%M:%S")) + " TimeSeed = " + str(TimeSeed.strftime("%H:%M:%S")))
+                        xList.append(x.strftime("%Y-%m-%d %H:%M:%S"))
+                        yList.append(y)
+                        if probetype == "ds18b20":
+                            zList.append(z)
+                else:
+                    xList.append(x.strftime("%Y-%m-%d %H:%M:%S"))
+                    yList.append(y)
+                    if probetype == "ds18b20":
+                        zList.append(z)
             
-        except:
-            print("Error: %s not available." % LogFileName)
-    return
+        #except:
+        #    print("Error parsing: %s" % LogFileName)
+    if probetype == "ds18b20":
+        if  str(cfg_common.readINIfile("global", "tempscale", str(cfg_common.SCALE_C))) == str(cfg_common.SCALE_F):
+            return xList, zList
+        else:
+            return xList, yList
+    else:
+        return xList, yList
 
 def threadManager():
     connection1= pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -299,7 +335,7 @@ def handle_outlet_heater(outlet, button_state, pin):
 
         for p in tempProbeDict:
             if tempProbeDict[p].probeid == probe:
-                if tempProbeDict[p].lastTemperature <= float(on_temp):
+                if float(tempProbeDict[p].lastTemperature) <= float(on_temp):
                     #print(str(tempProbeDict[p].lastTemperature) + " " + str(on_temp))
                     GPIO.output(pin, False)
                     tempScale = cfg_common.readINIfile("global", "tempscale", "0")
@@ -307,7 +343,7 @@ def handle_outlet_heater(outlet, button_state, pin):
                         on_temp = cfg_common.convertCtoF(on_temp)
                         off_temp = cfg_common.convertCtoF(off_temp)                   
                     return "ON (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"  
-                if tempProbeDict[p].lastTemperature >= float(off_temp):
+                if float(tempProbeDict[p].lastTemperature) >= float(off_temp):
                     GPIO.output(pin, True)
                     tempScale = cfg_common.readINIfile("global", "tempscale", "0")
                     if tempScale == str(cfg_common.SCALE_F):
@@ -662,6 +698,9 @@ def main(self):
                 else:
                     print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " Temperature: %.1f F" % dstemp)
                     #writeCurrentState('probes','temp1', str(dstemp))
+                    if  str(cfg_common.readINIfile("global", "tempscale", str(cfg_common.SCALE_C))) == str(cfg_common.SCALE_F):
+                            dstempF = RBP_commons.convertCtoF(dstemp)
+                            dstemp = float(dstempF)
                     # publish the temperature via rabbitmq
                     channel.basic_publish(exchange='',
                         routing_key='current_state',
@@ -678,6 +717,10 @@ def main(self):
                 try:
                     timestamp = datetime.now()
                     dstemp =  float(ds18b20.read_temp("C"))
+##                    if  str(cfg_common.readINIfile("global", "tempscale", str(cfg_common.SCALE_C))) == str(cfg_common.SCALE_F):
+##                        dstemp =  float(ds18b20.read_temp("F"))
+##                    else:
+##                        dstemp =  float(ds18b20.read_temp("C"))
                     
                     if (int(round(time.time()*1000)) - tempProbeDict[p].lastLogTime) > ds18b20_LogInterval:
                         tempData = str("{:.1f}".format(dstemp)) + "," + str(RBP_commons.convertCtoF(dstemp))
@@ -685,19 +728,21 @@ def main(self):
                         print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** Temperature: %.1f" % dstemp + " C, "
                               + RBP_commons.convertCtoF(dstemp) + " F" + " [" + tempProbeDict[p].name + "] [" + tempProbeDict[p].probeid + "]" + Style.RESET_ALL)
                         #ds18b20_LastLogTime = int(round(time.time()*1000))
-                        ds18b20_LastLogTimeDict = int(round(time.time()*1000))
-                        #ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
+                        ds18b20_LastLogTimeDict = int(round(time.time()*1000))             
                         tempProbeDict[p].lastTemperature = dstemp
                     else:
                         #print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " Temperature: %.1f" % dstemp)
                         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
                             "ds18b20 [label: " + tempProbeDict[p].name + "] [id: " + tempProbeDict[p].probeid + "]" + " [value: " + str(dstemp) + " C, " + str(RBP_commons.convertCtoF(dstemp)) + " F]")
-                        #writeCurrentState('probes','temp1', str(dstemp))
+                        
+                        if  str(cfg_common.readINIfile("global", "tempscale", str(cfg_common.SCALE_C))) == str(cfg_common.SCALE_F):
+                            dstempF = RBP_commons.convertCtoF(dstemp)
+                            dstemp = float(dstempF)
                         # publish the temperature via rabbitmq
                         channel.basic_publish(exchange='',
                             routing_key='current_state',
                             properties=pika.BasicProperties(expiration='10000'),
-                            body=str("ds18b20_" + tempProbeDict[p].probeid + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "%.1f" % dstemp + "," + RBP_commons.convertCtoF(dstemp)))
+                            body=str("ds18b20_" + tempProbeDict[p].probeid + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "%.1f" % dstemp ))
                         #ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
                         tempProbeDict[p].lastTemperature = dstemp
                 except:

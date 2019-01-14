@@ -673,6 +673,7 @@ class DashBoard(tk.Frame):
                                                     w.config(text = str(value))
                                                     print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) +
                                                         " received: " + probe.split("_")[1] + " [" + widget.cget("text") + "] = " + str(value))
+                                                    print(body)
                                                     break
                                     except:
                                         pass

@@ -96,44 +96,29 @@ class ProbeWidget():
         request = json.dumps(request)          
         print(request)
         chartData = self.rpc_call(request, "rpc_queue")
-        print(chartData)
-        for x in range(0,days_to_plot):
-            DateSeed = datetime.now() - timedelta(days=x)
-            LogFileName = self.probetype.get() + "_" + self.probeid.get() + "_" + DateSeed.strftime("%Y-%m-%d") + ".txt"
-            print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Reading data points from: %s" % LogFileName)
-            ######################
-            # request chart data
-            ######################
-            #strVal = "rpc check " + self.probeid.get()
-            #response = self.rpc_call(str(strVal), "rpc_queue")
-            #print(str(response) + " " + str(self.probeid.get()))
-            ######################
-            try:
-                pullData = open("logs/" + LogFileName,"r").read()    
-                dataList = pullData.split('\n')
-                xList = []
-                yList = []
-                for index, eachLine in enumerate(dataList):
-                    if len(eachLine) > 1:
-                        x, y, z = eachLine.split(',')
-                        x = datetime.strptime(x,'%Y-%m-%d %H:%M:%S')
-                        xList.append(x)
-                        yList.append(y)    
-                self.aniprobe.plot(xList, yList, "-", color='GREEN')
-                #if self.graphTimeFrame.get() > 1:
-                #    myFmt = mdates.DateFormatter('%b-%d')
-                #    aniprobe.xaxis.set_major_formatter(myFmt)
-                #else:
-                myFmt = mdates.DateFormatter('%I:%M%p')
-                self.aniprobe.xaxis.set_major_formatter(myFmt)
+        
+        try:
+            chartData = chartData.decode()
+            chartData = json.loads(chartData)
+            # convert the string dates to datetime objects
+            xList = [] # put them in this list
+            for t in chartData["datetime"]:
+                t = datetime.strptime(t,'%Y-%m-%d %H:%M:%S')
+                xList.append(t)
+            print(chartData["datetime"])
+            self.aniprobe.plot(xList, chartData["probevalue"], "-", color='GREEN')
+            myFmt = mdates.DateFormatter('%I:%M%p')
+            self.aniprobe.xaxis.set_major_formatter(myFmt)
 
-                self.figprobe.autofmt_xdate()
-                self.aniprobe.axes.tick_params(axis='x', labelsize=1, pad=50)
-                self.aniprobe.axes.tick_params(axis='y', labelsize=8) 
-            except:
-                self.figprobe.autofmt_xdate()
-                self.aniprobe.axes.tick_params(axis='x', labelsize=1, pad=50)
-                self.aniprobe.axes.tick_params(axis='y', labelsize=8) 
-                print("Error: %s not available." % LogFileName)
+            self.figprobe.autofmt_xdate()
+            self.aniprobe.axes.tick_params(axis='x', labelsize=1, pad=50)
+            self.aniprobe.axes.tick_params(axis='y', labelsize=8) 
+        except:
+            self.figprobe.autofmt_xdate()
+            self.aniprobe.axes.tick_params(axis='x', labelsize=1, pad=50)
+            self.aniprobe.axes.tick_params(axis='y', labelsize=8) 
+            print("Error plotting data")
+            pass
+        
+
         return
-      
