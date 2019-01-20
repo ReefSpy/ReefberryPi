@@ -13,13 +13,15 @@ from datetime import datetime, timedelta, time
 import pika
 import uuid
 import json
+import defs_common
+
 
 matplotlib.use("TkAgg")
 
 class ProbeWidget():
     
     def __init__(self, master):
-
+        defs_common.logtoconsole("Initializing ProbeWidget...", fg = "YELLOW", bg = "MAGENTA", style = "BRIGHT")
         #initialize the messaging queues      
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
@@ -33,6 +35,9 @@ class ProbeWidget():
         self.name = StringVar()
         self.probetype = StringVar()
         self.probeval = StringVar()
+
+        self.probeval.set("----") # give a default value
+
         
         self.figprobe = Figure(figsize=(1,1), dpi=100)
         self.aniprobe = self.figprobe.add_subplot(111, axisbg="gainsboro")
@@ -40,11 +45,11 @@ class ProbeWidget():
         self.probeframe.pack(fill=X, side=TOP)
         self.frame_probeval = LabelFrame(self.probeframe, relief = FLAT)
         self.frame_probeval.pack(side=LEFT)
-        self.lbl_probeval = Label(self.frame_probeval, text="00.0", relief = FLAT, 
+        self.lbl_probeval = Label(self.frame_probeval, text="00.0", textvariable=self.probeval ,relief = FLAT, 
                                     font=("Helvetica",44), padx=10)
         self.lbl_probeval.pack(side=TOP)
         self.lbl_probeSN = Label(self.frame_probeval,textvariable=self.probeid, padx=10)
-        self.lbl_probeSN.pack(side=TOP) # dont display this, but its used to match the probe values on update
+       # self.lbl_probeSN.pack(side=TOP) # dont display this, but its used to match the probe values on update
 
         #set up mini plot
         #some definitions for the plots
@@ -59,7 +64,8 @@ class ProbeWidget():
         #canvasprobe.get_tk_widget().grid(padx=10, sticky=W, row=0, column=2, columnspan=2)
         
         ani = animation.FuncAnimation(self.figprobe, self.animate_probe, interval=300000)
-        
+
+    
     def rpc_response(self, ch, method, props, body):
         if self.corr_id == props.correlation_id:
             self.response = body
@@ -67,6 +73,10 @@ class ProbeWidget():
     def rpc_call(self, n, queue):
         self.response = None
         self.corr_id = str(uuid.uuid4())
+
+        print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " RPC call: " + n
+              + " UID: " + self.corr_id)
+        
         self.channel.basic_publish(exchange='',
                                    routing_key=queue,
                                    properties=pika.BasicProperties(
@@ -81,20 +91,24 @@ class ProbeWidget():
     def updateProbeFrameName(self):
         self.probeframe.config(text = self.name.get())
         
+    def updateProbeValue(self, val):
+        self.probeval.set(val)
+        print("here: " + val)
+        
     # plot probe data
     def animate_probe(self, i):
         self.aniprobe.clear()
-        print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Refreshing " + self.name.get() + " mini graph")
+        print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Refreshing [" + self.name.get() + "] probe graph...")
         days_to_plot = 2
 
         # request new data from server
         request = {
-                      "rpc": "get_probedata24h",
+                      "rpc_req": "get_probedata24h",
                       "probetype": self.probetype.get(),
                       "probeid": self.probeid.get()
                   }
         request = json.dumps(request)          
-        print(request)
+        #print(request)
         chartData = self.rpc_call(request, "rpc_queue")
         
         try:
@@ -105,7 +119,7 @@ class ProbeWidget():
             for t in chartData["datetime"]:
                 t = datetime.strptime(t,'%Y-%m-%d %H:%M:%S')
                 xList.append(t)
-            print(chartData["datetime"])
+            #print(chartData["datetime"])
             self.aniprobe.plot(xList, chartData["probevalue"], "-", color='GREEN')
             myFmt = mdates.DateFormatter('%I:%M%p')
             self.aniprobe.xaxis.set_major_formatter(myFmt)
@@ -122,3 +136,4 @@ class ProbeWidget():
         
 
         return
+

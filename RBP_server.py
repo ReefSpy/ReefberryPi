@@ -31,6 +31,19 @@ import json
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', socket_timeout=15))
 channel = connection.channel()
 
+connection2 = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+channel2 = connection2.channel()
+##channel2.exchange_declare(exchange='rbp_probestatus',
+##                         exchange_type='fanout')
+channel2.exchange_declare(exchange='rbp_currentstatus',
+                         exchange_type='fanout')
+
+
+##connection3 = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+##channel3 = connection3.channel()
+##channel3.exchange_declare(exchange='rbp_outletstatus',
+##                         exchange_type='fanout')
+
 # queue for posting state update
 channel.queue_declare(queue='current_state' )
 # queue for reading outlet state change requests
@@ -93,14 +106,14 @@ def handle_rpc(channel):
        
         body = body.decode()
         body = json.loads(body)
-        print (Fore.GREEN + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
-                    + " RPC: " + str(body["rpc"]) + " [" + str(body["probetype"]) + ", " + str(body["probeid"]) 
-                    + "]" + Style.RESET_ALL)
-        response = "new rpc request"
+        response = ""
         # handle the RPC calls
-        if str(body["rpc"]) == "get_probedata24h":
+        if str(body["rpc_req"]) == "get_probedata24h":
+            print (Fore.GREEN + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
+                    + " RPC: " + str(body["rpc_req"]) + " [" + str(body["probetype"]) + ", " 
+                    + str(body["probeid"]) + "]" + Style.RESET_ALL)
+            
             probelogdata = get_probedata24h(str(body["probetype"]), str(body["probeid"]))
-
             try:
                 response = {
                            "datetime": probelogdata[0],
@@ -109,8 +122,35 @@ def handle_rpc(channel):
                 response = json.dumps(response)
             except:
                pass
+        elif str(body["rpc_req"]) == "get_probelist":
+            probelist = get_probelist()
+            print(probelist)
+            print (Fore.GREEN + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
+                    + " RPC: " + str(body["rpc_req"]) + Style.RESET_ALL)
+            response = {
+                        "probelist":probelist
+                        }
+            response = json.dumps(response)
+            
+        elif str(body["rpc_req"]) == "get_outletlist":
+            outletlist = get_outletlist()
+            #print(outletlist)
+            print (Fore.GREEN + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
+                    + " RPC: " + str(body["rpc_req"]) + Style.RESET_ALL)
+            response = {
+                        "outletlist":outletlist
+                        }
+            print (" Outlist: " + str(response))
+            response = json.dumps(response)
 
-            #print (response)
+            
+        else:
+            response = {
+                           "rpc_ack": "Error"
+                        }
+            respose = json.dumps(response)
+            
+            print (response)
 
         ch.basic_publish(exchange='',
                       routing_key=props.reply_to,
@@ -123,6 +163,74 @@ def handle_rpc(channel):
     channel.basic_consume(callback, queue='rpc_queue')
     channel.start_consuming()
 
+def get_probelist():
+    probedict = {}
+    config = configparser.ConfigParser()
+    config.read(cfg_common.CONFIGFILENAME)
+    # loop through each section and see if it is a ds18b20 temp probe
+    for section in config:
+        print(section)
+        if section.split("_")[0] == "ds18b20":
+            probetype = section.split("_")[0]
+            probeid = section
+            probename = config[section]["name"]
+            sensortype = "temperature"
+            probedict[probeid]={"probetype": probetype, "probeid": probeid, "probename": probename, "sensortype": sensortype}
+            
+        if section == "dht11/22":
+                if config[section]["enabled"]:
+                    probetype = "dht"
+                    probeid = "dht_t"
+                    probename = config[section]["temperature_name"]
+                    sensortype = "temperature"
+                    probedict[probeid]={"probetype": probetype, "probeid": probeid, "probename": probename, "sensortype": sensortype}
+
+                    probetype = "dht"
+                    probeid = "dht_h"
+                    probename = config[section]["humidity_name"]
+                    sensortype = "humidity"
+                    probedict[probeid]={"probetype": probetype, "probeid": probeid, "probename": probename, "sensortype": sensortype}
+
+        if section == "mcp3008":
+            print(config[section]["ch0_enabled"])
+            if config[section]["ch0_enabled"] == "True": 
+                probetype = "mcp3008"
+                probeid = "mcp3008_ch0"
+                probename = config[section]["ch0_name"]
+                sensortype = config[section]["ch0_type"]
+                probedict[probeid]={"probetype": probetype, "probeid": probeid, "probename": probename, "sensortype": sensortype}
+      
+            if  config[section]["ch1_enabled"] == "True": 
+                probetype = "mcp3008"
+                probeid = "mcp3008_ch1"
+                probename = config[section]["ch1_name"]
+                sensortype = config[section]["ch1_type"]
+                probedict[probeid]={"probetype": probetype, "probeid": probeid, "probename": probename, "sensortype": sensortype}
+
+            
+            
+    return probedict
+
+def get_outletlist():
+    outletdict = {}
+    config = configparser.ConfigParser()
+    config.read(cfg_common.CONFIGFILENAME)
+    # loop through each section and see if it is an outlet on internl bus
+    
+    for section in config:
+        print(section)
+        if section.find("int_outlet") > -1 or section.find("ext_outlet") > -1:
+            outletid = section
+            outletname = config[section]["name"]
+            outletbus = section.split("_")[0]
+            control_type = config[section]["control_type"]
+            print (outletname)
+            outletdict[outletid]={"outletid": outletid, "outletname": outletname, "outletbus": outletbus, "control_type": control_type}
+
+        
+            
+    return outletdict    
+    
 def get_probedata24h(probetype, probeid):
     if probetype == "":
        return
@@ -135,7 +243,7 @@ def get_probedata24h(probetype, probeid):
         
         DateSeed = datetime.now() - timedelta(days=d)
         TimeSeed = datetime.now()
-        LogFileName = probetype + "_" + probeid + "_" + DateSeed.strftime("%Y-%m-%d") + ".txt"
+        LogFileName = probeid + "_" + DateSeed.strftime("%Y-%m-%d") + ".txt"
         print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Reading data points from: %s" % LogFileName)
         
         #try:
@@ -562,7 +670,44 @@ def readTempProbes(tempProbeDict):
             #      "ds18b20 [id: " + probe.probeid + "] [label: " + probe.name + "]")
             #print("probe class id: " + probe.probeid)
             #print("probe class name: " + probe.name)
+
     
+def broadcastProbeStatus(probetype, probeid, probeval):   
+    message = {
+        "status_currentprobeval":
+                  {
+                    "probetype": str(probetype),
+                    "probeid": str(probeid),
+                    "probeval": str(probeval)
+                  }
+              }
+    
+    message = json.dumps(message)
+        
+    channel2.basic_publish(exchange='rbp_currentstatus',
+        routing_key='',
+        body=message)
+    
+def broadcastOutletStatus(outletid, outletname, outletbus, control_type, button_state, outletstate, statusmsg):   
+    message = {
+        "status_currentoutletstate" :
+                  {
+                    "outletid": str(outletid),
+                    "outletname": str(outletname),
+                    "outletbus": str(outletbus),
+                    "control_type": str(control_type),
+                    "button_state": str(button_state),
+                    "outletstate": str(outletstate),
+                    "statusmsg": str(statusmsg)
+                  }
+              }
+ 
+    message = json.dumps(message)
+        
+    channel2.basic_publish(exchange='rbp_currentstatus',
+        routing_key='',
+        body=message)
+
 
 def main(self):
     global ph_SamplingTimeSeed
@@ -623,18 +768,19 @@ def main(self):
                     # sometimes a high value, like 22.4 gets recorded, i need to fix this, but for now don't log that
                     if ph_AvgFiltered < 14.0:  
                         RBP_commons.logprobedata(config['logs']['ph_log_prefix'], "{:.2f}".format(ph_AvgFiltered))
+                        RBP_commons.logprobedata("mcp3008_ch0_", "{:.2f}".format(ph_AvgFiltered))
                         print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** pH = "
                               + "{:.2f}".format(ph_AvgFiltered) + Style.RESET_ALL)
                         ph_LastLogTime = int(round(time.time()*1000))
                 else:
                     print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " pH = "
                           + "{:.2f}".format(ph_AvgFiltered))
-                    writeCurrentState('probes','ph', str("{:.2f}".format(ph_AvgFiltered)))
+                    #writeCurrentState('probes','ph', str("{:.2f}".format(ph_AvgFiltered)))
                     channel.basic_publish(exchange='',
                         routing_key='current_state',
                         properties=pika.BasicProperties(expiration='10000'),
                         body=str("mcp3008_0" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "{:.2f}".format(ph_AvgFiltered)))
-
+                    broadcastProbeStatus("mcp3008", "mcp3008_ch0", str("{:.2f}".format(ph_AvgFiltered))) 
                 # clear the list so we can populate it with new data for the next data set
                 ph_dvlist.clear()
                 # record the new sampling time
@@ -658,14 +804,16 @@ def main(self):
                 if (int(round(time.time()*1000)) - dht11_LastLogTime) > dht11_LogInterval:
                     RBP_commons.logprobedata(config['logs']['extemp1_log_prefix'], "{:.1f}".format(temp_f))
                     RBP_commons.logprobedata(config['logs']['humidity_log_prefix'], "{:.0f}".format(hum))
+                    RBP_commons.logprobedata("dht_t_", "{:.1f}".format(temp_f))
+                    RBP_commons.logprobedata("dht_h_", "{:.0f}".format(hum))
                     print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** External Temperature: %.1f F" % temp_f + Style.RESET_ALL)
                     print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** Humidity: %d %%" % hum + Style.RESET_ALL)
                     dht11_LastLogTime = int(round(time.time()*1000))
                 else:
                     print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " External Temperature: %.1f F" % temp_f)
                     print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " Humidity: %d %%" % hum)
-                    writeCurrentState('probes','ext_temp', str(temp_f))
-                    writeCurrentState('probes','humidity', str(hum))
+                    #writeCurrentState('probes','ext_temp', str(temp_f))
+                    #writeCurrentState('probes','humidity', str(hum))
                     channel.basic_publish(exchange='',
                         routing_key='current_state',
                         properties=pika.BasicProperties(expiration='10000'),
@@ -674,7 +822,11 @@ def main(self):
                         routing_key='current_state',
                         properties=pika.BasicProperties(expiration='10000'),
                         body=str("dht11_h" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(hum)))
-                                      
+                    # broadcast humidity value
+                    broadcastProbeStatus("dht", "dht_h", str(hum))    
+                    # broadcast temperature value
+                    broadcastProbeStatus("dht", "dht_t", str(temp_f))
+                    
                 # record the new sampling time
                 dht11_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
         ##########################################################################################
@@ -744,6 +896,8 @@ def main(self):
                             properties=pika.BasicProperties(expiration='10000'),
                             body=str("ds18b20_" + tempProbeDict[p].probeid + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "%.1f" % dstemp ))
                         #ds18b20_1 = dstemp # set variable so we can use it later in something like outlets
+                        # broadcast temperature value
+                        broadcastProbeStatus("ds18b20", "ds18b20_" + str(tempProbeDict[p].probeid), str("%.1f" % dstemp))   
                         tempProbeDict[p].lastTemperature = dstemp
                 except:
                     print(Back.RED + Fore.WHITE + timestamp.strftime("%Y-%m-%d %H:%M:%S") +
@@ -881,6 +1035,16 @@ def main(self):
                                 body=str("int_outlet_" + str(x) + "," + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + 
                                      "," + int_outlet_buttonstates.get("int_outlet" + str(x) + "_buttonstate") + "," + str(status) +
                                          "," + cfg_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed")))
+                
+
+                broadcastOutletStatus("int_outlet_" + str(x),
+                                      cfg_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed"),
+                                      "int",
+                                      cfg_common.readINIfile("int_outlet_" + str(x), "control_type", "Always"),
+                                      int_outlet_buttonstates.get("int_outlet" + str(x) + "_buttonstate"),
+                                      "STATEUNKNOWN",
+                                      status)
+
                 print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") +    
                     " int_outlet_" + str(x) +
                     " [label: " + cfg_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed") +
