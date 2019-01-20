@@ -15,6 +15,10 @@ int_outletpins = {
         "int_outlet_2":13,
         "int_outlet_3":6,
         "int_outlet_4":5,
+        "int_outlet_5":26,
+        "int_outlet_6":12,
+        "int_outlet_7":16,
+        "int_outlet_8":20,
     }
 
 
@@ -36,7 +40,11 @@ def initGPIO():
     GPIO.setup(SPICS, GPIO.OUT)
 
     # set up pins for relay controls
-    GPIO.setup(relay_1, GPIO.OUT)
+    GPIO.setup(int_outletpins.get("int_outlet_1"), GPIO.OUT)
     GPIO.setup(int_outletpins.get("int_outlet_2"), GPIO.OUT)
     GPIO.setup(int_outletpins.get("int_outlet_3"), GPIO.OUT)
     GPIO.setup(int_outletpins.get("int_outlet_4"), GPIO.OUT)
+    GPIO.setup(int_outletpins.get("int_outlet_5"), GPIO.OUT)
+    GPIO.setup(int_outletpins.get("int_outlet_6"), GPIO.OUT)
+    GPIO.setup(int_outletpins.get("int_outlet_7"), GPIO.OUT)
+    GPIO.setup(int_outletpins.get("int_outlet_8"), GPIO.OUT)

@@ -100,11 +100,11 @@ class DashBoard(tk.Frame):
 
         self.frameProbes.bind("<Configure>", self.onFrameConfigure)
 
-        logocanvas=Canvas(self.frame_right_column,width=250,height=250)
-        logocanvas.pack()
-
-        self.img=PhotoImage(file="images/reefberrypi_logo2.gif")
-        logocanvas.create_image(0,0,image=self.img, anchor=NW)
+##        logocanvas=Canvas(self.frame_right_column,width=250,height=250)
+##        logocanvas.pack()
+##
+##        self.img=PhotoImage(file="images/reefberrypi_logo2.gif")
+##        logocanvas.create_image(0,0,image=self.img, anchor=NW)
 
         #  add probe frames to show current data and mini graphs on the GUI
         self.readExistingProbes()
@@ -144,13 +144,13 @@ class DashBoard(tk.Frame):
         # find the matching outletid in the dictionary then update
         for o in self.outletDict:
             if self.outletDict[o].outletid.get()==outletid:
-                defs_common.logtoconsole("Updating status of " + str(o) +
-                                         " (" + str(self.outletDict[o].outletname.get()) + ")", fg="YELLOW", style="BRIGHT")
+                #defs_common.logtoconsole("Updating status of " + str(o) +
+                #                         " (" + str(self.outletDict[o].outletname.get()) + ")", fg="YELLOW", style="BRIGHT")
 
                 self.outletDict[o].outletname.set(outletname)
                 self.outletDict[o].outletbus.set(outletbus)
                 self.outletDict[o].control_type.set(control_type)
-                self.outletDict[o].statusmsg.set(statusmsg)
+                
                 
                 self.outletDict[o].outletstate.set(outletstate)
                 self.outletDict[o].updateOutletFrameName
@@ -161,14 +161,16 @@ class DashBoard(tk.Frame):
                     button_state = defs_common.OUTLET_ON
                 elif button_state == "AUTO":
                     button_state = defs_common.OUTLET_AUTO
-                    
+
+                defs_common.logtoconsole("Freeze Update: " + str(self.outletDict[o].outlet_freezeupdate.get())) 
                 if self.outletDict[o].outlet_freezeupdate.get() != True:
-                    if "ON" in statusmsg:
+                    self.outletDict[o].statusmsg.set(statusmsg)
+                    if statusmsg.find("ON") != -1:
                         self.outletDict[o].lbl_outlet_status.config(text=statusmsg, foreground="GREEN")
-                        defs_common.logtoconsole("Set status text to GREEN", fg = "GREEN", style = "BRIGHT")
-                    elif "OFF" in statusmsg:
+                        #defs_common.logtoconsole("Set %s status text to GREEN" % str(self.outletDict[o].outletname.get()), fg = "GREEN", style = "BRIGHT")
+                    elif statusmsg.find("OFF") != -1:
                         self.outletDict[o].lbl_outlet_status.config(text=statusmsg, foreground="RED")
-                        defs_common.logtoconsole("Set status text to RED", fg = "RED", style = "BRIGHT")
+                        #defs_common.logtoconsole("Set status text to RED", fg = "RED", style = "BRIGHT")
     
                     if int(button_state) != int(self.outletDict[o].button_state.get()):      
                             if int(button_state) == int(defs_common.OUTLET_OFF):
@@ -182,6 +184,7 @@ class DashBoard(tk.Frame):
                                 
                 else:
                     self.outletDict[o].outlet_freezeupdate.set(False)
+                    defs_common.logtoconsole("Freeze Update: " + str(self.outletDict[o].outlet_freezeupdate.get()), fg="CYAN")
                     
 ##
 ##                self.outletDict[o].button_state.set(button_state)

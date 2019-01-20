@@ -90,6 +90,10 @@ int_outlet_buttonstates = {
     "int_outlet2_buttonstate":cfg_common.readINIfile("int_outlet_2", "button_state", "OFF"),
     "int_outlet3_buttonstate":cfg_common.readINIfile("int_outlet_3", "button_state", "OFF"),
     "int_outlet4_buttonstate":cfg_common.readINIfile("int_outlet_4", "button_state", "OFF"),
+    "int_outlet5_buttonstate":cfg_common.readINIfile("int_outlet_5", "button_state", "OFF"),
+    "int_outlet6_buttonstate":cfg_common.readINIfile("int_outlet_6", "button_state", "OFF"),
+    "int_outlet7_buttonstate":cfg_common.readINIfile("int_outlet_7", "button_state", "OFF"),
+    "int_outlet8_buttonstate":cfg_common.readINIfile("int_outlet_8", "button_state", "OFF")
     }
 
 # dictionary to hold all the temperature probes
@@ -219,7 +223,8 @@ def get_outletlist():
     
     for section in config:
         print(section)
-        if section.find("int_outlet") > -1 or section.find("ext_outlet") > -1:
+        #if section.find("int_outlet") > -1 or section.find("ext_outlet") > -1:
+        if section.find("int_outlet") > -1:
             outletid = section
             outletname = config[section]["name"]
             outletbus = section.split("_")[0]
@@ -390,6 +395,14 @@ def outlet_control(bus, outletnum): # bus = "int" or "ext"
         button_state = int_outlet_buttonstates.get("int_outlet3_buttonstate")
     elif outlet == "int_outlet_4":
         button_state = int_outlet_buttonstates.get("int_outlet4_buttonstate")
+    elif outlet == "int_outlet_5":
+        button_state = int_outlet_buttonstates.get("int_outlet5_buttonstate")
+    elif outlet == "int_outlet_6":
+        button_state = int_outlet_buttonstates.get("int_outlet6_buttonstate")
+    elif outlet == "int_outlet_7":
+        button_state = int_outlet_buttonstates.get("int_outlet7_buttonstate")
+    elif outlet == "int_outlet_8":
+        button_state = int_outlet_buttonstates.get("int_outlet8_buttonstate")
     else:
         button_state = "OFF"
 
@@ -981,6 +994,18 @@ def main(self):
                 cfg_common.writeINIfile(outlet, "button_state", value)
                 #int_outlet4_buttonstate = value
                 int_outlet_buttonstates["int_outlet4_buttonstate"] = value
+            elif outlet =="int_outlet_5":
+                cfg_common.writeINIfile(outlet, "button_state", value)
+                int_outlet_buttonstates["int_outlet5_buttonstate"] = value
+            elif outlet =="int_outlet_6":
+                cfg_common.writeINIfile(outlet, "button_state", value)
+                int_outlet_buttonstates["int_outlet6_buttonstate"] = value
+            elif outlet =="int_outlet_7":
+                cfg_common.writeINIfile(outlet, "button_state", value)
+                int_outlet_buttonstates["int_outlet7_buttonstate"] = value
+            elif outlet =="int_outlet_8":
+                cfg_common.writeINIfile(outlet, "button_state", value)
+                int_outlet_buttonstates["int_outlet8_buttonstate"] = value
 
             if outlet =="feed_mode":
                 feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
@@ -1005,7 +1030,7 @@ def main(self):
         ##########################################################################################
         #outlet1_control()
         # do each of the outlets on the internal bus (outlets 1-4)
-        for x in range (1,5):
+        for x in range (1,9):
             status = outlet_control("int", str(x))
         #    #print (str(x) + " " + str(status))
         
@@ -1027,7 +1052,7 @@ def main(self):
     ##              " Outlet_1 button state: " + outlet_1_buttonstate + " " + str(status))
 
             # do each of the outlets on the internal bus (outlets 1-4)
-            for x in range (1,5):
+            for x in range (1,9):
                 status = outlet_control("int", str(x))
                 channel.basic_publish(exchange='',
                                 routing_key='current_state',

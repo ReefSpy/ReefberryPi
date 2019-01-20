@@ -19,6 +19,7 @@ from datetime import datetime, timedelta, time
 import time
 import cls_DashBoard 
 import cls_GraphPage
+import cls_SplashPage
 #import cls_Toolbar
 import defs_common
 import os,sys
@@ -63,6 +64,12 @@ class RBP_app:
         self.btn_GraphPage = ttk.Button(self.frame_toolbar, text="Graphs", image=self.img_graph,
                             compound=TOP, command=lambda: self.show_frame(cls_GraphPage.GraphPage))
         self.btn_GraphPage.pack(side=LEFT)
+
+        self.img_about = PhotoImage(file="images/reefberrypi_logo-64.png")
+        self.btn_About = ttk.Button(self.frame_toolbar, text="About", image=self.img_about,
+                            compound=TOP, command=lambda: self.show_frame(cls_SplashPage.SplashPage))
+        self.btn_About.pack(side=LEFT)
+        
         #########################
         container = tk.Frame(master)
         container.pack(side="top", fill="both", expand = True)
@@ -71,7 +78,7 @@ class RBP_app:
 
         self.frames = {}
 
-        for F in (cls_DashBoard.DashBoard, cls_GraphPage.GraphPage):
+        for F in (cls_DashBoard.DashBoard, cls_GraphPage.GraphPage, cls_SplashPage.SplashPage):
             frame = F(container, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
@@ -163,7 +170,7 @@ class ThreadedClient:
         
     def periodicCall(self):
         
-        # Check every 200 ms if there is something new in the queue.
+        # Check every 100 ms if there is something new in the queue.
         
         self.gui.processIncoming(  )
         if not self.running:
@@ -171,7 +178,7 @@ class ThreadedClient:
             # some cleanup before actually shutting it down.
             import sys
             sys.exit(1)
-        self.master.after(200, self.periodicCall)
+        self.master.after(100, self.periodicCall)
 
 
     def endApplication(self):

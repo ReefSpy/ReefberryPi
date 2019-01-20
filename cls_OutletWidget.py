@@ -28,11 +28,11 @@ class OutletWidget():
 
 
         #initialize the messaging queues      
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        channel = connection.channel()
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        self.channel = self.connection.channel()
 
         #queue for posting outlet changes
-        channel.queue_declare(queue='outlet_change')
+        self.channel.queue_declare(queue='outlet_change')
 
         # frame for internal outlet 1 control
         self.frame_outlet = LabelFrame(master, text="waiting...", relief= RAISED)
@@ -62,48 +62,42 @@ class OutletWidget():
                                     indicatoron=0)
         self.rdo_outlet_on.pack(side=LEFT, expand=1, fill=X)
 
-#    def select_int_outlet1_state():
-#        print("Hello World")
         
     def updateOutletFrameName(self):
         self.frame_outlet.config(text = self.outletname.get())
-        
-##if value == "OFF":
-##    value = OUTLET_OFF
-##elif value == "ON":
-##    value = OUTLET_ON
-##elif value == "AUTO":
-##    value = OUTLET_AUTO
-                    
+
+                            
     def select_outlet_state(self):
-        defs_common.logtoconsole("select_outlet_state: " + str(self.button_state.get()))
+        defs_common.logtoconsole("outlet state change: " + str(self.outletid.get()) + " to " + str(self.button_state.get()), fg="YELLOW", style="BRIGHT")
         if self.button_state.get() == defs_common.OUTLET_OFF:
-            defs_common.logtoconsole("set text to off", bg="RED", style = "BRIGHT")
             self.statusmsg.set("OFF")
             self.lbl_outlet_status.config(foreground="RED")
-##            channel.basic_publish(exchange='',
-##                                  routing_key='outlet_change',
-##                                  properties=pika.BasicProperties(expiration='30000'),
-##                                  body=str("int_outlet_1" + "," + "OFF"))
+            self.channel.basic_publish(exchange='',
+                                  routing_key='outlet_change',
+                                  properties=pika.BasicProperties(expiration='30000'),
+                                  body=str(str(self.outletid.get()) + "," + "OFF"))
+                                  #body=str("int_outlet_1" + "," + "OFF"))
+                                  
         elif self.button_state.get() == defs_common.OUTLET_AUTO:
-            defs_common.logtoconsole("set text to AUTO", bg="RED", style = "BRIGHT")
             self.statusmsg.set("AUTO")
             self.lbl_outlet_status.config(foreground="DARK ORANGE")            
-##            channel.basic_publish(exchange='',
-##                                  routing_key='outlet_change',
-##                                  properties=pika.BasicProperties(expiration='30000'),
-##                                  body=str("int_outlet_1" + "," + "AUTO"))
+            self.channel.basic_publish(exchange='',
+                                  routing_key='outlet_change',
+                                  properties=pika.BasicProperties(expiration='30000'),
+                                  body=str(str(self.outletid.get()) + "," + "AUTO"))
+                                  #body=str("int_outlet_1" + "," + "AUTO"))
         elif self.button_state.get() == defs_common.OUTLET_ON:
-            defs_common.logtoconsole("set text to ON", bg="RED", style = "BRIGHT")
             self.statusmsg.set("ON")
             self.lbl_outlet_status.config(foreground="GREEN")
-##            channel.basic_publish(exchange='',
-##                                  routing_key='outlet_change',
-##                                  properties=pika.BasicProperties(expiration='30000'),
-##                                  body=str("int_outlet_1" + "," + "ON"))
+            self.channel.basic_publish(exchange='',
+                                  routing_key='outlet_change',
+                                  properties=pika.BasicProperties(expiration='30000'),
+                                  body=str(str(self.outletid.get()) + "," + "ON"))
+                                  #body=str("int_outlet_1" + "," + "ON"))
         else:
             self.lbl_outlet_status.config(text="UNKNOWN", foreground="BLACK")
 ##        selection = "Select outlet option " + self.lbl_outlet_status.cget("text")
 ##        print(Fore.YELLOW + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
 ##          " " + selection + Style.RESET_ALL)
         self.outlet_freezeupdate.set(True)
+        defs_common.logtoconsole("Freeze Update: " + str(self.outletid.get() + " " + str(self.outlet_freezeupdate.get())), fg="CYAN")

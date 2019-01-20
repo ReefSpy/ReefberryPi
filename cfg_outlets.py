@@ -115,6 +115,27 @@ class InternalBus(tk.Frame):
                                     compound=RIGHT, command=lambda:self.selectOutlet(self, 4))
         self.rdoOutlet4.grid(row=3, column=0)
 
+        self.rdoOutlet5 = Radiobutton(self.frame_intbus, text="Outlet 5", variable=self.IntOutletSelection,
+                                    image=self.outletimg, value=5, indicatoron=0,
+                                    compound=RIGHT, command=lambda:self.selectOutlet(self, 5))
+        self.rdoOutlet5.grid(row=4, column=0)
+
+        self.rdoOutlet6 = Radiobutton(self.frame_intbus, text="Outlet 6", variable=self.IntOutletSelection,
+                                    image=self.outletimg, value=6, indicatoron=0,
+                                    compound=RIGHT, command=lambda:self.selectOutlet(self, 6))
+        self.rdoOutlet6.grid(row=5, column=0)
+
+        self.rdoOutlet7 = Radiobutton(self.frame_intbus, text="Outlet 7", variable=self.IntOutletSelection,
+                                    image=self.outletimg, value=7, indicatoron=0,
+                                    compound=RIGHT, command=lambda:self.selectOutlet(self, 7))
+        self.rdoOutlet7.grid(row=6, column=0)
+
+        self.rdoOutlet8 = Radiobutton(self.frame_intbus, text="Outlet 8", variable=self.IntOutletSelection,
+                                    image=self.outletimg, value=8, indicatoron=0,
+                                    compound=RIGHT, command=lambda:self.selectOutlet(self, 8))
+        self.rdoOutlet8.grid(row=7, column=0)
+        
+
         # Outlet Config
         self.outlet = Outlet(self.frame_intbus, self, BUS_INTERNAL)
         self.outlet.grid(row=0, column=1, sticky=N, padx=15, rowspan=30)
