@@ -1,10 +1,14 @@
 import tkinter as tk
 from tkinter import * 
 from tkinter import ttk
+import os
 from colorama import Fore, Back, Style
 from datetime import datetime, timedelta, time
 import pika
 import defs_common
+import uuid
+import json
+import cfg_outlets
 
 class OutletWidget():
     
@@ -31,8 +35,15 @@ class OutletWidget():
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
 
+        result = self.channel.queue_declare(exclusive=True)
+        self.callback_queue = result.method.queue
+
+        self.channel.basic_consume(self.rpc_response, no_ack=True,
+                                   queue=self.callback_queue)
+
         #queue for posting outlet changes
-        self.channel.queue_declare(queue='outlet_change')
+        #self.channel.queue_declare(queue='outlet_change')
+        
 
         # frame for internal outlet 1 control
         self.frame_outlet = LabelFrame(master, text="waiting...", relief= RAISED)
@@ -40,10 +51,10 @@ class OutletWidget():
         self.frame_outlet_spacer = tk.LabelFrame(self.frame_outlet, relief = tk.FLAT)
         self.frame_outlet_spacer.pack(fill=X, side=TOP)
         
-##        self.img_cfg16 = PhotoImage(file="images/settings-16.png")
-##        self.btn_cfg_outlet = Button(self.frame_outlet_spacer, text = "edit", image=self.img_cfg16,
-##                                 relief = FLAT, command = self.RBP_outletcfg.init())
-##        self.btn_cfg_outlet.pack(side=LEFT, anchor=W)
+        self.img_cfg16 = PhotoImage(file="images/settings-16.png")
+        self.btn_cfg_outlet = Button(self.frame_outlet_spacer, text = "edit", image=self.img_cfg16,
+                                 relief = FLAT, command=lambda:self.configureOutlet(master))
+        self.btn_cfg_outlet.pack(side=LEFT, anchor=W)
         
         self.lbl_outlet_status = Label(self.frame_outlet_spacer, text = "waiting...", relief = FLAT, textvariable=self.statusmsg)
         self.lbl_outlet_status.pack(side=TOP, anchor=E)                          
@@ -62,7 +73,31 @@ class OutletWidget():
                                     indicatoron=0)
         self.rdo_outlet_on.pack(side=LEFT, expand=1, fill=X)
 
-        
+    def rpc_response(self, ch, method, props, body):
+        if self.corr_id == props.correlation_id:
+            self.response = body
+
+    def rpc_call(self, n, queue):
+        self.response = None
+        self.corr_id = str(uuid.uuid4())
+
+##        print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " RPC call: " + n
+##              + " UID: " + self.corr_id)
+
+        defs_common.logtoconsole(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " RPC call: " + n
+              + " UID: " + self.corr_id, fg="GREEN", style="BRIGHT")
+            
+        self.channel.basic_publish(exchange='',
+                                   routing_key=queue,
+                                   properties=pika.BasicProperties(
+                                         reply_to = self.callback_queue,
+                                         correlation_id = self.corr_id,
+                                         expiration="300000"),
+                                   body=str(n))
+        while self.response is None:
+            self.connection.process_data_events()
+        return self.response
+    
     def updateOutletFrameName(self):
         self.frame_outlet.config(text = self.outletname.get())
 
@@ -72,28 +107,55 @@ class OutletWidget():
         if self.button_state.get() == defs_common.OUTLET_OFF:
             self.statusmsg.set("OFF")
             self.lbl_outlet_status.config(foreground="RED")
-            self.channel.basic_publish(exchange='',
-                                  routing_key='outlet_change',
-                                  properties=pika.BasicProperties(expiration='30000'),
-                                  body=str(str(self.outletid.get()) + "," + "OFF"))
-                                  #body=str("int_outlet_1" + "," + "OFF"))
+##            self.channel.basic_publish(exchange='',
+##                                  routing_key='outlet_change',
+##                                  properties=pika.BasicProperties(expiration='30000'),
+##                                  body=str(str(self.outletid.get()) + "," + "OFF"))
+##                                  #body=str("int_outlet_1" + "," + "OFF"))
+
+            # request outlet change on server
+            request = {
+                      "rpc_req": "set_outletoperationmode",
+                      "bus": str(self.outletbus.get()),
+                      "outletnum": str(self.outletid.get().split("_")[2]),
+                      "opmode": "off"
+                  }
+            request = json.dumps(request)          
+            self.rpc_call(request, "rpc_queue")
                                   
         elif self.button_state.get() == defs_common.OUTLET_AUTO:
             self.statusmsg.set("AUTO")
             self.lbl_outlet_status.config(foreground="DARK ORANGE")            
-            self.channel.basic_publish(exchange='',
-                                  routing_key='outlet_change',
-                                  properties=pika.BasicProperties(expiration='30000'),
-                                  body=str(str(self.outletid.get()) + "," + "AUTO"))
-                                  #body=str("int_outlet_1" + "," + "AUTO"))
+##            self.channel.basic_publish(exchange='',
+##                                  routing_key='outlet_change',
+##                                  properties=pika.BasicProperties(expiration='30000'),
+##                                  body=str(str(self.outletid.get()) + "," + "AUTO"))
+##                                  #body=str("int_outlet_1" + "," + "AUTO"))
+            request = {
+                      "rpc_req": "set_outletoperationmode",
+                      "bus": str(self.outletbus.get()),
+                      "outletnum": str(self.outletid.get().split("_")[2]),
+                      "opmode": "auto"
+                  }
+            request = json.dumps(request)          
+            self.rpc_call(request, "rpc_queue")
+            
         elif self.button_state.get() == defs_common.OUTLET_ON:
             self.statusmsg.set("ON")
             self.lbl_outlet_status.config(foreground="GREEN")
-            self.channel.basic_publish(exchange='',
-                                  routing_key='outlet_change',
-                                  properties=pika.BasicProperties(expiration='30000'),
-                                  body=str(str(self.outletid.get()) + "," + "ON"))
-                                  #body=str("int_outlet_1" + "," + "ON"))
+##            self.channel.basic_publish(exchange='',
+##                                  routing_key='outlet_change',
+##                                  properties=pika.BasicProperties(expiration='30000'),
+##                                  body=str(str(self.outletid.get()) + "," + "ON"))
+##                                  #body=str("int_outlet_1" + "," + "ON"))
+            request = {
+                      "rpc_req": "set_outletoperationmode",
+                      "bus": str(self.outletbus.get()),
+                      "outletnum": str(self.outletid.get().split("_")[2]),
+                      "opmode": "on"
+                  }
+            request = json.dumps(request)          
+            self.rpc_call(request, "rpc_queue")
         else:
             self.lbl_outlet_status.config(text="UNKNOWN", foreground="BLACK")
 ##        selection = "Select outlet option " + self.lbl_outlet_status.cget("text")
@@ -101,3 +163,101 @@ class OutletWidget():
 ##          " " + selection + Style.RESET_ALL)
         self.outlet_freezeupdate.set(True)
         defs_common.logtoconsole("Freeze Update: " + str(self.outletid.get() + " " + str(self.outlet_freezeupdate.get())), fg="CYAN")
+
+    def configureOutlet(self, master):
+        print("dialog")
+        d = Dialog(master)
+        
+
+class Dialog(Toplevel):
+
+    def __init__(self, parent, title = None):
+
+        Toplevel.__init__(self, parent)
+        self.transient(parent)
+
+        if title:
+            self.title(title)
+
+        self.parent = parent
+
+        self.result = None
+
+        body = Frame(self)
+        self.initial_focus = self.body(body)
+        body.pack(padx=5, pady=5)
+
+        self.buttonbox()
+
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus = self
+
+        self.protocol("WM_DELETE_WINDOW", self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,
+                                  parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+    #
+    # construction hooks
+
+    def body(self, master):
+        # create dialog body.  return widget that should have
+        # initial focus.  this method should be overridden
+        outlet = cfg_outlets.PageOutlets(master, self)
+        outlet.pack()
+        pass
+
+    def buttonbox(self):
+        # add standard button box. override if you don't want the
+        # standard buttons
+
+        box = Frame(self)
+
+        w = Button(box, text="OK", width=10, command=self.ok, default=ACTIVE)
+        w.pack(side=LEFT, padx=5, pady=5)
+        w = Button(box, text="Cancel", width=10, command=self.cancel)
+        w.pack(side=LEFT, padx=5, pady=5)
+
+        self.bind("<Return>", self.ok)
+        self.bind("<Escape>", self.cancel)
+
+        box.pack()
+
+    #
+    # standard button semantics
+
+    def ok(self, event=None):
+
+        if not self.validate():
+            self.initial_focus.focus_set() # put focus back
+            return
+
+        self.withdraw()
+        self.update_idletasks()
+
+        self.apply()
+
+        self.cancel()
+
+    def cancel(self, event=None):
+
+        # put focus back to the parent window
+        self.parent.focus_set()
+        self.destroy()
+
+    #
+    # command hooks
+
+    def validate(self):
+
+        return 1 # override
+
+    def apply(self):
+
+        pass # override

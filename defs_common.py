@@ -10,10 +10,20 @@
 
 from datetime import datetime
 from colorama import Fore, Back, Style, init
+import os.path
+import configparser
+from datetime import datetime
+import logging
+
+CONFIGFILENAME = "config.ini"
+
+SCALE_C = 0
+SCALE_F = 1
 
 OUTLET_OFF = 1
 OUTLET_AUTO = 2
 OUTLET_ON = 3
+
 
 def logtoconsole(text, *args, **kwargs):
     
@@ -109,7 +119,12 @@ def logtoconsole(text, *args, **kwargs):
             else:
                 style = ""
                       
-    print(fore + back + style + str(datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")) + " " + text)
+    t = datetime.now()
+    s = t.strftime('%Y-%m-%d %H:%M:%S,%f')
+    s = s[:-3]
+    
+    print(fore + back + style + s + " " + text)
+    #print(fore + back + style + str(datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")) + " " + text)
     
 
 def logprobedata(log_prefix, data):
@@ -118,11 +133,98 @@ def logprobedata(log_prefix, data):
     formatted_date=str(formatted_date.strftime("%Y-%m-%d %H:%M:%S"))
     # write data to file
     log_file_name = log_prefix + datetime.now().strftime("%Y-%m-%d") + ".txt"
-    fh = open(str(config['logs']['log_dir']) + "/" + log_file_name, "a")
+    log_dir = readINIfile("logs", "log_dir", "logs")
+    #fh = open(str(config['logs']['log_dir']) + "/" + log_file_name, "a")
+    fh = open(str(log_dir) + "/" + log_file_name, "a")
     fh.write(str(formatted_date) + "," + str(data) + "\n")
     fh.close()
         
     
 def convertCtoF(temp_c):
-    temp_f = temp_c * 9.0 / 5.0 + 32.0
+    temp_f = float(temp_c) * 9.0 / 5.0 + 32.0
     return "{:.1f}".format(temp_f)
+
+
+def convertFtoC(degreesF):
+    val = (float(degreesF)-32) * (5/9)
+    return val
+
+def checkifconfigexists():
+    if os.path.isfile(CONFIGFILENAME):
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
+                      CONFIGFILENAME + " exists, reading file")
+    else:
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
+                      CONFIGFILENAME + " does not exists, creating file")
+        f = open(CONFIGFILENAME,"w+")
+        f.close()
+        
+        
+def readINIfile(section, key, default, *args, **kwargs):
+    # try to read the value from the config file
+    # if the value does not exist, lets write the default value into the
+    # file and return the default, otherwise return what is saved
+    # in the file
+    config = configparser.ConfigParser()
+    config.read(CONFIGFILENAME)
+    useDefault = False
+    if not section in config:
+        config[section] = {}
+        with open(CONFIGFILENAME,'w') as configfile:
+            config.write(configfile)
+    if not key in config[section]:
+        config[section][key] = str(default)
+        with open(CONFIGFILENAME,'w') as configfile:
+            config.write(configfile)   
+    if config[section][key] == "":
+        config[section][key] = str(default)
+        with open(CONFIGFILENAME,'w') as configfile:
+            config.write(configfile)
+            useDefault = True
+    for keyarg, value in kwargs.items():
+        if keyarg == "logger":
+            logger = value
+            logger.debug("readINIfile: " + "section=[" + section + "], key=[" + key + "], value=[" + config[section][key] + "]")
+            if useDefault == True:
+                logger.debug("readINIfile **used default value**: " + default)
+                   
+    return config[section][key] 
+
+    
+def writeINIfile(section, key, value, *args, **kwargs):
+    try:
+        config = configparser.ConfigParser()
+        config.read(CONFIGFILENAME)
+        
+        
+        try:
+            config[str(section)].update({str(key):str(value)})
+        except:
+            config[str(section)] = {str(key):str(value)} # need this line if the key
+                                                         # is not found so it will create it
+        with open(CONFIGFILENAME,'w') as configfile:
+            config.write(configfile)
+
+        for keyarg, value in kwargs.items():
+            if keyarg == "logger":
+                logger = value
+                logger.debug("writeINIfile: " + "section=[" + section + "], key=[" + key + "], value=[" + config[section][key] + "]")
+                
+        return True
+    except:
+        return False
+    
+
+def removesectionfromINIfile(section):
+    p = configparser.SafeConfigParser()
+    with open(CONFIGFILENAME, "r") as f:
+        p.readfp(f)
+
+    p.remove_section(section)
+
+    with open(CONFIGFILENAME, "w") as f:
+        p.write(f)
+
+
+
+

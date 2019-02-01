@@ -109,7 +109,7 @@ class DashBoard(tk.Frame):
         #  add probe frames to show current data and mini graphs on the GUI
         self.readExistingProbes()
         # add the feed widget
-        feedFrame = cls_FeedWidget.FeedWidget(self.frame_mid_column)
+        self.feedFrame = cls_FeedWidget.FeedWidget(self.frame_mid_column)
         # now add the outlets
         self.readOutlets()
 
@@ -162,7 +162,7 @@ class DashBoard(tk.Frame):
                 elif button_state == "AUTO":
                     button_state = defs_common.OUTLET_AUTO
 
-                defs_common.logtoconsole("Freeze Update: " + str(self.outletDict[o].outlet_freezeupdate.get())) 
+##                defs_common.logtoconsole("Freeze Update: " + str(self.outletDict[o].outlet_freezeupdate.get())) 
                 if self.outletDict[o].outlet_freezeupdate.get() != True:
                     self.outletDict[o].statusmsg.set(statusmsg)
                     if statusmsg.find("ON") != -1:
@@ -184,7 +184,7 @@ class DashBoard(tk.Frame):
                                 
                 else:
                     self.outletDict[o].outlet_freezeupdate.set(False)
-                    defs_common.logtoconsole("Freeze Update: " + str(self.outletDict[o].outlet_freezeupdate.get()), fg="CYAN")
+                    #defs_common.logtoconsole("Freeze Update: " + str(self.outletDict[o].outlet_freezeupdate.get()), fg="CYAN")
                     
 ##
 ##                self.outletDict[o].button_state.set(button_state)
@@ -201,7 +201,7 @@ class DashBoard(tk.Frame):
         request = json.dumps(request)          
         probelist = self.rpc_call(request, "rpc_queue")
         probelist = probelist.decode()
-        #print (probelist)
+        print (probelist)
         probelist = json.loads(probelist)
 
         for probeitem in probelist["probelist"]:
@@ -229,12 +229,16 @@ class DashBoard(tk.Frame):
         #print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " " + request)
         outletlist = self.rpc_call(request, "rpc_queue")
         outletlist = outletlist.decode()
-        print (outletlist)
+        #print (outletlist)
         outletlist = json.loads(outletlist)
         
-        #print (outletlist)
+        # reorder the list so its sorted by outlet id
+        print (outletlist)
+        sortedoutletlist = sorted(outletlist['outletlist'])
+        print (sortedoutletlist)
 
-        for outletitem in outletlist["outletlist"]:
+        #for outletitem in outletlist["outletlist"]:
+        for outletitem in sortedoutletlist:
             #outlet = cls_OutletWidget.OutletWidget(self.frame_mid_column)
             if outletlist["outletlist"][outletitem]["outletbus"] == "int":
                 outlet = cls_OutletWidget.OutletWidget(self.frame_mid_column)
@@ -270,6 +274,9 @@ class DashBoard(tk.Frame):
                                          expiration="300000"),
                                    body=str(n))
         while self.response is None:
-            self.connection.process_data_events()
+            self.connection.process_data_events(time_limit=20)
+            # if timelimit in seconds is reached, and we don't get a response, lets break out of the loop
+            # but we must handle NONE return on the caller
+            break
         return self.response        
         
