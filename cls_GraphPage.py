@@ -27,6 +27,7 @@ import defs_common
 import pika
 import json
 import uuid
+import threading
 
 class GraphPage(tk.Frame):
 
@@ -145,7 +146,7 @@ class GraphPage(tk.Frame):
         altgraphchoice.set(altgraphlist[0]) #default value
         graphAltType.set(str(altgraphlist[0])) # default value
 
-##        # create graph type frame
+        # create graph type frame
         frame_graphtype_alt = tk.LabelFrame(frame_left_column, relief = tk.FLAT)
         frame_graphtype_alt.pack(side=tk.TOP, fill=tk.X)
 
@@ -252,8 +253,8 @@ class GraphPage(tk.Frame):
                     xListAlt.append(t)
                 yListAlt = altChartData["probevalue"]
 
-            a2.plot(xListAlt, yListAlt, "-", picker=TRUE,label=altGraph, color='darkorange')
-            a.plot(xList, yList, "-", picker=TRUE, label=mainGraph, color='cornflowerblue')
+            a2.plot(xListAlt, yListAlt, "-", picker=TRUE,label=altGraph, color='darkorange', linewidth=2)
+            a.plot(xList, yList, "-", picker=TRUE, label=mainGraph, color='cornflowerblue', linewidth=2)
             a2.patch.set_visible(False) # some weird bug where first plot was hidden, but this fixes it
                                         # https://stackoverflow.com/questions/27216812/
                                         # matplotlib-cant-re-draw-first-axis-after-clearing-
@@ -331,7 +332,27 @@ class GraphPage(tk.Frame):
 
         # default to these
         rdo1Dy.invoke()
+
+        self.sendKeepAlive()
         
+    def sendKeepAlive(self):
+        # periodically (like every 1 or 2 minutes) send a message to the exchange so it
+        # knows this channel is still active and not closed due to inactivity
+        defs_common.logtoconsole("send keep alive request: " + "GraphPage", fg="YELLOW", style="BRIGHT")
+        request = {
+                  "rpc_req": "set_keepalive",
+                  "module": "GraphPage",
+              }
+        request = json.dumps(request)          
+        self.rpc_call(request, "rpc_queue")
+
+        # every 2 minutes, send out a message on this channel so the exchange server knows
+        # we are still alive and doesn't close our connection
+        heartbeatThread = threading.Timer(120, self.sendKeepAlive)
+        heartbeatThread.daemon = True
+        heartbeatThread.start()
+        #threading.Timer(120, self.sendKeepAlive).start()
+
     def rpc_response(self, ch, method, props, body):
         if self.corr_id == props.correlation_id:
             self.response = body

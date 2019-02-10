@@ -25,6 +25,15 @@ int_outletpins = {
 
 # MCP3008 pins
 ph_adc = 0
+mcp3008_ch0 = 0
+mcp3008_ch1 = 1
+mcp3008_ch2 = 2
+mcp3008_ch3 = 3
+mcp3008_ch4 = 4
+mcp3008_ch5 = 5
+mcp3008_ch6 = 6
+mcp3008_ch7 = 7
+
 
 def initGPIO():
     # turn off warnings

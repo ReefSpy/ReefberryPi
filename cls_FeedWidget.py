@@ -7,6 +7,8 @@ import pika
 import defs_common
 import uuid
 import json
+import time
+import threading
 
 class FeedWidget():
     
@@ -17,15 +19,18 @@ class FeedWidget():
 ##        #initialize the messaging queues      
 ##        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
 ##        channel = connection.channel()
+
         #initialize the messaging queues      
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        self.channel = self.connection.channel()
 
-        result = self.channel.queue_declare(exclusive=True)
-        self.callback_queue = result.method.queue
-
-        self.channel.basic_consume(self.rpc_response, no_ack=True,
-                                   queue=self.callback_queue)
+        self.initializeConnection()
+##        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+##        self.channel = self.connection.channel()
+##
+##        result = self.channel.queue_declare(exclusive=True)
+##        self.callback_queue = result.method.queue
+##
+##        self.channel.basic_consume(self.rpc_response, no_ack=True,
+##                                   queue=self.callback_queue)
 
         #queue for posting outlet changes
         #channel.queue_declare(queue='outlet_change')
@@ -45,6 +50,8 @@ class FeedWidget():
         self.btn_feedD.pack(side=LEFT, padx=2)
         self.btn_feedCancel = Button(self.frame_feedtimers, text="Cancel", width=6, command=lambda:select_feed_mode("CANCEL"))
         self.btn_feedCancel.pack(side=RIGHT, anchor=E, padx=2)
+
+        self.sendKeepAlive()
 
         def select_feed_mode(mode):
             #DefClr = app.cget("bg")
@@ -94,6 +101,37 @@ class FeedWidget():
 ##            print(Fore.YELLOW + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
 ##              " Press Feed Mode: " + mode + Style.RESET_ALL)
 
+    def sendKeepAlive(self):
+        # periodically (like every 1 or 2 minutes) send a message to the exchange so it
+        # knows this channel is still active and not closed due to inactivity
+        defs_common.logtoconsole("send keep alive request: " + "FeedWidget", fg="YELLOW", style="BRIGHT")
+        request = {
+                  "rpc_req": "set_keepalive",
+                  "module": "FeedWidget",
+              }
+        request = json.dumps(request)          
+        self.rpc_call(request, "rpc_queue")
+
+        # every 2 minutes or so, send out a message on this channel so the exchange server knows
+        # we are still alive and doesn't close our connection
+        heartbeatThread = threading.Timer(120, self.sendKeepAlive)
+        heartbeatThread.daemon = True
+        heartbeatThread.start()
+
+
+
+    def initializeConnection(self):
+        #initialize the messaging queues      
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        self.channel = self.connection.channel()
+
+        result = self.channel.queue_declare(exclusive=True)
+        self.callback_queue = result.method.queue
+
+        self.channel.basic_qos(prefetch_count=1)
+        self.channel.basic_consume(self.rpc_response, no_ack=True,
+                                   queue=self.callback_queue)
+
     def rpc_response(self, ch, method, props, body):
         if self.corr_id == props.correlation_id:
             self.response = body
@@ -107,6 +145,13 @@ class FeedWidget():
 
         defs_common.logtoconsole(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " RPC call: " + n
               + " UID: " + self.corr_id, fg="GREEN", style="BRIGHT")
+
+        if self.connection.is_open:
+            defs_common.logtoconsole("Pika connection is OPEN")
+        else:
+            defs_common.logtoconsole("Pika connection is CLOSED")
+            defs_common.logtoconsole("Reopen Pika connection")
+            self.initializeConnection()
             
         self.channel.basic_publish(exchange='',
                                    routing_key=queue,

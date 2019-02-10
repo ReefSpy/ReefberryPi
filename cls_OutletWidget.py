@@ -8,7 +8,10 @@ import pika
 import defs_common
 import uuid
 import json
-import cfg_outlets
+#import cfg_outlets
+import cls_OutletConfig
+import time
+import threading
 
 class OutletWidget():
     
@@ -31,18 +34,17 @@ class OutletWidget():
         self.outlet_freezeupdate.set(True)
 
 
-        #initialize the messaging queues      
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        self.channel = self.connection.channel()
+        self.initializeConnection()
+##        #initialize the messaging queues      
+##        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat_interval=5))
+##        self.channel = self.connection.channel()
+##
+##        result = self.channel.queue_declare(exclusive=True)
+##        self.callback_queue = result.method.queue
+##
+##        self.channel.basic_consume(self.rpc_response, no_ack=True,
+##                                   queue=self.callback_queue)
 
-        result = self.channel.queue_declare(exclusive=True)
-        self.callback_queue = result.method.queue
-
-        self.channel.basic_consume(self.rpc_response, no_ack=True,
-                                   queue=self.callback_queue)
-
-        #queue for posting outlet changes
-        #self.channel.queue_declare(queue='outlet_change')
         
 
         # frame for internal outlet 1 control
@@ -73,6 +75,8 @@ class OutletWidget():
                                     indicatoron=0)
         self.rdo_outlet_on.pack(side=LEFT, expand=1, fill=X)
 
+        self.sendKeepAlive()
+
     def rpc_response(self, ch, method, props, body):
         if self.corr_id == props.correlation_id:
             self.response = body
@@ -87,6 +91,14 @@ class OutletWidget():
         defs_common.logtoconsole(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " RPC call: " + n
               + " UID: " + self.corr_id, fg="GREEN", style="BRIGHT")
             
+
+        if self.connection.is_open:
+            defs_common.logtoconsole("Pika connection is OPEN")
+        else:
+            defs_common.logtoconsole("Pika connection is CLOSED")
+            defs_common.logtoconsole("Reopen Pika connection")
+            self.initializeConnection()
+            
         self.channel.basic_publish(exchange='',
                                    routing_key=queue,
                                    properties=pika.BasicProperties(
@@ -98,10 +110,41 @@ class OutletWidget():
             self.connection.process_data_events()
         return self.response
     
-    def updateOutletFrameName(self):
-        self.frame_outlet.config(text = self.outletname.get())
+    def initializeConnection(self):
+        #initialize the messaging queues      
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        self.channel = self.connection.channel()
 
-                            
+        result = self.channel.queue_declare(exclusive=True)
+        self.callback_queue = result.method.queue
+
+        self.channel.basic_qos(prefetch_count=1)
+        self.channel.basic_consume(self.rpc_response, no_ack=True,
+                                   queue=self.callback_queue)
+
+    def updateOutletFrameName(self, name):
+        self.frame_outlet.config(text = name)
+        print(name)
+
+    def sendKeepAlive(self):
+        # periodically (like every 1 or 2 minutes) send a message to the exchange so it
+        # knows this channel is still active and not closed due to inactivity
+        defs_common.logtoconsole("send keep alive request: " + str(self.outletid.get()), fg="YELLOW", style="BRIGHT")
+        request = {
+                  "rpc_req": "set_keepalive",
+                  "module": str(self.outletid.get()),
+              }
+        request = json.dumps(request)          
+        self.rpc_call(request, "rpc_queue")
+
+        # every 2 minutes, send out a message on this channel so the exchange server knows
+        # we are still alive and doesn't close our connection
+        heartbeatThread = threading.Timer(120, self.sendKeepAlive)
+        heartbeatThread.daemon = True
+        heartbeatThread.start()
+        #threading.Timer(120, self.sendKeepAlive).start()
+        
+                                
     def select_outlet_state(self):
         defs_common.logtoconsole("outlet state change: " + str(self.outletid.get()) + " to " + str(self.button_state.get()), fg="YELLOW", style="BRIGHT")
         if self.button_state.get() == defs_common.OUTLET_OFF:
@@ -165,16 +208,31 @@ class OutletWidget():
         defs_common.logtoconsole("Freeze Update: " + str(self.outletid.get() + " " + str(self.outlet_freezeupdate.get())), fg="CYAN")
 
     def configureOutlet(self, master):
-        print("dialog")
-        d = Dialog(master)
+        print("dialog " + self.outletid.get().split("_")[2])
+        outnum = self.outletid.get().split("_")[2]
         
+        d = Dialog(master, self, outnum)
+
+    def uploadsettings(self, section, key, value):
+        defs_common.logtoconsole("Request settings change: [" + section + "] [" + key + "] = " + value)
+        # request settings change on server
+        request = {
+                  "rpc_req": "set_writeinifile",
+                  "section": str(section),
+                  "key": str(key),
+                  "value": str(value)
+              }
+        request = json.dumps(request)          
+        self.rpc_call(request, "rpc_queue")
 
 class Dialog(Toplevel):
 
-    def __init__(self, parent, title = None):
+    def __init__(self, parent, controller, outletnum, title = None):
 
         Toplevel.__init__(self, parent)
         self.transient(parent)
+
+        self.controller = controller
 
         if title:
             self.title(title)
@@ -182,6 +240,8 @@ class Dialog(Toplevel):
         self.parent = parent
 
         self.result = None
+
+        self.outletnum = outletnum
 
         body = Frame(self)
         self.initial_focus = self.body(body)
@@ -203,13 +263,17 @@ class Dialog(Toplevel):
 
         self.wait_window(self)
 
+
+
     #
     # construction hooks
 
     def body(self, master):
         # create dialog body.  return widget that should have
         # initial focus.  this method should be overridden
-        outlet = cfg_outlets.PageOutlets(master, self)
+        #outlet = cfg_outlets.PageOutlets(master, self)
+        outlet = cls_OutletConfig.Outlet(master, self, cls_OutletConfig.BUS_INTERNAL, self.outletnum)
+
         outlet.pack()
         pass
 

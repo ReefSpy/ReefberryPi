@@ -27,6 +27,8 @@ import ds18b20
 import mcp3008
 import GPIO_config
 import RPi.GPIO as GPIO
+import numpy
+import ph_sensor
 
 
 class RBP_server:
@@ -60,10 +62,10 @@ class RBP_server:
         # dictionaries to hold all the temperature probes and outlets
         self.tempProbeDict = {}
         self.outletDict = {}
+        self.mcp3008Dict = {}
 
         #read prefs
         self.read_preferences()
-        
 
         # set up the GPIO
         GPIO_config.initGPIO()
@@ -84,8 +86,8 @@ class RBP_server:
 ##        mcp3008_0 = None
 ##
         # need the initial probe time seed to compare our sampling intervals against
-        self.ph_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
-        self.ph_LastLogTime = int(round(time.time()*1000)) #convert time to milliseconds
+        self.dv_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+        #self.dv_LastLogTime = int(round(time.time()*1000)) #convert time to milliseconds
         
         self.DHT_Sensor["dht11_lastlogtime"] = int(round(time.time()*1000)) #convert time to milliseconds
         self.DHT_Sensor["dht11_samplingtimeseed"] = int(round(time.time()*1000)) #convert time to milliseconds
@@ -116,10 +118,10 @@ class RBP_server:
             }
 
         self.temperaturescale =  int(defs_common.readINIfile('global', 'tempscale', "0", logger=self.logger)) 
-        self.ph_numsamples = int(defs_common.readINIfile('ph', 'ph_numsamples', "10", logger=self.logger)) # how many samples to collect before averaging
-        self.ph_SamplingInterval = int(defs_common.readINIfile('ph', 'ph_samplinginterval', "1000", logger=self.logger)) # milliseconds
-        self.ph_Sigma = int(defs_common.readINIfile('ph', 'ph_sigma', "1", logger=self.logger)) # how many standard deviations to clean up outliers
-        self.ph_LogInterval = int(defs_common.readINIfile('ph', 'ph_loginterval', "300000", logger=self.logger)) # milliseconds
+##        self.ph_numsamples = int(defs_common.readINIfile('ph', 'ph_numsamples', "10", logger=self.logger)) # how many samples to collect before averaging
+##        self.ph_SamplingInterval = int(defs_common.readINIfile('ph', 'ph_samplinginterval', "1000", logger=self.logger)) # milliseconds
+##        self.ph_Sigma = int(defs_common.readINIfile('ph', 'ph_sigma', "1", logger=self.logger)) # how many standard deviations to clean up outliers
+##        self.ph_LogInterval = int(defs_common.readINIfile('ph', 'ph_loginterval', "300000", logger=self.logger)) # milliseconds
         self.ds18b20_SamplingInterval = int(defs_common.readINIfile('probes_ds18b20', 'ds18b20_samplinginterval', "5000", logger=self.logger)) # milliseconds
         self.ds18b20_LogInterval = int(defs_common.readINIfile('probes_ds18b20', 'ds18b20_loginterval', "300000", logger=self.logger)) # milliseconds
         self.outlet_SamplingInterval = int(defs_common.readINIfile('outlets', 'outlet_samplinginterval', "5000", logger=self.logger)) # milliseconds
@@ -144,7 +146,8 @@ class RBP_server:
             #outletDict[outlet]["outletname"]
             defs_common.logtoconsole("outlet prefs loaded for: " + str(self.outletDict[outlet].outletname), fg="BLUE", Style="BRIGHT")
 
-        
+        # read the mcp3008 analog probe channels
+        self.readmcp3008Prefs(self.mcp3008Dict)
     
     def initialize_logger(self, output_dir, output_file, loglevel_console, loglevel_logfile):
         self.logger = logging.getLogger()
@@ -206,14 +209,18 @@ class RBP_server:
         #defs_common.writeINIfile(bus + "_outlet_" + outletnum, "button_state", button_state)
         curstate = defs_common.readINIfile(outlet, "button_state", "OFF", logger=self.logger)
         if curstate != button_state:
+##            changerequest = {}
+##            changerequest["outletid"] = outlet
+##            changerequest["button_state"] = button_state
+##            self.logger.debug("outlet_control: change " + outlet + " button_state to " + button_state + " (from " + curstate + ")")
+##            self.queue.put(changerequest)  
+            #
             changerequest = {}
-            changerequest["outletid"] = outlet
-            changerequest["button_state"] = button_state
-            #self.queue.put("i want to change " + outlet + " to " + button_state + " curstate = " + curstate)
-            #print("i want to change " + outlet + " to " + button_state + " curstate = " + curstate)
+            changerequest["section"] = outlet
+            changerequest["key"] = "button_state"
+            changerequest["value"] = button_state
             self.logger.debug("outlet_control: change " + outlet + " button_state to " + button_state + " (from " + curstate + ")")
-            self.queue.put(changerequest)
-
+            self.queue.put(changerequest)        
         
         # control type ALWAYS
         if controltype == "Always":
@@ -478,6 +485,9 @@ class RBP_server:
         channel1 = connection1.channel()
         connection2= pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         channel2 = connection2.channel()
+        connection3= pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        channel3 = connection3.channel()
+        
         t1 = threading.Thread(target=self.handle_rpc, args=(channel1,))
         t1.daemon = True
         self.threads.append(t1)
@@ -488,8 +498,54 @@ class RBP_server:
         self.threads.append(t2)
         t2.start()
 
+        t3 = threading.Thread(target=self.handle_nodered, args=(channel3,))
+        t3.daemon = True
+        self.threads.append(t3)
+        t3.start()
+
         for t in self.threads:
           t.join()
+
+    def handle_nodered(self, channel):
+        channel.queue_declare(queue='rbp_nodered')
+        self.logger.info("Waiting for node-red messages...")
+
+        def callback(ch, method, props, body):
+            
+            body = body.decode()
+            body = json.loads(body)
+            response = ""
+
+            self.logger.debug("[handle_nodered:callback] ch=" + str(ch) + " method=" + str(method) + " props=" + str(props) + " body-" + str(body))
+            defs_common.logtoconsole(str(body["rpc_req"]), fg="MAGENTA", style="BRIGHT")
+
+            if str(body["rpc_req"]) == "set_outletopmodenodered":
+                defs_common.logtoconsole("set_outletopmodenodered " + str(body), fg="GREEN", style="BRIGHT")
+                self.logger.info("set_outletopmodenodered " + str(body))
+                outlet = str(str(body["bus"]) + "_outlet" + str(body["outletnum"]))
+                mode = str(body["opmode"]).upper()
+
+                # bad things happened when I tried to control outlets from this thread
+                # allow control to happen in the other thread by just changing the dictionary value
+                self.int_outlet_buttonstates[str(outlet) + "_buttonstate"] = mode
+
+            elif str(body["rpc_req"]) == "set_feedmode":
+                defs_common.logtoconsole("set_feedmode " + str(body), fg="GREEN", style="BRIGHT")
+                self.logger.info("set_feedmode " + str(body))
+                self.feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+                defs_common.logtoconsole("Mode is " + str(body["feedmode"]), fg="BLUE", style="BRIGHT")
+                self.feed_CurrentMode = str(body["feedmode"])
+                self.feed_PreviousMode = "CANCEL"
+                
+
+                # if feed mode was cancelled, broadcast it out 
+                if self.feed_CurrentMode == "CANCEL":
+                    self.broadcastFeedStatus(self.feed_CurrentMode, "0")
+
+        channel.basic_qos(prefetch_count=1)
+        channel.basic_consume(callback, no_ack = True, queue='rbp_nodered')
+        channel.start_consuming()
+
 
     def handle_rpc(self,channel):    
         channel.queue_declare(queue='rpc_queue')
@@ -586,6 +642,26 @@ class RBP_server:
                 if self.feed_CurrentMode == "CANCEL":
                     self.broadcastFeedStatus(self.feed_CurrentMode, "0")
 
+            elif str(body["rpc_req"]) == "set_keepalive":
+                # periodically, a call is sent out on the channel to ensure
+                # Rabbit MQ knows it is alive and keeps connection open
+                # just log it, don't do anything else
+                defs_common.logtoconsole("set_keepalive " + str(body), fg="GREEN", style="BRIGHT")
+                self.logger.debug("set_keepalive " + str(body))
+
+            elif str(body["rpc_req"]) == "set_writeinifile":
+                # write values to the configuration file
+                defs_common.logtoconsole("set_writeinifile " + str(body), fg="GREEN", style="BRIGHT")
+                self.logger.debug("set_writeinifile " + str(body))
+
+                changerequest = {}
+                changerequest["section"] = str(body["section"])
+                changerequest["key"] = str(body["key"])
+                changerequest["value"] = str(body["value"])
+                self.queue.put(changerequest)     
+
+
+            
             else:
                 response = {
                                "rpc_ack": "Error"
@@ -596,12 +672,16 @@ class RBP_server:
 
 
 
-            ch.basic_publish(exchange='',
-                      routing_key=props.reply_to,
-                      properties=pika.BasicProperties(correlation_id = \
-                                                         props.correlation_id),
-                      body=str(response))
-            ch.basic_ack(delivery_tag = method.delivery_tag)
+            try:
+                ch.basic_publish(exchange='',
+                          routing_key=props.reply_to,
+                          properties=pika.BasicProperties(correlation_id = \
+                                                             props.correlation_id),
+                          body=str(response))
+                
+                ch.basic_ack(delivery_tag = method.delivery_tag)
+            except:
+                print("error with RPC publish")
 
         channel.basic_qos(prefetch_count=1)
         channel.basic_consume(callback, queue='rpc_queue')
@@ -674,6 +754,26 @@ class RBP_server:
 
                 self.logger.info("read temperature probe from config: probeid = " + probe.probeid + ", probename = " + probe.name)
 
+    def readmcp3008Prefs(self, mcp3008Dict):
+        mcp3008Dict.clear()
+        self.dv_SamplingInterval = int(defs_common.readINIfile('mcp3008', 'dv_samplinginterval', "1000", logger=self.logger)) # milliseconds
+        self.dv_LogInterval = int(defs_common.readINIfile('mcp3008', 'dv_loginterval', "300000", logger=self.logger)) # milliseconds
+
+        # there are 8 channels on this chip
+        for x in range(8):
+            channel = analogChannelClass()
+            channel.ch_num = x
+            prefix = "ch" + str(x)
+            channel.ch_name = defs_common.readINIfile("mcp3008", prefix + "_name", "Unnamed", logger=self.logger)
+            channel.ch_enabled = defs_common.readINIfile("mcp3008", prefix + "_enabled", "False", logger=self.logger)
+            channel.ch_type = defs_common.readINIfile("mcp3008", prefix + "_type", "raw", logger=self.logger)
+            channel.ch_dvlist = []
+            channel.ch_numsamples = defs_common.readINIfile("mcp3008", prefix + "_numsamples", "10", logger=self.logger) # how many samples to collect before averaging
+            channel.ch_sigma = defs_common.readINIfile("mcp3008", prefix + "_sigma", "1", logger=self.logger) # how many standard deviations to clean up outliers
+            channel.LastLogTime = int(round(time.time()*1000)) #convert time to milliseconds
+            mcp3008Dict [x] = channel
+
+        
     def readOutletPrefs(self, outletDict):
         outletDict.clear()
         config = configparser.ConfigParser()
@@ -738,20 +838,14 @@ class RBP_server:
                         probedict[probeid]={"probetype": probetype, "probeid": probeid, "probename": probename, "sensortype": sensortype}
 
             if section == "mcp3008":
-                #print(config[section]["ch0_enabled"])
-                if config[section]["ch0_enabled"] == "True": 
-                    probetype = "mcp3008"
-                    probeid = "mcp3008_ch0"
-                    probename = config[section]["ch0_name"]
-                    sensortype = config[section]["ch0_type"]
-                    probedict[probeid]={"probetype": probetype, "probeid": probeid, "probename": probename, "sensortype": sensortype}
-          
-                if  config[section]["ch1_enabled"] == "True": 
-                    probetype = "mcp3008"
-                    probeid = "mcp3008_ch1"
-                    probename = config[section]["ch1_name"]
-                    sensortype = config[section]["ch1_type"]
-                    probedict[probeid]={"probetype": probetype, "probeid": probeid, "probename": probename, "sensortype": sensortype}
+                for x in range (0,8):
+                    if config[section]["ch" + str(x) + "_enabled"] == "True":
+                        probetype = "mcp3008"
+                        probeid = "mcp3008_ch" + str(x)
+                        probename = config[section]["ch" + str(x) + "_name"]
+                        sensortype = config[section]["ch" + str(x) + "_type"]
+                        probedict[probeid]={"probetype": probetype, "probeid": probeid, "probename": probename, "sensortype": sensortype}
+                        
     
         return probedict
 
@@ -763,8 +857,6 @@ class RBP_server:
         # loop through each section and see if it is an outlet on internl bus
         
         for section in config:
-            #print(section)
-            #if section.find("int_outlet") > -1 or section.find("ext_outlet") > -1:
             if section.find("int_outlet") > -1:
                 outletid = section
                 outletname = config[section]["name"]
@@ -905,9 +997,91 @@ class RBP_server:
 ##                    ph_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 
 
+            
+            ##########################################################################################
+            # read each of the 8 channels on the mcp3008
+            # channels (0-7)
+            ##########################################################################################
+            # only read the data at every ph_SamplingInterval (ie: 500ms or 1000ms)
+            if (int(round(time.time()*1000)) - self.dv_SamplingTimeSeed) > self.dv_SamplingInterval:
+                #for x in range (0,8):
+                for ch in self.mcp3008Dict:
+                    if self.mcp3008Dict[ch].ch_enabled == "True":
+                        #defs_common.logtoconsole(str(self.mcp3008Dict[ch].ch_num) + " " + str(self.mcp3008Dict[ch].ch_name) + " " + str(self.mcp3008Dict[ch].ch_enabled) + " " + str(len(self.mcp3008Dict[ch].ch_dvlist)))
+                        dv = mcp3008.readadc(int(self.mcp3008Dict[ch].ch_num), GPIO_config.SPICLK, GPIO_config.SPIMOSI,
+                                                GPIO_config.SPIMISO, GPIO_config.SPICS)
 
+                        self.mcp3008Dict[ch].ch_dvlist.append(dv)
+                        #self.logger.info(str(self.mcp3008Dict[ch].ch_num) + " " + str(self.mcp3008Dict[ch].ch_name) + " " + str(self.mcp3008Dict[ch].ch_dvlist))
+                    # once we hit our desired sample size of ph_numsamples (ie: 120)
+                    # then calculate the average value
+                    if len(self.mcp3008Dict[ch].ch_dvlist) >= int(self.mcp3008Dict[ch].ch_numsamples):
+                        # The probes may pick up noise and read very high or
+                        # very low values that we know are not good values. We are going to use numpy
+                        # to calculate the standard deviation and remove the outlying data that is
+                        # Sigma standard deviations away from the mean.  This way these outliers
+                        # do not affect our results
+                        self.logger.info("mcp3008 ch" + str(self.mcp3008Dict[ch].ch_num) + " raw data " + str(self.mcp3008Dict[ch].ch_name) + " " + str(self.mcp3008Dict[ch].ch_dvlist))
+                        dv_FilteredCounts = numpy.array(self.mcp3008Dict[ch].ch_dvlist)
+                        dv_FilteredMean = numpy.mean(dv_FilteredCounts, axis=0)
+                        dv_FlteredSD = numpy.std(dv_FilteredCounts, axis=0)
+                        dv_dvlistfiltered = [x for x in dv_FilteredCounts if
+                                            (x > dv_FilteredMean - float(self.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
+                        dv_dvlistfiltered = [x for x in dv_dvlistfiltered if
+                                            (x < dv_FilteredMean + float(self.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
 
+                        self.logger.info("mcp3008 ch" + str(self.mcp3008Dict[ch].ch_num) + " filtered " + str(self.mcp3008Dict[ch].ch_name) + " " + str(dv_dvlistfiltered))
+                    
+                        # calculate the average of our filtered list
+                        try:
+                            dv_AvgCountsFiltered = int(sum(dv_dvlistfiltered)/len(dv_dvlistfiltered))
+                            print( "{:.2f}".format(dv_AvgCountsFiltered)) ## delete this line
+                        except:
+                            dv_AvgCountsFiltered = 1  # need to revisit this error handling. Exception thrown when all
+                                                      # values were 1023
+                            print("Error collecting data")  
 
+                        #self.mcp3008Dict[ch].ch_dvlist.clear()  ## delete  this line
+
+                        if self.mcp3008Dict[ch].ch_type == "pH":
+                            # bug, somtimes value is coming back high, like really high, like 22.0.  this is an impossible
+                            # value since max ph is 14.  need to figure this out later, but for now, lets log this val to aid in
+                            # debugging
+                            orgval = dv_AvgCountsFiltered
+                            
+                            #convert digital value to ph
+                            dv_AvgCountsFiltered = ph_sensor.dv2ph(dv_AvgCountsFiltered)
+                            dv_AvgCountsFiltered = float("{:.2f}".format(dv_AvgCountsFiltered))
+
+                            if dv_AvgCountsFiltered > 14:
+                                self.logger.error("Invalid PH value: " + str(dv_AvgCountsFiltered) + " " + str(orgval) + " " + str(dv_dvlistfiltered))
+                                defs_common.logtoconsole("Invalid PH value: " + str(dv_AvgCountsFiltered) + " " + str(orgval) + " " + str(dv_dvlistfiltered), fg="RED", style = "BRIGHT")
+##
+                        # if enough time has passed (ph_LogInterval) then log the data to file
+                        # otherwise just print it to console
+                        timestamp = datetime.now()
+                        if (int(round(time.time()*1000)) - self.mcp3008Dict[ch].LastLogTime) > self.dv_LogInterval:
+                            # sometimes a high value, like 22.4 gets recorded, i need to fix this, but for now don't log that
+##                            if ph_AvgFiltered < 14.0:  
+                            #RBP_commons.logprobedata(config['logs']['ph_log_prefix'], "{:.2f}".format(ph_AvgFiltered))
+                            defs_common.logprobedata("mcp3008_ch" + str(self.mcp3008Dict[ch].ch_num) + "_", "{:.2f}".format(dv_AvgCountsFiltered))
+                            print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** dv = "
+                                  + "{:.2f}".format(dv_AvgCountsFiltered) + Style.RESET_ALL)
+                            self.mcp3008Dict[ch].LastLogTime = int(round(time.time()*1000))
+                        else:
+                            print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " dv = "
+                                  + "{:.2f}".format(dv_AvgCountsFiltered))
+                            #writeCurrentState('probes','ph', str("{:.2f}".format(ph_AvgFiltered)))
+##                            channel.basic_publish(exchange='',
+##                                routing_key='current_state',
+##                                properties=pika.BasicProperties(expiration='10000'),
+##                                body=str("mcp3008_0" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "{:.2f}".format(ph_AvgFiltered)))
+                        self.broadcastProbeStatus("mcp3008", "mcp3008_ch" + str(self.mcp3008Dict[ch].ch_num), (dv_AvgCountsFiltered)) 
+                        # clear the list so we can populate it with new data for the next data set
+                        self.mcp3008Dict[ch].ch_dvlist.clear()
+                        # record the new sampling time
+                        self.dv_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+                        
             ################################################################################################################
             # read dht11 temperature and humidity sensor
             #
@@ -963,10 +1137,10 @@ class RBP_server:
             # we support multiple probes, so work from the probe dictionary and get data
             # for each
             ##########################################################################################
-            # read data from the temperature probes
+            # read data from the temperature probes       
             if (int(round(time.time()*1000)) - self.ds18b20_SamplingTimeSeed) > self.ds18b20_SamplingInterval:
                 for p in self.tempProbeDict:
-                    try:
+                    try:             
                         timestamp = datetime.now()
                         dstempC =  float(ds18b20.read_temp("C"))
                         dstempF = defs_common.convertCtoF(float(dstempC))
@@ -1015,7 +1189,6 @@ class RBP_server:
             ##########################################################################################
             
             if self.feed_CurrentMode == "A":
-                #defs_common.logtoconsole("++++++++++++++ FEED A +++++++++++++++", fg="MAGENTA", style="BRIGHT")
                 self.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_a", "60")
             elif self.feed_CurrentMode == "B":
                 self.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_b", "60")
@@ -1033,10 +1206,6 @@ class RBP_server:
                            " Feed Mode: " + self.feed_CurrentMode + " COMPLETE" + Style.RESET_ALL)
                     self.feed_CurrentMode = "CANCEL"
                     timestamp = datetime.now()
-##                    channel.basic_publish(exchange='',
-##                            routing_key='current_state',
-##                            properties=pika.BasicProperties(expiration='10000'),
-##                            body=str("feed_timer" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(self.feed_CurrentMode) + "," + str(0)))
 
                     self.broadcastFeedStatus(self.feed_CurrentMode, self.feedTimeLeft)
                          
@@ -1047,16 +1216,8 @@ class RBP_server:
                            " Feed Mode: " + self.feed_CurrentMode + " (" + self.feed_ModeTotaltime + "s) " + "Time Remaining: " + str(round(self.feedTimeLeft/1000)) + "s"
                            + Style.RESET_ALL)
                     timestamp = datetime.now()
-##                    channel.basic_publish(exchange='',
-##                            routing_key='current_state',
-##                            properties=pika.BasicProperties(expiration='10000'),
-##                            body=str("feed_timer" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + str(self.feed_CurrentMode) + "," + str(round(self.feedTimeLeft/1000))))
+
                     self.broadcastFeedStatus(self.feed_CurrentMode, round(self.feedTimeLeft/1000))
-        
-
-
-
-
 
 
             ##########################################################################################
@@ -1130,11 +1291,17 @@ class RBP_server:
             ##########################################################################################
             if self.queue.qsize(  ) > 0:
                 for i in range(0,self.queue.qsize()):
+##                    msg = self.queue.get(0)
+##                    self.logger.info("Configuration update: " + msg["outletid"] + " button_state to " + msg["button_state"])
+##                    defs_common.writeINIfile(msg["outletid"], "button_state", msg["button_state"], logger=self.logger)
+##                    print (msg)
+##                    print (self.queue.qsize(  ))
+
                     msg = self.queue.get(0)
-                    self.logger.info("Configuration update: " + msg["outletid"] + " button_state to " + msg["button_state"])
-                    defs_common.writeINIfile(msg["outletid"], "button_state", msg["button_state"], logger=self.logger)
+                    self.logger.info("Configuration update: [" + msg["section"] + "] [ " + msg["key"] + "] = " + msg["value"])
+                    defs_common.writeINIfile(msg["section"], msg["key"], msg["value"], logger=self.logger)
                     print (msg)
-                    print (self.queue.qsize(  ))
+                    print (self.queue.qsize())                    
             ########################################################################################## 
             # pause to slow down the loop, otherwise CPU usage spikes as program is busy waiting
             ##########################################################################################            
@@ -1168,6 +1335,17 @@ class outletPrefs():
     return_enable_feed_d = ""
     return_feed_delay_d  = ""
   
+class analogChannelClass():
+    # class for probes connected to mcp3008 a-d chip
+    ch_num = ""
+    ch_name = ""
+    ch_enabled = ""
+    ch_type = ""
+    # list to hold the raw digital values
+    ch_dvlist = []
+    ch_numsamples = ""
+    ch_sigma = ""
+    LastLogTime = ""
 
     
 root = RBP_server()

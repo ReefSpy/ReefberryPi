@@ -153,7 +153,7 @@ class DashBoard(tk.Frame):
                 
                 
                 self.outletDict[o].outletstate.set(outletstate)
-                self.outletDict[o].updateOutletFrameName
+                self.outletDict[o].updateOutletFrameName(outletname)
 
                 if button_state == "OFF":
                     button_state = defs_common.OUTLET_OFF
@@ -204,7 +204,31 @@ class DashBoard(tk.Frame):
         print (probelist)
         probelist = json.loads(probelist)
 
-        for probeitem in probelist["probelist"]:
+        #sort the probelist by probeid
+        sortedprobelist = sorted(probelist['probelist'])
+
+        # i want to display the panels in a certain order ds18b20 at top
+        # then dht, then mcp3008, so lets arrange the list
+        orderedsortedlist = []
+        print(sortedprobelist)
+        for item in sortedprobelist:
+            if item.split("_")[0] == "ds18b20":
+                orderedsortedlist.append(item)
+        for item in sortedprobelist:
+            if item.find("dht_t") != -1:
+                orderedsortedlist.append(item)
+        for item in sortedprobelist:
+            if item.find("dht_h") != -1:
+                orderedsortedlist.append(item)
+        for item in sortedprobelist:
+            if item.split("_")[0] == "mcp3008":
+                orderedsortedlist.append(item)
+
+        print(orderedsortedlist)
+        
+        #for probeitem in probelist["probelist"]:
+        #for probeitem in sortedprobelist:
+        for probeitem in orderedsortedlist:
             #print(probeitem)
             #print(probelist["probelist"][probeitem]["probename"])
             
@@ -237,6 +261,7 @@ class DashBoard(tk.Frame):
         sortedoutletlist = sorted(outletlist['outletlist'])
         print (sortedoutletlist)
 
+
         #for outletitem in outletlist["outletlist"]:
         for outletitem in sortedoutletlist:
             #outlet = cls_OutletWidget.OutletWidget(self.frame_mid_column)
@@ -249,7 +274,7 @@ class DashBoard(tk.Frame):
             outlet.outletbus.set(outletlist["outletlist"][outletitem]["outletbus"])
             outlet.outletid.set(outletlist["outletlist"][outletitem]["outletid"])
             outlet.control_type.set(outletlist["outletlist"][outletitem]["control_type"])
-            outlet.updateOutletFrameName()
+            outlet.updateOutletFrameName(outletlist["outletlist"][outletitem]["outletname"])
             self.outletDict [outlet.outletid.get()] = outlet
             
             
