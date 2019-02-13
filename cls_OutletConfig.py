@@ -6,6 +6,7 @@ import cfg_common
 from tkinter import font
 import cfg_tempprobes
 
+
 LARGE_FONT = ("Verdana", 12)
 BUS_INTERNAL = 0
 BUS_EXTERNAL = 1
@@ -271,15 +272,18 @@ class Outlet(tk.Frame):
             section = "ext_outlet_" + str(self.outletnum.get())
 
         # outlet name
-        val = cfg_common.readINIfile(section, "name", "Unnamed")
+        #val = cfg_common.readINIfile(section, "name", "Unnamed")
+        val = self.downloadsettings(section, "name", "Unnamed")
         self.txt_outletname.delete(0, 'end')
         self.txt_outletname.insert(0, val)
         # control type
-        val = cfg_common.readINIfile(section, "control_type", "Always")
+        #val = cfg_common.readINIfile(section, "control_type", "Always")
+        val = self.downloadsettings(section, "control_type", "Always")
         self.controltypechoice.set(val)
         self.select_controltype(val)
         # enable logging     
-        val = cfg_common.readINIfile(section, "enable_log", str(False))
+        #val = cfg_common.readINIfile(section, "enable_log", str(False))
+        val = self.downloadsettings(section, "enable_log", str(False))
         if str(val) == "True":
             self.chk_log.select()
         else:
@@ -288,6 +292,11 @@ class Outlet(tk.Frame):
     def uploadsettings(self, section, key, value):
         # send the command back up to the controller to handle the request
         self.controller.controller.uploadsettings(section, key, value)
+
+    def downloadsettings(self, section, key, defaultval):
+        # send the command back up to the controller to handle the request
+        val = self.controller.controller.downloadsettings(section, key, defaultval)
+        return val
 
     def setOutletName(self):
         self.txt_outletname.delete(0, 'end')
@@ -440,7 +449,8 @@ class Outlet(tk.Frame):
                 self.uploadsettings(section, "skimmer_enable_feed_d", "False")
 
         elif self.controltypechoice.get() == "Heater": # Heater
-            tempscale = cfg_common.readINIfile("global", "tempscale", cfg_common.SCALE_F)
+            #tempscale = cfg_common.readINIfile("global", "tempscale", cfg_common.SCALE_F)
+            tempscale = self.downloadsettings("global", "tempscale", cfg_common.SCALE_F)
             if int(tempscale) == int(cfg_common.SCALE_C):
                 #cfg_common.writeINIfile(section, "heater_on", self.spn_ontemp.get())
                 #cfg_common.writeINIfile(section, "heater_off", self.spn_offtemp.get())
@@ -532,7 +542,8 @@ class Outlet(tk.Frame):
             self.spn_offtemp.grid(row=3, column=1, sticky=W, padx=5, pady=5)
 
             # read saved values
-            val = cfg_common.readINIfile(section, "heater_probe", "")
+            #val = cfg_common.readINIfile(section, "heater_probe", "")
+            val = self.downloadsettings(section, "heater_probe", "")
             if val != "":
                 try:
                     self.tempprobechoice.set(probeDict[val].name + " [" +
@@ -541,20 +552,25 @@ class Outlet(tk.Frame):
                     self.tempprobechoice.set(val) # if a selection was made, but probe later deleted
                                                   # it won't find the name so just use the ID
 
-            tempscale = cfg_common.readINIfile("global", "tempscale", cfg_common.SCALE_F)
+            #tempscale = cfg_common.readINIfile("global", "tempscale", cfg_common.SCALE_F)
+            tempscale = self.downloadsettings("global", "tempscale", cfg_common.SCALE_F)
             if int(tempscale) == int(cfg_common.SCALE_C):
-                val = cfg_common.readINIfile(section, "heater_on", "25.0")
+                #val = cfg_common.readINIfile(section, "heater_on", "25.0")
+                val = self.downloadsettings(section, "heater_on", "25.0")
                 self.spn_ontemp.delete(0, END)
                 self.spn_ontemp.insert(0, '{0:.1f}'.format(float(val)))
-                val = cfg_common.readINIfile(section, "heater_off", "25.5")
+                #val = cfg_common.readINIfile(section, "heater_off", "25.5")
+                val = self.downloadsettings(section, "heater_off", "25.5")
                 self.spn_offtemp.delete(0, END)
                 self.spn_offtemp.insert(0, '{0:.1f}'.format(float(val)))
             else:
-                val = cfg_common.readINIfile(section, "heater_on", "25.0")
+                #val = cfg_common.readINIfile(section, "heater_on", "25.0")
+                val = self.downloadsettings(section, "heater_on", "25.0")
                 val = cfg_common.convertCtoF(val)
                 self.spn_ontemp.delete(0, END)
                 self.spn_ontemp.insert(0, '{0:.1f}'.format(float(val)))
-                val = cfg_common.readINIfile(section, "heater_off", "25.5")
+                #val = cfg_common.readINIfile(section, "heater_off", "25.5")
+                val = self.downloadsettings(section, "heater_off", "25.5")
                 val = cfg_common.convertCtoF(val)
                 self.spn_offtemp.delete(0, END)
                 self.spn_offtemp.insert(0, '{0:.1f}'.format(float(val)))
@@ -571,7 +587,8 @@ class Outlet(tk.Frame):
             self.statemenu.configure(indicatoron=True, relief=GROOVE)
             self.statemenu.grid(row=1, column=1, padx=5, sticky=W)
             # read saved state
-            val = cfg_common.readINIfile(section, "always_state", "ON")
+            #val = cfg_common.readINIfile(section, "always_state", "ON")
+            val = self.downloadsettings(section, "always_state", "ON")
             self.statechoice.set(val)
             #print("select_controltype Always: " + val)
 
@@ -615,14 +632,16 @@ class Outlet(tk.Frame):
 
             # read saved states
             # on time 
-            val = cfg_common.readINIfile(section, "light_on", "08:00")
+            #val = cfg_common.readINIfile(section, "light_on", "08:00")
+            val = self.downloadsettings(section, "light_on", "08:00")
             val = val.split(":")
             self.spn_ontimeHH.delete(0, "end")
             self.spn_ontimeHH.insert(0, val[0])
             self.spn_ontimeMM.delete(0, "end")
             self.spn_ontimeMM.insert(0, val[1])
             # off time
-            val = cfg_common.readINIfile(section, "light_off", "17:00")
+            #val = cfg_common.readINIfile(section, "light_off", "17:00")
+            val = self.downloadsettings(section, "light_off", "17:00")
             val = val.split(":")
             self.spn_offtimeHH.delete(0, "end")
             self.spn_offtimeHH.insert(0, val[0])
@@ -657,12 +676,14 @@ class Outlet(tk.Frame):
                                         validate='all', validatecommand=vldt_ifnum_cmd,
                                         wrap=True, width=8)
             self.spn_skimmerFeeddelayA.grid(row=3, column=2, padx=5, pady=2)    
-            val = cfg_common.readINIfile(section, "skimmer_enable_feed_a", str(False)) # enabled feed delay
+            #val = cfg_common.readINIfile(section, "skimmer_enable_feed_a", str(False)) # enabled feed delay
+            val = self.downloadsettings(section, "skimmer_enable_feed_a", str(False)) # enabled feed delay
             if str(val) == "True":
                 self.chk_skmFeedenabledA.select()
             else:
                 self.chk_skmFeedenabledA.deselect()
-            val = cfg_common.readINIfile(section, "skimmer_feed_delay_a", "0") # feed delay timer
+            #val = cfg_common.readINIfile(section, "skimmer_feed_delay_a", "0") # feed delay timer
+            val = self.downloadsettings(section, "skimmer_feed_delay_a", "0") # feed delay timer
             self.spn_skimmerFeeddelayA.delete(0, "end")
             self.spn_skimmerFeeddelayA.insert(0, val)
            
@@ -676,12 +697,14 @@ class Outlet(tk.Frame):
                                         validate='all', validatecommand=vldt_ifnum_cmd,
                                         wrap=True, width=8)
             self.spn_skimmerFeeddelayB.grid(row=4, column=2, padx=5, pady=2)
-            val = cfg_common.readINIfile(section, "skimmer_enable_feed_b", str(False)) # enabled feed delay
+            #val = cfg_common.readINIfile(section, "skimmer_enable_feed_b", str(False)) # enabled feed delay
+            val = self.downloadsettings(section, "skimmer_enable_feed_b", str(False)) # enabled feed delay
             if str(val) == "True":
                 self.chk_skmFeedenabledB.select()
             else:
                 self.chk_skmFeedenabledB.deselect()
-            val = cfg_common.readINIfile(section, "skimmer_feed_delay_b", "0") # feed delay timer
+            #val = cfg_common.readINIfile(section, "skimmer_feed_delay_b", "0") # feed delay timer
+            val = self.downloadsettings(section, "skimmer_feed_delay_b", "0") # feed delay timer
             self.spn_skimmerFeeddelayB.delete(0, "end")
             self.spn_skimmerFeeddelayB.insert(0, val)
             # row for timer C
@@ -694,12 +717,14 @@ class Outlet(tk.Frame):
                                         validate='all', validatecommand=vldt_ifnum_cmd,
                                         wrap=True, width=8)
             self.spn_skimmerFeeddelayC.grid(row=5, column=2, padx=5, pady=2)
-            val = cfg_common.readINIfile(section, "skimmer_enable_feed_c", str(False)) # enabled feed delay
+            #val = cfg_common.readINIfile(section, "skimmer_enable_feed_c", str(False)) # enabled feed delay
+            val = self.downloadsettings(section, "skimmer_enable_feed_c", str(False)) # enabled feed delay
             if str(val) == "True":
                 self.chk_skmFeedenabledC.select()
             else:
                 self.chk_skmFeedenabledC.deselect()
-            val = cfg_common.readINIfile(section, "skimmer_feed_delay_c", "0") # feed delay timer
+            #val = cfg_common.readINIfile(section, "skimmer_feed_delay_c", "0") # feed delay timer
+            val = self.downloadsettings(section, "skimmer_feed_delay_c", "0") # feed delay timer
             self.spn_skimmerFeeddelayC.delete(0, "end")
             self.spn_skimmerFeeddelayC.insert(0, val)
             # row for timer D
@@ -712,12 +737,14 @@ class Outlet(tk.Frame):
                                         validate='all', validatecommand=vldt_ifnum_cmd,
                                         wrap=True, width=8)
             self.spn_skimmerFeeddelayD.grid(row=6, column=2, padx=5, pady=2)
-            val = cfg_common.readINIfile(section, "skimmer_enable_feed_d", str(False)) # enabled feed delay
+            #val = cfg_common.readINIfile(section, "skimmer_enable_feed_d", str(False)) # enabled feed delay
+            val = self.downloadsettings(section, "skimmer_enable_feed_d", str(False)) # enabled feed delay
             if str(val) == "True":
                 self.chk_skmFeedenabledD.select()
             else:
                 self.chk_skmFeedenabledD.deselect()
-            val = cfg_common.readINIfile(section, "skimmer_feed_delay_d", "0") # feed delay timer
+            #val = cfg_common.readINIfile(section, "skimmer_feed_delay_d", "0") # feed delay timer
+            val = self.downloadsettings(section, "skimmer_feed_delay_d", "0") # feed delay timer
             self.spn_skimmerFeeddelayD.delete(0, "end")
             self.spn_skimmerFeeddelayD.insert(0, val)
             
@@ -748,12 +775,14 @@ class Outlet(tk.Frame):
                                         validate='all', validatecommand=vldt_ifnum_cmd,
                                         wrap=True, width=8)
             self.spn_returnFeeddelayA.grid(row=3, column=2, padx=5, pady=2)    
-            val = cfg_common.readINIfile(section, "return_enable_feed_a", str(False)) # enabled feed delay
+            #val = cfg_common.readINIfile(section, "return_enable_feed_a", str(False)) # enabled feed delay
+            val = self.downloadsettings(section, "return_enable_feed_a", str(False)) # enabled feed delay
             if str(val) == "True":
                 self.chk_rtnFeedenabledA.select()
             else:
                 self.chk_rtnFeedenabledA.deselect()
-            val = cfg_common.readINIfile(section, "return_feed_delay_a", "0") # feed delay timer
+            #val = cfg_common.readINIfile(section, "return_feed_delay_a", "0") # feed delay timer
+            val = self.downloadsettings(section, "return_feed_delay_a", "0") # feed delay timer
             self.spn_returnFeeddelayA.delete(0, "end")
             self.spn_returnFeeddelayA.insert(0, val)
            
@@ -767,12 +796,14 @@ class Outlet(tk.Frame):
                                         validate='all', validatecommand=vldt_ifnum_cmd,
                                         wrap=True, width=8)
             self.spn_returnFeeddelayB.grid(row=4, column=2, padx=5, pady=2)
-            val = cfg_common.readINIfile(section, "return_enable_feed_b", str(False)) # enabled feed delay
+            #val = cfg_common.readINIfile(section, "return_enable_feed_b", str(False)) # enabled feed delay
+            val = self.downloadsettings(section, "return_enable_feed_b", str(False)) # enabled feed delay
             if str(val) == "True":
                 self.chk_rtnFeedenabledB.select()
             else:
                 self.chk_rtnFeedenabledB.deselect()
-            val = cfg_common.readINIfile(section, "return_feed_delay_b", "0") # feed delay timer
+            #val = cfg_common.readINIfile(section, "return_feed_delay_b", "0") # feed delay timer
+            val = self.downloadsettings(section, "return_feed_delay_b", "0") # feed delay timer
             self.spn_returnFeeddelayB.delete(0, "end")
             self.spn_returnFeeddelayB.insert(0, val)
             # row for timer C
@@ -785,12 +816,14 @@ class Outlet(tk.Frame):
                                         validate='all', validatecommand=vldt_ifnum_cmd,
                                         wrap=True, width=8)
             self.spn_returnFeeddelayC.grid(row=5, column=2, padx=5, pady=2)
-            val = cfg_common.readINIfile(section, "return_enable_feed_c", str(False)) # enabled feed delay
+            #val = cfg_common.readINIfile(section, "return_enable_feed_c", str(False)) # enabled feed delay
+            val = self.downloadsettings(section, "return_enable_feed_c", str(False)) # enabled feed delay
             if str(val) == "True":
                 self.chk_rtnFeedenabledC.select()
             else:
                 self.chk_rtnFeedenabledC.deselect()
-            val = cfg_common.readINIfile(section, "return_feed_delay_c", "0") # feed delay timer
+            #val = cfg_common.readINIfile(section, "return_feed_delay_c", "0") # feed delay timer
+            val = self.downloadsettings(section, "return_feed_delay_c", "0") # feed delay timer
             self.spn_returnFeeddelayC.delete(0, "end")
             self.spn_returnFeeddelayC.insert(0, val)
             # row for timer D
@@ -803,12 +836,14 @@ class Outlet(tk.Frame):
                                         validate='all', validatecommand=vldt_ifnum_cmd,
                                         wrap=True, width=8)
             self.spn_returnFeeddelayD.grid(row=6, column=2, padx=5, pady=2)
-            val = cfg_common.readINIfile(section, "return_enable_feed_d", str(False)) # enabled feed delay
+            #val = cfg_common.readINIfile(section, "return_enable_feed_d", str(False)) # enabled feed delay
+            val = self.downloadsettings(section, "return_enable_feed_d", str(False)) # enabled feed delay
             if str(val) == "True":
                 self.chk_rtnFeedenabledD.select()
             else:
                 self.chk_rtnFeedenabledD.deselect()
-            val = cfg_common.readINIfile(section, "return_feed_delay_d", "0") # feed delay timer
+            #val = cfg_common.readINIfile(section, "return_feed_delay_d", "0") # feed delay timer
+            val = self.downloadsettings(section, "return_feed_delay_d", "0") # feed delay timer
             self.spn_returnFeeddelayD.delete(0, "end")
             self.spn_returnFeeddelayD.insert(0, val)
 ##            self.lbl_skimmerFeedtime = Label(self.frame_cfg,text="Feed Timer:")
@@ -867,6 +902,12 @@ class Outlet(tk.Frame):
             self.bell()
         return valid
 
+
+
+
+
+    # need to fix this, can't be reading this file directly
+    # should be requesting the dict from the server!
     def readExistingProbes(self):
         # create dictionary to hold assigned temperature probes
         # these are probes that are already saved in config file

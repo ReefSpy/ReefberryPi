@@ -15,6 +15,7 @@ import configparser
 from datetime import datetime
 import logging
 
+
 CONFIGFILENAME = "config.ini"
 
 SCALE_C = 0
@@ -165,9 +166,22 @@ def readINIfile(section, key, default, *args, **kwargs):
     # if the value does not exist, lets write the default value into the
     # file and return the default, otherwise return what is saved
     # in the file
+    useDefault = False
+    useThreadLock = False
+    
+    # to prevent multiple threads from woking on the file at the same time, we will check
+    # the thread lock
+    for keyarg, value in kwargs.items():
+        if keyarg == "lock":
+            lck = value
+            lck.acquire()
+            useThreadLock = True
+            #logtoconsole("Read Lock Aquired", fg = "WHITE", bg="MAGENTA", style="BRIGHT")
+        
+
     config = configparser.ConfigParser()
     config.read(CONFIGFILENAME)
-    useDefault = False
+    
     if not section in config:
         config[section] = {}
         with open(CONFIGFILENAME,'w') as configfile:
@@ -187,11 +201,31 @@ def readINIfile(section, key, default, *args, **kwargs):
             logger.debug("readINIfile: " + "section=[" + section + "], key=[" + key + "], value=[" + config[section][key] + "]")
             if useDefault == True:
                 logger.debug("readINIfile **used default value**: " + default)
-                   
+        
+
+
+    if useThreadLock == True:
+        lck.release()
+        #logtoconsole("Read Lock Released", fg = "WHITE", bg="MAGENTA", style="BRIGHT")
+    
     return config[section][key] 
 
     
 def writeINIfile(section, key, value, *args, **kwargs):
+
+    useThreadLock = False
+    
+    # to prevent multiple threads from woking on the file at the same time, we will check
+    # the thread lock
+    for keyarg, val in kwargs.items():
+        if keyarg == "lock":
+            lck = val
+            lck.acquire()
+            useThreadLock = True
+            #logtoconsole("Write Lock Aquired", fg = "WHITE", bg="BLUE", style="BRIGHT")
+        
+
+
     try:
         config = configparser.ConfigParser()
         config.read(CONFIGFILENAME)
@@ -205,13 +239,22 @@ def writeINIfile(section, key, value, *args, **kwargs):
         with open(CONFIGFILENAME,'w') as configfile:
             config.write(configfile)
 
-        for keyarg, value in kwargs.items():
+        for keyarg, val in kwargs.items():
             if keyarg == "logger":
-                logger = value
-                logger.debug("writeINIfile: " + "section=[" + section + "], key=[" + key + "], value=[" + config[section][key] + "]")
-                
+                logger = val
+                logger.debug("writeINIfile: " + "section=[" + str(section) + "], key=[" + str(key) + "], value=[" + str(config[section][key]) + "]")
+
+        if useThreadLock == True:
+            lck.release()
+            #logtoconsole("Write Lock Released", fg = "WHITE", bg="BLUE", style="BRIGHT")
+            
         return True
+
     except:
+
+        if useThreadLock == True:
+            lck.release()
+            #logtoconsole("Write Lock Released", fg = "WHITE", bg="BLUE", style="BRIGHT")
         return False
     
 

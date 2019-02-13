@@ -29,6 +29,8 @@ import GPIO_config
 import RPi.GPIO as GPIO
 import numpy
 import ph_sensor
+import cls_Preferences
+import defs_outletcontrol
 
 
 class RBP_server:
@@ -36,7 +38,9 @@ class RBP_server:
     def __init__(self):
 
         self.threads=[]
-        self.queue = queue.Queue()        
+        self.queue = queue.Queue()
+
+        self.threadlock = threading.Lock()
 
         LOG_FILEDIR = "logs"
         LOG_FILENAME = "RBP_server.log"
@@ -57,15 +61,13 @@ class RBP_server:
         self.channel2.exchange_declare(exchange='rbp_currentstatus',
                                  exchange_type='fanout')
 
-
-
         # dictionaries to hold all the temperature probes and outlets
         self.tempProbeDict = {}
         self.outletDict = {}
         self.mcp3008Dict = {}
 
         #read prefs
-        self.read_preferences()
+        cls_Preferences.read_preferences(self)
 
         # set up the GPIO
         GPIO_config.initGPIO()
@@ -74,20 +76,10 @@ class RBP_server:
         self.dht_sensor = dht11.DHT11(pin=GPIO_config.dht11)
 
         # list to hold the raw ph data
-        self.ph_dvlist = []             
-##
-##        # give these an initial value in case we fail to get a valid reading it will just report -1
-##        #temp_f, temp_c = -1, -1
-##
-##        # some variables to hold the latest probe data
-##        ds18b20_1 = None
-##        dht11_t = None
-##        dht_11_h = None
-##        mcp3008_0 = None
-##
+        #self.ph_dvlist = []             
+
         # need the initial probe time seed to compare our sampling intervals against
         self.dv_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
-        #self.dv_LastLogTime = int(round(time.time()*1000)) #convert time to milliseconds
         
         self.DHT_Sensor["dht11_lastlogtime"] = int(round(time.time()*1000)) #convert time to milliseconds
         self.DHT_Sensor["dht11_samplingtimeseed"] = int(round(time.time()*1000)) #convert time to milliseconds
@@ -106,48 +98,6 @@ class RBP_server:
         
         self.threadManager()
 
-    def read_preferences(self):
-        # read in the preferences
-
-        self.DHT_Sensor = {
-            "enabled": defs_common.readINIfile('dht11/22', 'enabled', "False", logger=self.logger),
-            "temperature_name": str(defs_common.readINIfile('dht11/22', 'temperature_name', "Ambient Temperature", logger=self.logger)), 
-            "humidity_name": str(defs_common.readINIfile('dht11/22', 'humidity_name', "Humidity", logger=self.logger)), 
-            "dht11_samplinginterval": int(defs_common.readINIfile('dht11/22', 'dht11_samplinginterval', "5000", logger=self.logger)), # milliseconds
-            "dht11_loginterval": int(defs_common.readINIfile('dht11/22', 'dht11_loginterval', "300000", logger=self.logger)), # milliseconds
-            }
-
-        self.temperaturescale =  int(defs_common.readINIfile('global', 'tempscale', "0", logger=self.logger)) 
-##        self.ph_numsamples = int(defs_common.readINIfile('ph', 'ph_numsamples', "10", logger=self.logger)) # how many samples to collect before averaging
-##        self.ph_SamplingInterval = int(defs_common.readINIfile('ph', 'ph_samplinginterval', "1000", logger=self.logger)) # milliseconds
-##        self.ph_Sigma = int(defs_common.readINIfile('ph', 'ph_sigma', "1", logger=self.logger)) # how many standard deviations to clean up outliers
-##        self.ph_LogInterval = int(defs_common.readINIfile('ph', 'ph_loginterval', "300000", logger=self.logger)) # milliseconds
-        self.ds18b20_SamplingInterval = int(defs_common.readINIfile('probes_ds18b20', 'ds18b20_samplinginterval', "5000", logger=self.logger)) # milliseconds
-        self.ds18b20_LogInterval = int(defs_common.readINIfile('probes_ds18b20', 'ds18b20_loginterval', "300000", logger=self.logger)) # milliseconds
-        self.outlet_SamplingInterval = int(defs_common.readINIfile('outlets', 'outlet_samplinginterval', "5000", logger=self.logger)) # milliseconds
-
-        self.int_outlet_buttonstates = {
-            "int_outlet1_buttonstate":defs_common.readINIfile("int_outlet_1", "button_state", "OFF", logger=self.logger),
-            "int_outlet2_buttonstate":defs_common.readINIfile("int_outlet_2", "button_state", "OFF", logger=self.logger),
-            "int_outlet3_buttonstate":defs_common.readINIfile("int_outlet_3", "button_state", "OFF", logger=self.logger),
-            "int_outlet4_buttonstate":defs_common.readINIfile("int_outlet_4", "button_state", "OFF", logger=self.logger),
-            "int_outlet5_buttonstate":defs_common.readINIfile("int_outlet_5", "button_state", "OFF", logger=self.logger),
-            "int_outlet6_buttonstate":defs_common.readINIfile("int_outlet_6", "button_state", "OFF", logger=self.logger),
-            "int_outlet7_buttonstate":defs_common.readINIfile("int_outlet_7", "button_state", "OFF", logger=self.logger),
-            "int_outlet8_buttonstate":defs_common.readINIfile("int_outlet_8", "button_state", "OFF", logger=self.logger)
-            }
-
-        # read the temperature probes
-        self.readTempProbes(self.tempProbeDict)
-
-        # read the outlet prefs
-        self.readOutletPrefs(self.outletDict)
-        for outlet in self.outletDict:
-            #outletDict[outlet]["outletname"]
-            defs_common.logtoconsole("outlet prefs loaded for: " + str(self.outletDict[outlet].outletname), fg="BLUE", Style="BRIGHT")
-
-        # read the mcp3008 analog probe channels
-        self.readmcp3008Prefs(self.mcp3008Dict)
     
     def initialize_logger(self, output_dir, output_file, loglevel_console, loglevel_logfile):
         self.logger = logging.getLogger()
@@ -180,7 +130,7 @@ class RBP_server:
     def outlet_control(self, bus, outletnum): # bus = "int" or "ext"
 
         outlet = str(bus + "_outlet_" + outletnum)
-        controltype = defs_common.readINIfile(outlet, "control_type", "Always")
+        controltype = defs_common.readINIfile(outlet, "control_type", "Always", lock=self.threadlock, logger=self.logger)
         pin = GPIO_config.int_outletpins.get(outlet)
         
 
@@ -205,16 +155,10 @@ class RBP_server:
 ##########################
 # is this the problem???
 ##########################
-
+        # <<<<<< don't write to ini file from this thread!
         #defs_common.writeINIfile(bus + "_outlet_" + outletnum, "button_state", button_state)
-        curstate = defs_common.readINIfile(outlet, "button_state", "OFF", logger=self.logger)
+        curstate = defs_common.readINIfile(outlet, "button_state", "OFF", lock=self.threadlock, logger=self.logger)
         if curstate != button_state:
-##            changerequest = {}
-##            changerequest["outletid"] = outlet
-##            changerequest["button_state"] = button_state
-##            self.logger.debug("outlet_control: change " + outlet + " button_state to " + button_state + " (from " + curstate + ")")
-##            self.queue.put(changerequest)  
-            #
             changerequest = {}
             changerequest["section"] = outlet
             changerequest["key"] = "button_state"
@@ -224,260 +168,17 @@ class RBP_server:
         
         # control type ALWAYS
         if controltype == "Always":
-            return self.handle_outlet_always(outlet, button_state, pin)   
+            return defs_outletcontrol.handle_outlet_always(self, outlet, button_state, pin)   
         # control type HEATER    
         elif controltype == "Heater":
-            return self.handle_outlet_heater(outlet, button_state, pin)
+            return defs_outletcontrol.handle_outlet_heater(self, outlet, button_state, pin)
         # control type RETURN PUMP
         elif controltype == "Return Pump":
-            return self.handle_outlet_returnpump(outlet, button_state, pin)
+            return defs_outletcontrol.handle_outlet_returnpump(self, outlet, button_state, pin)
         elif controltype == "Skimmer":
-            return self.handle_outlet_skimmer(outlet, button_state, pin)
+            return defs_outletcontrol.handle_outlet_skimmer(self, outlet, button_state, pin)
         elif controltype == "Light":
-            return self.handle_outlet_light(outlet, button_state, pin)
-
-    def handle_outlet_always(self, outlet, button_state, pin):
-        if button_state == "OFF":
-            GPIO.output(pin, True)
-            return "OFF"
-        elif button_state == "ON":
-            GPIO.output(pin, False)
-            return "ON"
-        elif button_state == "AUTO":
-            state = defs_common.readINIfile(outlet, "always_state", "OFF", logger=self.logger)
-            if state == "OFF":
-                GPIO.output(pin, True)
-                return "OFF"
-            elif state == "ON":
-                GPIO.output(pin, False)
-                return "ON"
-        else:
-            GPIO.output(pin, True)
-            return "OFF"
-
-    def handle_outlet_heater(self, outlet, button_state, pin):
-        #global tempProbeDict
-        if button_state == "OFF":
-            GPIO.output(pin, True)
-            return "OFF"
-        elif button_state == "ON":
-            GPIO.output(pin, False)
-            return "ON"
-        elif button_state == "AUTO":
-            probe = defs_common.readINIfile(outlet, "heater_probe", "28-000000000000", logger=self.logger)
-            on_temp = defs_common.readINIfile(outlet, "heater_on", "25.0", logger=self.logger)
-            off_temp = defs_common.readINIfile(outlet, "heater_off", "25.5", logger=self.logger)
-
-
-            for p in self.tempProbeDict:
-                if self.tempProbeDict[p].probeid == probe:
-                    #print("last temp " + str(self.tempProbeDict[p].lastTemperature))
-                    if float(self.tempProbeDict[p].lastTemperature) <= float(on_temp):
-                        #print(str(tempProbeDict[p].lastTemperature) + " " + str(on_temp))
-                        GPIO.output(pin, False)
-                        tempScale = defs_common.readINIfile("global", "tempscale", "0", logger=self.logger)
-                        if  tempScale == str(defs_common.SCALE_F):
-                            on_temp = defs_common.convertCtoF(float(on_temp))
-                            off_temp = defs_common.convertCtoF(float(off_temp))                   
-                        return "ON (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"  
-                    if float(self.tempProbeDict[p].lastTemperature) >= float(off_temp):
-                        GPIO.output(pin, True)
-                        tempScale = defs_common.readINIfile("global", "tempscale", "0", logger=self.logger)
-                        if tempScale == str(defs_common.SCALE_F):
-                            on_temp = defs_common.convertCtoF(on_temp)
-                            off_temp = defs_common.convertCtoF(off_temp)
-                        return "OFF (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"
-                    break
-    ##        if state == "OFF":
-    ##            GPIO.output(pin, True)
-    ##            return "OFF"
-    ##        elif state == "ON":
-    ##            GPIO.output(pin, False)
-    ##            return "ON"
-        else:
-            GPIO.output(pin, True)
-            return "OFF"
-
-    def handle_outlet_light(self, outlet, button_state, pin):
-        if button_state == "OFF":
-            GPIO.output(pin, True)
-            return "OFF"
-        elif button_state == "ON":
-            GPIO.output(pin, False)
-            return "ON"
-        elif button_state == "AUTO":
-            on_time = defs_common.readINIfile(outlet, "light_on", "08:00", logger=self.logger)
-            off_time = defs_common.readINIfile(outlet, "light_off", "17:00", logger=self.logger)
-            now = datetime.now()
-            now_time = now.time()
-            on_time = datetime.strptime(on_time, '%H:%M')
-            off_time = datetime.strptime(off_time, '%H:%M')
-            # on time before off time
-            if datetime.time(on_time) < datetime.time(off_time):
-                if now_time >= datetime.time(on_time) and now_time <= datetime.time(off_time):
-                    GPIO.output(pin, False) #turn on light
-                    status = "ON" + " (" + str(datetime.strftime(on_time, '%H:%M')) + " - " + str(datetime.strftime(off_time, '%H:%M')) +")"
-                    return status
-                else:
-                    GPIO.output(pin, True) #turn on light
-                    status = "OFF" + " (" + str(datetime.strftime(on_time, '%H:%M')) + " - " + str(datetime.strftime(off_time, '%H:%M')) +")"
-                    return status
-            else: # on time after off time
-                if now_time <= datetime.time(on_time) and now_time >= datetime.time(off_time):
-                    GPIO.output(pin, True) #turn off light
-                    status = "OFF" + " (" + str(datetime.strftime(on_time, '%H:%M')) + " - " + str(datetime.strftime(off_time, '%H:%M')) +")"
-                    return status
-                else:
-                    GPIO.output(pin, False) #turn on light
-                    status = "ON" + " (" + str(datetime.strftime(on_time, '%H:%M')) + " - " + str(datetime.strftime(off_time, '%H:%M')) +")"
-                    return status
-        else:
-            GPIO.output(pin, True)
-            return "OFF"
-
-    def handle_outlet_returnpump (self, outlet, button_state, pin):  
-        #global feed_PreviousMode
-        if self.feed_PreviousMode == "A":
-            self.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "return_feed_delay_a", "0") 
-        elif self.feed_PreviousMode == "B":
-            self.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "return_feed_delay_b", "0")
-        elif self.feed_PreviousMode == "C":
-            self.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "return_feed_delay_c", "0")
-        elif self.feed_PreviousMode == "D":
-            self.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "return_feed_delay_d", "0")
-        else:
-            self.feed_ExtraTimeAdded = 0
-            
-        if button_state == "OFF":
-            GPIO.output(pin, True)
-            return "OFF"
-        elif button_state == "ON":
-            GPIO.output(pin, False)
-            return "ON"
-        elif button_state == "AUTO":
-            if self.feed_CurrentMode == "A":
-                return_enable_feed_a = defs_common.readINIfile(outlet, "return_enable_feed_a", "False")
-                self.feed_PreviousMode = "A"
-                if return_enable_feed_a == "True":
-                    GPIO.output(pin, True)
-                    return "OFF (feed)"
-                elif return_enable_feed_a == "False":
-                    GPIO.output(pin, False)
-                    return "ON"
-            elif self.feed_CurrentMode == "B":
-                return_enable_feed_b = defs_common.readINIfile(outlet, "return_enable_feed_b", "False")
-                self.feed_PreviousMode = "B"
-                if return_enable_feed_b == "True":
-                    GPIO.output(pin, True)
-                    return "OFF (feed)"
-                elif return_enable_feed_b == "False":
-                    GPIO.output(pin, False)
-                    return "ON"
-            elif self.feed_CurrentMode == "C":
-                return_enable_feed_c = defs_common.readINIfile(outlet, "return_enable_feed_c", "False")
-                self.feed_PreviousMode = "C"
-                if return_enable_feed_c == "True":
-                    GPIO.output(pin, True)
-                    return "OFF (feed)"
-                elif return_enable_feed_c == "False":
-                    GPIO.output(pin, False)
-                    return "ON"
-            elif self.feed_CurrentMode == "D":
-                return_enable_feed_d = defs_common.readINIfile(outlet, "return_enable_feed_d", "False")
-                self.feed_PreviousMode = "D"
-                if return_enable_feed_d == "True":
-                    GPIO.output(pin, True)
-                    return "OFF (feed)"
-                elif return_enable_feed_d == "False":
-                    GPIO.output(pin, False)
-                    return "ON"
-            else:
-                difference = round(((int(self.feed_ExtraTimeSeed) + (int(self.feed_ExtraTimeAdded)*1000)) - int(round(time.time())*1000))/1000)
-                
-                if int(round(time.time())*1000) <= int(self.feed_ExtraTimeSeed) + (int(self.feed_ExtraTimeAdded)*1000):
-                    #print("Extra feed time remaining: " + str(difference) + "s")
-                    print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-                       " Delay Mode: " + outlet + " (" + str(self.feed_ExtraTimeAdded) + "s) " + " Delay Time Remaining: " + str(round(difference)) + "s"
-                       + Style.RESET_ALL)
-                    GPIO.output(pin, True)
-                    return "OFF (delay)"
-                else:
-                    GPIO.output(pin, False)
-                    return "ON"
-        else:
-            GPIO.output(pin, True)
-            return "OFF"
-
-    def handle_outlet_skimmer (self, outlet, button_state, pin):  
-        if self.feed_PreviousMode == "A":
-            self.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "skimmer_feed_delay_a", "0") 
-        elif self.feed_PreviousMode == "B":
-            self.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "skimmer_feed_delay_b", "0")
-        elif self.feed_PreviousMode == "C":
-            self.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "skimmer_feed_delay_c", "0")
-        elif self.feed_PreviousMode == "D":
-            self.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "skimmer_feed_delay_d", "0")
-        else:
-            self.feed_ExtraTimeAdded = 0
-
-        if button_state == "OFF":
-            GPIO.output(pin, True)
-            return "OFF"
-        elif button_state == "ON":
-            GPIO.output(pin, False)
-            return "ON"
-        elif button_state == "AUTO":
-            if self.feed_CurrentMode == "A":
-                skimmer_enable_feed_a = defs_common.readINIfile(outlet, "skimmer_enable_feed_a", "False")
-                self.feed_PreviousMode = "A"
-                if skimmer_enable_feed_a == "True":
-                    GPIO.output(pin, True)
-                    return "OFF (feed)"
-                elif skimmer_enable_feed_a == "False":
-                    GPIO.output(pin, False)
-                    return "ON"
-            elif self.feed_CurrentMode == "B":
-                skimmer_enable_feed_b = defs_common.readINIfile(outlet, "skimmer_enable_feed_b", "False")
-                self.feed_PreviousMode = "B"
-                if skimmer_enable_feed_b == "True":
-                    GPIO.output(pin, True)
-                    return "OFF (feed)"
-                elif skimmer_enable_feed_b == "False":
-                    GPIO.output(pin, False)
-                    return "ON"
-            elif self.feed_CurrentMode == "C":
-                skimmer_enable_feed_c = defs_common.readINIfile(outlet, "skimmer_enable_feed_c", "False")
-                self.feed_PreviousMode = "C"
-                if skimmer_enable_feed_c == "True":
-                    GPIO.output(pin, True)
-                    return "OFF (feed)"
-                elif skimmer_enable_feed_c == "False":
-                    GPIO.output(pin, False)
-                    return "ON"
-            elif self.feed_CurrentMode == "D":
-                skimmer_enable_feed_d = defs_common.readINIfile(outlet, "skimmer_enable_feed_d", "False")
-                self.feed_PreviousMode = "D"
-                if skimmer_enable_feed_d == "True":
-                    GPIO.output(pin, True)
-                    return "OFF (feed)"
-                elif skimmer_enable_feed_d == "False":
-                    GPIO.output(pin, False)
-                    return "ON"
-            else:
-                difference = round(((int(self.feed_ExtraTimeSeed) + (int(self.feed_ExtraTimeAdded)*1000)) - int(round(time.time())*1000))/1000)
-                if int(round(time.time())*1000) <= int(self.feed_ExtraTimeSeed) + (int(self.feed_ExtraTimeAdded)*1000):
-                    #print("Extra feed time remaining: " + str(difference) + "s")
-                    print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-                       " Delay Mode: " + outlet + " (" + str(self.feed_ExtraTimeAdded) + "s) " + " Delay Time Remaining: " + str(round(difference)) + "s"
-                       + Style.RESET_ALL)
-                    GPIO.output(pin, True)
-                    return "OFF (delay)"
-                else:
-                    GPIO.output(pin, False)
-                    return "ON"
-        else:
-            GPIO.output(pin, True)
-            return "OFF"
+            return defs_outletcontrol.handle_outlet_light(self, outlet, button_state, pin)
 
 
     def threadManager(self):
@@ -658,8 +359,23 @@ class RBP_server:
                 changerequest["section"] = str(body["section"])
                 changerequest["key"] = str(body["key"])
                 changerequest["value"] = str(body["value"])
-                self.queue.put(changerequest)     
+                self.queue.put(changerequest)
 
+            elif str(body["rpc_req"]) == "get_readinifile":
+                # read values from the configuration file
+                defs_common.logtoconsole("get_readinifile " + str(body), fg="GREEN", style="BRIGHT")
+                self.logger.debug("get_readinifile " + str(body))
+
+                # do the read here
+                returnval = defs_common.readINIfile(str(body["section"]), str(body["key"]), str(body["defaultval"]), lock=self.threadlock, logger=self.logger)
+                
+                # respond with result here...
+                response = {
+                            "readinifile":returnval
+                            }
+
+                response = json.dumps(response)
+                self.logger.debug(str(response))
 
             
             else:
@@ -740,74 +456,7 @@ class RBP_server:
             routing_key='',
             body=message)
 
-    def readTempProbes(self, tempProbeDict):
-        self.tempProbeDict.clear()
-        config = configparser.ConfigParser()
-        config.read(defs_common.CONFIGFILENAME)
-        # loop through each section and see if it is a ds18b20 temp probe
-        for section in config:
-            if section.split("_")[0] == "ds18b20":
-                probe = tempProbeClass()
-                probe.probeid = section.split("_")[1]
-                probe.name = config[section]["name"]
-                tempProbeDict [section.split("_")[1]] = probe
-
-                self.logger.info("read temperature probe from config: probeid = " + probe.probeid + ", probename = " + probe.name)
-
-    def readmcp3008Prefs(self, mcp3008Dict):
-        mcp3008Dict.clear()
-        self.dv_SamplingInterval = int(defs_common.readINIfile('mcp3008', 'dv_samplinginterval', "1000", logger=self.logger)) # milliseconds
-        self.dv_LogInterval = int(defs_common.readINIfile('mcp3008', 'dv_loginterval', "300000", logger=self.logger)) # milliseconds
-
-        # there are 8 channels on this chip
-        for x in range(8):
-            channel = analogChannelClass()
-            channel.ch_num = x
-            prefix = "ch" + str(x)
-            channel.ch_name = defs_common.readINIfile("mcp3008", prefix + "_name", "Unnamed", logger=self.logger)
-            channel.ch_enabled = defs_common.readINIfile("mcp3008", prefix + "_enabled", "False", logger=self.logger)
-            channel.ch_type = defs_common.readINIfile("mcp3008", prefix + "_type", "raw", logger=self.logger)
-            channel.ch_dvlist = []
-            channel.ch_numsamples = defs_common.readINIfile("mcp3008", prefix + "_numsamples", "10", logger=self.logger) # how many samples to collect before averaging
-            channel.ch_sigma = defs_common.readINIfile("mcp3008", prefix + "_sigma", "1", logger=self.logger) # how many standard deviations to clean up outliers
-            channel.LastLogTime = int(round(time.time()*1000)) #convert time to milliseconds
-            mcp3008Dict [x] = channel
-
-        
-    def readOutletPrefs(self, outletDict):
-        outletDict.clear()
-        config = configparser.ConfigParser()
-        config.read(defs_common.CONFIGFILENAME)
-        # loop through each section and see if it is a ds18b20 temp probe
-        for section in config:
-            #if section.split("_")[1] == "":
-            if "int_outlet" in section:
-                outlet = outletPrefs()
-                outlet.ischanged            = "False"
-                outlet.outletid             = section
-                outlet.outletname           = defs_common.readINIfile(section, "name", "Unnamed", logger=self.logger)
-                outlet.control_type         = defs_common.readINIfile(section, "control_type", "Always", logger=self.logger)
-                outlet.always_state         = defs_common.readINIfile(section, "always_state", "OFF", logger=self.logger)
-                outlet.enable_log           = defs_common.readINIfile(section, "enable_log", "False", logger=self.logger)
-                outlet.heater_probe         = defs_common.readINIfile(section, "heater_probe", "", logger=self.logger)
-                outlet.heater_on            = defs_common.readINIfile(section, "heater_on", "25.0", logger=self.logger)
-                outlet.heater_off           = defs_common.readINIfile(section, "heater_off", "25.5", logger=self.logger)
-                outlet.button_state         = defs_common.readINIfile(section, "button_state", "OFF", logger=self.logger)
-                outlet.light_on             = defs_common.readINIfile(section, "light_on", "08:00", logger=self.logger)
-                outlet.light_off            = defs_common.readINIfile(section, "light_off", "17:00", logger=self.logger)
-                outlet.return_enable_feed_a = defs_common.readINIfile(section, "return_enable_feed_a", "False", logger=self.logger)
-                outlet.return_feed_delay_a  = defs_common.readINIfile(section, "return_feed_delay_a", "0", logger=self.logger)
-                outlet.return_enable_feed_b = defs_common.readINIfile(section, "return_enable_feed_b", "False", logger=self.logger)
-                outlet.return_feed_delay_b  = defs_common.readINIfile(section, "return_feed_delay_b", "0", logger=self.logger)
-                outlet.return_enable_feed_c = defs_common.readINIfile(section, "return_enable_feed_c", "False", logger=self.logger)
-                outlet.return_feed_delay_c  = defs_common.readINIfile(section, "return_feed_delay_c", "0", logger=self.logger)
-                outlet.return_enable_feed_d = defs_common.readINIfile(section, "return_enable_feed_d", "False", logger=self.logger)
-                outlet.return_feed_delay_d  = defs_common.readINIfile(section, "return_feed_delay_d", "0", logger=self.logger)
-
-                outletDict[section] = outlet
-
-                self.logger.info("read outlet prefs from config: probeid = " + outlet.outletid + ", outletname = " + outlet.outletname)
-               
+             
 
     def get_probelist(self):
         probedict = {}
@@ -916,7 +565,7 @@ class RBP_server:
             #    print("Error parsing: %s" % LogFileName)
                 self.logger.error("Error parsing: %s" % LogFileName)
         if probetype == "ds18b20" or probeid == "dht_t":
-            if  str(defs_common.readINIfile("global", "tempscale", str(defs_common.SCALE_C))) == str(defs_common.SCALE_F):
+            if  str(defs_common.readINIfile("global", "tempscale", str(defs_common.SCALE_C), lock=self.threadlock, logger=self.logger)) == str(defs_common.SCALE_F):
                 return xList, zList
             else:
                 return xList, yList
@@ -1056,7 +705,7 @@ class RBP_server:
                             if dv_AvgCountsFiltered > 14:
                                 self.logger.error("Invalid PH value: " + str(dv_AvgCountsFiltered) + " " + str(orgval) + " " + str(dv_dvlistfiltered))
                                 defs_common.logtoconsole("Invalid PH value: " + str(dv_AvgCountsFiltered) + " " + str(orgval) + " " + str(dv_dvlistfiltered), fg="RED", style = "BRIGHT")
-##
+
                         # if enough time has passed (ph_LogInterval) then log the data to file
                         # otherwise just print it to console
                         timestamp = datetime.now()
@@ -1071,11 +720,7 @@ class RBP_server:
                         else:
                             print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " dv = "
                                   + "{:.2f}".format(dv_AvgCountsFiltered))
-                            #writeCurrentState('probes','ph', str("{:.2f}".format(ph_AvgFiltered)))
-##                            channel.basic_publish(exchange='',
-##                                routing_key='current_state',
-##                                properties=pika.BasicProperties(expiration='10000'),
-##                                body=str("mcp3008_0" + "," + timestamp.strftime("%Y-%m-%d %H:%M:%S") + "," + "{:.2f}".format(ph_AvgFiltered)))
+
                         self.broadcastProbeStatus("mcp3008", "mcp3008_ch" + str(self.mcp3008Dict[ch].ch_num), (dv_AvgCountsFiltered)) 
                         # clear the list so we can populate it with new data for the next data set
                         self.mcp3008Dict[ch].ch_dvlist.clear()
@@ -1189,13 +834,13 @@ class RBP_server:
             ##########################################################################################
             
             if self.feed_CurrentMode == "A":
-                self.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_a", "60")
+                self.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_a", "60", lock=self.threadlock, logger=self.logger)
             elif self.feed_CurrentMode == "B":
-                self.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_b", "60")
+                self.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_b", "60", lock=self.threadlock, logger=self.logger)
             elif self.feed_CurrentMode == "C":
-                self.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_c", "60")
+                self.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_c", "60", lock=self.threadlock, logger=self.logger)
             elif self.feed_CurrentMode == "D":
-                self.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_d", "60")
+                self.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_d", "60", lock=self.threadlock, logger=self.logger)
             else:
                 self.feed_ModeTotaltime = "0"
 
@@ -1230,62 +875,21 @@ class RBP_server:
                 status = self.outlet_control("int", str(x))
                 
                 self.broadcastOutletStatus("int_outlet_" + str(x),
-                      defs_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed", logger=self.logger),
+                      defs_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed", lock=self.threadlock, logger=self.logger),
                       "int",
-                      defs_common.readINIfile("int_outlet_" + str(x), "control_type", "Always", logger=self.logger),
+                      defs_common.readINIfile("int_outlet_" + str(x), "control_type", "Always", lock=self.threadlock, logger=self.logger),
                       self.int_outlet_buttonstates.get("int_outlet" + str(x) + "_buttonstate"),
                       "STATEUNKNOWN",
                       status)
 
                 self.logger.debug("int_outlet_" + str(x) +
-                    " [label: " + defs_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed", logger=self.logger) +
-                    "] [type: " + defs_common.readINIfile("int_outlet_" + str(x), "control_type", "Always", logger=self.logger) +
-                    "] [button: " + defs_common.readINIfile("int_outlet_" + str(x), "button_state", "OFF", logger=self.logger) +  
+                    " [label: " + defs_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed", lock=self.threadlock, logger=self.logger) +
+                    "] [type: " + defs_common.readINIfile("int_outlet_" + str(x), "control_type", "Always", lock=self.threadlock, logger=self.logger) +
+                    "] [button: " + defs_common.readINIfile("int_outlet_" + str(x), "button_state", "OFF", lock=self.threadlock, logger=self.logger) +  
                     "] [status: " + str(status) + "]" +
                     " [pin: " + str(GPIO_config.int_outletpins.get("int_outlet_" + str(x))) + "]")
                     
-##            ##########################################################################################
-##            # broadcast current state of outlets
-##            #
-##            ##########################################################################################
-##            if (int(round(time.time()*1000)) - self.outlet_SamplingTimeSeed) > self.outlet_SamplingInterval:
-##
-##
-##                # do each of the outlets on the internal bus (outlets 1-8)
-##                for x in range (1,9):
-##                    status = self.outlet_control("int", str(x))
-####                    channel.basic_publish(exchange='',
-####                                    routing_key='current_state',
-####                                    properties=pika.BasicProperties(expiration='10000'),
-####                                    body=str("int_outlet_" + str(x) + "," + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + 
-####                                         "," + int_outlet_buttonstates.get("int_outlet" + str(x) + "_buttonstate") + "," + str(status) +
-####                                             "," + cfg_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed")))
-####                    
-##
-##                    self.broadcastOutletStatus("int_outlet_" + str(x),
-##                                          defs_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed", logger=self.logger),
-##                                          "int",
-##                                          defs_common.readINIfile("int_outlet_" + str(x), "control_type", "Always", logger=self.logger),
-##                                          self.int_outlet_buttonstates.get("int_outlet" + str(x) + "_buttonstate"),
-##                                          "STATEUNKNOWN",
-##                                          status)
-##
-####                    print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") +    
-####                        " int_outlet_" + str(x) +
-####                        " [label: " + defs_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed", logger=self.logger) +
-####                        "] [type: " + defs_common.readINIfile("int_outlet_" + str(x), "control_type", "Always", logger=self.logger) +
-####                        "] [button: " + defs_common.readINIfile("int_outlet_" + str(x), "button_state", "OFF", logger=self.logger) +  
-####                        "] [status: " + str(status) + "]" +
-####                        " [pin: " + str(GPIO_config.int_outletpins.get("int_outlet_" + str(x))) + "]")
-##                   
-##                    self.logger.info("int_outlet_" + str(x) +
-##                        " [label: " + defs_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed", logger=self.logger) +
-##                        "] [type: " + defs_common.readINIfile("int_outlet_" + str(x), "control_type", "Always", logger=self.logger) +
-##                        "] [button: " + defs_common.readINIfile("int_outlet_" + str(x), "button_state", "OFF", logger=self.logger) +  
-##                        "] [status: " + str(status) + "]" +
-##                        " [pin: " + str(GPIO_config.int_outletpins.get("int_outlet_" + str(x))) + "]")
-##                    
-##                self.outlet_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+
             ##########################################################################################
             # update configuration file with any change requests sitting in the queue
             ##########################################################################################
@@ -1299,7 +903,7 @@ class RBP_server:
 
                     msg = self.queue.get(0)
                     self.logger.info("Configuration update: [" + msg["section"] + "] [ " + msg["key"] + "] = " + msg["value"])
-                    defs_common.writeINIfile(msg["section"], msg["key"], msg["value"], logger=self.logger)
+                    defs_common.writeINIfile(msg["section"], msg["key"], msg["value"], lock=self.threadlock, logger=self.logger)
                     print (msg)
                     print (self.queue.qsize())                    
             ########################################################################################## 
@@ -1307,45 +911,6 @@ class RBP_server:
             ##########################################################################################            
             time.sleep(1)
 
-class tempProbeClass():
-    name = ""
-    probeid = ""
-    lastTemperature = "0"
-    lastLogTime = ""
-
-class outletPrefs():
-    ischanged            = ""
-    outletid             = ""
-    outletname           = ""
-    control_type         = ""
-    always_state         = ""
-    enable_log           = ""
-    heater_probe         = ""
-    heater_on            = ""
-    heater_off           = ""
-    button_state         = ""
-    light_on             = ""
-    light_off            = ""
-    return_enable_feed_a = ""
-    return_feed_delay_a  = ""
-    return_enable_feed_b = ""
-    return_feed_delay_b  = ""
-    return_enable_feed_c = ""
-    return_feed_delay_c  = ""
-    return_enable_feed_d = ""
-    return_feed_delay_d  = ""
-  
-class analogChannelClass():
-    # class for probes connected to mcp3008 a-d chip
-    ch_num = ""
-    ch_name = ""
-    ch_enabled = ""
-    ch_type = ""
-    # list to hold the raw digital values
-    ch_dvlist = []
-    ch_numsamples = ""
-    ch_sigma = ""
-    LastLogTime = ""
 
     
 root = RBP_server()

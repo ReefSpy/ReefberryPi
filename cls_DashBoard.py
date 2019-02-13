@@ -32,35 +32,6 @@ class DashBoard(tk.Frame):
         #initialize the messaging queues      
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
-##########
-##        self.statuschannel = self.connection.channel()
-##        self.statuschannel.exchange_declare(exchange='rbp_probestatus',
-##                                            exchange_type='fanout')
-##
-##        self.result = self.statuschannel.queue_declare(exclusive=True)
-##        self.queue_name = self.result.method.queue
-##
-##        self.statuschannel.queue_bind(exchange='rbp_probestatus',
-##                   queue=self.queue_name)
-##
-##                
-##        def callback(ch, method, properties, body):
-##            body = body.decode()
-##            #print(" [x] %r" % body)
-##
-##        self.statuschannel.basic_consume(callback,
-##                      queue=self.queue_name,
-##                      no_ack=True)
-##
-##        #self.statuschannel.start_consuming()
-##        method_frame, header_frame, body = self.statuschannel.basic_get(queue=self.queue_name,
-##                              no_ack=True)
-##        #print(self.queue_name)
-##        if body != None:
-##            body = body.decode()
-
-###############
-        
         
         result = self.channel.queue_declare(exclusive=True)
         self.callback_queue = result.method.queue
@@ -115,17 +86,6 @@ class DashBoard(tk.Frame):
 
         
         
-        #self.checkProbeStatus()
-        
-##    def checkProbeStatus(self):
-##        print("checkProbeStatus")
-##        
-##        
-##        self.after(100, self.checkProbeStatus)
-##
-##    def printProbeStatus(ch, method, properties, body):
-##        body = body.decode()
-##        print(" [x] %r" % body)
         
     def onFrameConfigure(self, event):
         # used for the scrollbar

@@ -9,6 +9,7 @@ import uuid
 import json
 import time
 import threading
+import cls_FeedConfig
 
 class FeedWidget():
     
@@ -38,7 +39,15 @@ class FeedWidget():
         # frame for feed timers
         self.frame_feedtimers = LabelFrame(master, text="Feed Mode", relief= RAISED)
         self.frame_feedtimers.pack(fill=X, side=TOP)
-        self.lbl_feedtimers_status = Label(self.frame_feedtimers, text = " ", relief = FLAT)
+        self.frame_feed_spacer = tk.LabelFrame(self.frame_feedtimers, relief = tk.FLAT)
+        self.frame_feed_spacer.pack(fill=X, side=TOP)
+
+        self.img_cfg16 = PhotoImage(file="images/settings-16.png")
+        self.btn_cfg_feed = Button(self.frame_feed_spacer, text = "edit", image=self.img_cfg16,
+                                 relief = FLAT, command=lambda:self.configureFeedmode(master))
+        self.btn_cfg_feed.pack(side=LEFT, anchor=W)
+        
+        self.lbl_feedtimers_status = Label(self.frame_feed_spacer, text = " ", relief = FLAT)
         self.lbl_feedtimers_status.pack(side=TOP, anchor=E)
         self.btn_feedA = Button(self.frame_feedtimers, text="A", width=2, command=lambda:select_feed_mode("A"))
         self.btn_feedA.pack(side=LEFT, padx=2)
@@ -118,7 +127,36 @@ class FeedWidget():
         heartbeatThread.daemon = True
         heartbeatThread.start()
 
+    def uploadsettings(self, section, key, value):
+        defs_common.logtoconsole("Request settings change: [" + str(section) + "] [" + str(key) + "] = " + str(value))
+        # request settings change on server
+        request = {
+                  "rpc_req": "set_writeinifile",
+                  "section": str(section),
+                  "key": str(key),
+                  "value": str(value)
+              }
+        request = json.dumps(request)          
+        self.rpc_call(request, "rpc_queue")
 
+    def downloadsettings(self, section, key, defaultval):
+        defs_common.logtoconsole("Request settings vaue: [" + str(section) + "] [" + str(key) + "]")
+        # get setting value from server
+        request = {
+                  "rpc_req": "get_readinifile",
+                  "section": str(section),
+                  "key": str(key),
+                  "defaultval": str(defaultval)
+              }
+        request = json.dumps(request)          
+        val = self.rpc_call(request, "rpc_queue")
+        val = val.decode()
+        val = json.loads(val)
+        val = val.get("readinifile")
+
+        print (val)
+        
+        return val
 
     def initializeConnection(self):
         #initialize the messaging queues      
@@ -200,3 +238,108 @@ class FeedWidget():
             self.btn_feedD.config(background=DefClr)
             self.lbl_feedtimers_status.config(text="")
 
+    def configureFeedmode(self, master):
+        #print("dialog " + self.outletid.get().split("_")[2])
+        #outnum = self.outletid.get().split("_")[2]
+        
+        d = Dialog(master, self)
+
+class Dialog(Toplevel):
+
+    def __init__(self, parent, controller, title = None):
+
+        Toplevel.__init__(self, parent)
+        self.transient(parent)
+
+        self.controller = controller
+
+        if title:
+            self.title(title)
+
+        self.parent = parent
+
+        self.result = None
+
+
+        body = Frame(self)
+        self.initial_focus = self.body(body)
+        body.pack(padx=5, pady=5)
+
+        self.buttonbox()
+
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus = self
+
+        self.protocol("WM_DELETE_WINDOW", self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,
+                                  parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+
+
+    #
+    # construction hooks
+
+    def body(self, master):
+        # create dialog body.  return widget that should have
+        # initial focus.  this method should be overridden
+        #outlet = cfg_outlets.PageOutlets(master, self)
+        feedtimers = cls_FeedConfig.FeedTimers(master, self)
+        feedtimers.pack()
+        #outlet.pack()
+        pass
+
+    def buttonbox(self):
+        # add standard button box. override if you don't want the
+        # standard buttons
+
+        box = Frame(self)
+
+        w = Button(box, text="OK", width=10, command=self.ok, default=ACTIVE)
+        w.pack(side=LEFT, padx=5, pady=5)
+        w = Button(box, text="Cancel", width=10, command=self.cancel)
+        w.pack(side=LEFT, padx=5, pady=5)
+
+        self.bind("<Return>", self.ok)
+        self.bind("<Escape>", self.cancel)
+
+        box.pack()
+
+    #
+    # standard button semantics
+
+    def ok(self, event=None):
+
+        if not self.validate():
+            self.initial_focus.focus_set() # put focus back
+            return
+
+        self.withdraw()
+        self.update_idletasks()
+
+        self.apply()
+
+        self.cancel()
+
+    def cancel(self, event=None):
+
+        # put focus back to the parent window
+        self.parent.focus_set()
+        self.destroy()
+
+    #
+    # command hooks
+
+    def validate(self):
+
+        return 1 # override
+
+    def apply(self):
+
+        pass # override

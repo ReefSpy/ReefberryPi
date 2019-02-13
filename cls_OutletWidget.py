@@ -124,7 +124,7 @@ class OutletWidget():
 
     def updateOutletFrameName(self, name):
         self.frame_outlet.config(text = name)
-        print(name)
+        #print(name)
 
     def sendKeepAlive(self):
         # periodically (like every 1 or 2 minutes) send a message to the exchange so it
@@ -214,7 +214,7 @@ class OutletWidget():
         d = Dialog(master, self, outnum)
 
     def uploadsettings(self, section, key, value):
-        defs_common.logtoconsole("Request settings change: [" + section + "] [" + key + "] = " + value)
+        defs_common.logtoconsole("Request settings change: [" + str(section) + "] [" + str(key) + "] = " + str(value))
         # request settings change on server
         request = {
                   "rpc_req": "set_writeinifile",
@@ -225,6 +225,26 @@ class OutletWidget():
         request = json.dumps(request)          
         self.rpc_call(request, "rpc_queue")
 
+    def downloadsettings(self, section, key, defaultval):
+        defs_common.logtoconsole("Request settings vaue: [" + str(section) + "] [" + str(key) + "]")
+        # get setting value from server
+        request = {
+                  "rpc_req": "get_readinifile",
+                  "section": str(section),
+                  "key": str(key),
+                  "defaultval": str(defaultval)
+              }
+        request = json.dumps(request)          
+        val = self.rpc_call(request, "rpc_queue")
+        val = val.decode()
+        val = json.loads(val)
+        val = val.get("readinifile")
+
+        print (val)
+        
+        return val
+
+        
 class Dialog(Toplevel):
 
     def __init__(self, parent, controller, outletnum, title = None):
