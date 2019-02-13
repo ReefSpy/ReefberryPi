@@ -787,7 +787,7 @@ class RBP_server:
                 for p in self.tempProbeDict:
                     try:             
                         timestamp = datetime.now()
-                        dstempC =  float(ds18b20.read_temp("C"))
+                        dstempC =  float(ds18b20.read_temp(self.tempProbeDict[p].probeid, "C"))
                         dstempF = defs_common.convertCtoF(float(dstempC))
                         dstempF = float(dstempF)
                         tempData = str(dstempC) + "," + str(dstempF)
