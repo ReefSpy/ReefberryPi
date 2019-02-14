@@ -797,7 +797,7 @@ class RBP_server:
                         else:
                             broadcasttemp = str("%.1f" % dstempC)
                         
-                        self.tempProbeDict[p].lastLogTime = self.ds18b20_LastLogTimeDict
+                        #self.tempProbeDict[p].lastLogTime = self.ds18b20_LastLogTimeDict
 
                         if (int(round(time.time()*1000)) - int(self.tempProbeDict[p].lastLogTime)) > self.ds18b20_LogInterval:
                             # log and broadcast temperature value
@@ -810,7 +810,9 @@ class RBP_server:
                                                      " F")
                             self.broadcastProbeStatus("ds18b20", "ds18b20_" + self.tempProbeDict[p].probeid, str(broadcasttemp))
 
-                            self.ds18b20_LastLogTimeDict = int(round(time.time()*1000))             
+                            #self.ds18b20_LastLogTimeDict = int(round(time.time()*1000))
+                            self.tempProbeDict[p].lastLogTime = int(round(time.time()*1000))
+                            
                             self.tempProbeDict[p].lastTemperature = dstempC
                         else:
                             self.logger.info(str("[ds18b20_" + self.tempProbeDict[p].probeid + "] " +
@@ -820,10 +822,10 @@ class RBP_server:
                             # broadcast temperature value
                             self.broadcastProbeStatus("ds18b20", "ds18b20_" + str(self.tempProbeDict[p].probeid), str(broadcasttemp))   
                             self.tempProbeDict[p].lastTemperature = broadcasttemp
-                    except:
-                        print(Back.RED + Fore.WHITE + timestamp.strftime("%Y-%m-%d %H:%M:%S") +
-                              " <<<Error>>> Can not read ds18b20_" + self.tempProbeDict[p].probeid + " temperature data!" + Style.RESET_ALL)
-        
+                    except Exception as e:
+                        defs_common.logtoconsole(Back.RED + Fore.WHITE + timestamp.strftime("<<<Error>>> Can not read ds18b20_" + self.tempProbeDict[p].probeid + " temperature data!", fg="WHITE", bg="RED", style="BRIGHT"))
+                        self.logger.error ("<<<Error>>> Can not read ds18b20_" + self.tempProbeDict[p].probeid + " temperature data!")
+                        self.logger.error (e)
                 # record the new sampling time
                 self.ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 

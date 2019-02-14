@@ -108,6 +108,7 @@ def readTempProbes(controller):
             probe = tempProbeClass()
             probe.probeid = section.split("_")[1]
             probe.name = config[section]["name"]
+            probe.lastLogTime = int(round(time.time()*1000)) #convert time to milliseconds
             controller.tempProbeDict [section.split("_")[1]] = probe
 
             controller.logger.info("read temperature probe from config: probeid = " + probe.probeid + ", probename = " + probe.name)
