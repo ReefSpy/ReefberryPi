@@ -92,12 +92,17 @@ class DashBoard(tk.Frame):
         # Reset the scroll region to encompass the inner frame
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-    def updateProbeVal(self, probeid, probeval):
+    def updateProbeVal(self, probeid, probeval, probename):
         # update an individual probe value on the UI
         # find the matching probeid in the dictionary then update
         for p in self.probeDict:
             if self.probeDict[p].probeid.get()==probeid:
                 self.probeDict[p].probeval.set(probeval)
+                self.probeDict[p].name.set(probename)
+                self.probeDict[p].updateProbeFrameName(probename)
+                
+                
+                
 
     def updateOutletStatus(self, outletid, outletname, outletbus, control_type, button_state, outletstate, statusmsg):
         # update an individual outlet on the UI
@@ -195,7 +200,7 @@ class DashBoard(tk.Frame):
             probe = cls_ProbeWidget.ProbeWidget(self.frameProbes)
             probe.probeid.set(str(probelist["probelist"][probeitem]["probeid"]))
             probe.name.set(probelist["probelist"][probeitem]["probename"])
-            probe.updateProbeFrameName()
+            probe.updateProbeFrameName(probelist["probelist"][probeitem]["probename"])
             probe.probetype.set(probelist["probelist"][probeitem]["probetype"])
             probe.animate_probe(self)
             self.probeDict [probe.probeid.get()] = probe

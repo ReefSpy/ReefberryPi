@@ -37,6 +37,8 @@ class RBP_server:
     
     def __init__(self):
 
+
+
         self.threads=[]
         self.queue = queue.Queue()
 
@@ -61,40 +63,46 @@ class RBP_server:
         self.channel2.exchange_declare(exchange='rbp_currentstatus',
                                  exchange_type='fanout')
 
-        # dictionaries to hold all the temperature probes and outlets
-        self.tempProbeDict = {}
-        self.outletDict = {}
-        self.mcp3008Dict = {}
+        # read prefs *** new way***
+        self.AppPrefs = cls_Preferences.AppPrefs(self)
+        self.refreshPrefs = False
+        #defs_common.logtoconsole(str(self.AppPrefs.tempProbeDict), fg="BLUE", bg="WHITE", style="BRIGHT")
+        #defs_common.logtoconsole(str(self.AppPrefs.outletDict), fg="BLUE", bg="WHITE", style="BRIGHT")
+        #defs_common.logtoconsole(str(self.AppPrefs.mcp3008Dict), fg="BLUE", bg="WHITE", style="BRIGHT")
 
-        #read prefs
-        cls_Preferences.read_preferences(self)
+
+
+        # dictionaries to hold all the temperature probes and outlets
+#        self.tempProbeDict = {}
+#        self.outletDict = {}
+#        self.mcp3008Dict = {}
+
+        #read prefs *** old way ***
+#        cls_Preferences.read_preferences(self)
 
         # set up the GPIO
         GPIO_config.initGPIO()
 
         # dht11 temperature and humidity sensor
-        self.dht_sensor = dht11.DHT11(pin=GPIO_config.dht11)
+        self.dht_sensor = dht11.DHT11(pin=GPIO_config.dht11)           
 
-        # list to hold the raw ph data
-        #self.ph_dvlist = []             
-
-        # need the initial probe time seed to compare our sampling intervals against
-        self.dv_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
-        
-        self.DHT_Sensor["dht11_lastlogtime"] = int(round(time.time()*1000)) #convert time to milliseconds
-        self.DHT_Sensor["dht11_samplingtimeseed"] = int(round(time.time()*1000)) #convert time to milliseconds
-
-        self.ds18b20_LastLogTime = int(round(time.time()*1000)) #convert time to milliseconds
-        self.ds18b20_LastLogTimeDict = int(round(time.time()*1000)) #convert time to milliseconds
-        self.ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
-        self.outlet_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
-
-        # need initial feed timer seed to compare our times against
-        self.feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
-        self.feed_CurrentMode = "CANCEL" #initialize with feed mode cancel to it is off
-        self.feed_PreviousMode = "CANCEL"
-        self.feed_ExtraTimeSeed = int(round(time.time()*1000))  #extra time after feed is over
-        self.feed_ExtraTimeAdded = 0 # initialze to 0 extra time added
+##        # need the initial probe time seed to compare our sampling intervals against
+##        self.dv_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+##        
+##        self.DHT_Sensor["dht11_lastlogtime"] = int(round(time.time()*1000)) #convert time to milliseconds
+##        self.DHT_Sensor["dht11_samplingtimeseed"] = int(round(time.time()*1000)) #convert time to milliseconds
+##
+##        self.ds18b20_LastLogTime = int(round(time.time()*1000)) #convert time to milliseconds
+##        self.ds18b20_LastLogTimeDict = int(round(time.time()*1000)) #convert time to milliseconds
+##        self.ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+##        self.outlet_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+##
+##        # need initial feed timer seed to compare our times against
+##        self.feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+##        self.feed_CurrentMode = "CANCEL" #initialize with feed mode cancel to it is off
+##        self.feed_PreviousMode = "CANCEL"
+##        self.feed_ExtraTimeSeed = int(round(time.time()*1000))  #extra time after feed is over
+##        self.feed_ExtraTimeAdded = 0 # initialze to 0 extra time added
         
         self.threadManager()
 
@@ -130,26 +138,28 @@ class RBP_server:
     def outlet_control(self, bus, outletnum): # bus = "int" or "ext"
 
         outlet = str(bus + "_outlet_" + outletnum)
-        controltype = defs_common.readINIfile(outlet, "control_type", "Always", lock=self.threadlock, logger=self.logger)
+        #controltype = defs_common.readINIfile(outlet, "control_type", "Always", lock=self.threadlock, logger=self.logger)
+        controltype = self.AppPrefs.outletDict[outlet].control_type
+        
         pin = GPIO_config.int_outletpins.get(outlet)
         
 
         if outlet == "int_outlet_1":
-            button_state = self.int_outlet_buttonstates.get("int_outlet1_buttonstate")
+            button_state = self.AppPrefs.int_outlet_buttonstates.get("int_outlet1_buttonstate")
         elif outlet == "int_outlet_2":
-            button_state = self.int_outlet_buttonstates.get("int_outlet2_buttonstate")
+            button_state = self.AppPrefs.int_outlet_buttonstates.get("int_outlet2_buttonstate")
         elif outlet == "int_outlet_3":
-            button_state = self.int_outlet_buttonstates.get("int_outlet3_buttonstate")
+            button_state = self.AppPrefs.int_outlet_buttonstates.get("int_outlet3_buttonstate")
         elif outlet == "int_outlet_4":
-            button_state = self.int_outlet_buttonstates.get("int_outlet4_buttonstate")
+            button_state = self.AppPrefs.int_outlet_buttonstates.get("int_outlet4_buttonstate")
         elif outlet == "int_outlet_5":
-            button_state = self.int_outlet_buttonstates.get("int_outlet5_buttonstate")
+            button_state = self.AppPrefs.int_outlet_buttonstates.get("int_outlet5_buttonstate")
         elif outlet == "int_outlet_6":
-            button_state = self.int_outlet_buttonstates.get("int_outlet6_buttonstate")
+            button_state = self.AppPrefs.int_outlet_buttonstates.get("int_outlet6_buttonstate")
         elif outlet == "int_outlet_7":
-            button_state = self.int_outlet_buttonstates.get("int_outlet7_buttonstate")
+            button_state = self.AppPrefs.int_outlet_buttonstates.get("int_outlet7_buttonstate")
         elif outlet == "int_outlet_8":
-            button_state = self.int_outlet_buttonstates.get("int_outlet8_buttonstate")
+            button_state = self.AppPrefs.int_outlet_buttonstates.get("int_outlet8_buttonstate")
         else:
             button_state = "OFF"
 ##########################
@@ -157,14 +167,17 @@ class RBP_server:
 ##########################
         # <<<<<< don't write to ini file from this thread!
         #defs_common.writeINIfile(bus + "_outlet_" + outletnum, "button_state", button_state)
-        curstate = defs_common.readINIfile(outlet, "button_state", "OFF", lock=self.threadlock, logger=self.logger)
+        #curstate = defs_common.readINIfile(outlet, "button_state", "OFF", lock=self.threadlock, logger=self.logger)
+        curstate = self.AppPrefs.outletDict[outlet].button_state
         if curstate != button_state:
             changerequest = {}
             changerequest["section"] = outlet
             changerequest["key"] = "button_state"
             changerequest["value"] = button_state
             self.logger.debug("outlet_control: change " + outlet + " button_state to " + button_state + " (from " + curstate + ")")
-            self.queue.put(changerequest)        
+            self.queue.put(changerequest)
+            # testing to see if this works...
+            self.AppPrefs.outletDict[outlet].button_state = button_state
         
         # control type ALWAYS
         if controltype == "Always":
@@ -228,20 +241,20 @@ class RBP_server:
 
                 # bad things happened when I tried to control outlets from this thread
                 # allow control to happen in the other thread by just changing the dictionary value
-                self.int_outlet_buttonstates[str(outlet) + "_buttonstate"] = mode
+                self.AppPrefs.int_outlet_buttonstates[str(outlet) + "_buttonstate"] = mode
 
             elif str(body["rpc_req"]) == "set_feedmode":
                 defs_common.logtoconsole("set_feedmode " + str(body), fg="GREEN", style="BRIGHT")
                 self.logger.info("set_feedmode " + str(body))
-                self.feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+                self.AppPrefs.feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
                 defs_common.logtoconsole("Mode is " + str(body["feedmode"]), fg="BLUE", style="BRIGHT")
-                self.feed_CurrentMode = str(body["feedmode"])
-                self.feed_PreviousMode = "CANCEL"
+                self.AppPrefs.feed_CurrentMode = str(body["feedmode"])
+                self.AppPrefs.feed_PreviousMode = "CANCEL"
                 
 
                 # if feed mode was cancelled, broadcast it out 
-                if self.feed_CurrentMode == "CANCEL":
-                    self.broadcastFeedStatus(self.feed_CurrentMode, "0")
+                if self.AppPrefs.feed_CurrentMode == "CANCEL":
+                    self.broadcastFeedStatus(self.AppPrefs.feed_CurrentMode, "0")
 
         channel.basic_qos(prefetch_count=1)
         channel.basic_consume(callback, no_ack = True, queue='rbp_nodered')
@@ -328,20 +341,20 @@ class RBP_server:
 
                 # bad things happened when I tried to control outlets from this thread
                 # allow control to happen in the other thread by just changing the dictionary value
-                self.int_outlet_buttonstates[str(outlet) + "_buttonstate"] = mode
+                self.AppPrefs.int_outlet_buttonstates[str(outlet) + "_buttonstate"] = mode
 
             elif str(body["rpc_req"]) == "set_feedmode":
                 defs_common.logtoconsole("set_feedmode " + str(body), fg="GREEN", style="BRIGHT")
                 self.logger.info("set_feedmode " + str(body))
-                self.feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+                self.AppPrefs.feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
                 defs_common.logtoconsole("Mode is " + str(body["feedmode"]), fg="BLUE", style="BRIGHT")
-                self.feed_CurrentMode = str(body["feedmode"])
-                self.feed_PreviousMode = "CANCEL"
+                self.AppPrefs.feed_CurrentMode = str(body["feedmode"])
+                self.AppPrefs.feed_PreviousMode = "CANCEL"
                 
 
                 # if feed mode was cancelled, broadcast it out 
-                if self.feed_CurrentMode == "CANCEL":
-                    self.broadcastFeedStatus(self.feed_CurrentMode, "0")
+                if self.AppPrefs.feed_CurrentMode == "CANCEL":
+                    self.broadcastFeedStatus(self.AppPrefs.feed_CurrentMode, "0")
 
             elif str(body["rpc_req"]) == "set_keepalive":
                 # periodically, a call is sent out on the channel to ensure
@@ -404,13 +417,14 @@ class RBP_server:
         channel.start_consuming()
 
 
-    def broadcastProbeStatus(self, probetype, probeid, probeval):   
+    def broadcastProbeStatus(self, probetype, probeid, probeval, probename):   
         message = {
             "status_currentprobeval":
                       {
                         "probetype": str(probetype),
                         "probeid": str(probeid),
-                        "probeval": str(probeval)
+                        "probeval": str(probeval),
+                        "probename": str(probename)
                       }
                   }
         
@@ -652,34 +666,34 @@ class RBP_server:
             # channels (0-7)
             ##########################################################################################
             # only read the data at every ph_SamplingInterval (ie: 500ms or 1000ms)
-            if (int(round(time.time()*1000)) - self.dv_SamplingTimeSeed) > self.dv_SamplingInterval:
+            if (int(round(time.time()*1000)) - self.AppPrefs.dv_SamplingTimeSeed) > self.AppPrefs.dv_SamplingInterval:
                 #for x in range (0,8):
-                for ch in self.mcp3008Dict:
-                    if self.mcp3008Dict[ch].ch_enabled == "True":
+                for ch in self.AppPrefs.mcp3008Dict:
+                    if self.AppPrefs.mcp3008Dict[ch].ch_enabled == "True":
                         #defs_common.logtoconsole(str(self.mcp3008Dict[ch].ch_num) + " " + str(self.mcp3008Dict[ch].ch_name) + " " + str(self.mcp3008Dict[ch].ch_enabled) + " " + str(len(self.mcp3008Dict[ch].ch_dvlist)))
-                        dv = mcp3008.readadc(int(self.mcp3008Dict[ch].ch_num), GPIO_config.SPICLK, GPIO_config.SPIMOSI,
+                        dv = mcp3008.readadc(int(self.AppPrefs.mcp3008Dict[ch].ch_num), GPIO_config.SPICLK, GPIO_config.SPIMOSI,
                                                 GPIO_config.SPIMISO, GPIO_config.SPICS)
 
-                        self.mcp3008Dict[ch].ch_dvlist.append(dv)
+                        self.AppPrefs.mcp3008Dict[ch].ch_dvlist.append(dv)
                         #self.logger.info(str(self.mcp3008Dict[ch].ch_num) + " " + str(self.mcp3008Dict[ch].ch_name) + " " + str(self.mcp3008Dict[ch].ch_dvlist))
                     # once we hit our desired sample size of ph_numsamples (ie: 120)
                     # then calculate the average value
-                    if len(self.mcp3008Dict[ch].ch_dvlist) >= int(self.mcp3008Dict[ch].ch_numsamples):
+                    if len(self.AppPrefs.mcp3008Dict[ch].ch_dvlist) >= int(self.AppPrefs.mcp3008Dict[ch].ch_numsamples):
                         # The probes may pick up noise and read very high or
                         # very low values that we know are not good values. We are going to use numpy
                         # to calculate the standard deviation and remove the outlying data that is
                         # Sigma standard deviations away from the mean.  This way these outliers
                         # do not affect our results
-                        self.logger.info("mcp3008 ch" + str(self.mcp3008Dict[ch].ch_num) + " raw data " + str(self.mcp3008Dict[ch].ch_name) + " " + str(self.mcp3008Dict[ch].ch_dvlist))
-                        dv_FilteredCounts = numpy.array(self.mcp3008Dict[ch].ch_dvlist)
+                        self.logger.info("mcp3008 ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num) + " raw data " + str(self.AppPrefs.mcp3008Dict[ch].ch_name) + " " + str(self.AppPrefs.mcp3008Dict[ch].ch_dvlist))
+                        dv_FilteredCounts = numpy.array(self.AppPrefs.mcp3008Dict[ch].ch_dvlist)
                         dv_FilteredMean = numpy.mean(dv_FilteredCounts, axis=0)
                         dv_FlteredSD = numpy.std(dv_FilteredCounts, axis=0)
                         dv_dvlistfiltered = [x for x in dv_FilteredCounts if
-                                            (x > dv_FilteredMean - float(self.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
+                                            (x > dv_FilteredMean - float(self.AppPrefs.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
                         dv_dvlistfiltered = [x for x in dv_dvlistfiltered if
-                                            (x < dv_FilteredMean + float(self.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
+                                            (x < dv_FilteredMean + float(self.AppPrefs.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
 
-                        self.logger.info("mcp3008 ch" + str(self.mcp3008Dict[ch].ch_num) + " filtered " + str(self.mcp3008Dict[ch].ch_name) + " " + str(dv_dvlistfiltered))
+                        self.logger.info("mcp3008 ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num) + " filtered " + str(self.AppPrefs.mcp3008Dict[ch].ch_name) + " " + str(dv_dvlistfiltered))
                     
                         # calculate the average of our filtered list
                         try:
@@ -692,7 +706,7 @@ class RBP_server:
 
                         #self.mcp3008Dict[ch].ch_dvlist.clear()  ## delete  this line
 
-                        if self.mcp3008Dict[ch].ch_type == "pH":
+                        if self.AppPrefs.mcp3008Dict[ch].ch_type == "pH":
                             # bug, somtimes value is coming back high, like really high, like 22.0.  this is an impossible
                             # value since max ph is 14.  need to figure this out later, but for now, lets log this val to aid in
                             # debugging
@@ -709,23 +723,23 @@ class RBP_server:
                         # if enough time has passed (ph_LogInterval) then log the data to file
                         # otherwise just print it to console
                         timestamp = datetime.now()
-                        if (int(round(time.time()*1000)) - self.mcp3008Dict[ch].LastLogTime) > self.dv_LogInterval:
+                        if (int(round(time.time()*1000)) - self.AppPrefs.mcp3008Dict[ch].LastLogTime) > self.AppPrefs.dv_LogInterval:
                             # sometimes a high value, like 22.4 gets recorded, i need to fix this, but for now don't log that
 ##                            if ph_AvgFiltered < 14.0:  
                             #RBP_commons.logprobedata(config['logs']['ph_log_prefix'], "{:.2f}".format(ph_AvgFiltered))
-                            defs_common.logprobedata("mcp3008_ch" + str(self.mcp3008Dict[ch].ch_num) + "_", "{:.2f}".format(dv_AvgCountsFiltered))
+                            defs_common.logprobedata("mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num) + "_", "{:.2f}".format(dv_AvgCountsFiltered))
                             print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** dv = "
                                   + "{:.2f}".format(dv_AvgCountsFiltered) + Style.RESET_ALL)
-                            self.mcp3008Dict[ch].LastLogTime = int(round(time.time()*1000))
+                            self.AppPrefs.mcp3008Dict[ch].LastLogTime = int(round(time.time()*1000))
                         else:
                             print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " dv = "
                                   + "{:.2f}".format(dv_AvgCountsFiltered))
 
-                        self.broadcastProbeStatus("mcp3008", "mcp3008_ch" + str(self.mcp3008Dict[ch].ch_num), (dv_AvgCountsFiltered)) 
+                        self.broadcastProbeStatus("mcp3008", "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num), (dv_AvgCountsFiltered), str(self.AppPrefs.mcp3008Dict[ch].ch_name)) 
                         # clear the list so we can populate it with new data for the next data set
-                        self.mcp3008Dict[ch].ch_dvlist.clear()
+                        self.AppPrefs.mcp3008Dict[ch].ch_dvlist.clear()
                         # record the new sampling time
-                        self.dv_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+                        self.AppPrefs.dv_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
                         
             ################################################################################################################
             # read dht11 temperature and humidity sensor
@@ -733,7 +747,7 @@ class RBP_server:
             # these sensors are slow to refresh and should not be read more
             # than once every second or two (ie: dht_SamplingInterval = 3000ms or 5000ms for 3s or 5s) would be safe
             ################################################################################################################
-            if (int(round(time.time()*1000)) - self.DHT_Sensor.get("dht11_samplingtimeseed")) > int(self.DHT_Sensor.get("dht11_samplinginterval")):    
+            if (int(round(time.time()*1000)) - self.AppPrefs.DHT_Sensor.get("dht11_samplingtimeseed")) > int(self.AppPrefs.DHT_Sensor.get("dht11_samplinginterval")):    
                 # let's read the dht11 temp and humidity data
                 result = self.dht_sensor.read()
                 if result.is_valid():
@@ -743,38 +757,38 @@ class RBP_server:
                     hum = result.humidity
                     timestamp = datetime.now()
 
-                    if str(self.temperaturescale) == str(defs_common.SCALE_F):
+                    if str(self.AppPrefs.temperaturescale) == str(defs_common.SCALE_F):
                         broadcasttemp = str("%.1f" % temp_f)
                     else:
                         broadcasttemp = str("%.1f" % temp_c)
                     
-                    if (int(round(time.time()*1000)) - self.DHT_Sensor.get("dht11_lastlogtime")) > int(self.DHT_Sensor.get("dht11_loginterval")):
+                    if (int(round(time.time()*1000)) - self.AppPrefs.DHT_Sensor.get("dht11_lastlogtime")) > int(self.AppPrefs.DHT_Sensor.get("dht11_loginterval")):
                         tempData = str("{:.1f}".format(temp_c)) + "," + str(temp_f)
 
                         # log and broadcast temperature value
                         defs_common.logprobedata("dht_t_", tempData)
-                        defs_common.logtoconsole("***Logged*** [dht_t] " +  self.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f, fg="CYAN", style="BRIGHT")
-                        self.logger.info(str("***Logged*** [dht_t] " +  self.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f))
-                        self.broadcastProbeStatus("dht", "dht_t", str(broadcasttemp))
+                        defs_common.logtoconsole("***Logged*** [dht_t] " +  self.AppPrefs.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f, fg="CYAN", style="BRIGHT")
+                        self.logger.info(str("***Logged*** [dht_t] " +  self.AppPrefs.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f))
+                        self.broadcastProbeStatus("dht", "dht_t", str(broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
 
                         # log and broadcast humidity value
                         defs_common.logprobedata("dht_h_", "{:.0f}".format(hum))
-                        defs_common.logtoconsole("***Logged*** [dht_h] " +  self.DHT_Sensor.get("humidity_name") + " = %d %%" % hum, fg="CYAN", style="BRIGHT")
-                        self.logger.info(str("***Logged*** [dht_h] " +  self.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
-                        self.broadcastProbeStatus("dht", "dht_h", str(hum)) 
+                        defs_common.logtoconsole("***Logged*** [dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum, fg="CYAN", style="BRIGHT")
+                        self.logger.info(str("***Logged*** [dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
+                        self.broadcastProbeStatus("dht", "dht_h", str(hum), self.AppPrefs.DHT_Sensor.get("humidity_name")) 
                         
-                        self.DHT_Sensor["dht11_lastlogtime"] = int(round(time.time()*1000))
+                        self.AppPrefs.DHT_Sensor["dht11_lastlogtime"] = int(round(time.time()*1000))
                     else:
-                        self.logger.info(str("[dht_t] " +  self.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f))
-                        self.logger.info(str("[dht_h] " +  self.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
+                        self.logger.info(str("[dht_t] " +  self.AppPrefs.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f))
+                        self.logger.info(str("[dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
 
                         # broadcast humidity value
-                        self.broadcastProbeStatus("dht", "dht_h", str(hum))    
+                        self.broadcastProbeStatus("dht", "dht_h", str(hum), self.AppPrefs.DHT_Sensor.get("humidity_name"))    
                         # broadcast temperature value
-                        self.broadcastProbeStatus("dht", "dht_t", str(broadcasttemp))
+                        self.broadcastProbeStatus("dht", "dht_t", str(broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
                         
                     # record the new sampling time
-                    self.DHT_Sensor["dht11_samplingtimeseed"] = int(round(time.time()*1000)) #convert time to milliseconds
+                    self.AppPrefs.DHT_Sensor["dht11_samplingtimeseed"] = int(round(time.time()*1000)) #convert time to milliseconds
 
             ##########################################################################################
             # read ds18b20 temperature sensor
@@ -783,51 +797,51 @@ class RBP_server:
             # for each
             ##########################################################################################
             # read data from the temperature probes       
-            if (int(round(time.time()*1000)) - self.ds18b20_SamplingTimeSeed) > self.ds18b20_SamplingInterval:
-                for p in self.tempProbeDict:
+            if (int(round(time.time()*1000)) - self.AppPrefs.ds18b20_SamplingTimeSeed) > self.AppPrefs.ds18b20_SamplingInterval:
+                for p in self.AppPrefs.tempProbeDict:
                     try:             
                         timestamp = datetime.now()
-                        dstempC =  float(ds18b20.read_temp(self.tempProbeDict[p].probeid, "C"))
+                        dstempC =  float(ds18b20.read_temp(self.AppPrefs.tempProbeDict[p].probeid, "C"))
                         dstempF = defs_common.convertCtoF(float(dstempC))
                         dstempF = float(dstempF)
                         tempData = str(dstempC) + "," + str(dstempF)
                         
-                        if str(self.temperaturescale) == str(defs_common.SCALE_F):
+                        if str(self.AppPrefs.temperaturescale) == str(defs_common.SCALE_F):
                             broadcasttemp = str("%.1f" % dstempF)
                         else:
                             broadcasttemp = str("%.1f" % dstempC)
                         
                         #self.tempProbeDict[p].lastLogTime = self.ds18b20_LastLogTimeDict
 
-                        if (int(round(time.time()*1000)) - int(self.tempProbeDict[p].lastLogTime)) > self.ds18b20_LogInterval:
+                        if (int(round(time.time()*1000)) - int(self.AppPrefs.tempProbeDict[p].lastLogTime)) > self.AppPrefs.ds18b20_LogInterval:
                             # log and broadcast temperature value
-                            defs_common.logprobedata("ds18b20_" + self.tempProbeDict[p].probeid + "_", tempData)
-                            defs_common.logtoconsole("***Logged*** [ds18b20_" + self.tempProbeDict[p].probeid + "] " +
-                                                     self.tempProbeDict[p].name + str(" = {:.1f}".format(dstempC)) + " C | " + str("{:.1f}".format(dstempF)) +
+                            defs_common.logprobedata("ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + "_", tempData)
+                            defs_common.logtoconsole("***Logged*** [ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + "] " +
+                                                     self.AppPrefs.tempProbeDict[p].name + str(" = {:.1f}".format(dstempC)) + " C | " + str("{:.1f}".format(dstempF)) +
                                                      " F", fg="CYAN", style="BRIGHT")
-                            self.logger.info(str("***Logged*** [ds18b20_" + self.tempProbeDict[p].probeid + "] " +
-                                                     self.tempProbeDict[p].name + str(" = {:.1f}".format(dstempC)) + " C | " + str("{:.1f}".format(dstempF))) +
+                            self.logger.info(str("***Logged*** [ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + "] " +
+                                                     self.AppPrefs.tempProbeDict[p].name + str(" = {:.1f}".format(dstempC)) + " C | " + str("{:.1f}".format(dstempF))) +
                                                      " F")
-                            self.broadcastProbeStatus("ds18b20", "ds18b20_" + self.tempProbeDict[p].probeid, str(broadcasttemp))
+                            self.broadcastProbeStatus("ds18b20", "ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid, str(broadcasttemp), self.AppPrefs.tempProbeDict[p].name)
 
                             #self.ds18b20_LastLogTimeDict = int(round(time.time()*1000))
-                            self.tempProbeDict[p].lastLogTime = int(round(time.time()*1000))
+                            self.AppPrefs.tempProbeDict[p].lastLogTime = int(round(time.time()*1000))
                             
-                            self.tempProbeDict[p].lastTemperature = dstempC
+                            self.AppPrefs.tempProbeDict[p].lastTemperature = dstempC
                         else:
-                            self.logger.info(str("[ds18b20_" + self.tempProbeDict[p].probeid + "] " +
-                                                     self.tempProbeDict[p].name + str(" = {:.1f}".format(dstempC)) + " C | " + str("{:.1f}".format(dstempF))) +
+                            self.logger.info(str("[ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + "] " +
+                                                     self.AppPrefs.tempProbeDict[p].name + str(" = {:.1f}".format(dstempC)) + " C | " + str("{:.1f}".format(dstempF))) +
                                                      " F")
                             
                             # broadcast temperature value
-                            self.broadcastProbeStatus("ds18b20", "ds18b20_" + str(self.tempProbeDict[p].probeid), str(broadcasttemp))   
-                            self.tempProbeDict[p].lastTemperature = broadcasttemp
+                            self.broadcastProbeStatus("ds18b20", "ds18b20_" + str(self.AppPrefs.tempProbeDict[p].probeid), str(broadcasttemp), self.AppPrefs.tempProbeDict[p].name)   
+                            self.AppPrefs.tempProbeDict[p].lastTemperature = broadcasttemp
                     except Exception as e:
-                        defs_common.logtoconsole(Back.RED + Fore.WHITE + timestamp.strftime("<<<Error>>> Can not read ds18b20_" + self.tempProbeDict[p].probeid + " temperature data!", fg="WHITE", bg="RED", style="BRIGHT"))
-                        self.logger.error ("<<<Error>>> Can not read ds18b20_" + self.tempProbeDict[p].probeid + " temperature data!")
+                        defs_common.logtoconsole(Back.RED + Fore.WHITE + timestamp.strftime("<<<Error>>> Can not read ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + " temperature data!", fg="WHITE", bg="RED", style="BRIGHT"))
+                        self.logger.error ("<<<Error>>> Can not read ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + " temperature data!")
                         self.logger.error (e)
                 # record the new sampling time
-                self.ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+                self.AppPrefs.ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 
 
             ##########################################################################################
@@ -835,36 +849,40 @@ class RBP_server:
             #
             ##########################################################################################
             
-            if self.feed_CurrentMode == "A":
-                self.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_a", "60", lock=self.threadlock, logger=self.logger)
-            elif self.feed_CurrentMode == "B":
-                self.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_b", "60", lock=self.threadlock, logger=self.logger)
-            elif self.feed_CurrentMode == "C":
-                self.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_c", "60", lock=self.threadlock, logger=self.logger)
-            elif self.feed_CurrentMode == "D":
-                self.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_d", "60", lock=self.threadlock, logger=self.logger)
+            if self.AppPrefs.feed_CurrentMode == "A":
+                #self.AppPrefs.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_a", "60", lock=self.threadlock, logger=self.logger)
+                self.AppPrefs.feed_ModeTotaltime = self.AppPrefs.feed_a_time
+            elif self.AppPrefs.feed_CurrentMode == "B":
+                #self.AppPrefs.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_b", "60", lock=self.threadlock, logger=self.logger)
+                self.AppPrefs.feed_ModeTotaltime = self.AppPrefs.feed_b_time
+            elif self.AppPrefs.feed_CurrentMode == "C":
+                #self.AppPrefs.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_c", "60", lock=self.threadlock, logger=self.logger)
+                self.AppPrefs.feed_ModeTotaltime = self.AppPrefs.feed_c_time
+            elif self.AppPrefs.feed_CurrentMode == "D":
+                #self.AppPrefs.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_d", "60", lock=self.threadlock, logger=self.logger)
+                self.AppPrefs.feed_ModeTotaltime = self.AppPrefs.feed_d_time
             else:
-                self.feed_ModeTotaltime = "0"
+                self.AppPrefs.feed_ModeTotaltime = "0"
 
-            if self.feed_CurrentMode != "CANCEL":
-                self.feedTimeLeft = (int(self.feed_ModeTotaltime)*1000) - (int(round(time.time()*1000)) - self.feed_SamplingTimeSeed)
-                if self.feedTimeLeft <=0:
+            if self.AppPrefs.feed_CurrentMode != "CANCEL":
+                self.AppPrefs.feedTimeLeft = (int(self.AppPrefs.feed_ModeTotaltime)*1000) - (int(round(time.time()*1000)) - self.AppPrefs.feed_SamplingTimeSeed)
+                if self.AppPrefs.feedTimeLeft <=0:
                     print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-                           " Feed Mode: " + self.feed_CurrentMode + " COMPLETE" + Style.RESET_ALL)
-                    self.feed_CurrentMode = "CANCEL"
+                           " Feed Mode: " + self.AppPrefs.feed_CurrentMode + " COMPLETE" + Style.RESET_ALL)
+                    self.AppPrefs.feed_CurrentMode = "CANCEL"
                     timestamp = datetime.now()
 
-                    self.broadcastFeedStatus(self.feed_CurrentMode, self.feedTimeLeft)
+                    self.broadcastFeedStatus(self.AppPrefs.feed_CurrentMode, self.AppPrefs.feedTimeLeft)
                          
-                    self.feed_ExtraTimeSeed = int(round(time.time()*1000))
-                    print ("Extra time starts at: " + str(self.feed_ExtraTimeSeed) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    self.AppPrefs.feed_ExtraTimeSeed = int(round(time.time()*1000))
+                    print ("Extra time starts at: " + str(self.AppPrefs.feed_ExtraTimeSeed) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                 else:    
                     print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-                           " Feed Mode: " + self.feed_CurrentMode + " (" + self.feed_ModeTotaltime + "s) " + "Time Remaining: " + str(round(self.feedTimeLeft/1000)) + "s"
+                           " Feed Mode: " + self.AppPrefs.feed_CurrentMode + " (" + self.AppPrefs.feed_ModeTotaltime + "s) " + "Time Remaining: " + str(round(self.AppPrefs.feedTimeLeft/1000)) + "s"
                            + Style.RESET_ALL)
                     timestamp = datetime.now()
 
-                    self.broadcastFeedStatus(self.feed_CurrentMode, round(self.feedTimeLeft/1000))
+                    self.broadcastFeedStatus(self.AppPrefs.feed_CurrentMode, round(self.AppPrefs.feedTimeLeft/1000))
 
 
             ##########################################################################################
@@ -875,39 +893,52 @@ class RBP_server:
             # do each of the outlets on the internal bus (outlets 1-8)
             for x in range (1,9):
                 status = self.outlet_control("int", str(x))
-                
+
                 self.broadcastOutletStatus("int_outlet_" + str(x),
-                      defs_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed", lock=self.threadlock, logger=self.logger),
+                      self.AppPrefs.outletDict["int_outlet_" + str(x)].outletname,
                       "int",
-                      defs_common.readINIfile("int_outlet_" + str(x), "control_type", "Always", lock=self.threadlock, logger=self.logger),
-                      self.int_outlet_buttonstates.get("int_outlet" + str(x) + "_buttonstate"),
+                      self.AppPrefs.outletDict["int_outlet_" + str(x)].control_type,             
+                      self.AppPrefs.int_outlet_buttonstates.get("int_outlet" + str(x) + "_buttonstate"),
                       "STATEUNKNOWN",
                       status)
-
+                
                 self.logger.debug("int_outlet_" + str(x) +
-                    " [label: " + defs_common.readINIfile("int_outlet_" + str(x), "name", "Unnamed", lock=self.threadlock, logger=self.logger) +
-                    "] [type: " + defs_common.readINIfile("int_outlet_" + str(x), "control_type", "Always", lock=self.threadlock, logger=self.logger) +
-                    "] [button: " + defs_common.readINIfile("int_outlet_" + str(x), "button_state", "OFF", lock=self.threadlock, logger=self.logger) +  
+                    " [label: " + self.AppPrefs.outletDict["int_outlet_" + str(x)].outletname +
+                    "] [type: " + self.AppPrefs.outletDict["int_outlet_" + str(x)].control_type +              
+                    "] [button: " + self.AppPrefs.outletDict["int_outlet_" + str(x)].button_state +           
                     "] [status: " + str(status) + "]" +
                     " [pin: " + str(GPIO_config.int_outletpins.get("int_outlet_" + str(x))) + "]")
-                    
+                
+                   
 
             ##########################################################################################
             # update configuration file with any change requests sitting in the queue
             ##########################################################################################
-            if self.queue.qsize(  ) > 0:
-                for i in range(0,self.queue.qsize()):
-##                    msg = self.queue.get(0)
-##                    self.logger.info("Configuration update: " + msg["outletid"] + " button_state to " + msg["button_state"])
-##                    defs_common.writeINIfile(msg["outletid"], "button_state", msg["button_state"], logger=self.logger)
-##                    print (msg)
-##                    print (self.queue.qsize(  ))
 
+            if self.queue.qsize(  ) > 0:
+                updatedPrefs = set({})
+                for i in range(0,self.queue.qsize()):
                     msg = self.queue.get(0)
                     self.logger.info("Configuration update: [" + msg["section"] + "] [ " + msg["key"] + "] = " + msg["value"])
                     defs_common.writeINIfile(msg["section"], msg["key"], msg["value"], lock=self.threadlock, logger=self.logger)
-                    print (msg)
-                    print (self.queue.qsize())                    
+                    updatedPrefs.add(msg["section"])
+                    #print (msg)
+                    #print (self.queue.qsize())
+
+                self.refreshPrefs = True
+                # if a new value is written to the config, we also have to load it into memory into our
+                # AppPref class so this new setting will be used in the next cycle
+                print (str(updatedPrefs))
+                # update the section here...
+                for sec in updatedPrefs:
+                    self.AppPrefs.reloadPrefSection(self, sec)
+                    
+                    
+            # if new prefs were written, lets read back in all prefs to get any changes
+##            if self.refreshPrefs == True:
+##                self.AppPrefs.readAllPrefs(self)
+##                self.refreshPrefs = False
+                
             ########################################################################################## 
             # pause to slow down the loop, otherwise CPU usage spikes as program is busy waiting
             ##########################################################################################            

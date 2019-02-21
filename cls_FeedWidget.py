@@ -289,10 +289,8 @@ class Dialog(Toplevel):
     def body(self, master):
         # create dialog body.  return widget that should have
         # initial focus.  this method should be overridden
-        #outlet = cfg_outlets.PageOutlets(master, self)
-        feedtimers = cls_FeedConfig.FeedTimers(master, self)
-        feedtimers.pack()
-        #outlet.pack()
+        self.feedtimers = cls_FeedConfig.FeedTimers(master, self)
+        self.feedtimers.pack()
         pass
 
     def buttonbox(self):
@@ -319,6 +317,8 @@ class Dialog(Toplevel):
         if not self.validate():
             self.initial_focus.focus_set() # put focus back
             return
+
+        self.feedtimers.saveChanges()
 
         self.withdraw()
         self.update_idletasks()

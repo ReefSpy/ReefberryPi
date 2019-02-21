@@ -5,17 +5,17 @@ from tkinter import ttk
 LARGE_FONT= ("Verdana", 12)
 
 
-class PageAlerts(tk.Frame):
+class PageSwitches(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
-
-        label = tk.Label(self, text="Alerts Configuration", font=LARGE_FONT)
-        label.pack(side=TOP, pady=10, anchor=W)
+        self.parent = parent
+        self.controller = controller
+        
+        label = tk.Label(self, text="Switch Configuration", font=LARGE_FONT)
+        label.pack(side=TOP, anchor=W)
 
         label2 = tk.Label(self, text="Coming Soon...", font=LARGE_FONT)
         label2.pack(side=TOP, pady=50)
-
-        
 

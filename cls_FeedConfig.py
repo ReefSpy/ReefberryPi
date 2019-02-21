@@ -19,11 +19,11 @@ class FeedTimers(tk.Frame):
         label = tk.Label(self, text="Feed Timers", font=LARGE_FONT)
         label.grid(row=0, column=0, pady=10, sticky=W)
 
-        # save button
-        self.saveimg=PhotoImage(file="images/save-blue-24.png")
-        self.btn_save = Button(self, text="Save", image=self.saveimg,
-                               compound='left', relief=RAISED, command=self.saveChanges)
-        self.btn_save.grid(row=1, column=0, sticky=W)
+##        # save button
+##        self.saveimg=PhotoImage(file="images/save-blue-24.png")
+##        self.btn_save = Button(self, text="Save", image=self.saveimg,
+##                               compound='left', relief=RAISED, command=self.saveChanges)
+##        self.btn_save.grid(row=1, column=0, sticky=W)
 
         ###########################################################################
         # frame for feed timers

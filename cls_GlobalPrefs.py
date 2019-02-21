@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
-import cfg_common
+import defs_common
 from tkinter import messagebox
 
 LARGE_FONT= ("Verdana", 12)
@@ -11,7 +11,9 @@ class PageGlobal(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
-
+        self.parent = parent
+        self.controller = controller
+        
         label = tk.Label(self, text="Global Settings", font=LARGE_FONT)
         label.pack(side=TOP, anchor=W)
 
@@ -39,21 +41,24 @@ class PageGlobal(tk.Frame):
         rdofahrenheitscale.pack(pady=10, side=LEFT)
 
         # read value from config file
-        scalesetting = cfg_common.readINIfile("global", "tempscale", cfg_common.SCALE_F)
-        #print(scalesetting)
+        #scalesetting = cfg_common.readINIfile("global", "tempscale", cfg_common.SCALE_F)
+        scalesetting = controller.downloadsettings("global", "tempscale", defs_common.SCALE_F)
         
-        if str(scalesetting) == str(cfg_common.SCALE_C):
-            self.tempscale.set(str(cfg_common.SCALE_C))
+        if str(scalesetting) == str(defs_common.SCALE_C):
+            self.tempscale.set(str(defs_common.SCALE_C))
         else:
-            self.tempscale.set(str(cfg_common.SCALE_F))
+            self.tempscale.set(str(defs_common.SCALE_F))
         
 
     def saveChanges(self):
 
-        if cfg_common.writeINIfile('global', 'tempscale', str(self.tempscale.get())):
-            messagebox.showinfo("Global Settings",
-                                "New configuration saved succesfully.")
-        else:
-            messagebox.showerror("Global Settings",
-                                 "Error: Could not save changes! \nNew configuration not saved.")
+        self.controller.uploadsettings('global', 'tempscale', str(self.tempscale.get()))
+
+##        if cfg_common.writeINIfile('global', 'tempscale', str(self.tempscale.get())):
+##            
+##            messagebox.showinfo("Global Settings",
+##                                "New configuration saved succesfully.")
+##        else:
+##            messagebox.showerror("Global Settings",
+##                                 "Error: Could not save changes! \nNew configuration not saved.")
         

@@ -20,6 +20,7 @@ import time
 import cls_DashBoard 
 import cls_GraphPage
 import cls_SplashPage
+import cls_PrefPage
 #import cls_Toolbar
 import defs_common
 import os,sys
@@ -50,6 +51,17 @@ class RBP_app:
         
         #self.toolbar = cls_Toolbar.Toolbar()
 
+        #create a menubar
+        master.menubar = Menu(master)
+
+        # create a pulldown menu, and add it to the menu bar
+        master.filemenu = Menu(master.menubar, tearoff=0)
+        master.filemenu.add_command(label="Exit", command=master.quit)
+        master.menubar.add_cascade(label="File", menu=master.filemenu)
+        # display the menu
+        master.config(menu=master.menubar)
+
+        
         ######################### 
         #create toolbar frame
         self.frame_toolbar = tk.LabelFrame(master, relief = tk.FLAT)
@@ -65,12 +77,26 @@ class RBP_app:
                             compound=TOP, command=lambda: self.show_frame(cls_GraphPage.GraphPage))
         self.btn_GraphPage.pack(side=LEFT)
 
+        self.img_prefs = PhotoImage(file="images/gears-64.png")
+        self.btn_prefs = ttk.Button(self.frame_toolbar, text="Settings", image=self.img_prefs,
+                            compound=TOP, command=lambda: self.show_frame(cls_PrefPage.PrefPage))
+        self.btn_prefs.pack(side=LEFT)
+
         self.img_about = PhotoImage(file="images/reefberrypi_logo-64.png")
         self.btn_About = ttk.Button(self.frame_toolbar, text="About", image=self.img_about,
                             compound=TOP, command=lambda: self.show_frame(cls_SplashPage.SplashPage))
         self.btn_About.pack(side=LEFT)
+
+        # create statusbar
+        statusbar = StatusBar(master)
+        statusbar.pack(side=BOTTOM, fill=X)
+        statusbar.set("connected to server")
+
         
         #########################
+        #self.sizegrip = ttk.Sizegrip(master)
+        #self.sizegrip.pack(side="right", anchor="s")
+        
         container = tk.Frame(master)
         container.pack(side="top", fill="both", expand = True)
         container.grid_rowconfigure(0, weight=1)
@@ -78,7 +104,7 @@ class RBP_app:
 
         self.frames = {}
 
-        for F in (cls_DashBoard.DashBoard, cls_GraphPage.GraphPage, cls_SplashPage.SplashPage):
+        for F in (cls_DashBoard.DashBoard, cls_GraphPage.GraphPage, cls_PrefPage.PrefPage, cls_SplashPage.SplashPage):
             frame = F(container, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
@@ -87,6 +113,8 @@ class RBP_app:
         self.show_frame(cls_DashBoard.DashBoard)
         #self.show_frame(cls_GraphPage.GraphPage)
 
+
+    
     def processIncoming(self):
         """Handle all messages currently in the queue, if any."""
         while self.queue.qsize(  ):
@@ -102,10 +130,11 @@ class RBP_app:
                     if key == "status_currentprobeval":
                         curID = str(msg["status_currentprobeval"]["probeid"])
                         curVal = str(msg["status_currentprobeval"]["probeval"])
+                        curName = str(msg["status_currentprobeval"]["probename"])
 
                         if curID == "dht_h": #if this is a humidity value, tack on the % sign
                             curVal = str(curVal) + "%"
-                        self.frames[cls_DashBoard.DashBoard].updateProbeVal(curID, curVal)
+                        self.frames[cls_DashBoard.DashBoard].updateProbeVal(curID, curVal, curName)
 
                     if key == "status_currentoutletstate":    
                         #defs_common.logtoconsole(str(msg), fg="MAGENTA", bg="GREEN")
@@ -223,7 +252,21 @@ class ThreadedClient:
         channel.start_consuming()
     
         
+class StatusBar(Frame):
 
+    def __init__(self, master):
+        Frame.__init__(self, master)
+        self.label = Label(self, bd=1, relief=SUNKEN, anchor=W)
+        self.label.pack(fill=X)
+
+    def set(self, format, *args):
+        self.label.config(text=format % args)
+        self.label.update_idletasks()
+
+    def clear(self):
+        self.label.config(text="")
+        self.label.update_idletasks()
+        
 #####################
         
 app = tk.Tk()

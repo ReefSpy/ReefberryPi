@@ -253,11 +253,11 @@ class Outlet(tk.Frame):
         self.chk_log = Checkbutton(self.logframe, text="Enable", variable=self.logenabled)
         self.chk_log.pack(side=LEFT, anchor=W)
 
-        # Save button
-        self.saveImg=PhotoImage(file="images/save-blue-24.png")
-        self.btn_Save = Button(self, text="Save", image=self.saveImg, compound=LEFT, command=self.saveOutlet)
-        self.btn_Save.grid(row=2, column=2, pady=10, padx=10, sticky=E)
-
+##        # Save button
+##        self.saveImg=PhotoImage(file="images/save-blue-24.png")
+##        self.btn_Save = Button(self, text="Save", image=self.saveImg, compound=LEFT, command=self.saveOutlet)
+##        self.btn_Save.grid(row=2, column=2, pady=10, padx=10, sticky=E)
+##
         self.setOutletNum(outletnum, self.BusType)
 
     def setOutletNum(self, outletnum, bustype):

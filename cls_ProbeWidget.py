@@ -88,12 +88,13 @@ class ProbeWidget():
             self.connection.process_data_events()
         return self.response
 
-    def updateProbeFrameName(self):
-        self.probeframe.config(text = self.name.get())
+    def updateProbeFrameName(self, probename):
+        self.probeframe.config(text = probename)
+        #print("Update probeframe name " + probename)
         
     def updateProbeValue(self, val):
         self.probeval.set(val)
-        print("here: " + val)
+        #print("here: " + val)
         
     # plot probe data
     def animate_probe(self, i):

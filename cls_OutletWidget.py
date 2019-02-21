@@ -292,9 +292,9 @@ class Dialog(Toplevel):
         # create dialog body.  return widget that should have
         # initial focus.  this method should be overridden
         #outlet = cfg_outlets.PageOutlets(master, self)
-        outlet = cls_OutletConfig.Outlet(master, self, cls_OutletConfig.BUS_INTERNAL, self.outletnum)
+        self.outlet = cls_OutletConfig.Outlet(master, self, cls_OutletConfig.BUS_INTERNAL, self.outletnum)
 
-        outlet.pack()
+        self.outlet.pack()
         pass
 
     def buttonbox(self):
@@ -321,6 +321,8 @@ class Dialog(Toplevel):
         if not self.validate():
             self.initial_focus.focus_set() # put focus back
             return
+
+        self.outlet.saveOutlet()
 
         self.withdraw()
         self.update_idletasks()
