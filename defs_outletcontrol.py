@@ -3,6 +3,7 @@ from colorama import Fore, Back, Style
 import defs_common
 import RPi.GPIO as GPIO
 import time
+import defs_common
 
 
 
@@ -35,27 +36,26 @@ def handle_outlet_heater(controller, outlet, button_state, pin):
         return "ON"
     elif button_state == "AUTO":
         probe = defs_common.readINIfile(outlet, "heater_probe", "28-000000000000", logger=controller.logger)
-        on_temp = defs_common.readINIfile(outlet, "heater_on", "25.0", logger=controller.logger)
-        off_temp = defs_common.readINIfile(outlet, "heater_off", "25.5", logger=controller.logger)
+
+        if controller.AppPrefs.temperaturescale == defs_common.SCALE_F:
+            on_temp = defs_common.convertCtoF(controller.AppPrefs.outletDict[outlet].heater_on)
+        else:
+            on_temp = controller.AppPrefs.outletDict[outlet].heater_on
+            
+        if controller.AppPrefs.temperaturescale == defs_common.SCALE_F:
+            off_temp = defs_common.convertCtoF(controller.AppPrefs.outletDict[outlet].heater_off)
+        else:
+            off_temp = controller.AppPrefs.outletDict[outlet].heater_off
 
 
         for p in controller.AppPrefs.tempProbeDict:
             if controller.AppPrefs.tempProbeDict[p].probeid == probe:
-                #print("last temp " + str(self.tempProbeDict[p].lastTemperature))
+                print("last temp " + str(controller.AppPrefs.tempProbeDict[p].lastTemperature) + " On temp " + on_temp + " Off temp " + off_temp)
                 if float(controller.AppPrefs.tempProbeDict[p].lastTemperature) <= float(on_temp):
-                    #print(str(tempProbeDict[p].lastTemperature) + " " + str(on_temp))
-                    GPIO.output(pin, False)
-                    tempScale = defs_common.readINIfile("global", "tempscale", "0", logger=controller.logger)
-                    if  tempScale == str(defs_common.SCALE_F):
-                        on_temp = defs_common.convertCtoF(float(on_temp))
-                        off_temp = defs_common.convertCtoF(float(off_temp))                   
+                    GPIO.output(pin, False)                
                     return "ON (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"  
                 if float(controller.AppPrefs.tempProbeDict[p].lastTemperature) >= float(off_temp):
                     GPIO.output(pin, True)
-                    tempScale = defs_common.readINIfile("global", "tempscale", "0", logger=controller.logger)
-                    if tempScale == str(defs_common.SCALE_F):
-                        on_temp = defs_common.convertCtoF(on_temp)
-                        off_temp = defs_common.convertCtoF(off_temp)
                     return "OFF (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"
                 break
 
