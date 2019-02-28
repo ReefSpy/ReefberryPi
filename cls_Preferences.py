@@ -23,26 +23,34 @@ class tempProbeClass():
     lastLogTime = ""
 
 class outletPrefs():
-    ischanged            = ""
-    outletid             = ""
-    outletname           = ""
-    control_type         = ""
-    always_state         = ""
-    enable_log           = ""
-    heater_probe         = ""
-    heater_on            = ""
-    heater_off           = ""
-    button_state         = ""
-    light_on             = ""
-    light_off            = ""
-    return_enable_feed_a = ""
-    return_feed_delay_a  = ""
-    return_enable_feed_b = ""
-    return_feed_delay_b  = ""
-    return_enable_feed_c = ""
-    return_feed_delay_c  = ""
-    return_enable_feed_d = ""
-    return_feed_delay_d  = ""
+    ischanged             = ""
+    outletid              = ""
+    outletname            = ""
+    control_type          = ""
+    always_state          = ""
+    enable_log            = ""
+    heater_probe          = ""
+    heater_on             = ""
+    heater_off            = ""
+    button_state          = ""
+    light_on              = ""
+    light_off             = ""
+    return_enable_feed_a  = ""
+    return_feed_delay_a   = ""
+    return_enable_feed_b  = ""
+    return_feed_delay_b   = ""
+    return_enable_feed_c  = ""
+    return_feed_delay_c   = ""
+    return_enable_feed_d  = ""
+    return_feed_delay_d   = ""
+    skimmer_enable_feed_a = ""
+    skimmer_feed_delay_a  = ""
+    skimmer_enable_feed_b = ""
+    skimmer_feed_delay_b  = ""
+    skimmer_enable_feed_c = ""
+    skimmer_feed_delay_c  = ""
+    skimmer_enable_feed_d = ""
+    skimmer_feed_delay_d  = ""
 
 class AppPrefs():
 
@@ -181,6 +189,14 @@ class AppPrefs():
                 outlet.return_feed_delay_c  = defs_common.readINIfile(section, "return_feed_delay_c", "0", lock=controller.threadlock, logger=controller.logger)
                 outlet.return_enable_feed_d = defs_common.readINIfile(section, "return_enable_feed_d", "False", lock=controller.threadlock, logger=controller.logger)
                 outlet.return_feed_delay_d  = defs_common.readINIfile(section, "return_feed_delay_d", "0", lock=controller.threadlock, logger=controller.logger)
+                outlet.skimmer_enable_feed_a = defs_common.readINIfile(section, "skimmer_enable_feed_a", "False", lock=controller.threadlock, logger=controller.logger)
+                outlet.skimmer_feed_delay_a  = defs_common.readINIfile(section, "skimmer_feed_delay_a", "0", lock=controller.threadlock, logger=controller.logger)
+                outlet.skimmer_enable_feed_b = defs_common.readINIfile(section, "skimmer_enable_feed_b", "False", lock=controller.threadlock, logger=controller.logger)
+                outlet.skimmer_feed_delay_b  = defs_common.readINIfile(section, "skimmer_feed_delay_b", "0", lock=controller.threadlock, logger=controller.logger)
+                outlet.skimmer_enable_feed_c = defs_common.readINIfile(section, "skimmer_enable_feed_c", "False", lock=controller.threadlock, logger=controller.logger)
+                outlet.skimmer_feed_delay_c  = defs_common.readINIfile(section, "skimmer_feed_delay_c", "0", lock=controller.threadlock, logger=controller.logger)
+                outlet.skimmer_enable_feed_d = defs_common.readINIfile(section, "skimmer_enable_feed_d", "False", lock=controller.threadlock, logger=controller.logger)
+                outlet.skimmer_feed_delay_d  = defs_common.readINIfile(section, "skimmer_feed_delay_d", "0", lock=controller.threadlock, logger=controller.logger)
 
                 self.outletDict[section] = outlet
 
@@ -228,6 +244,14 @@ class AppPrefs():
             outlet.return_feed_delay_c  = defs_common.readINIfile(section, "return_feed_delay_c", "0", lock=controller.threadlock, logger=controller.logger)
             outlet.return_enable_feed_d = defs_common.readINIfile(section, "return_enable_feed_d", "False", lock=controller.threadlock, logger=controller.logger)
             outlet.return_feed_delay_d  = defs_common.readINIfile(section, "return_feed_delay_d", "0", lock=controller.threadlock, logger=controller.logger)
+            outlet.skimmer_enable_feed_a = defs_common.readINIfile(section, "skimmer_enable_feed_a", "False", lock=controller.threadlock, logger=controller.logger)
+            outlet.skimmer_feed_delay_a  = defs_common.readINIfile(section, "skimmer_feed_delay_a", "0", lock=controller.threadlock, logger=controller.logger)
+            outlet.skimmer_enable_feed_b = defs_common.readINIfile(section, "skimmer_enable_feed_b", "False", lock=controller.threadlock, logger=controller.logger)
+            outlet.skimmer_feed_delay_b  = defs_common.readINIfile(section, "skimmer_feed_delay_b", "0", lock=controller.threadlock, logger=controller.logger)
+            outlet.skimmer_enable_feed_c = defs_common.readINIfile(section, "skimmer_enable_feed_c", "False", lock=controller.threadlock, logger=controller.logger)
+            outlet.skimmer_feed_delay_c  = defs_common.readINIfile(section, "skimmer_feed_delay_c", "0", lock=controller.threadlock, logger=controller.logger)
+            outlet.skimmer_enable_feed_d = defs_common.readINIfile(section, "skimmer_enable_feed_d", "False", lock=controller.threadlock, logger=controller.logger)
+            outlet.skimmer_feed_delay_d  = defs_common.readINIfile(section, "skimmer_feed_delay_d", "0", lock=controller.threadlock, logger=controller.logger)
 
             self.outletDict[section] = outlet
 

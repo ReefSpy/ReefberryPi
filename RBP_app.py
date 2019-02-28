@@ -56,7 +56,8 @@ class RBP_app:
 
         # create a pulldown menu, and add it to the menu bar
         master.filemenu = Menu(master.menubar, tearoff=0)
-        master.filemenu.add_command(label="Exit", command=master.quit)
+        #master.filemenu.add_command(label="Exit", command=master.quit)
+        master.filemenu.add_command(label="Quit", command=self.on_closing)
         master.menubar.add_cascade(label="File", menu=master.filemenu)
         # display the menu
         master.config(menu=master.menubar)
@@ -90,7 +91,7 @@ class RBP_app:
         # create statusbar
         statusbar = StatusBar(master)
         statusbar.pack(side=BOTTOM, fill=X)
-        statusbar.set("connected to server")
+        #statusbar.set("connected to server")
 
         
         #########################
@@ -113,7 +114,11 @@ class RBP_app:
         self.show_frame(cls_DashBoard.DashBoard)
         #self.show_frame(cls_GraphPage.GraphPage)
 
-
+    def on_closing(self):
+        if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            client.endApplication()
+            app.destroy()
+            
     
     def processIncoming(self):
         """Handle all messages currently in the queue, if any."""

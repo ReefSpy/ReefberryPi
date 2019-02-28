@@ -240,7 +240,22 @@ class OutletWidget():
         val = json.loads(val)
         val = val.get("readinifile")
 
-        print (val)
+        #print (val)
+        
+        return val
+
+    def getProbeList(self):
+        defs_common.logtoconsole("Request probe list for outlet control")
+        # get setting value from server
+        request = {
+                  "rpc_req": "get_probelist",
+              }
+        request = json.dumps(request)          
+        val = self.rpc_call(request, "rpc_queue")
+        val = val.decode()
+        val = json.loads(val)
+
+        #print (val)
         
         return val
 

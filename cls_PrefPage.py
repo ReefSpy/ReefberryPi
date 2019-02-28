@@ -18,7 +18,8 @@ import json
 import uuid
 import threading
 
-import cfg_tempprobes
+#import cfg_tempprobes
+import cls_TempPrefs
 import cls_GlobalPrefs
 #import cfg_outlets
 import cls_EnviroPrefs
@@ -26,7 +27,7 @@ import cls_SwitchPrefs
 import cls_AnalogPrefs
 #import cfg_feedtimers
 import cls_PWMPrefs
-import cfg_common
+#import cfg_common
 import cls_AlertPrefs
 import defs_common
 
@@ -91,7 +92,7 @@ class PrefPage(tk.Frame):
         self.frame_master.bind("<Configure>", self.onFrameConfigure)
 ##
         for F in (cls_GlobalPrefs.PageGlobal,
-                  cfg_tempprobes.PageTempProbes,
+                  cls_TempPrefs.PageTempProbes,
                   cls_EnviroPrefs.PageEnvironmental,
                   cls_SwitchPrefs.PageSwitches,
                   cls_AnalogPrefs.PageAnalogProbes,
@@ -254,7 +255,7 @@ class PrefPage(tk.Frame):
         if tab == PAGE_GLOBAL:
             selection.show_frame(cls_GlobalPrefs.PageGlobal)
         elif tab == PAGE_TEMPPROBES:
-            selection.show_frame(cfg_tempprobes.PageTempProbes)
+            selection.show_frame(cls_TempPrefs.PageTempProbes)
         elif tab == PAGE_OUTLETS:
             #selection.show_frame(cfg_outlets.PageOutlets)
             pass

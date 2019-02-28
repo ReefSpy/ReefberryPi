@@ -4,7 +4,8 @@ from tkinter import ttk
 import configparser
 import cfg_common
 from tkinter import font
-import cfg_tempprobes
+#import cfg_tempprobes
+import cls_TempPrefs
 
 
 LARGE_FONT = ("Verdana", 12)
@@ -797,19 +798,37 @@ class Outlet(tk.Frame):
 
     # need to fix this, can't be reading this file directly
     # should be requesting the dict from the server!
+##    def readExistingProbes(self):
+##        # create dictionary to hold assigned temperature probes
+##        # these are probes that are already saved in config file
+##        probeDict = {}
+##        probeDict.clear()
+##        config = configparser.ConfigParser()
+##        config.read(cfg_common.CONFIGFILENAME)
+##        # loop through each section and see if it is a ds18b20 temp probe
+##        for section in config:
+##            if section.split("_")[0] == "ds18b20":
+##                probe = cfg_tempprobes.ProbeClass()
+##                probe.probeid = section.split("_")[1]
+##                probe.name = config[section]["name"]
+##                probeDict [section.split("_")[1]] = probe
+##
+##        return probeDict
+
     def readExistingProbes(self):
         # create dictionary to hold assigned temperature probes
         # these are probes that are already saved in config file
         probeDict = {}
         probeDict.clear()
-        config = configparser.ConfigParser()
-        config.read(cfg_common.CONFIGFILENAME)
-        # loop through each section and see if it is a ds18b20 temp probe
-        for section in config:
-            if section.split("_")[0] == "ds18b20":
-                probe = cfg_tempprobes.ProbeClass()
-                probe.probeid = section.split("_")[1]
-                probe.name = config[section]["name"]
-                probeDict [section.split("_")[1]] = probe
+
+        # send the command back up to the controller to handle the request
+        probelist = self.controller.controller.getProbeList()
+        for tempprobe in probelist['probelist']:
+            if tempprobe.split("_")[0] == "ds18b20":
+                probe = cls_TempPrefs.ProbeClass()
+                probe.probeid = probelist['probelist'][tempprobe]['probeid'].split("_")[1]
+                probe.name = probelist['probelist'][tempprobe]['probename']
+                probeDict [probe.probeid] = probe
 
         return probeDict
+        

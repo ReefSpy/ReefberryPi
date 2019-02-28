@@ -258,7 +258,19 @@ def writeINIfile(section, key, value, *args, **kwargs):
         return False
     
 
-def removesectionfromINIfile(section):
+def removesectionfromINIfile(section, *args, **kwargs):
+
+    useThreadLock = False
+
+    # to prevent multiple threads from woking on the file at the same time, we will check
+    # the thread lock
+    for keyarg, val in kwargs.items():
+        if keyarg == "lock":
+            lck = val
+            lck.acquire()
+            useThreadLock = True
+            #logtoconsole("Write Lock Aquired", fg = "WHITE", bg="BLUE", style="BRIGHT")
+    
     p = configparser.SafeConfigParser()
     with open(CONFIGFILENAME, "r") as f:
         p.readfp(f)
@@ -267,6 +279,10 @@ def removesectionfromINIfile(section):
 
     with open(CONFIGFILENAME, "w") as f:
         p.write(f)
+
+    if useThreadLock == True:
+        lck.release()
+        #logtoconsole("Write Lock Released", fg = "WHITE", bg="BLUE", style="BRIGHT")
 
 
 

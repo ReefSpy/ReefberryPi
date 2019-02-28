@@ -31,6 +31,7 @@ import numpy
 import ph_sensor
 import cls_Preferences
 import defs_outletcontrol
+import glob
 
 
 class RBP_server:
@@ -333,6 +334,19 @@ class RBP_server:
                 response = json.dumps(response)
                 self.logger.debug(str(response))
 
+            elif str(body["rpc_req"]) == "get_connectedtempprobes":
+                defs_common.logtoconsole("RPC: " + str(body["rpc_req"]), fg="GREEN", style="BRIGHT")
+                self.logger.info("RPC: " + str(body["rpc_req"]))
+                tempprobelist = self.getConnectedTempProbes()
+
+                response = {
+                            "tempprobelist":tempprobelist
+                            }
+
+                response = json.dumps(response)
+                self.logger.debug(str(response))
+                
+
             elif str(body["rpc_req"]) == "set_outletoperationmode":
                 defs_common.logtoconsole("set_outletoperationmode " + str(body), fg="GREEN", style="BRIGHT")
                 self.logger.info("set_outletoperationmode " + str(body))
@@ -470,8 +484,23 @@ class RBP_server:
             routing_key='',
             body=message)
 
-             
+#####
+    def getConnectedTempProbes(self):
+        
+        base_dir = '/sys/bus/w1/devices/' 
+        device_folder = glob.glob(base_dir + '28*')
 
+        probelist = []
+
+        probeID = ""
+        for d in device_folder:
+            probeid = d.split("/")[-1]
+            probelist.append(probeid)
+
+        return probelist
+    
+   
+#####
     def get_probelist(self):
         probedict = {}
         config = configparser.ConfigParser()
@@ -827,7 +856,8 @@ class RBP_server:
                             #self.ds18b20_LastLogTimeDict = int(round(time.time()*1000))
                             self.AppPrefs.tempProbeDict[p].lastLogTime = int(round(time.time()*1000))
                             
-                            self.AppPrefs.tempProbeDict[p].lastTemperature = dstempC
+                            #self.AppPrefs.tempProbeDict[p].lastTemperature = dstempC
+                            self.AppPrefs.tempProbeDict[p].lastTemperature = broadcasttemp
                         else:
                             self.logger.info(str("[ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + "] " +
                                                      self.AppPrefs.tempProbeDict[p].name + str(" = {:.1f}".format(dstempC)) + " C | " + str("{:.1f}".format(dstempF))) +
