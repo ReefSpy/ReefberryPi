@@ -388,6 +388,15 @@ class RBP_server:
                 changerequest["value"] = str(body["value"])
                 self.queue.put(changerequest)
 
+            elif str(body["rpc_req"]) == "set_removesectionfrominifile":
+                defs_common.logtoconsole("set_removesectionfrominifile " + str(body), fg="GREEN", style="BRIGHT")
+                self.logger.debug("set_removesectionfrominifile " + str(body))
+
+                section = str(body["section"])
+                
+                defs_common.removesectionfromINIfile(section, lock=self.threadlock, logger=self.logger)
+                
+
             elif str(body["rpc_req"]) == "get_readinifile":
                 # read values from the configuration file
                 defs_common.logtoconsole("get_readinifile " + str(body), fg="GREEN", style="BRIGHT")
@@ -412,7 +421,6 @@ class RBP_server:
                 respose = json.dumps(response)
                 
                 self.logger.debug(str(response))
-
 
 
             try:
@@ -484,7 +492,7 @@ class RBP_server:
             routing_key='',
             body=message)
 
-#####
+
     def getConnectedTempProbes(self):
         
         base_dir = '/sys/bus/w1/devices/' 
@@ -500,7 +508,6 @@ class RBP_server:
         return probelist
     
    
-#####
     def get_probelist(self):
         probedict = {}
         config = configparser.ConfigParser()

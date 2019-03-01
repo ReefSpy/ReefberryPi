@@ -1,12 +1,10 @@
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
-#import glob
-#import cfg_common
-#import configparser
 from datetime import datetime
 import defs_common
 import json
+import time
 
 LARGE_FONT= ("Verdana", 12)
 
@@ -27,15 +25,6 @@ class PageTempProbes(tk.Frame):
         label = tk.Label(self, text="Temperature Probes", font=LARGE_FONT)
         label.pack(side=TOP, anchor=W)
 
-        # top frame for toolbar
-        #self.frame_toolbar = LabelFrame(self, relief= FLAT)
-        #self.frame_toolbar.pack(fill=X, side=TOP)
-        # save button
-        #self.saveimg=PhotoImage(file="images/save-blue-24.png")
-        #self.btn_save = Button(self.frame_toolbar, text="Save", image=self.saveimg,
-        #                       compound='left', relief=RAISED, command=self.saveChanges)
-        #self.btn_save.pack(side=TOP, anchor=W, pady=5)
-
         #hold these icons for later use
         self.editimg=PhotoImage(file="images/edit-24.png")
         self.deleteimg=PhotoImage(file="images/trash-can-24.png")
@@ -49,8 +38,6 @@ class PageTempProbes(tk.Frame):
         # probe
         self.unassignedprobeframe = LabelFrame(self.frame_DS18B20, relief=GROOVE, text="Unnassigned Probes:")
         self.unassignedprobeframe.pack(side=LEFT, anchor=N, padx=10)
-        #self.lbl_probe = Label(self.unassignedprobeframe,text="Unassigned Probes:")
-        #self.lbl_probe.pack(side=TOP, anchor=W, padx=10)
         self.assignedprobeframe = LabelFrame(self.frame_DS18B20, relief=GROOVE, text="Assigned Probes:")
         self.assignedprobeframe.pack(side=LEFT, anchor=N, padx=10)
 
@@ -63,28 +50,31 @@ class PageTempProbes(tk.Frame):
         #                           command=self.assignProbe)
         #self.btn_assignprobe.pack(side=TOP, anchor=W, padx=10, pady=10)
 
+        # add refresh button
+        self.btn_refreshprobes = Button(self.unassignedprobeframe,text="Refresh",
+                                   command=self.getConnectedProbes)
+        self.btn_refreshprobes.pack(side=TOP, anchor=W, fill=X, pady=10)
         # add probe button
         self.btn_assignprobe = Button(self.unassignedprobeframe,text="Add Probe",
                                    command=self.addProbe)
-        self.btn_assignprobe.pack(side=TOP, anchor=W, fill=X, pady=10)
+        self.btn_assignprobe.pack(side=TOP, anchor=W, fill=X)    
         
         self.getConnectedProbes()
         self.readExistingProbes()
         for i in self.probeDict:
-            print("Probe dict id: " + str(self.probeDict[i].probeid))
-            print("Probe dict name: " + str(self.probeDict[i].probeid))
+            #print("Probe dict id: " + str(self.probeDict[i].probeid))
+            #print("Probe dict name: " + str(self.probeDict[i].probeid))
             self.createProbeFrame(str(self.probeDict[i].probeid), str(self.probeDict[i].name))
         
 
     def addProbe(self):
         d = NewProbeDialog(self, self.lst_probes.get(ACTIVE), "Unnamed")
+        self.getConnectedProbes()
         
 
     def getConnectedProbes(self):
 
         self.readExistingProbes()
-        #base_dir = '/sys/bus/w1/devices/' 
-        #device_folder = glob.glob(base_dir + '28*')
 
         defs_common.logtoconsole("Request list of connected temperature probes...")
         # get setting value from server
@@ -158,23 +148,23 @@ class PageTempProbes(tk.Frame):
         self.probeframe.grid_columnconfigure(1, minsize=200)
 
     def editProbe(self, ID, name):
-        #print(ID['text'])
-        #print(name["text"])
+
         self.readExistingProbes()
+
         d = NewProbeDialog(self, ID['text'], name["text"])
         # we need to refresh the page, clear out old probes and populate current data
         for widget in self.assignedprobeframe.winfo_children():
             widget.destroy()
-        #self.readExistingProbes()
+        self.probeDict.clear()
+        self.readExistingProbes()
         for i in self.probeDict:
-            #print("Probe dict id: " + str(self.probeDict[i].probeid))
-            #print("Probe dict name: " + str(self.probeDict[i].probeid))
             self.createProbeFrame(str(self.probeDict[i].probeid), str(self.probeDict[i].name))
         
     def deleteProbe(self, ID, name):
         if messagebox.askokcancel("Delete Probe", "Are you sure want to delete probe?\n\nProbe ID: " + str(ID["text"]) +
                                   "\nName: " + str(name["text"])):
-            cfg_common.removesectionfromINIfile(str("ds18b20_" + ID["text"]))
+            #cfg_common.removesectionfromINIfile(str("ds18b20_" + ID["text"]))
+            self.removeTempProbe(str("ds18b20_" + ID["text"]))
             # we need to refresh the page, clear out old probes and populate current data
             for widget in self.assignedprobeframe.winfo_children():
                 widget.destroy()
@@ -184,21 +174,13 @@ class PageTempProbes(tk.Frame):
             self.getConnectedProbes()
             
     def saveChanges(self):
-        #print("Enter saveChanges")
-        #print(self.newprobeDict)
+
         try:
             for probe in self.newprobeDict:
                 self.controller.uploadsettings('ds18b20_' + self.newprobeDict[probe].probeid, "name", "1")
                 del self.newprobeDict[probe]
-##                if cfg_common.writeINIfile('ds18b20_' + self.newprobeDict[probe].probeid, "name", "1"):
-##                    messagebox.showinfo("Global Settings",
-##                                    "New configuration saved succesfully.")
-##                    # remove this key from unsaved probe list
-##                    del self.newprobeDict[probe]
-##                else:
-##                    messagebox.showerror("Global Settings",
-##                                     "Error: Could not save changes! \nNew configuration not saved.")
-            
+
+            self.readExistingProbes() 
 
         except:
             print("saveChanges Error")
@@ -223,7 +205,6 @@ class PageTempProbes(tk.Frame):
         probelist = probelist.decode()
         probelist = json.loads(probelist)
 
-        
         for tempprobe in probelist['probelist']:
             if tempprobe.split("_")[0] == "ds18b20":
                 probe = ProbeClass()
@@ -232,6 +213,14 @@ class PageTempProbes(tk.Frame):
                 self.probeDict [probe.probeid] = probe
 
 
+    def removeTempProbe(self, section):
+        # send request to server
+        request = {
+                  "rpc_req": "set_removesectionfrominifile",
+                  "section": section
+              }
+        request = json.dumps(request)          
+        self.controller.rpc_call(request, "rpc_queue")
 
 
         
@@ -273,12 +262,16 @@ class NewProbeDialog():
         self.dlg.grab_set()
         self.dlg.transient(parent)
         self.dlg.wait_window(self.dlg)
-        parent.getConnectedProbes()
-        parent.readExistingProbes()
+
 
     def save(self, parent):
+
         parent.controller.uploadsettings('ds18b20_' + self.lbl_probeid["text"],
                                    "name", self.txt_probename.get())
+        # pause here and give server time to write data to file
+        # if I don't wait, the call for the list of probes gets run before
+        # the new values were updated.  will have to figure this out later
+        time.sleep(2)        
         parent.createProbeFrame(str(self.lbl_probeid["text"]), str(self.txt_probename.get()))
         try:
             parent.lst_probes.delete(parent.lst_probes.curselection())
@@ -290,7 +283,8 @@ class NewProbeDialog():
                 parent.btn_assignprobe["state"] = NORMAL
         except:
             pass
-        
+
+
         self.dlg.destroy()
 
     def cancel(self):
