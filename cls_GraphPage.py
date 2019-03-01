@@ -123,13 +123,21 @@ class GraphPage(tk.Frame):
 ############################
         probelist = self.getProbeList()
         sortedprobelist = sorted(probelist['probelist'])
+        outletlist = self.getOutletList()
+        sortedoutletlist = sorted(outletlist['outletlist'])
 
         sortedprobedict = {}
         for probeitem in probelist["probelist"]:
             print("Probe item = " + probeitem)
-            sortedprobedict[probelist["probelist"][probeitem]["probename"]] = probeitem
+            sortedprobedict["probe: " + probelist["probelist"][probeitem]["probename"]] = probeitem
             
             print("GraphProbe = " + probelist["probelist"][probeitem]["probename"])
+
+        for outletitem in outletlist["outletlist"]:
+            print("Outlet item = " + outletitem)
+            sortedprobedict["outlet: " + outletlist["outletlist"][outletitem]["outletname"]] = outletitem
+            
+            print("GraphOutlet = " + outletlist["outletlist"][outletitem]["outletname"])        
 
         print(sortedprobedict)
 
@@ -141,6 +149,7 @@ class GraphPage(tk.Frame):
         maingraphchoice = StringVar()
         altgraphlist = altsortedlist
         maingraphlist = sorted(sortedprobedict)
+        
         maingraphchoice.set(maingraphlist[0]) #default value
         graphType.set(str(maingraphlist[0])) # default value
         altgraphchoice.set(altgraphlist[0]) #default value
@@ -154,6 +163,8 @@ class GraphPage(tk.Frame):
         maingraphmenu = OptionMenu(frame_graphtype_alt,maingraphchoice,*maingraphlist,
                                    command=select_main_graph_type)
         maingraphmenu.pack(side=LEFT, fill=tk.X)
+
+        
 
         # vs label
         lblVs = Label(frame_graphtype_alt,text="vs")
@@ -392,4 +403,17 @@ class GraphPage(tk.Frame):
         probelist = json.loads(probelist)
 
         return probelist
-        
+
+    def getOutletList(self):
+        # get list of all probes from the server
+        # request new data from server
+        request = {
+                      "rpc_req": "get_outletlist",
+                  }
+        request = json.dumps(request)          
+        outletlist = self.rpc_call(request, "rpc_queue")
+        outletlist = outletlist.decode()
+        print (outletlist)
+        outletlist = json.loads(outletlist)
+
+        return outletlist

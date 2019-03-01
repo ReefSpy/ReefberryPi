@@ -223,7 +223,7 @@ class RBP_server:
 
     def handle_nodered(self, channel):
         channel.queue_declare(queue='rbp_nodered')
-        self.logger.info("Waiting for node-red messages...")
+        self.logger.info("Listening for node-red messages...")
 
         def callback(ch, method, props, body):
             
@@ -264,7 +264,7 @@ class RBP_server:
 
     def handle_rpc(self,channel):    
         channel.queue_declare(queue='rpc_queue')
-        self.logger.info("Waiting for rpc messages...")
+        self.logger.info("Listening for rpc messages...")
 
         def callback(ch, method, props, body):
             
