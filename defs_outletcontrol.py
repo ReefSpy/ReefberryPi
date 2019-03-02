@@ -142,7 +142,7 @@ def handle_outlet_light(controller, outlet, button_state, pin):
                 status = "OFF" + " (" + str(datetime.strftime(on_time, '%H:%M')) + " - " + str(datetime.strftime(off_time, '%H:%M')) +")"
                 return status
             else:
-                GPIO.output(pin, False) #turn on light
+                #GPIO.output(pin, False) #turn on light
                 handle_on_off(controller, outlet, pin, PIN_ON)
                 status = "ON" + " (" + str(datetime.strftime(on_time, '%H:%M')) + " - " + str(datetime.strftime(off_time, '%H:%M')) +")"
                 return status
