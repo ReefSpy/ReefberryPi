@@ -127,7 +127,15 @@ class ProbeWidget():
 
             self.figprobe.autofmt_xdate()
             self.aniprobe.axes.tick_params(axis='x', labelsize=1, pad=50)
-            self.aniprobe.axes.tick_params(axis='y', labelsize=8) 
+            self.aniprobe.axes.tick_params(axis='y', labelsize=8)
+
+            newYlim=float(max(chartData["probevalue"])) + .1
+            self.aniprobe.set_ylim(top=newYlim)
+            #print(mainlogID)
+            #defs_common.logtoconsole (str(newYlim), fg="CYAN")
+
+
+            
         except:
             self.figprobe.autofmt_xdate()
             self.aniprobe.axes.tick_params(axis='x', labelsize=1, pad=50)

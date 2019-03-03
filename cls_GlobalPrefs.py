@@ -21,7 +21,8 @@ class PageGlobal(tk.Frame):
         self.frame_toolbar = LabelFrame(self, relief= FLAT)
         self.frame_toolbar.pack(fill=X, side=TOP)
         # save button
-        self.saveimg=PhotoImage(file="images/save-blue-24.png")
+        #self.saveimg=PhotoImage(file="images/save-blue-24.png")
+        self.saveimg=PhotoImage(file="images/upload-to-cloud-24.png")
         self.btn_save = Button(self.frame_toolbar, text="Save", image=self.saveimg,
                                compound='left', relief=RAISED, command=self.saveChanges)
         self.btn_save.pack(side=TOP, anchor=W)

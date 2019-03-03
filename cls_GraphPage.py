@@ -287,10 +287,43 @@ class GraphPage(tk.Frame):
             a.set_ylabel(graphType.get(), weight='bold')
             #a.set_xlabel('Time')
             a2.set_ylabel(altgraphchoice.get(), weight='bold')
-            a.legend(loc='upper right', bbox_to_anchor=(1.00, 1.13),  shadow=True, ncol=2, fontsize = 'small')
-            a2.legend(loc='upper left', bbox_to_anchor=(0.50, 1.13),  shadow=True, ncol=2, fontsize = 'small')
+            a2.legend(loc='upper right', bbox_to_anchor=(1.00, 1.13),  shadow=True, ncol=2, fontsize = 'small')
+            a.legend(loc='upper left', bbox_to_anchor=(0.00, 1.13),  shadow=True, ncol=2, fontsize = 'small')
 
             f.autofmt_xdate()
+
+
+ 
+            
+            # if we are graphing one of the outlets, adjust the upper limit so
+            # its easier to read
+##            if mainlogID.startswith("int_outlet"):
+##                newYlim=float(max(yList))*1.1
+##                a.set_ylim(top=newYlim)
+##                print(mainlogID)
+##                defs_common.logtoconsole (str(newYlim), fg="CYAN")
+##            if altGraph != "None":
+##                if altlogID.startswith("int_outlet"):
+##                    newYlimalt=float(max(yListAlt))*1.1
+##                    a2.set_ylim(top=newYlimalt)
+##                    print(altlogID)
+##                    defs_common.logtoconsole (str(newYlimalt), fg="CYAN")
+
+            #if mainlogID.startswith("int_outlet"):
+            newYlim=float(max(yList)) + .1
+            a.set_ylim(top=newYlim)
+            print(mainlogID)
+            defs_common.logtoconsole (str(newYlim), fg="CYAN")
+
+            if altGraph != "None":
+                if altlogID.startswith("int_outlet"):
+                    newYlimalt=float(max(yListAlt)) + .1
+                    a2.set_ylim(top=newYlimalt)
+                    print(altlogID)
+                    defs_common.logtoconsole (str(newYlimalt), fg="CYAN")
+            
+           
+            
 ### END NEW GRAPH FUNC
         #setup temperature plot
         f = Figure(figsize=(5,3), dpi=100)

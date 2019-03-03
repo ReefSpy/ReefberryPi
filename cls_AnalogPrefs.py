@@ -18,7 +18,8 @@ class PageAnalogProbes(tk.Frame):
         label.grid(row=0, column=0, sticky=W)
 
         # save button
-        self.saveimg=PhotoImage(file="images/save-blue-24.png")
+        #self.saveimg=PhotoImage(file="images/save-blue-24.png")
+        self.saveimg=PhotoImage(file="images/upload-to-cloud-24.png")
         self.btn_save = Button(self, text="Save", image=self.saveimg,
                                compound='left', relief=RAISED, command=self.saveChanges)
         self.btn_save.grid(row=1, column=0, sticky=W)

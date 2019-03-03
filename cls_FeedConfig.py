@@ -15,9 +15,15 @@ class FeedTimers(tk.Frame):
         
         # registering validation command
         self.vldt_ifnum_cmd = (self.register(self.ValidateIfNum),'%s', '%S')
+
+        timercanvas = Canvas(self, width=64, height=64)
+        timercanvas.grid (row=0, column=0, pady=10, sticky=W)
+        self.timerimg=PhotoImage(file="images/time-64.png")
+        timercanvas.create_image(0,0,image=self.timerimg, anchor=NW)
+        
         
         label = tk.Label(self, text="Feed Timers", font=LARGE_FONT)
-        label.grid(row=0, column=0, pady=10, sticky=W)
+        label.grid(row=0, column=1, pady=10, sticky=W)
 
 ##        # save button
 ##        self.saveimg=PhotoImage(file="images/save-blue-24.png")
@@ -30,7 +36,7 @@ class FeedTimers(tk.Frame):
         ###########################################################################
         self.frame_feed = LabelFrame(self, text="Feed Timers", relief= GROOVE)
         #self.frame_feed.pack(side=TOP, anchor=W)
-        self.frame_feed.grid(row=2, column=0, pady=10, sticky=W)
+        self.frame_feed.grid(row=2, column=0, columnspan=6, pady=10, sticky=W)
 
         # timer A
         self.lbl_nameA = Label(self.frame_feed,text="Timer A:")

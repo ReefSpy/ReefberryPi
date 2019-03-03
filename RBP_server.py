@@ -598,9 +598,15 @@ class RBP_server:
                         else:
                             x, y = eachLine.split(',')
                         x = datetime.strptime(x,'%Y-%m-%d %H:%M:%S')
-                        if d==1: # in yesterdays log file (0 is today, 1 is yesterday etc...)
-                            if x.strftime("%H:%M:%S") >= TimeSeed.strftime("%H:%M:%S"): # we only want data for last 24 hours, so ignore values created before that
-                                #print("D=0" + " x= " + str(x.strftime("%H:%M:%S")) + " TimeSeed = " + str(TimeSeed.strftime("%H:%M:%S")))
+                        if numdays == 2: # if 2 days, just give the 24 hour daya meaning ignore data befor now time
+                            if d==1: # in yesterdays log file (0 is today, 1 is yesterday etc...)
+                                if x.strftime("%H:%M:%S") >= TimeSeed.strftime("%H:%M:%S"): # we only want data for last 24 hours, so ignore values created before that
+                                    #print("D=0" + " x= " + str(x.strftime("%H:%M:%S")) + " TimeSeed = " + str(TimeSeed.strftime("%H:%M:%S")))
+                                    xList.append(x.strftime("%Y-%m-%d %H:%M:%S"))
+                                    yList.append(y)
+                                    if probetype == "ds18b20" or probeid == "dht_t":
+                                        zList.append(z)
+                            else:
                                 xList.append(x.strftime("%Y-%m-%d %H:%M:%S"))
                                 yList.append(y)
                                 if probetype == "ds18b20" or probeid == "dht_t":
@@ -610,7 +616,7 @@ class RBP_server:
                             yList.append(y)
                             if probetype == "ds18b20" or probeid == "dht_t":
                                 zList.append(z)
-                
+                                
             except:
             #    print("Error parsing: %s" % LogFileName)
                 self.logger.error("Error parsing: %s" % LogFileName)
