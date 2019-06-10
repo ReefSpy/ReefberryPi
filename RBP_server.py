@@ -523,7 +523,7 @@ class RBP_server:
                 probedict[probeid]={"probetype": probetype, "probeid": probeid, "probename": probename, "sensortype": sensortype}
                 
             if section == "dht11/22":
-                    if config[section]["enabled"]:
+                    if config[section]["enabled"] == "True":
                         probetype = "dht"
                         probeid = "dht_t"
                         probename = config[section]["temperature_name"]
@@ -755,7 +755,7 @@ class RBP_server:
                             orgval = dv_AvgCountsFiltered
                             
                             #convert digital value to ph
-                            dv_AvgCountsFiltered = ph_sensor.dv2ph(dv_AvgCountsFiltered)
+                            dv_AvgCountsFiltered = ph_sensor.dv2ph(dv_AvgCountsFiltered, ch, self.AppPrefs)
                             dv_AvgCountsFiltered = float("{:.2f}".format(dv_AvgCountsFiltered))
 
                             if dv_AvgCountsFiltered > 14:
@@ -788,49 +788,50 @@ class RBP_server:
             #
             # these sensors are slow to refresh and should not be read more
             # than once every second or two (ie: dht_SamplingInterval = 3000ms or 5000ms for 3s or 5s) would be safe
-            ################################################################################################################
-            if (int(round(time.time()*1000)) - self.AppPrefs.DHT_Sensor.get("dht11_samplingtimeseed")) > int(self.AppPrefs.DHT_Sensor.get("dht11_samplinginterval")):    
-                # let's read the dht11 temp and humidity data
-                result = self.dht_sensor.read()
-                if result.is_valid():
-                    temp_c = result.temperature
-                    temp_f = defs_common.convertCtoF(float(temp_c))
-                    temp_f = float(temp_f)
-                    hum = result.humidity
-                    timestamp = datetime.now()
+            ################################################################################################################           
+            if self.AppPrefs.DHT_Sensor.get("enabled") == "True":
+                if (int(round(time.time()*1000)) - self.AppPrefs.DHT_Sensor.get("dht11_samplingtimeseed")) > int(self.AppPrefs.DHT_Sensor.get("dht11_samplinginterval")):    
+                    # let's read the dht11 temp and humidity data
+                    result = self.dht_sensor.read()
+                    if result.is_valid():
+                        temp_c = result.temperature
+                        temp_f = defs_common.convertCtoF(float(temp_c))
+                        temp_f = float(temp_f)
+                        hum = result.humidity
+                        timestamp = datetime.now()
 
-                    if str(self.AppPrefs.temperaturescale) == str(defs_common.SCALE_F):
-                        broadcasttemp = str("%.1f" % temp_f)
-                    else:
-                        broadcasttemp = str("%.1f" % temp_c)
-                    
-                    if (int(round(time.time()*1000)) - self.AppPrefs.DHT_Sensor.get("dht11_lastlogtime")) > int(self.AppPrefs.DHT_Sensor.get("dht11_loginterval")):
-                        tempData = str("{:.1f}".format(temp_c)) + "," + str(temp_f)
-
-                        # log and broadcast temperature value
-                        defs_common.logprobedata("dht_t_", tempData)
-                        defs_common.logtoconsole("***Logged*** [dht_t] " +  self.AppPrefs.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f, fg="CYAN", style="BRIGHT")
-                        self.logger.info(str("***Logged*** [dht_t] " +  self.AppPrefs.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f))
-                        self.broadcastProbeStatus("dht", "dht_t", str(broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
-
-                        # log and broadcast humidity value
-                        defs_common.logprobedata("dht_h_", "{:.0f}".format(hum))
-                        defs_common.logtoconsole("***Logged*** [dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum, fg="CYAN", style="BRIGHT")
-                        self.logger.info(str("***Logged*** [dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
-                        self.broadcastProbeStatus("dht", "dht_h", str(hum), self.AppPrefs.DHT_Sensor.get("humidity_name")) 
+                        if str(self.AppPrefs.temperaturescale) == str(defs_common.SCALE_F):
+                            broadcasttemp = str("%.1f" % temp_f)
+                        else:
+                            broadcasttemp = str("%.1f" % temp_c)
                         
-                        self.AppPrefs.DHT_Sensor["dht11_lastlogtime"] = int(round(time.time()*1000))
-                    else:
-                        self.logger.info(str("[dht_t] " +  self.AppPrefs.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f))
-                        self.logger.info(str("[dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
+                        if (int(round(time.time()*1000)) - self.AppPrefs.DHT_Sensor.get("dht11_lastlogtime")) > int(self.AppPrefs.DHT_Sensor.get("dht11_loginterval")):
+                            tempData = str("{:.1f}".format(temp_c)) + "," + str(temp_f)
 
-                        # broadcast humidity value
-                        self.broadcastProbeStatus("dht", "dht_h", str(hum), self.AppPrefs.DHT_Sensor.get("humidity_name"))    
-                        # broadcast temperature value
-                        self.broadcastProbeStatus("dht", "dht_t", str(broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
-                        
-                    # record the new sampling time
-                    self.AppPrefs.DHT_Sensor["dht11_samplingtimeseed"] = int(round(time.time()*1000)) #convert time to milliseconds
+                            # log and broadcast temperature value
+                            defs_common.logprobedata("dht_t_", tempData)
+                            defs_common.logtoconsole("***Logged*** [dht_t] " +  self.AppPrefs.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f, fg="CYAN", style="BRIGHT")
+                            self.logger.info(str("***Logged*** [dht_t] " +  self.AppPrefs.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f))
+                            self.broadcastProbeStatus("dht", "dht_t", str(broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
+
+                            # log and broadcast humidity value
+                            defs_common.logprobedata("dht_h_", "{:.0f}".format(hum))
+                            defs_common.logtoconsole("***Logged*** [dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum, fg="CYAN", style="BRIGHT")
+                            self.logger.info(str("***Logged*** [dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
+                            self.broadcastProbeStatus("dht", "dht_h", str(hum), self.AppPrefs.DHT_Sensor.get("humidity_name")) 
+                            
+                            self.AppPrefs.DHT_Sensor["dht11_lastlogtime"] = int(round(time.time()*1000))
+                        else:
+                            self.logger.info(str("[dht_t] " +  self.AppPrefs.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f))
+                            self.logger.info(str("[dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
+
+                            # broadcast humidity value
+                            self.broadcastProbeStatus("dht", "dht_h", str(hum), self.AppPrefs.DHT_Sensor.get("humidity_name"))    
+                            # broadcast temperature value
+                            self.broadcastProbeStatus("dht", "dht_t", str(broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
+                            
+                        # record the new sampling time
+                        self.AppPrefs.DHT_Sensor["dht11_samplingtimeseed"] = int(round(time.time()*1000)) #convert time to milliseconds
 
             ##########################################################################################
             # read ds18b20 temperature sensor
@@ -880,7 +881,7 @@ class RBP_server:
                             self.broadcastProbeStatus("ds18b20", "ds18b20_" + str(self.AppPrefs.tempProbeDict[p].probeid), str(broadcasttemp), self.AppPrefs.tempProbeDict[p].name)   
                             self.AppPrefs.tempProbeDict[p].lastTemperature = broadcasttemp
                     except Exception as e:
-                        defs_common.logtoconsole(Back.RED + Fore.WHITE + timestamp.strftime("<<<Error>>> Can not read ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + " temperature data!", fg="WHITE", bg="RED", style="BRIGHT"))
+                        defs_common.logtoconsole(str("<<<Error>>> Can not read ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + " temperature data!"), fg="WHITE", bg="RED", style="BRIGHT")
                         self.logger.error ("<<<Error>>> Can not read ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + " temperature data!")
                         self.logger.error (e)
                 # record the new sampling time
@@ -986,6 +987,7 @@ class RBP_server:
             # pause to slow down the loop, otherwise CPU usage spikes as program is busy waiting
             ##########################################################################################            
             time.sleep(1)
+            
 
 
     

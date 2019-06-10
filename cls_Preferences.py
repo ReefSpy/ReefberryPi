@@ -10,6 +10,9 @@ class analogChannelClass():
     ch_name = ""
     ch_enabled = ""
     ch_type = ""
+    ch_ph_low = ""
+    ch_ph_med = ""
+    ch_ph_high = ""
     # list to hold the raw digital values
     ch_dvlist = []
     ch_numsamples = ""
@@ -215,6 +218,9 @@ class AppPrefs():
             channel.ch_name = defs_common.readINIfile("mcp3008", prefix + "_name", "Unnamed", lock=controller.threadlock, logger=controller.logger)
             channel.ch_enabled = defs_common.readINIfile("mcp3008", prefix + "_enabled", "False", lock=controller.threadlock, logger=controller.logger)
             channel.ch_type = defs_common.readINIfile("mcp3008", prefix + "_type", "raw", lock=controller.threadlock, logger=controller.logger)
+            channel.ch_ph_low = defs_common.readINIfile("mcp3008", prefix + "_ph_low", "900", lock=controller.threadlock, logger=controller.logger)
+            channel.ch_ph_med = defs_common.readINIfile("mcp3008", prefix + "_ph_med", "800", lock=controller.threadlock, logger=controller.logger)
+            channel.ch_ph_high = defs_common.readINIfile("mcp3008", prefix + "_ph_high", "700", lock=controller.threadlock, logger=controller.logger)
             channel.ch_dvlist = []
             channel.ch_numsamples = defs_common.readINIfile("mcp3008", prefix + "_numsamples", "10", lock=controller.threadlock, logger=controller.logger) # how many samples to collect before averaging
             channel.ch_sigma = defs_common.readINIfile("mcp3008", prefix + "_sigma", "1", lock=controller.threadlock, logger=controller.logger) # how many standard deviations to clean up outliers

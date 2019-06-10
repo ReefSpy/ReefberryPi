@@ -10,9 +10,9 @@ import mcp3008
 
 # these are the calibration points of the Ph probe.  Change the
 # digital values as necessary
-dv_ph4 = 980
-dv_ph7 = 819
-dv_ph10 = 663
+dv_ph4 = 875
+dv_ph7 = 725
+dv_ph10 = 584
 
 # data collection variables
 ph_ListLength = 120     # how many ph samples to collect
@@ -29,10 +29,10 @@ GPIO.setwarnings(False)
 
 # change these as desired - they're the pins connected from the
 # SPI port on the ADC to the Pi
-SPICLK = 18
-SPIMISO = 23
-SPIMOSI = 24
-SPICS = 25
+SPICLK = 11
+SPIMISO = 9
+SPIMOSI = 10
+SPICS = 22
 
 # set up the SPI interface pins
 GPIO.setup(SPIMOSI, GPIO.OUT)
