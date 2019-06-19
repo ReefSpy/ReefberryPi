@@ -209,16 +209,18 @@ class ThreadedClient:
 
         
     def periodicCall(self):
-        
-        # Check every 100 ms if there is something new in the queue.
-        
-        self.gui.processIncoming(  )
-        if not self.running:
-            # This is the brutal stop of the system. You may want to do
-            # some cleanup before actually shutting it down.
-            import sys
-            sys.exit(1)
-        self.master.after(100, self.periodicCall)
+        #print("periodic call")
+        try:
+            # Check every 100 ms if there is something new in the queue.
+            self.gui.processIncoming(  )
+            if not self.running:
+                # This is the brutal stop of the system. You may want to do
+                # some cleanup before actually shutting it down.
+                import sys
+                sys.exit(1)
+            self.master.after(100, self.periodicCall)
+        except Exception as e:
+            print(e)
 
 
     def endApplication(self):

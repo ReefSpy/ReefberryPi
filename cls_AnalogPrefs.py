@@ -92,7 +92,7 @@ class ChannelWidget(tk.Frame):
         self.sensortypemenu.grid(row=1, column=1)
 
         # channel calibrate button
-        self.btn_calibrate = Button(self.adcframe, text="Calibrate", relief=RAISED, command=self.calibrateSensor)
+        self.btn_calibrate = Button(self.adcframe, text="Calibrate", relief=RAISED, command=lambda:self.calibrateSensor(parent))
         self.btn_calibrate.grid(row=1, column=2)
 
         # channel enable checkbox
@@ -122,7 +122,7 @@ class ChannelWidget(tk.Frame):
             self.sensortypemenu.config(state='disabled')
             self.btn_calibrate.config(state='disabled')
 
-    def calibrateSensor(self):
+    def calibrateSensor(self, master):
         if str(self.sensortype.get()) == "raw":
             tk.messagebox.showwarning("Calibration", "Calibration unavailable for sensor type 'raw' on channel " + str(self.channelID) )
 
@@ -131,8 +131,8 @@ class ChannelWidget(tk.Frame):
 
         if str(self.sensortype.get()) == "pH":
             #tk.messagebox.showinfo("Calibration", "Let's calibrate pH")
-            strtitle = "pH Calibration: Channel " + str(self.channelID) + " [" + str(self.txt_name.get()) + "]"
-            d = Dialog(self.parent, self, self.channelID, title = strtitle)
+            strtitle = "3 Point PH Calibration"
+            d = Dialog(master, self, self.channelID, str(self.txt_name.get()), title = strtitle)
             d.CalibPH.running = False
 
     def getConfig(self, controller, channelID):
@@ -170,7 +170,7 @@ class ChannelWidget(tk.Frame):
 
 class Dialog(Toplevel):
 
-    def __init__(self, parent, controller, channelnum, title = None):
+    def __init__(self, parent, controller, channelnum, channelname, title = None):
 
         Toplevel.__init__(self, parent)
         self.transient(parent)
@@ -185,6 +185,7 @@ class Dialog(Toplevel):
         self.result = None
 
         self.channelnum = channelnum
+        self.channelname = channelname
 
         body = Frame(self)
         self.initial_focus = self.body(body)
@@ -214,7 +215,7 @@ class Dialog(Toplevel):
     def body(self, master):
         # create dialog body.  return widget that should have
         # initial focus.  this method should be overridden
-        self.CalibPH = cls_CalibPH.CalibPH(master, self, self.channelnum)
+        self.CalibPH = cls_CalibPH.CalibPH(master, self, self.channelnum, self.channelname)
         self.CalibPH.pack()
         pass
 
@@ -224,12 +225,12 @@ class Dialog(Toplevel):
 
         box = Frame(self)
 
-        w = Button(box, text="Close", width=10, command=self.ok, default=ACTIVE)
+        w = Button(box, text="Save", width=10, command=self.ok, default=ACTIVE)
         w.pack(side=LEFT, padx=5, pady=5)
-        #w = Button(box, text="Cancel", width=10, command=self.cancel)
-        #w.pack(side=LEFT, padx=5, pady=5)
+        w = Button(box, text="Cancel", width=10, command=self.cancel)
+        w.pack(side=LEFT, padx=5, pady=5)
 
-        self.bind("<Return>", self.ok)
+        #self.bind("<Return>", self.ok)
         self.bind("<Escape>", self.cancel)
 
         box.pack()
@@ -250,13 +251,15 @@ class Dialog(Toplevel):
 
         self.apply()
 
-        self.cancel()
+        #self.cancel()
 
     def cancel(self, event=None):
 
-        # put focus back to the parent window
-        self.parent.focus_set()
-        self.destroy()
+        if tk.messagebox.askyesno("Calibration", "Unsaved changes will be lost.  Close anyway?", parent=self.CalibPH):
+
+            # put focus back to the parent window
+            self.parent.focus_set()
+            self.destroy()
 
     #
     # command hooks
@@ -266,7 +269,9 @@ class Dialog(Toplevel):
         return 1 # override
 
     def apply(self):
-
+        # put focus back to the parent window
+        self.parent.focus_set()
+        self.destroy()
         pass # override
 
         

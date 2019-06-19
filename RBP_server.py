@@ -396,6 +396,19 @@ class RBP_server:
                 
                 defs_common.removesectionfromINIfile(section, lock=self.threadlock, logger=self.logger)
                 
+            elif str(body["rpc_req"]) == "get_ADCfromMCP3008":
+                defs_common.logtoconsole("RPC: " + str(body["rpc_req"]), fg="GREEN", style="BRIGHT")
+                self.logger.info("RPC: " + str(body["rpc_req"]))
+                channelnum = str(body["ch_num"])
+                dv = self.get_ADCfromMCP3008(channelnum)
+
+                response = {
+                            "channel":channelnum,
+                            "dv":dv
+                            }
+
+                response = json.dumps(response)
+                self.logger.debug(str(response))
 
             elif str(body["rpc_req"]) == "get_readinifile":
                 # read values from the configuration file
@@ -491,6 +504,11 @@ class RBP_server:
         self.channel2.basic_publish(exchange='rbp_currentstatus',
             routing_key='',
             body=message)
+
+    def get_ADCfromMCP3008(self, chnum):
+        dv = mcp3008.readadc(int(chnum), GPIO_config.SPICLK, GPIO_config.SPIMOSI,
+                                                GPIO_config.SPIMISO, GPIO_config.SPICS)
+        return dv
 
 
     def getConnectedTempProbes(self):
@@ -755,7 +773,11 @@ class RBP_server:
                             orgval = dv_AvgCountsFiltered
                             
                             #convert digital value to ph
-                            dv_AvgCountsFiltered = ph_sensor.dv2ph(dv_AvgCountsFiltered, ch, self.AppPrefs)
+                            lowCal = self.AppPrefs.mcp3008Dict[ch].ch_ph_low
+                            medCal = self.AppPrefs.mcp3008Dict[ch].ch_ph_med
+                            highCal =self.AppPrefs.mcp3008Dict[ch].ch_ph_high
+                            
+                            dv_AvgCountsFiltered = ph_sensor.dv2ph(dv_AvgCountsFiltered, ch, lowCal, medCal, highCal)
                             dv_AvgCountsFiltered = float("{:.2f}".format(dv_AvgCountsFiltered))
 
                             if dv_AvgCountsFiltered > 14:
@@ -777,7 +799,8 @@ class RBP_server:
                             print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " dv = "
                                   + "{:.2f}".format(dv_AvgCountsFiltered))
 
-                        self.broadcastProbeStatus("mcp3008", "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num), (dv_AvgCountsFiltered), str(self.AppPrefs.mcp3008Dict[ch].ch_name)) 
+                      
+                        self.broadcastProbeStatus("mcp3008", "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num), str(dv_AvgCountsFiltered), str(self.AppPrefs.mcp3008Dict[ch].ch_name)) 
                         # clear the list so we can populate it with new data for the next data set
                         self.AppPrefs.mcp3008Dict[ch].ch_dvlist.clear()
                         # record the new sampling time

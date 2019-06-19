@@ -17,9 +17,16 @@
 ##        ph = 7 + (dv_ph7 - dv) / ((dv_ph4 - dv_ph7) / 3)
 ##    return ph
 
-def dv2ph(dv, channel, AppPrefs):
-    if dv <= int(AppPrefs.mcp3008Dict[channel].ch_ph_med):
-        ph = 7 + (int(AppPrefs.mcp3008Dict[channel].ch_ph_med) - dv) / ((int(AppPrefs.mcp3008Dict[channel].ch_ph_med) - int(AppPrefs.mcp3008Dict[channel].ch_ph_high)) / 3)
+##def dv2ph(dv, channel, AppPrefs):
+##    if dv <= int(AppPrefs.mcp3008Dict[channel].ch_ph_med):
+##        ph = 7 + (int(AppPrefs.mcp3008Dict[channel].ch_ph_med) - dv) / ((int(AppPrefs.mcp3008Dict[channel].ch_ph_med) - int(AppPrefs.mcp3008Dict[channel].ch_ph_high)) / 3)
+##    else:
+##        ph = 7 + (int(AppPrefs.mcp3008Dict[channel].ch_ph_med) - dv) / ((int(AppPrefs.mcp3008Dict[channel].ch_ph_low) - int(AppPrefs.mcp3008Dict[channel].ch_ph_med)) / 3)
+##    return ph
+
+def dv2ph(dv, channel, lowCal, medCal, highCal):
+    if dv <= int(medCal):
+        ph = 7 + (int(medCal) - dv) / ((int(medCal) - int(highCal)) / 3)
     else:
-        ph = 7 + (int(AppPrefs.mcp3008Dict[channel].ch_ph_med) - dv) / ((int(AppPrefs.mcp3008Dict[channel].ch_ph_low) - int(AppPrefs.mcp3008Dict[channel].ch_ph_med)) / 3)
+        ph = 7 + (int(medCal) - dv) / ((int(lowCal) - int(medCal)) / 3)
     return ph
