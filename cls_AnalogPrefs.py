@@ -133,7 +133,7 @@ class ChannelWidget(tk.Frame):
             #tk.messagebox.showinfo("Calibration", "Let's calibrate pH")
             strtitle = "3 Point PH Calibration"
             d = Dialog(master, self, self.channelID, str(self.txt_name.get()), title = strtitle)
-            d.CalibPH.running = False
+            #d.CalibPH.running = False
 
     def getConfig(self, controller, channelID):
         # read values from config file
@@ -254,8 +254,8 @@ class Dialog(Toplevel):
         #self.cancel()
 
     def cancel(self, event=None):
-
-        if tk.messagebox.askyesno("Calibration", "Unsaved changes will be lost.  Close anyway?", parent=self.CalibPH):
+        #if tk.messagebox.askyesno("Calibration", "Unsaved changes will be lost.  Close anyway?", parent=self.CalibPH):
+        if tk.messagebox.askyesno("Calibration", "Unsaved changes will be lost.  Close anyway?", parent=self):
 
             # put focus back to the parent window
             self.parent.focus_set()

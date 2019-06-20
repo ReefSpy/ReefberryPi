@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import *
 from tkinter import ttk
 import tkinter.scrolledtext as tkst
-import cfg_common
 from datetime import datetime
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
@@ -10,14 +9,11 @@ from matplotlib.figure import Figure
 import matplotlib.animation as animation
 from matplotlib import style
 import matplotlib.dates as mdates
-import matplotlib.pyplot as plt
-import pika
-import uuid
+#import matplotlib.pyplot as plt
+#import pika
+#import uuid
 import json
 import defs_common
-import queue
-import threading
-import random
 import time
 import ph_sensor
 from statistics import mean
@@ -42,17 +38,6 @@ class CalibPH(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         defs_common.logtoconsole("Initializing CalibPH...", fg = "YELLOW", bg = "MAGENTA", style = "BRIGHT")
-
-        # Create the queue
-        self.queue = queue.Queue(  )
-
-        # Set up the thread to do asynchronous I/O
-        # More threads can also be created and used, if necessary
-        #self.running = 1
-
-        #self.threadCal = threading.Thread(target=self.workerThread_RBPstatusListener)
-        #self.threadCal.daemon = True
-        #self.threadCal.start()
 
         self.controller = controller
         self.parent = parent
@@ -153,8 +138,8 @@ class CalibPH(tk.Frame):
         style.use("ggplot")
         self.figprobe = Figure(figsize=(6,2.5), dpi=100)
         self.figprobe.set_facecolor("gainsboro")
-        #self.aniprobe = self.figprobe.add_subplot(111, axisbg="gainsboro")
         self.aniprobe = self.figprobe.add_subplot(111)
+        self.aniprobe.set_title("Data Points")
         
         self.canvasprobe = FigureCanvasTkAgg(self.figprobe, frame_CalData)
         
@@ -162,8 +147,11 @@ class CalibPH(tk.Frame):
         self.canvasprobe.get_tk_widget().grid(sticky=EW, row=2, column=2, columnspan=4)
 
         # histogram plot
-        self.fighist, self.axhist = plt.subplots()
-        plt.title("Histogram")
+##        self.fighist, self.axhist = plt.subplots()
+##        plt.title("Histogram")
+        self.fighist = Figure(figsize=(6,2.5), dpi=100)
+        self.axhist = self.fighist.add_subplot(111)
+        self.axhist.set_title("Histogram")
         self.fighist.set_facecolor("gainsboro")
         self.fighist.set_size_inches(6,2.5)
         self.fighist.set_dpi(100)
@@ -221,9 +209,6 @@ class CalibPH(tk.Frame):
         self.btn_ApplyCal.grid(row=6, column=0, columnspan=2, sticky=EW)
         
         
-        # Start the periodic call to check if the queue contains
-        # anything
-        #self.periodicCall()
 
         self.currentADCLoop(self.ChannelID)
 
@@ -359,13 +344,6 @@ class CalibPH(tk.Frame):
                     self.isCalRunning = False
                    
                     
-
-##            phVal = ph_sensor.dv2ph(val, self.ChannelID, self.lbl_low_val.cget("text"),
-##                                                         self.lbl_med_val.cget("text"),
-##                                                         self.lbl_high_val.cget("text"))
-##            print('{0:.2f}'.format(float(phVal)))
-##            self.lbl_curPHval.configure(text='{0:.2f}'.format(float(phVal)))
-
             self.after(1000, self.currentADCLoop, chnum)
             
             #return val
@@ -389,98 +367,6 @@ class CalibPH(tk.Frame):
         
         return val
         
-##    def periodicCall(self):
-##        
-##        # Check every 100 ms if there is something new in the queue.
-##        
-##        self.processIncoming(  )
-##        print("Running = " + str(self.running))
-##        if not self.running:
-##            # This is the brutal stop of the system. You may want to do
-##            # some cleanup before actually shutting it down.
-##            #import sys
-##            print("I am trying to stop")
-##            #sys.exit(1)
-##            
-##        self.master.after(100, self.periodicCall)
-
-##    def processIncoming(self):
-##        """Handle all messages currently in the queue, if any."""
-##        while self.queue.qsize(  ):
-##            try:
-##                msg = self.queue.get(0)
-##                #print(msg)
-##                # Check contents of message and do whatever is needed. As a
-##                # simple test, print it (in real life, you would
-##                # suitably update the GUI's display in a richer fashion).
-##                #defs_common.logtoconsole("processIncoming " + str(msg))
-##                msg = json.loads(msg)
-##                 
-##                for key in msg:
-##                    #print(key)
-##                    if key == "status_currentprobeval":
-##                        curID = str(msg["status_currentprobeval"]["probeid"])
-##                        curVal = str(msg["status_currentprobeval"]["probeval"])
-##                        curName = str(msg["status_currentprobeval"]["probename"])
-##                        print(curID + " " + curVal + " " + curName)
-##
-##                        #if curID == "mcp3008_ch" + str(self.ChannelID):
-##                        #    self.lbl_curPHval.configure(text='{0:.2f}'.format(float(curVal)))
-##
-####                        if curID == "dht_h": #if this is a humidity value, tack on the % sign
-####                            curVal = str(curVal) + "%"
-####                        self.frames[cls_DashBoard.DashBoard].updateProbeVal(curID, curVal, curName)
-####
-####                    if key == "status_currentoutletstate":    
-####                        #defs_common.logtoconsole(str(msg), fg="MAGENTA", bg="GREEN")
-####                        self.frames[cls_DashBoard.DashBoard].updateOutletStatus(str(msg["status_currentoutletstate"]["outletid"]),
-####                                                                                str(msg["status_currentoutletstate"]["outletname"]),
-####                                                                                str(msg["status_currentoutletstate"]["outletbus"]),
-####                                                                                str(msg["status_currentoutletstate"]["control_type"]),
-####                                                                                str(msg["status_currentoutletstate"]["button_state"]),
-####                                                                                str(msg["status_currentoutletstate"]["outletstate"]),
-####                                                                                str(msg["status_currentoutletstate"]["statusmsg"]))
-####                    if key == "status_feedmode":
-####                        defs_common.logtoconsole(str(msg), fg="MAGENTA", bg="GREEN")
-####                        feedmode = str(msg["status_feedmode"]["feedmode"])
-####                        timeremaining = str(msg["status_feedmode"]["timeremaining"])
-####                        self.frames[cls_DashBoard.DashBoard].feedFrame.updatefeedstatus(feedmode, timeremaining)
-##                        
-##                        
-##            except queue.Empty:
-##                # just on general principles, although we don't
-##                # expect this branch to be taken in this case
-##                pass
-##
-##
-##    def workerThread_RBPstatusListener(self):
-##        # check for new messages in the messanging exchange
-##        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-##        channel = connection.channel()
-##
-##        channel.exchange_declare(exchange='rbp_currentstatus',
-##                                 exchange_type='fanout')
-##
-##        target=self.handle_RBPstatus(channel)
-##
-##    def handle_RBPstatus(self, channel):
-##        result = channel.queue_declare(exclusive=True)
-##        queue_name = result.method.queue
-##
-##        channel.queue_bind(exchange='rbp_currentstatus',
-##                           queue=queue_name)
-##        def callback(ch, method, properties, body):
-##            body = body.decode()
-##            #print(" [x] %r" % body)
-##            self.queue.put(body)
-##
-##
-##        channel.basic_consume(callback,
-##                              queue=queue_name,
-##                              no_ack=True)
-##
-##        defs_common.logtoconsole("Listening for status updates on exchange: rbp_currentstatus")
-##        channel.start_consuming()
 
     # plot calibration data
     def animate_probe(self, i):
@@ -530,10 +416,6 @@ class CalibPH(tk.Frame):
         try:
             # lets plot the histogram
             bins = range (0,1023,binsize) # set up bins for histogram
-            #minbin = min(self.calPoints)
-            #maxbin = max(self.calPoints)
-            #bins = range (minbin,maxbin,binsize) # set up bins for histogram
-            #self.axhist.axes.set_xlim([minbin,maxbin])
             n, dvbins, self.patches = self.axhist.hist(self.calPoints, bins, color = "royalblue", ec="royalblue")
             
             self.canvashist.show()
