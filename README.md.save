@@ -1,0 +1,18 @@
+# Reefberry Pi
+
+Reefberry Pi is an aquarium controller built with a Raspberry Pi 
+microcontroller
+
+# Prerequisites
+
+pip3 install colorama
+pip3 install pika
+pip3 install RPi.GPIO
+pip3 install numpy
+
+for dht11 probe:
+sudo git clone https://github.com/adafruit/Adafruit_Python_DHT.git
+sudo apt-get install build-essential python-dev python-openssl
+cd Adafruit_Python_DHT
+sudo python3 setup.py install
+
