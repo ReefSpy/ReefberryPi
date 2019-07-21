@@ -56,10 +56,11 @@ class RBP_server:
         self.logger.info("Server startup...")
 
         # initialize the messanging queues
-        self.connection1 = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', socket_timeout=15))
+        credentials = pika.PlainCredentials('user','pass')
+	self.connection1 = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', port='5672', virtual_host='/',credentials=credentials,  socket_timeout=15))
         self.channel1 = self.connection1.channel()
 
-        self.connection2 = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        self.connection2 = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', port='5672', virtual_host='/',credentials=credentials))
         self.channel2 = self.connection2.channel()
         self.channel2.exchange_declare(exchange='rbp_currentstatus',
                                  exchange_type='fanout')
@@ -196,7 +197,8 @@ class RBP_server:
 
 
     def threadManager(self):
-        connection1= pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+	credentials = pika.PlainCredentials('user','pass')
+        connection1= pika.BlockingConnection(pika.ConnectionParameters(host='localhost',credentials=credentials))
         channel1 = connection1.channel()
         connection2= pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         channel2 = connection2.channel()
