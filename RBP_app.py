@@ -130,7 +130,7 @@ class RBP_app:
                 # suitably update the GUI's display in a richer fashion).
                 #defs_common.logtoconsole("processIncoming " + str(msg))
                 msg = json.loads(msg)
-                 
+                
                 for key in msg:
                     if key == "status_currentprobeval":
                         curID = str(msg["status_currentprobeval"]["probeid"])
@@ -240,7 +240,7 @@ class ThreadedClient:
         
         
     def handle_RBPstatus(self, channel):
-        result = channel.queue_declare(exclusive=True)
+        result = channel.queue_declare(queue='',exclusive=True)
         queue_name = result.method.queue
 
         channel.queue_bind(exchange='rbp_currentstatus',
@@ -251,9 +251,9 @@ class ThreadedClient:
             self.queue.put(body)
 
 
-        channel.basic_consume(callback,
+        channel.basic_consume(on_message_callback=callback,
                               queue=queue_name,
-                              no_ack=True)
+                              auto_ack=True)
 
         defs_common.logtoconsole("Listening for status updates on exchange: rbp_currentstatus")
         channel.start_consuming()

@@ -33,10 +33,10 @@ class DashBoard(tk.Frame):
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
         
-        result = self.channel.queue_declare(exclusive=True)
+        result = self.channel.queue_declare(queue='',exclusive=True)
         self.callback_queue = result.method.queue
 
-        self.channel.basic_consume(self.rpc_response, no_ack=True,
+        self.channel.basic_consume(on_message_callback=self.rpc_response, auto_ack=True,
                                    queue=self.callback_queue)
 
         # create dictionary to hold assigned probes and outlets

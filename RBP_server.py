@@ -258,7 +258,7 @@ class RBP_server:
                     self.broadcastFeedStatus(self.AppPrefs.feed_CurrentMode, "0")
 
         channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(callback, no_ack = True, queue='rbp_nodered')
+        channel.basic_consume(on_message_callback=callback, auto_ack = True, queue='rbp_nodered')
         channel.start_consuming()
 
 
@@ -286,6 +286,27 @@ class RBP_server:
                     response = {
                                "datetime": probelogdata[0],
                                "probevalue": probelogdata[1],
+                               "probetype": str(body["probetype"]),
+                               "probeid": str(body["probeid"]),                 
+                            }
+                    response = json.dumps(response)
+                    self.logger.debug(str(response))
+                except:
+                   pass
+
+            elif str(body["rpc_req"]) == "get_probedata24h_ex":
+                defs_common.logtoconsole("RPC: " + str(body["rpc_req"]) + " [" + str(body["probetype"]) + ", " + str(body["probeid"]) + "]", fg="GREEN", style="BRIGHT")
+                self.logger.info("RPC: " + str(body["rpc_req"]) + " [" + str(body["probetype"]) + ", " + str(body["probeid"]) + "]")
+                #probelogdata = self.get_probedata24h(str(body["probetype"]), str(body["probeid"]))
+                probelogdata = self.get_probedatadays(str(body["probetype"]), str(body["probeid"]), 2) # 2 days to ensure you get yesterdays data too
+
+                try:
+                    response = {"probedata":{
+                                   "datetime": probelogdata[0],
+                                   "probevalue": probelogdata[1],
+                                   "probetype": str(body["probetype"]),
+                                   "probeid": str(body["probeid"]),
+                               }
                             }
                     response = json.dumps(response)
                     self.logger.debug(str(response))
@@ -304,6 +325,8 @@ class RBP_server:
                     response = {
                                "datetime": probelogdata[0],
                                "probevalue": probelogdata[1],
+                               "probetype": str(body["probetype"]),
+                               "probeid": str(body["probeid"]),
                             }
                     response = json.dumps(response)
                     self.logger.debug(str(response))
@@ -448,7 +471,7 @@ class RBP_server:
                 print("error with RPC publish")
 
         channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(callback, queue='rpc_queue')
+        channel.basic_consume(on_message_callback=callback, queue='rpc_queue')
         channel.start_consuming()
 
 
@@ -469,6 +492,11 @@ class RBP_server:
             routing_key='',
             body=message)
 
+# testing MQTT ########
+        self.channel2.basic_publish(exchange='amq.topic',
+            routing_key='rbp_status',
+            body=message)
+###################
     def broadcastFeedStatus(self, feedmode, timeremaining):   
         message = {
             "status_feedmode":
