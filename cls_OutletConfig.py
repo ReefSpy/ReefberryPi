@@ -220,7 +220,7 @@ class Outlet(tk.Frame):
 
         # drop down list for control type
         self.controltypechoice = StringVar()
-        self.controltypelist = ["Always", "Heater", "Light", "Return Pump", "Skimmer"]
+        self.controltypelist = ["Always", "Heater", "Light", "Return Pump", "Skimmer", "pH Control"]
         self.controltypechoice.set("Always") # default value
 
         # outlet frame
@@ -429,6 +429,18 @@ class Outlet(tk.Frame):
             val=val[:-1] # strip last character from string because it will be "]"
             self.uploadsettings(section, "heater_probe", val)
 
+        elif self.controltypechoice.get() == "pH Control": # pH Control
+
+            self.uploadsettings(section, "ph_high", self.spn_highval.get())
+            self.uploadsettings(section, "ph_low", self.spn_lowval.get())
+
+            val = self.phprobechoice.get().rsplit("[")[1]
+            val=val[:-1] # strip last character from string because it will be "]"
+            self.uploadsettings(section, "ph_probe", val)
+
+            val = self.onwhenchoice.get()
+            self.uploadsettings(section, "ph_onwhen", val)
+
     def select_controltype(self, control):
         OutletNumber = self.outletnum.get()
         if self.BusType == BUS_INTERNAL:
@@ -522,7 +534,67 @@ class Outlet(tk.Frame):
                 self.spn_offtemp.delete(0, END)
                 self.spn_offtemp.insert(0, '{0:.1f}'.format(float(val)))
                 
+        elif control=="pH Control":
             
+            phDict = self.readExistingPHProbes()
+            print(phDict)
+            probelist = []
+            for k in phDict.keys():
+                probelist.append(phDict.get(k).name + " [" +
+                                 phDict.get(k).probeid + "]")
+            if len(phDict) == 0:
+                probelist.append(" ") # no probes defined, just add an empty list entry so it wont error
+            #drop down list for probes
+            self.phprobechoice = StringVar()
+            self.lbl_probe = Label(self.frame_cfg,text="Probe Name:")
+            self.lbl_probe.grid(row=1, column=0, sticky=E, padx=5)
+            self.probemenu = OptionMenu(self.frame_cfg,self.phprobechoice,*probelist)
+            self.probemenu.configure(indicatoron=True, relief=GROOVE)
+            self.probemenu.grid(row=1, column=1, sticky=W, padx=5)
+            # spinbox for high ph val
+            self.lbl_highval = Label(self.frame_cfg,text="High Value:")
+            self.lbl_highval.grid(row=2, column=0, sticky=E, padx=5, pady=5)
+            self.spn_highval = Spinbox(self.frame_cfg, from_=0,to=14, increment=.1,
+                                      validate='all', 
+                                      width=6)
+            self.spn_highval.grid(row=2, column=1, sticky=W, padx=5, pady=5)
+            # spinbox for low ph val
+            self.lbl_lowval = Label(self.frame_cfg,text="Low Value:")
+            self.lbl_lowval.grid(row=3, column=0, sticky=E, padx=5, pady=5)
+            self.spn_lowval = Spinbox(self.frame_cfg, from_=0,to=14, increment=.1,
+                                       validate='all',
+                                       width=6)
+            self.spn_lowval.grid(row=3, column=1, sticky=W, padx=5, pady=5)
+
+            # dropdown box for On When
+            onwhenlist = ["LOW", "HIGH"]
+            self.onwhenchoice = StringVar()
+            self.lbl_onwhen = Label(self.frame_cfg,text="On When:")
+            self.lbl_onwhen.grid(row=4, column=0, sticky=E, padx=5)
+            self.onwhenmenu = OptionMenu(self.frame_cfg,self.onwhenchoice,*onwhenlist)
+            self.onwhenmenu.configure(indicatoron=True, relief=GROOVE)
+            self.onwhenmenu.grid(row=4, column=1, sticky=W, padx=5)
+
+            # read saved values
+            val = self.downloadsettings(section, "ph_probe", "")
+            if val != "":
+                try:
+                    self.phprobechoice.set(phDict[val].name + " [" +
+                                             phDict[val].probeid + "]")
+                except:
+                    self.phprobechoice.set(val) # if a selection was made, but probe later deleted
+                                                  # it won't find the name so just use the ID
+
+         
+            val = self.downloadsettings(section, "ph_high", "8.0")
+            self.spn_highval.delete(0, END)
+            self.spn_highval.insert(0, '{0:.1f}'.format(float(val)))
+            val = self.downloadsettings(section, "ph_low", "7.9")
+            self.spn_lowval.delete(0, END)
+            self.spn_lowval.insert(0, '{0:.1f}'.format(float(val)))
+            val = self.downloadsettings(section, "ph_onwhen", "HIGH")
+            self.onwhenchoice.set(val)
+                
         elif control=="Always":
             #drop dwn list for Always
             self.statechoice = StringVar()
@@ -831,4 +903,23 @@ class Outlet(tk.Frame):
                 probeDict [probe.probeid] = probe
 
         return probeDict
+
+    def readExistingPHProbes(self):
+        # create dictionary to hold assigned ph probes
+        # these are probes that are already saved in config file
+        phDict = {}
+        phDict.clear()
+
+        # send the command back up to the controller to handle the request
+        phprobelist = self.controller.controller.getProbeList()
+        for phprobe in phprobelist['probelist']:
+            print(phprobelist)
+            if phprobe.split("_")[0] == "mcp3008":
+                probe = cls_TempPrefs.ProbeClass()
+                probe.probeid = phprobelist['probelist'][phprobe]['probeid']
+                probe.name = phprobelist['probelist'][phprobe]['probename']
+                phDict [probe.probeid] = probe
+                print(phDict)
+
+        return phDict
         

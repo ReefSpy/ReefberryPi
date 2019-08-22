@@ -193,6 +193,8 @@ class RBP_server:
             return defs_outletcontrol.handle_outlet_skimmer(self, outlet, button_state, pin)
         elif controltype == "Light":
             return defs_outletcontrol.handle_outlet_light(self, outlet, button_state, pin)
+        elif controltype == "pH Control":
+            return defs_outletcontrol.handle_outlet_ph(self, outlet, button_state, pin)
 
 
     def threadManager(self):
@@ -828,7 +830,8 @@ class RBP_server:
                                   + "{:.2f}".format(dv_AvgCountsFiltered))
 
                       
-                        self.broadcastProbeStatus("mcp3008", "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num), str(dv_AvgCountsFiltered), str(self.AppPrefs.mcp3008Dict[ch].ch_name)) 
+                        self.broadcastProbeStatus("mcp3008", "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num), str(dv_AvgCountsFiltered), str(self.AppPrefs.mcp3008Dict[ch].ch_name))
+                        self.AppPrefs.mcp3008Dict[ch].lastValue = str(dv_AvgCountsFiltered)
                         # clear the list so we can populate it with new data for the next data set
                         self.AppPrefs.mcp3008Dict[ch].ch_dvlist.clear()
                         # record the new sampling time

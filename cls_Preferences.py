@@ -18,6 +18,7 @@ class analogChannelClass():
     ch_numsamples = ""
     ch_sigma = ""
     LastLogTime = ""
+    lastValue = ""
 
 class tempProbeClass():
     name = ""
@@ -54,6 +55,10 @@ class outletPrefs():
     skimmer_feed_delay_c  = ""
     skimmer_enable_feed_d = ""
     skimmer_feed_delay_d  = ""
+    ph_probe              = ""
+    ph_high               = ""
+    ph_low                = ""
+    ph_onwhen             = ""
 
 class AppPrefs():
 
@@ -200,7 +205,11 @@ class AppPrefs():
                 outlet.skimmer_feed_delay_c  = defs_common.readINIfile(section, "skimmer_feed_delay_c", "0", lock=controller.threadlock, logger=controller.logger)
                 outlet.skimmer_enable_feed_d = defs_common.readINIfile(section, "skimmer_enable_feed_d", "False", lock=controller.threadlock, logger=controller.logger)
                 outlet.skimmer_feed_delay_d  = defs_common.readINIfile(section, "skimmer_feed_delay_d", "0", lock=controller.threadlock, logger=controller.logger)
-
+                outlet.ph_probe              = defs_common.readINIfile(section, "ph_probe", "mcp3008_ch1", lock=controller.threadlock, logger=controller.logger)
+                outlet.ph_high               = defs_common.readINIfile(section, "ph_high", "8.0", lock=controller.threadlock, logger=controller.logger)
+                outlet.ph_low                = defs_common.readINIfile(section, "ph_low", "7.9", lock=controller.threadlock, logger=controller.logger)
+                outlet.ph_onwhen             = defs_common.readINIfile(section, "ph_onwhen", "HIGH", lock=controller.threadlock, logger=controller.logger)
+                
                 self.outletDict[section] = outlet
 
                 controller.logger.info("read outlet prefs from config: outletid = " + outlet.outletid + ", outletname = " + outlet.outletname)
@@ -258,6 +267,10 @@ class AppPrefs():
             outlet.skimmer_feed_delay_c  = defs_common.readINIfile(section, "skimmer_feed_delay_c", "0", lock=controller.threadlock, logger=controller.logger)
             outlet.skimmer_enable_feed_d = defs_common.readINIfile(section, "skimmer_enable_feed_d", "False", lock=controller.threadlock, logger=controller.logger)
             outlet.skimmer_feed_delay_d  = defs_common.readINIfile(section, "skimmer_feed_delay_d", "0", lock=controller.threadlock, logger=controller.logger)
+            outlet.ph_probe              = defs_common.readINIfile(section, "ph_probe", "mcp3008_ch1", lock=controller.threadlock, logger=controller.logger)
+            outlet.ph_high               = defs_common.readINIfile(section, "ph_high", "8.0", lock=controller.threadlock, logger=controller.logger)
+            outlet.ph_low                = defs_common.readINIfile(section, "ph_low", "7.9", lock=controller.threadlock, logger=controller.logger)
+            outlet.ph_onwhen             = defs_common.readINIfile(section, "ph_onwhen", "HIGH", lock=controller.threadlock, logger=controller.logger)
 
             self.outletDict[section] = outlet
 

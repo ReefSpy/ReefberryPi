@@ -7,6 +7,15 @@ import time
 PIN_ON = False
 PIN_OFF = True
 
+def get_on_or_off (pin):
+    currentOutletState = GPIO.input(pin)
+    if currentOutletState == PIN_ON:
+        return "ON"
+    elif currentOutletState == PIN_OFF:
+        return "OFF"
+    else:
+        return "UNKNOWN"
+
 def handle_on_off (controller, outlet, pin, targetstate):
 
     currentOutletState = GPIO.input(pin)
@@ -94,10 +103,64 @@ def handle_outlet_heater(controller, outlet, button_state, pin):
                     #GPIO.output(pin, False)
                     handle_on_off(controller, outlet, pin, PIN_ON)
                     return "ON (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"  
-                if float(controller.AppPrefs.tempProbeDict[p].lastTemperature) >= float(off_temp):
+                elif float(controller.AppPrefs.tempProbeDict[p].lastTemperature) >= float(off_temp):
                     #GPIO.output(pin, True)
                     handle_on_off(controller, outlet, pin, PIN_OFF)
                     return "OFF (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"
+                else:
+                    state = get_on_or_off(pin)
+                    return state + " (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"
+                break
+
+    else:
+        #GPIO.output(pin, True)
+        handle_on_off(controller, outlet, pin, PIN_OFF)
+        return "OFF"
+
+def handle_outlet_ph(controller, outlet, button_state, pin):
+    
+    if button_state == "OFF":
+        handle_on_off(controller, outlet, pin, PIN_OFF)
+        return "OFF"
+    elif button_state == "ON":
+        handle_on_off(controller, outlet, pin, PIN_ON)
+        return "ON"
+    elif button_state == "AUTO":
+        probe = controller.AppPrefs.outletDict[outlet].ph_probe
+        ph_high = controller.AppPrefs.outletDict[outlet].ph_high
+        ph_low = controller.AppPrefs.outletDict[outlet].ph_low
+        ph_onwhen = controller.AppPrefs.outletDict[outlet].ph_onwhen
+
+        #print(probe)
+        #print(probe[-1:])
+        for p in controller.AppPrefs.mcp3008Dict:
+           # print(controller.AppPrefs.mcp3008Dict[p].ch_num)
+            if str(controller.AppPrefs.mcp3008Dict[p].ch_num) == str(controller.AppPrefs.outletDict[outlet].ph_probe[-1:]):
+               # print("I found the probe: " +  str(controller.AppPrefs.mcp3008Dict[p].ch_num))
+               # print("last ph " + str(controller.AppPrefs.mcp3008Dict[p].lastValue) + " PH High " + ph_high + " PH Low " + ph_low + " On when " + ph_onwhen)
+                if controller.AppPrefs.mcp3008Dict[p].lastValue == "":
+                    controller.AppPrefs.mcp3008Dict[p].lastValue = 0
+                if ph_onwhen == "HIGH":
+                    if float(controller.AppPrefs.mcp3008Dict[p].lastValue) >= float(ph_high):
+                        handle_on_off(controller, outlet, pin, PIN_ON)
+                        return "ON (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                    elif float(controller.AppPrefs.mcp3008Dict[p].lastValue) <= float(ph_low):
+                        handle_on_off(controller, outlet, pin, PIN_OFF)
+                        return "OFF (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                    else:
+                        state = get_on_or_off(pin)
+                        return state + " (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                        
+                elif ph_onwhen == "LOW":
+                    if float(controller.AppPrefs.mcp3008Dict[p].lastValue) >= float(ph_high):
+                        handle_on_off(controller, outlet, pin, PIN_OFF)
+                        return "OFF (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                    elif float(controller.AppPrefs.mcp3008Dict[p].lastValue) <= float(ph_low):
+                        handle_on_off(controller, outlet, pin, PIN_ON)
+                        return "ON (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                    else:
+                        state = get_on_or_off(pin)
+                        return state + " (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
                 break
 
     else:
