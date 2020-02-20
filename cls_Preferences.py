@@ -1,6 +1,8 @@
 import configparser
 import time
 import defs_common
+import random 
+import string 
 
 
     
@@ -71,6 +73,7 @@ class AppPrefs():
         self.mcp3008Dict = {}
         self.tempProbeDict = {}
 
+        self.readGlobalPrefs(controller)
         self.readTempProbes(controller)
         self.readOutletPrefs(controller)
         self.readmcp3008Prefs(controller)
@@ -113,16 +116,31 @@ class AppPrefs():
         self.ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
         self.outlet_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
 
-        self.readGlobalPrefs(controller)
         self.readFeedPrefs(controller)
 
     def readGlobalPrefs(self, controller):
+        controller.logger.info("read global prefs")
         self.temperaturescale =  int(defs_common.readINIfile('global',
                                                              'tempscale',
                                                              "0",
                                                              lock=controller.threadlock,
                                                              logger=controller.logger)) 
-        controller.logger.info("read global prefs")
+
+  
+        # Generate a random UID string with 8 random characters.
+        # we will use this UID if no UID is already present in the prefs file
+        uid = ''.join([random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890") for n in range(8)]) 
+
+        self.appuid =  defs_common.readINIfile('global',
+                                               'appuid',
+                                                str(uid),
+                                                lock=controller.threadlock,
+                                                logger=controller.logger)
+  
+        controller.logger.info("App UID: " + str(self.appuid))
+
+        
+        
         
     def readFeedPrefs(self, controller):
         # need initial feed timer seed to compare our times against
