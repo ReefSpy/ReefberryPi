@@ -13,6 +13,7 @@
 from datetime import datetime, timedelta, time
 from influxdb import InfluxDBClient
 from colorama import Fore, Back, Style
+import paho.mqtt.client as mqtt
 import queue
 import time
 import threading
@@ -28,6 +29,7 @@ import dht11
 import numpy
 import ph_sensor
 import mcp3008
+import json
 
 
 
@@ -45,6 +47,11 @@ class RBP_controller:
         self.INFLUXDB_HOST = "192.168.1.217"
         self.INFLUXDB_PORT = "8086"
         self.INFLUXDB_DBNAME = "reefberrypi"
+        
+        self.MQTT_BROKER_HOST = "192.168.1.217"
+        self.MQTT_USERNAME = "pi"
+        self.MQTT_PASSWORD = "reefberry"
+        
         LOG_FILEDIR = "logs"
         LOG_FILENAME = "RBP_controller.log"
         LOGLEVEL_CONSOLE = logging.INFO # DEBUG, INFO, ERROR
@@ -66,6 +73,13 @@ class RBP_controller:
 
         # connect to InfluxDB
         self.InfluxDBclient = self.ConnectInfluxDB(self.INFLUXDB_HOST, self.INFLUXDB_PORT, self.INFLUXDB_DBNAME)
+
+        # connect to MQTT broker
+        self.MQTTclient = mqtt.Client(self.AppPrefs.appuid) #create new instance and assign the AppUID to it
+        #self.MQTTclient.on_message=on_message #attach function to callback
+        self.MQTTclient.username_pw_set(self.MQTT_USERNAME, self.MQTT_PASSWORD)
+        self.MQTTclient.connect(self.MQTT_BROKER_HOST)
+        self.MQTTclient.subscribe("reefberrypi/demo")
 
         self.threadManager()
 
@@ -164,7 +178,6 @@ class RBP_controller:
                 }
                 ]
     
-            
             bRetVal = self.InfluxDBclient.write_points(json_body)
             if bRetVal == False:
                 self.logger.error("Error writing temperature to InfluxDB! [" + str(probeid) + "] " + str(value))
@@ -178,7 +191,21 @@ class RBP_controller:
             self.logger.error(e)
             self.InfluxDBclient = self.ConnectInfluxDB(self.INFLUXDB_HOST, self.INFLUXDB_PORT, self.INFLUXDB_DBNAME)
 
-    
+
+    def broadcastProbeStatus(self, probetype, probeid, probeval, probename):   
+        message = {
+            "status_currentprobeval":
+                      {
+                        "probetype": str(probetype),
+                        "probeid": str(probeid),
+                        "probeval": str(probeval),
+                        "probename": str(probename)
+                      }
+                  }
+        
+        message = json.dumps(message)
+        self.logger.info("[MQTT Tx] " + message)
+        self.MQTTclient.publish("reefberrypi/demo", probeid + " : " + probeval)
         
 
     def initialize_logger(self, output_dir, output_file, loglevel_console, loglevel_logfile):
@@ -309,7 +336,8 @@ class RBP_controller:
                                                      " F")
                             
                             # broadcast temperature value
-                            #self.broadcastProbeStatus("ds18b20", "ds18b20_" + str(self.AppPrefs.tempProbeDict[p].probeid), str(broadcasttemp), self.AppPrefs.tempProbeDict[p].name)   
+                            #self.MQTTclient.publish("reefberrypi/demo",str(dstempC))
+                            self.broadcastProbeStatus("ds18b20", "ds18b20_" + str(self.AppPrefs.tempProbeDict[p].probeid), str(broadcasttemp), self.AppPrefs.tempProbeDict[p].name)   
                             self.AppPrefs.tempProbeDict[p].lastTemperature = broadcasttemp
                     except Exception as e:
                         defs_common.logtoconsole(str("<<<Error>>> Can not read ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + " temperature data!"), fg="WHITE", bg="RED", style="BRIGHT")
@@ -347,7 +375,7 @@ class RBP_controller:
                             defs_common.logprobedata("dht_t_", tempData)
                             defs_common.logtoconsole("***Logged*** [dht_t] " +  self.AppPrefs.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f, fg="CYAN", style="BRIGHT")
                             self.logger.info(str("***Logged*** [dht_t] " +  self.AppPrefs.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f))
-                            #self.broadcastProbeStatus("dht", "dht_t", str(broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
+                            self.broadcastProbeStatus("dht", "dht_t", str(broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
 
 ##                            json_body = [
 ##                            {
@@ -371,7 +399,7 @@ class RBP_controller:
                             defs_common.logprobedata("dht_h_", "{:.0f}".format(hum))
                             defs_common.logtoconsole("***Logged*** [dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum, fg="CYAN", style="BRIGHT")
                             self.logger.info(str("***Logged*** [dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
-                            #self.broadcastProbeStatus("dht", "dht_h", str(hum), self.AppPrefs.DHT_Sensor.get("humidity_name")) 
+                            self.broadcastProbeStatus("dht", "dht_h", str(hum), self.AppPrefs.DHT_Sensor.get("humidity_name")) 
 ##                            json_body = [
 ##                            {
 ##                                          "measurement": "probevalues",
@@ -395,9 +423,9 @@ class RBP_controller:
                             self.logger.info(str("[dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
 
                             # broadcast humidity value
-                            #self.broadcastProbeStatus("dht", "dht_h", str(hum), self.AppPrefs.DHT_Sensor.get("humidity_name"))    
+                            self.broadcastProbeStatus("dht", "dht_h", str(hum), self.AppPrefs.DHT_Sensor.get("humidity_name"))    
                             # broadcast temperature value
-                            #self.broadcastProbeStatus("dht", "dht_t", str(broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
+                            self.broadcastProbeStatus("dht", "dht_t", str(broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
                             
                         # record the new sampling time
                         self.AppPrefs.DHT_Sensor["dht11_samplingtimeseed"] = int(round(time.time()*1000)) #convert time to milliseconds
@@ -483,7 +511,7 @@ class RBP_controller:
                                   + "{:.2f}".format(dv_AvgCountsFiltered))
 
                       
-                        #self.broadcastProbeStatus("mcp3008", "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num), str(dv_AvgCountsFiltered), str(self.AppPrefs.mcp3008Dict[ch].ch_name))
+                        self.broadcastProbeStatus("mcp3008", "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num), str(dv_AvgCountsFiltered), str(self.AppPrefs.mcp3008Dict[ch].ch_name))
                         self.AppPrefs.mcp3008Dict[ch].lastValue = str(dv_AvgCountsFiltered)
                         # clear the list so we can populate it with new data for the next data set
                         self.AppPrefs.mcp3008Dict[ch].ch_dvlist.clear()
