@@ -13,6 +13,7 @@
 from datetime import datetime, timedelta, time
 from influxdb import InfluxDBClient
 from colorama import Fore, Back, Style
+import paho.mqtt.client as mqtt
 import queue
 import time
 import threading
@@ -28,16 +29,16 @@ import dht11
 import numpy
 import ph_sensor
 import mcp3008
-
-
+import json
 
 
 class RBP_controller:
-    
+
     def __init__(self):
 
-        defs_common.logtoconsole("Application Start", fg="WHITE", style="BRIGHT")
-        self.threads=[]
+        defs_common.logtoconsole(
+            "Application Start", fg="WHITE", style="BRIGHT")
+        self.threads = []
         self.queue = queue.Queue()
 
         self.threadlock = threading.Lock()
@@ -45,12 +46,18 @@ class RBP_controller:
         self.INFLUXDB_HOST = "192.168.1.217"
         self.INFLUXDB_PORT = "8086"
         self.INFLUXDB_DBNAME = "reefberrypi"
+
+        self.MQTT_BROKER_HOST = "192.168.1.217"
+        self.MQTT_USERNAME = "pi"
+        self.MQTT_PASSWORD = "reefberry"
+
         LOG_FILEDIR = "logs"
         LOG_FILENAME = "RBP_controller.log"
-        LOGLEVEL_CONSOLE = logging.INFO # DEBUG, INFO, ERROR
+        LOGLEVEL_CONSOLE = logging.INFO  # DEBUG, INFO, ERROR
         LOGLEVEL_LOGFILE = logging.INFO
-          
-        self.initialize_logger(LOG_FILEDIR, LOG_FILENAME, LOGLEVEL_CONSOLE, LOGLEVEL_LOGFILE)
+
+        self.initialize_logger(LOG_FILEDIR, LOG_FILENAME,
+                               LOGLEVEL_CONSOLE, LOGLEVEL_LOGFILE)
 
         self.logger.info("Reefberry Pi controller startup...")
 
@@ -65,10 +72,18 @@ class RBP_controller:
         self.dht_sensor = dht11.DHT11(pin=GPIO_config.dht11)
 
         # connect to InfluxDB
-        self.InfluxDBclient = self.ConnectInfluxDB(self.INFLUXDB_HOST, self.INFLUXDB_PORT, self.INFLUXDB_DBNAME)
+        self.InfluxDBclient = self.ConnectInfluxDB(
+            self.INFLUXDB_HOST, self.INFLUXDB_PORT, self.INFLUXDB_DBNAME)
+
+        # connect to MQTT broker
+        # create new instance and assign the AppUID to it
+        self.MQTTclient = mqtt.Client(self.AppPrefs.appuid)
+        # self.MQTTclient.on_message=on_message #attach function to callback
+        self.MQTTclient.username_pw_set(self.MQTT_USERNAME, self.MQTT_PASSWORD)
+        self.MQTTclient.connect(self.MQTT_BROKER_HOST)
+        self.MQTTclient.subscribe("reefberrypi/demo")
 
         self.threadManager()
-
 
     def ConnectInfluxDB(self, host, port, dbname):
         try:
@@ -88,15 +103,19 @@ class RBP_controller:
         client.switch_database(dbname)
 
         # create retetion policies
-        client.create_retention_policy("one_day", "24h", "1", dbname, default=True)
-        client.create_retention_policy("three_days", "3d", "1", dbname, default=False)
-        client.create_retention_policy("one_week", "1w", "1", dbname, default=False)
-        client.create_retention_policy("three_months", "12w", "1", dbname, default=False)
+        client.create_retention_policy(
+            "one_day", "24h", "1", dbname, default=True)
+        client.create_retention_policy(
+            "three_days", "3d", "1", dbname, default=False)
+        client.create_retention_policy(
+            "one_week", "1w", "1", dbname, default=False)
+        client.create_retention_policy(
+            "three_months", "12w", "1", dbname, default=False)
 
         # create continuous queries
         ################################################################################
         # downsample data to every 5 minutes and retain for 3 days
-        ################################################################################        
+        ################################################################################
         # probedata
         select_clause = """SELECT
                             mean("value") as "mean_value"
@@ -104,11 +123,12 @@ class RBP_controller:
                             FROM "probedata" 
                             GROUP BY time(5m), *
                             """
-        client.create_continuous_query('cq_probedata_5m', select_clause, dbname)
-        
+        client.create_continuous_query(
+            'cq_probedata_5m', select_clause, dbname)
+
         ################################################################################
         # downsample data to every 10 minutes and retain for 1 week
-        ################################################################################        
+        ################################################################################
         # probedata
         select_clause = """SELECT
                             mean("value") as "mean_value"
@@ -116,11 +136,12 @@ class RBP_controller:
                             FROM "probedata" 
                             GROUP BY time(10m), *
                             """
-        client.create_continuous_query('cq_probedata_10m', select_clause, dbname)
+        client.create_continuous_query(
+            'cq_probedata_10m', select_clause, dbname)
 
         ################################################################################
         # downsample data to every 15 minutes and retain for 3 months
-        ################################################################################        
+        ################################################################################
         # probedata
         select_clause = """SELECT
                             mean("value") as "mean_value"
@@ -128,58 +149,73 @@ class RBP_controller:
                             FROM "probedata" 
                             GROUP BY time(15m), *
                             """
-        client.create_continuous_query('cq_probedata_15m', select_clause, dbname)
+        client.create_continuous_query(
+            'cq_probedata_15m', select_clause, dbname)
 
-##    def WriteDataInfluxDB (self, json_data):
-##        try:
+# def WriteDataInfluxDB (self, json_data):
+# try:
 ##            bRetVal = self.InfluxDBclient.write_points(json_data)
-##            if bRetVal == False:
+# if bRetVal == False:
 ##                self.logger.error("Error writing temperature to InfluxDB!")
 ##
-##            else:
+# else:
 ##                self.logger.info("Write point to InfluxDB")
-##        except ConnectionError:
+# except ConnectionError:
 ##            self.logger.error("InfluxDB Connection Error - Reconnecting...")
 ##            self.InfluxDBclient = self.ConnectInfluxDB(self.INFLUXDB_HOST, self.INFLUXDB_PORT, self.INFLUXDB_DBNAME)
-##        except Exception as e:
+# except Exception as e:
 ##            self.logger.error("InfluxDB Error writing")
-##            self.logger.error(e)
+# self.logger.error(e)
 ##            self.InfluxDBclient = self.ConnectInfluxDB(self.INFLUXDB_HOST, self.INFLUXDB_PORT, self.INFLUXDB_DBNAME)
 
-
-
-    def WriteProbeDataInfluxDB (self, probeid, value):
+    def WriteProbeDataInfluxDB(self, probeid, value):
         try:
             json_body = [
                 {
-                  "measurement": "probedata",
-                  "tags": {
-                       "appuid": self.AppPrefs.appuid,
-                       "probeid": probeid
-                  },
-                  "time": datetime.utcnow(),
-                  "fields": {
-                       "value": float(value),
-                  }
+                    "measurement": "probedata",
+                    "tags": {
+                        "appuid": self.AppPrefs.appuid,
+                        "probeid": probeid
+                    },
+                    "time": datetime.utcnow(),
+                    "fields": {
+                        "value": float(value),
+                    }
                 }
-                ]
-    
-            
+            ]
+
             bRetVal = self.InfluxDBclient.write_points(json_body)
             if bRetVal == False:
-                self.logger.error("Error writing temperature to InfluxDB! [" + str(probeid) + "] " + str(value))
+                self.logger.error(
+                    "Error writing temperature to InfluxDB! [" + str(probeid) + "] " + str(value))
             else:
-                self.logger.info("Write point to InfluxDB [" + probeid + "] " + str(value))
+                self.logger.info(
+                    "Write point to InfluxDB [" + probeid + "] " + str(value))
         except ConnectionError:
             self.logger.error("InfluxDB Connection Error - Reconnecting...")
-            self.InfluxDBclient = self.ConnectInfluxDB(self.INFLUXDB_HOST, self.INFLUXDB_PORT, self.INFLUXDB_DBNAME)
+            self.InfluxDBclient = self.ConnectInfluxDB(
+                self.INFLUXDB_HOST, self.INFLUXDB_PORT, self.INFLUXDB_DBNAME)
         except Exception as e:
-            self.logger.error("InfluxDB Error writing [" + str(probeid) + "] " + str(value))
+            self.logger.error(
+                "InfluxDB Error writing [" + str(probeid) + "] " + str(value))
             self.logger.error(e)
-            self.InfluxDBclient = self.ConnectInfluxDB(self.INFLUXDB_HOST, self.INFLUXDB_PORT, self.INFLUXDB_DBNAME)
+            self.InfluxDBclient = self.ConnectInfluxDB(
+                self.INFLUXDB_HOST, self.INFLUXDB_PORT, self.INFLUXDB_DBNAME)
 
-    
-        
+    def broadcastProbeStatus(self, probetype, probeid, probeval, probename):
+        message = {
+            "status_currentprobeval":
+            {
+                "probetype": str(probetype),
+                "probeid": str(probeid),
+                "probeval": str(probeval),
+                "probename": str(probename)
+            }
+        }
+
+        message = json.dumps(message)
+        self.logger.info("[MQTT Tx] " + message)
+        self.MQTTclient.publish("reefberrypi/demo", probeid + " : " + probeval)
 
     def initialize_logger(self, output_dir, output_file, loglevel_console, loglevel_logfile):
 
@@ -190,27 +226,30 @@ class RBP_controller:
         if not os.path.exists(output_dir):
             defs_common.logtoconsole("Logfile directory not found")
             os.mkdir(output_dir)
-            defs_common.logtoconsole("Logfile directory created: " + os.getcwd() + "/" + str(output_dir))
-         
+            defs_common.logtoconsole(
+                "Logfile directory created: " + os.getcwd() + "/" + str(output_dir))
+
         # create console handler and set level to info
         self.handler = logging.StreamHandler()
         self.handler.setLevel(loglevel_console)
         self.formatter = logging.Formatter('%(asctime)s %(message)s')
         self.handler.setFormatter(self.formatter)
         self.logger.addHandler(self.handler)
-     
+
         # create log file handler and set level to info
-        self.handler = logging.handlers.RotatingFileHandler(os.path.join(output_dir, output_file), maxBytes=2000000, backupCount=5)
+        self.handler = logging.handlers.RotatingFileHandler(
+            os.path.join(output_dir, output_file), maxBytes=2000000, backupCount=5)
         self.handler.setLevel(loglevel_logfile)
-        self.formatter = logging.Formatter('%(asctime)s <%(levelname)s> [%(threadName)s:%(module)s] %(message)s')
+        self.formatter = logging.Formatter(
+            '%(asctime)s <%(levelname)s> [%(threadName)s:%(module)s] %(message)s')
         self.handler.setFormatter(self.formatter)
         self.logger.addHandler(self.handler)
-     
+
         # create debug file handler and set level to debug
-        #handler = logging.FileHandler(os.path.join(output_dir, "all.log"),handler.setLevel(logging.DEBUG)
+        # handler = logging.FileHandler(os.path.join(output_dir, "all.log"),handler.setLevel(logging.DEBUG)
         #formatter = logging.Formatter('%(asctime)s <%(levelname)s> [%(threadName)s:%(module)s] %(message)s')
-        #handler.setFormatter(formatter)
-        #logger.addHandler(handler)
+        # handler.setFormatter(formatter)
+        # logger.addHandler(handler)
 
     def threadManager(self):
         #connection1= pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -219,12 +258,12 @@ class RBP_controller:
         #channel2 = connection2.channel()
         #connection3= pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         #channel3 = connection3.channel()
-        
+
         #t1 = threading.Thread(target=self.handle_rpc, args=(channel1,))
         #t1.daemon = True
-        #self.threads.append(t1)
-        #t1.start()
-        
+        # self.threads.append(t1)
+        # t1.start()
+
         t2 = threading.Thread(target=self.apploop)
         t2.daemon = True
         self.threads.append(t2)
@@ -232,16 +271,17 @@ class RBP_controller:
 
         #t3 = threading.Thread(target=self.handle_nodered, args=(channel3,))
         #t3.daemon = True
-        #self.threads.append(t3)
-        #t3.start()
+        # self.threads.append(t3)
+        # t3.start()
 
         for t in self.threads:
-          t.join()
+            t.join()
 ############################################################################################################################
 #
 #  Main application loop
 #
 ############################################################################################################################
+
     def apploop(self):
         while True:
             #defs_common.logtoconsole("app loop")
@@ -252,80 +292,88 @@ class RBP_controller:
             # we support multiple probes, so work from the probe dictionary and get data
             # for each
             ##########################################################################################
-            # read data from the temperature probes       
+            # read data from the temperature probes
             if (int(round(time.time()*1000)) - self.AppPrefs.ds18b20_SamplingTimeSeed) > self.AppPrefs.ds18b20_SamplingInterval:
                 for p in self.AppPrefs.tempProbeDict:
-                    try:             
+                    try:
                         timestamp = datetime.now()
-                        dstempC =  float(ds18b20.read_temp(self.AppPrefs.tempProbeDict[p].probeid, "C"))
+                        dstempC = float(ds18b20.read_temp(
+                            self.AppPrefs.tempProbeDict[p].probeid, "C"))
                         dstempF = defs_common.convertCtoF(float(dstempC))
                         dstempF = float(dstempF)
                         tempData = str(dstempC) + "," + str(dstempF)
-                        
+
                         if str(self.AppPrefs.temperaturescale) == str(defs_common.SCALE_F):
                             broadcasttemp = str("%.1f" % dstempF)
                         else:
                             broadcasttemp = str("%.1f" % dstempC)
-                        
+
                         #self.tempProbeDict[p].lastLogTime = self.ds18b20_LastLogTimeDict
 
-##                        json_body = [
-##                        {
-##                                      "measurement": "probevalues",
-##                                      "tags": {
-##                                           "appuid": self.AppPrefs.appuid,
-##                                           "probeid": "ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid
-##                                      },
-##                                      "time": datetime.utcnow(),
-##                                      "fields": {
-##                                           "value": float(dstempC),
-##                                      }
-##                        }
-##                        ]
-
+# json_body = [
+# {
+# "measurement": "probevalues",
+# "tags": {
+# "appuid": self.AppPrefs.appuid,
+# "probeid": "ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid
+# },
+# "time": datetime.utcnow(),
+# "fields": {
+# "value": float(dstempC),
+# }
+# }
+# ]
 
                         if (int(round(time.time()*1000)) - int(self.AppPrefs.tempProbeDict[p].lastLogTime)) > self.AppPrefs.ds18b20_LogInterval:
                             # log and broadcast temperature value
-                            defs_common.logprobedata("ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + "_", tempData)
+                            defs_common.logprobedata(
+                                "ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + "_", tempData)
                             defs_common.logtoconsole("***Logged*** [ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + "] " +
                                                      self.AppPrefs.tempProbeDict[p].name + str(" = {:.1f}".format(dstempC)) + " C | " + str("{:.1f}".format(dstempF)) +
                                                      " F", fg="CYAN", style="BRIGHT")
                             self.logger.info(str("***Logged*** [ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + "] " +
-                                                     self.AppPrefs.tempProbeDict[p].name + str(" = {:.1f}".format(dstempC)) + " C | " + str("{:.1f}".format(dstempF))) +
-                                                     " F")
+                                                 self.AppPrefs.tempProbeDict[p].name + str(" = {:.1f}".format(dstempC)) + " C | " + str("{:.1f}".format(dstempF))) +
+                                             " F")
                             # log to InfluxDB
-                            #self.WriteDataInfluxDB(json_body)
-                            self.WriteProbeDataInfluxDB("ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid, dstempC)
+                            # self.WriteDataInfluxDB(json_body)
+                            self.WriteProbeDataInfluxDB(
+                                "ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid, dstempC)
                             #self.broadcastProbeStatus("ds18b20", "ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid, str(broadcasttemp), self.AppPrefs.tempProbeDict[p].name)
 
                             #self.ds18b20_LastLogTimeDict = int(round(time.time()*1000))
-                            self.AppPrefs.tempProbeDict[p].lastLogTime = int(round(time.time()*1000))
-                            
+                            self.AppPrefs.tempProbeDict[p].lastLogTime = int(
+                                round(time.time()*1000))
+
                             #self.AppPrefs.tempProbeDict[p].lastTemperature = dstempC
                             self.AppPrefs.tempProbeDict[p].lastTemperature = broadcasttemp
                         else:
                             self.logger.info(str("[ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + "] " +
-                                                     self.AppPrefs.tempProbeDict[p].name + str(" = {:.1f}".format(dstempC)) + " C | " + str("{:.1f}".format(dstempF))) +
-                                                     " F")
-                            
+                                                 self.AppPrefs.tempProbeDict[p].name + str(" = {:.1f}".format(dstempC)) + " C | " + str("{:.1f}".format(dstempF))) +
+                                             " F")
+
                             # broadcast temperature value
-                            #self.broadcastProbeStatus("ds18b20", "ds18b20_" + str(self.AppPrefs.tempProbeDict[p].probeid), str(broadcasttemp), self.AppPrefs.tempProbeDict[p].name)   
+                            # self.MQTTclient.publish("reefberrypi/demo",str(dstempC))
+                            self.broadcastProbeStatus("ds18b20", "ds18b20_" + str(
+                                self.AppPrefs.tempProbeDict[p].probeid), str(broadcasttemp), self.AppPrefs.tempProbeDict[p].name)
                             self.AppPrefs.tempProbeDict[p].lastTemperature = broadcasttemp
                     except Exception as e:
-                        defs_common.logtoconsole(str("<<<Error>>> Can not read ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + " temperature data!"), fg="WHITE", bg="RED", style="BRIGHT")
-                        self.logger.error ("<<<Error>>> Can not read ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + " temperature data!")
-                        self.logger.error (e)
+                        defs_common.logtoconsole(str(
+                            "<<<Error>>> Can not read ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + " temperature data!"), fg="WHITE", bg="RED", style="BRIGHT")
+                        self.logger.error("<<<Error>>> Can not read ds18b20_" +
+                                          self.AppPrefs.tempProbeDict[p].probeid + " temperature data!")
+                        self.logger.error(e)
                 # record the new sampling time
-                self.AppPrefs.ds18b20_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+                self.AppPrefs.ds18b20_SamplingTimeSeed = int(
+                    round(time.time()*1000))  # convert time to milliseconds
 
             ################################################################################################################
             # read dht11 temperature and humidity sensor
             #
             # these sensors are slow to refresh and should not be read more
             # than once every second or two (ie: dht_SamplingInterval = 3000ms or 5000ms for 3s or 5s) would be safe
-            ################################################################################################################           
+            ################################################################################################################
             if self.AppPrefs.DHT_Sensor.get("enabled") == "True":
-                if (int(round(time.time()*1000)) - self.AppPrefs.DHT_Sensor.get("dht11_samplingtimeseed")) > int(self.AppPrefs.DHT_Sensor.get("dht11_samplinginterval")):    
+                if (int(round(time.time()*1000)) - self.AppPrefs.DHT_Sensor.get("dht11_samplingtimeseed")) > int(self.AppPrefs.DHT_Sensor.get("dht11_samplinginterval")):
                     # let's read the dht11 temp and humidity data
                     result = self.dht_sensor.read()
                     if result.is_valid():
@@ -341,66 +389,80 @@ class RBP_controller:
                             broadcasttemp = str("%.1f" % temp_c)
 
                         if (int(round(time.time()*1000)) - self.AppPrefs.DHT_Sensor.get("dht11_lastlogtime")) > int(self.AppPrefs.DHT_Sensor.get("dht11_loginterval")):
-                            tempData = str("{:.1f}".format(temp_c)) + "," + str(temp_f)
+                            tempData = str("{:.1f}".format(
+                                temp_c)) + "," + str(temp_f)
 
                             # log and broadcast temperature value
                             defs_common.logprobedata("dht_t_", tempData)
-                            defs_common.logtoconsole("***Logged*** [dht_t] " +  self.AppPrefs.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f, fg="CYAN", style="BRIGHT")
-                            self.logger.info(str("***Logged*** [dht_t] " +  self.AppPrefs.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f))
-                            #self.broadcastProbeStatus("dht", "dht_t", str(broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
+                            defs_common.logtoconsole("***Logged*** [dht_t] " + self.AppPrefs.DHT_Sensor.get(
+                                "temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f, fg="CYAN", style="BRIGHT")
+                            self.logger.info(str("***Logged*** [dht_t] " + self.AppPrefs.DHT_Sensor.get(
+                                "temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f))
+                            self.broadcastProbeStatus("dht", "dht_t", str(
+                                broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
 
-##                            json_body = [
-##                            {
-##                                          "measurement": "probevalues",
-##                                          "tags": {
-##                                               "appuid": self.AppPrefs.appuid,
-##                                               "probeid": "dht_t"
-##                                          },
-##                                          "time": datetime.utcnow(),
-##                                          "fields": {
-##                                               "value": float(temp_c),
-##                                          }
-##                            }
-##                            ]
-                            
+# json_body = [
+# {
+# "measurement": "probevalues",
+# "tags": {
+# "appuid": self.AppPrefs.appuid,
+# "probeid": "dht_t"
+# },
+# "time": datetime.utcnow(),
+# "fields": {
+# "value": float(temp_c),
+# }
+# }
+# ]
+
                             # log to InfluxDB
-                            #self.WriteDataInfluxDB(json_body)
+                            # self.WriteDataInfluxDB(json_body)
                             self.WriteProbeDataInfluxDB("dht_t", temp_c)
-                                
+
                             # log and broadcast humidity value
-                            defs_common.logprobedata("dht_h_", "{:.0f}".format(hum))
-                            defs_common.logtoconsole("***Logged*** [dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum, fg="CYAN", style="BRIGHT")
-                            self.logger.info(str("***Logged*** [dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
-                            #self.broadcastProbeStatus("dht", "dht_h", str(hum), self.AppPrefs.DHT_Sensor.get("humidity_name")) 
-##                            json_body = [
-##                            {
-##                                          "measurement": "probevalues",
-##                                          "tags": {
-##                                               "appuid": self.AppPrefs.appuid,
-##                                               "probeid": "dht_h"
-##                                          },
-##                                          "time": datetime.utcnow(),
-##                                          "fields": {
-##                                               "value": float(hum),
-##                                          }
-##                            }
-##                            ]
+                            defs_common.logprobedata(
+                                "dht_h_", "{:.0f}".format(hum))
+                            defs_common.logtoconsole("***Logged*** [dht_h] " + self.AppPrefs.DHT_Sensor.get(
+                                "humidity_name") + " = %d %%" % hum, fg="CYAN", style="BRIGHT")
+                            self.logger.info(str(
+                                "***Logged*** [dht_h] " + self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
+                            self.broadcastProbeStatus("dht", "dht_h", str(
+                                hum), self.AppPrefs.DHT_Sensor.get("humidity_name"))
+# json_body = [
+# {
+# "measurement": "probevalues",
+# "tags": {
+# "appuid": self.AppPrefs.appuid,
+# "probeid": "dht_h"
+# },
+# "time": datetime.utcnow(),
+# "fields": {
+# "value": float(hum),
+# }
+# }
+# ]
                             # log to InfluxDB
-                            #self.WriteDataInfluxDB(json_body)
+                            # self.WriteDataInfluxDB(json_body)
                             self.WriteProbeDataInfluxDB("dht_h", hum)
-                            
-                            self.AppPrefs.DHT_Sensor["dht11_lastlogtime"] = int(round(time.time()*1000))
+
+                            self.AppPrefs.DHT_Sensor["dht11_lastlogtime"] = int(
+                                round(time.time()*1000))
                         else:
-                            self.logger.info(str("[dht_t] " +  self.AppPrefs.DHT_Sensor.get("temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f))
-                            self.logger.info(str("[dht_h] " +  self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
+                            self.logger.info(str("[dht_t] " + self.AppPrefs.DHT_Sensor.get(
+                                "temperature_name") + " = %.1f C" % temp_c + " | %.1f F" % temp_f))
+                            self.logger.info(str(
+                                "[dht_h] " + self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
 
                             # broadcast humidity value
-                            #self.broadcastProbeStatus("dht", "dht_h", str(hum), self.AppPrefs.DHT_Sensor.get("humidity_name"))    
+                            self.broadcastProbeStatus("dht", "dht_h", str(
+                                hum), self.AppPrefs.DHT_Sensor.get("humidity_name"))
                             # broadcast temperature value
-                            #self.broadcastProbeStatus("dht", "dht_t", str(broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
-                            
+                            self.broadcastProbeStatus("dht", "dht_t", str(
+                                broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
+
                         # record the new sampling time
-                        self.AppPrefs.DHT_Sensor["dht11_samplingtimeseed"] = int(round(time.time()*1000)) #convert time to milliseconds
+                        self.AppPrefs.DHT_Sensor["dht11_samplingtimeseed"] = int(
+                            round(time.time()*1000))  # convert time to milliseconds
 
             ##########################################################################################
             # read each of the 8 channels on the mcp3008
@@ -408,12 +470,12 @@ class RBP_controller:
             ##########################################################################################
             # only read the data at every ph_SamplingInterval (ie: 500ms or 1000ms)
             if (int(round(time.time()*1000)) - self.AppPrefs.dv_SamplingTimeSeed) > self.AppPrefs.dv_SamplingInterval:
-                #for x in range (0,8):
+                # for x in range (0,8):
                 for ch in self.AppPrefs.mcp3008Dict:
                     if self.AppPrefs.mcp3008Dict[ch].ch_enabled == "True":
                         #defs_common.logtoconsole(str(self.mcp3008Dict[ch].ch_num) + " " + str(self.mcp3008Dict[ch].ch_name) + " " + str(self.mcp3008Dict[ch].ch_enabled) + " " + str(len(self.mcp3008Dict[ch].ch_dvlist)))
                         dv = mcp3008.readadc(int(self.AppPrefs.mcp3008Dict[ch].ch_num), GPIO_config.SPICLK, GPIO_config.SPIMOSI,
-                                                GPIO_config.SPIMISO, GPIO_config.SPICS)
+                                             GPIO_config.SPIMISO, GPIO_config.SPICS)
 
                         self.AppPrefs.mcp3008Dict[ch].ch_dvlist.append(dv)
                         #self.logger.info(str(self.mcp3008Dict[ch].ch_num) + " " + str(self.mcp3008Dict[ch].ch_name) + " " + str(self.mcp3008Dict[ch].ch_dvlist))
@@ -425,75 +487,90 @@ class RBP_controller:
                         # to calculate the standard deviation and remove the outlying data that is
                         # Sigma standard deviations away from the mean.  This way these outliers
                         # do not affect our results
-                        self.logger.info("mcp3008 ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num) + " raw data " + str(self.AppPrefs.mcp3008Dict[ch].ch_name) + " " + str(self.AppPrefs.mcp3008Dict[ch].ch_dvlist))
-                        dv_FilteredCounts = numpy.array(self.AppPrefs.mcp3008Dict[ch].ch_dvlist)
+                        self.logger.info("mcp3008 ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num) + " raw data " + str(
+                            self.AppPrefs.mcp3008Dict[ch].ch_name) + " " + str(self.AppPrefs.mcp3008Dict[ch].ch_dvlist))
+                        dv_FilteredCounts = numpy.array(
+                            self.AppPrefs.mcp3008Dict[ch].ch_dvlist)
                         dv_FilteredMean = numpy.mean(dv_FilteredCounts, axis=0)
                         dv_FlteredSD = numpy.std(dv_FilteredCounts, axis=0)
                         dv_dvlistfiltered = [x for x in dv_FilteredCounts if
-                                            (x > dv_FilteredMean - float(self.AppPrefs.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
+                                             (x > dv_FilteredMean - float(self.AppPrefs.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
                         dv_dvlistfiltered = [x for x in dv_dvlistfiltered if
-                                            (x < dv_FilteredMean + float(self.AppPrefs.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
+                                             (x < dv_FilteredMean + float(self.AppPrefs.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
 
-                        self.logger.info("mcp3008 ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num) + " filtered " + str(self.AppPrefs.mcp3008Dict[ch].ch_name) + " " + str(dv_dvlistfiltered))
-                    
+                        self.logger.info("mcp3008 ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num) + " filtered " + str(
+                            self.AppPrefs.mcp3008Dict[ch].ch_name) + " " + str(dv_dvlistfiltered))
+
                         # calculate the average of our filtered list
                         try:
-                            dv_AvgCountsFiltered = int(sum(dv_dvlistfiltered)/len(dv_dvlistfiltered))
-                            print( "{:.2f}".format(dv_AvgCountsFiltered)) ## delete this line
+                            dv_AvgCountsFiltered = int(
+                                sum(dv_dvlistfiltered)/len(dv_dvlistfiltered))
+                            # delete this line
+                            print("{:.2f}".format(dv_AvgCountsFiltered))
                         except:
-                            dv_AvgCountsFiltered = 1  # need to revisit this error handling. Exception thrown when all
-                                                      # values were 1023
-                            print("Error collecting data")  
+                            # need to revisit this error handling. Exception thrown when all
+                            dv_AvgCountsFiltered = 1
+                            # values were 1023
+                            print("Error collecting data")
 
-                        #self.mcp3008Dict[ch].ch_dvlist.clear()  ## delete  this line
+                        # self.mcp3008Dict[ch].ch_dvlist.clear()  ## delete  this line
 
                         if self.AppPrefs.mcp3008Dict[ch].ch_type == "pH":
                             # bug, somtimes value is coming back high, like really high, like 22.0.  this is an impossible
                             # value since max ph is 14.  need to figure this out later, but for now, lets log this val to aid in
                             # debugging
                             orgval = dv_AvgCountsFiltered
-                            
-                            #convert digital value to ph
+
+                            # convert digital value to ph
                             lowCal = self.AppPrefs.mcp3008Dict[ch].ch_ph_low
                             medCal = self.AppPrefs.mcp3008Dict[ch].ch_ph_med
-                            highCal =self.AppPrefs.mcp3008Dict[ch].ch_ph_high
-                            
-                            dv_AvgCountsFiltered = ph_sensor.dv2ph(dv_AvgCountsFiltered, ch, lowCal, medCal, highCal)
-                            dv_AvgCountsFiltered = float("{:.2f}".format(dv_AvgCountsFiltered))
+                            highCal = self.AppPrefs.mcp3008Dict[ch].ch_ph_high
+
+                            dv_AvgCountsFiltered = ph_sensor.dv2ph(
+                                dv_AvgCountsFiltered, ch, lowCal, medCal, highCal)
+                            dv_AvgCountsFiltered = float(
+                                "{:.2f}".format(dv_AvgCountsFiltered))
 
                             if dv_AvgCountsFiltered > 14:
-                                self.logger.error("Invalid PH value: " + str(dv_AvgCountsFiltered) + " " + str(orgval) + " " + str(dv_dvlistfiltered))
-                                defs_common.logtoconsole("Invalid PH value: " + str(dv_AvgCountsFiltered) + " " + str(orgval) + " " + str(dv_dvlistfiltered), fg="RED", style = "BRIGHT")
+                                self.logger.error("Invalid PH value: " + str(
+                                    dv_AvgCountsFiltered) + " " + str(orgval) + " " + str(dv_dvlistfiltered))
+                                defs_common.logtoconsole("Invalid PH value: " + str(dv_AvgCountsFiltered) + " " + str(
+                                    orgval) + " " + str(dv_dvlistfiltered), fg="RED", style="BRIGHT")
 
                         # if enough time has passed (ph_LogInterval) then log the data to file
                         # otherwise just print it to console
                         timestamp = datetime.now()
                         if (int(round(time.time()*1000)) - self.AppPrefs.mcp3008Dict[ch].LastLogTime) > self.AppPrefs.dv_LogInterval:
                             # sometimes a high value, like 22.4 gets recorded, i need to fix this, but for now don't log that
-##                            if ph_AvgFiltered < 14.0:  
+                            # if ph_AvgFiltered < 14.0:
                             #RBP_commons.logprobedata(config['logs']['ph_log_prefix'], "{:.2f}".format(ph_AvgFiltered))
                             # log data to InfluxDB
-                            self.WriteProbeDataInfluxDB("mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num), "{:.2f}".format(dv_AvgCountsFiltered))
-                            defs_common.logprobedata("mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num) + "_", "{:.2f}".format(dv_AvgCountsFiltered))
+                            self.WriteProbeDataInfluxDB(
+                                "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num), "{:.2f}".format(dv_AvgCountsFiltered))
+                            defs_common.logprobedata(
+                                "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num) + "_", "{:.2f}".format(dv_AvgCountsFiltered))
                             print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** dv = "
                                   + "{:.2f}".format(dv_AvgCountsFiltered) + Style.RESET_ALL)
-                            self.AppPrefs.mcp3008Dict[ch].LastLogTime = int(round(time.time()*1000))
+                            self.AppPrefs.mcp3008Dict[ch].LastLogTime = int(
+                                round(time.time()*1000))
                         else:
                             print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " dv = "
                                   + "{:.2f}".format(dv_AvgCountsFiltered))
 
-                      
-                        #self.broadcastProbeStatus("mcp3008", "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num), str(dv_AvgCountsFiltered), str(self.AppPrefs.mcp3008Dict[ch].ch_name))
-                        self.AppPrefs.mcp3008Dict[ch].lastValue = str(dv_AvgCountsFiltered)
+                        self.broadcastProbeStatus("mcp3008", "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num), str(
+                            dv_AvgCountsFiltered), str(self.AppPrefs.mcp3008Dict[ch].ch_name))
+                        self.AppPrefs.mcp3008Dict[ch].lastValue = str(
+                            dv_AvgCountsFiltered)
                         # clear the list so we can populate it with new data for the next data set
                         self.AppPrefs.mcp3008Dict[ch].ch_dvlist.clear()
                         # record the new sampling time
-                        self.AppPrefs.dv_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
- 
+                        self.AppPrefs.dv_SamplingTimeSeed = int(
+                            round(time.time()*1000))  # convert time to milliseconds
 
-            ########################################################################################## 
+            ##########################################################################################
             # pause to slow down the loop, otherwise CPU usage spikes as program is busy waiting
-            ##########################################################################################            
+            ##########################################################################################
             time.sleep(.5)
+
 
 root = RBP_controller()
