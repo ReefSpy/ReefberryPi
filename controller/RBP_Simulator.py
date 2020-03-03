@@ -48,7 +48,7 @@ class RBP_controller:
         self.INFLUXDB_PORT = "8086"
         self.INFLUXDB_DBNAME = "reefberrypi"
 
-        self.MQTT_BROKER_HOST = "127.0.0.1"
+        self.MQTT_BROKER_HOST = "192.168.1.217"
         self.MQTT_USERNAME = "pi"
         self.MQTT_PASSWORD = "reefberry"
 
