@@ -118,7 +118,7 @@ class RBP_controller:
             probelist = self.get_probelist()
             response = {
                 "probelist": probelist,
-                "uuid": str(body["uuid"]
+                "uuid": str(body["uuid"],
             }
 
             response=json.dumps(response)
