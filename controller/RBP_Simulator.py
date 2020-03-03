@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, time
 from influxdb import InfluxDBClient
 from colorama import Fore, Back, Style
 import paho.mqtt.client as mqtt
-import queue
+#import queue
 import time
 import threading
 import logging
@@ -39,8 +39,8 @@ class RBP_controller:
 
         defs_common.logtoconsole(
             "Application Start", fg="WHITE", style="BRIGHT")
-        self.threads = []
-        self.queue = queue.Queue()
+        #self.threads = []
+        #self.queue = queue.Queue()
 
         self.threadlock = threading.Lock()
 
@@ -385,7 +385,7 @@ class RBP_controller:
         # handler.setFormatter(formatter)
         # logger.addHandler(handler)
 
-    def threadManager(self):
+    # def threadManager(self):
         # connection1= pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         # channel1 = connection1.channel()
         # connection2= pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -398,18 +398,18 @@ class RBP_controller:
         # self.threads.append(t1)
         # t1.start()
 
-        t2 = threading.Thread(target=self.apploop)
-        t2.daemon = True
-        self.threads.append(t2)
-        t2.start()
+        # t2 = threading.Thread(target=self.apploop)
+        # t2.daemon = True
+        # self.threads.append(t2)
+        # t2.start()
 
         # t3 = threading.Thread(target=self.handle_mqtt, args=(channel3,))
         # t3.daemon = True
         # self.threads.append(t3)
         # t3.start()
 
-        for t in self.threads:
-            t.join()
+        # for t in self.threads:
+        #    t.join()
 ############################################################################################################################
 #
 #  Main application loop
