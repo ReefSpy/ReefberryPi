@@ -44,14 +44,6 @@ class RBP_controller:
 
         self.threadlock = threading.Lock()
 
-        self.INFLUXDB_HOST = "127.0.0.1"
-        self.INFLUXDB_PORT = "8086"
-        self.INFLUXDB_DBNAME = "reefberrypi"
-
-        self.MQTT_BROKER_HOST = "192.168.1.217"
-        self.MQTT_USERNAME = "pi"
-        self.MQTT_PASSWORD = "reefberry"
-
         LOG_FILEDIR = "logs"
         LOG_FILENAME = "RBP_controller.log"
         LOGLEVEL_CONSOLE = logging.INFO  # DEBUG, INFO, ERROR
@@ -65,6 +57,14 @@ class RBP_controller:
         # read prefs
         self.AppPrefs = cls_Preferences.AppPrefs(self)
         self.refreshPrefs = False
+
+        self.INFLUXDB_HOST = self.AppPrefs.influxdb_host
+        self.INFLUXDB_PORT = self.AppPrefs.influxdb_port
+        self.INFLUXDB_DBNAME = "reefberrypi"
+
+        self.MQTT_BROKER_HOST = self.AppPrefs.mqtt_broker_host
+        self.MQTT_USERNAME = "pi"
+        self.MQTT_PASSWORD = "reefberry"
 
         # set up the GPIO
         # GPIO_config.initGPIO()

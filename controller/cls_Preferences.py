@@ -139,8 +139,25 @@ class AppPrefs():
   
         controller.logger.info("App UID: " + str(self.appuid))
 
-        
-        
+        # Influx DB and MQTT server settings
+        self.influxdb_host =  defs_common.readINIfile('global',
+                                                          'influxdb_host',
+                                                          "127.0.0.1",
+                                                          lock=controller.threadlock,
+                                                          logger=controller.logger) 
+
+        self.influxdb_port =  defs_common.readINIfile('global',
+                                                          'influxdb_port',
+                                                          "8086",
+                                                          lock=controller.threadlock,
+                                                          logger=controller.logger) 
+                                                 
+        self.mqtt_broker_host =  defs_common.readINIfile('global',
+                                                          'mqtt_broker_host',
+                                                          "127.0.0.1",
+                                                          lock=controller.threadlock,
+                                                          logger=controller.logger) 
+
         
     def readFeedPrefs(self, controller):
         # need initial feed timer seed to compare our times against
