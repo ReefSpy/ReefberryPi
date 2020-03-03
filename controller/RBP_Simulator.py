@@ -40,7 +40,7 @@ class RBP_controller:
 
         defs_common.logtoconsole(
             "Application Start", fg="WHITE", style="BRIGHT")
-        #self.threads = []
+        # self.threads = []
         self.queue = queue.Queue()
 
         self.threadlock = threading.Lock()
@@ -117,10 +117,11 @@ class RBP_controller:
             self.logger.info("RPC: " + str(body["rpc_req"]))
             probelist = self.get_probelist()
             response = {
-                "probelist": probelist
+                "probelist": probelist,
+                "uuid": str(body["uuid"]
             }
 
-            response = json.dumps(response)
+            response=json.dumps(response)
             self.logger.debug(str(response))
             self.logger.info(str(response))
 
@@ -128,31 +129,33 @@ class RBP_controller:
             defs_common.logtoconsole(
                 "RPC: " + str(body["rpc_req"]), fg="GREEN", style="BRIGHT")
             self.logger.info("RPC: " + str(body["rpc_req"]))
-            outletlist = self.get_outletlist()
+            outletlist=self.get_outletlist()
             # print(outletlist)
             # print (Fore.GREEN + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             #        + " RPC: " + str(body["rpc_req"]) + Style.RESET_ALL)
-            response = {
-                "outletlist": outletlist
+            response={
+                "outletlist": outletlist,
+                "uuid": str(body["uuid"],
+
             }
 
-            response = json.dumps(response)
+            response=json.dumps(response)
             self.logger.debug(str(response))
 
         elif str(body["rpc_req"]) == "set_outletoperationmode":
             defs_common.logtoconsole(
                 "set_outletoperationmode " + str(body), fg="GREEN", style="BRIGHT")
             self.logger.info("set_outletoperationmode " + str(body))
-            outlet = str(str(body["bus"]) + "_outlet" + str(body["outletnum"]))
-            mode = str(body["opmode"]).upper()
+            outlet=str(str(body["bus"]) + "_outlet" + str(body["outletnum"]))
+            mode=str(body["opmode"]).upper()
 
             # bad things happened when I tried to control outlets from this thread
             # allow control to happen in the other thread by just changing the dictionary value
             self.AppPrefs.int_outlet_buttonstates[str(
-                outlet) + "_buttonstate"] = mode
+                outlet) + "_buttonstate"]=mode
 
         try:
-            message = response
+            message=response
             self.logger.info("[MQTT Tx] " + message)
             self.MQTTclient.publish("reefberrypi/demo", message)
 
@@ -172,7 +175,7 @@ class RBP_controller:
 
     def ConnectInfluxDB(self, host, port, dbname):
         try:
-            client = InfluxDBClient(host, port)
+            client=InfluxDBClient(host, port)
             self.logger.info("Connected to InfluxDB at " + host + ":" + port)
             self.InitInfluxDB(client, dbname)
             return client
@@ -202,7 +205,7 @@ class RBP_controller:
         # downsample data to every 5 minutes and retain for 3 days
         ################################################################################
         # probedata
-        select_clause = """SELECT
+        select_clause="""SELECT
                             mean("value") as "mean_value"
                             INTO "three_days"."probedata_downsample_5m"
                             FROM "probedata"
@@ -215,7 +218,7 @@ class RBP_controller:
         # downsample data to every 10 minutes and retain for 1 week
         ################################################################################
         # probedata
-        select_clause = """SELECT
+        select_clause="""SELECT
                             mean("value") as "mean_value"
                             INTO "one_week"."probedata_downsample_10m"
                             FROM "probedata"
@@ -228,7 +231,7 @@ class RBP_controller:
         # downsample data to every 15 minutes and retain for 3 months
         ################################################################################
         # probedata
-        select_clause = """SELECT
+        select_clause="""SELECT
                             mean("value") as "mean_value"
                             INTO "three_months"."probedata_downsample_15m"
                             FROM "probedata"
@@ -255,7 +258,7 @@ class RBP_controller:
 
     def WriteProbeDataInfluxDB(self, probeid, value):
         try:
-            json_body = [
+            json_body=[
                 {
                     "measurement": "probedata",
                     "tags": {
@@ -269,7 +272,7 @@ class RBP_controller:
                 }
             ]
 
-            bRetVal = self.InfluxDBclient.write_points(json_body)
+            bRetVal=self.InfluxDBclient.write_points(json_body)
             if bRetVal == False:
                 self.logger.error(
                     "Error writing temperature to InfluxDB! [" + str(probeid) + "] " + str(value))
@@ -278,17 +281,17 @@ class RBP_controller:
                     "Write point to InfluxDB [" + probeid + "] " + str(value))
         except ConnectionError:
             self.logger.error("InfluxDB Connection Error - Reconnecting...")
-            self.InfluxDBclient = self.ConnectInfluxDB(
+            self.InfluxDBclient=self.ConnectInfluxDB(
                 self.INFLUXDB_HOST, self.INFLUXDB_PORT, self.INFLUXDB_DBNAME)
         except Exception as e:
             self.logger.error(
                 "InfluxDB Error writing [" + str(probeid) + "] " + str(value))
             self.logger.error(e)
-            self.InfluxDBclient = self.ConnectInfluxDB(
+            self.InfluxDBclient=self.ConnectInfluxDB(
                 self.INFLUXDB_HOST, self.INFLUXDB_PORT, self.INFLUXDB_DBNAME)
 
     def broadcastProbeStatus(self, probetype, probeid, probeval, probename):
-        message = {
+        message={
             "status_currentprobeval":
             {
                 "probetype": str(probetype),
@@ -298,13 +301,13 @@ class RBP_controller:
             }
         }
 
-        message = json.dumps(message)
+        message=json.dumps(message)
         self.logger.info("[MQTT Tx] " + message)
         # self.MQTTclient.publish("reefberrypi/demo", probeid + " : " + probeval)
         self.MQTTclient.publish("reefberrypi/demo", message)
 
     def broadcastOutletStatus(self, outletid, outletname, outletbus, control_type, button_state, outletstate, statusmsg):
-        message = {
+        message={
             "status_currentoutletstate":
             {
                 "outletid": str(outletid),
@@ -317,75 +320,75 @@ class RBP_controller:
             }
         }
 
-        message = json.dumps(message)
+        message=json.dumps(message)
 
         self.logger.info("[MQTT Tx] " + message)
         self.MQTTclient.publish("reefberrypi/demo", message)
 
     def get_probelist(self):
-        probedict = {}
-        config = configparser.ConfigParser()
+        probedict={}
+        config=configparser.ConfigParser()
         config.read(defs_common.CONFIGFILENAME)
         # loop through each section and see if it is a ds18b20 temp probe
         for section in config:
             # print(section)
             if section.split("_")[0] == "ds18b20":
-                probetype = section.split("_")[0]
-                probeid = section
-                probename = config[section]["name"]
-                sensortype = "temperature"
-                probedict[probeid] = {"probetype": probetype, "probeid": probeid,
+                probetype=section.split("_")[0]
+                probeid=section
+                probename=config[section]["name"]
+                sensortype="temperature"
+                probedict[probeid]={"probetype": probetype, "probeid": probeid,
                                       "probename": probename, "sensortype": sensortype}
 
             if section == "dht11/22":
                 if config[section]["enabled"] == "True":
-                    probetype = "dht"
-                    probeid = "dht_t"
-                    probename = config[section]["temperature_name"]
-                    sensortype = "temperature"
-                    probedict[probeid] = {
+                    probetype="dht"
+                    probeid="dht_t"
+                    probename=config[section]["temperature_name"]
+                    sensortype="temperature"
+                    probedict[probeid]={
                         "probetype": probetype, "probeid": probeid, "probename": probename, "sensortype": sensortype}
 
-                    probetype = "dht"
-                    probeid = "dht_h"
-                    probename = config[section]["humidity_name"]
-                    sensortype = "humidity"
-                    probedict[probeid] = {
+                    probetype="dht"
+                    probeid="dht_h"
+                    probename=config[section]["humidity_name"]
+                    sensortype="humidity"
+                    probedict[probeid]={
                         "probetype": probetype, "probeid": probeid, "probename": probename, "sensortype": sensortype}
 
             if section == "mcp3008":
                 for x in range(0, 8):
                     if config[section]["ch" + str(x) + "_enabled"] == "True":
-                        probetype = "mcp3008"
-                        probeid = "mcp3008_ch" + str(x)
-                        probename = config[section]["ch" + str(x) + "_name"]
-                        sensortype = config[section]["ch" + str(x) + "_type"]
-                        probedict[probeid] = {
+                        probetype="mcp3008"
+                        probeid="mcp3008_ch" + str(x)
+                        probename=config[section]["ch" + str(x) + "_name"]
+                        sensortype=config[section]["ch" + str(x) + "_type"]
+                        probedict[probeid]={
                             "probetype": probetype, "probeid": probeid, "probename": probename, "sensortype": sensortype}
 
         return probedict
 
     def get_outletlist(self):
-        outletdict = {}
-        config = configparser.ConfigParser()
+        outletdict={}
+        config=configparser.ConfigParser()
         config.read(defs_common.CONFIGFILENAME)
         # loop through each section and see if it is an outlet on internl bus
 
         for section in config:
             if section.find("int_outlet") > -1:
-                outletid = section
-                outletname = config[section]["name"]
-                outletbus = section.split("_")[0]
-                control_type = config[section]["control_type"]
+                outletid=section
+                outletname=config[section]["name"]
+                outletbus=section.split("_")[0]
+                control_type=config[section]["control_type"]
                 # print (outletname)
-                outletdict[outletid] = {"outletid": outletid, "outletname": outletname,
+                outletdict[outletid]={"outletid": outletid, "outletname": outletname,
                                         "outletbus": outletbus, "control_type": control_type}
 
         return outletdict
 
     def initialize_logger(self, output_dir, output_file, loglevel_console, loglevel_logfile):
 
-        self.logger = logging.getLogger()
+        self.logger=logging.getLogger()
         self.logger.setLevel(logging.DEBUG)
 
         # check if log dir exists, if not create it
@@ -396,17 +399,17 @@ class RBP_controller:
                 "Logfile directory created: " + os.getcwd() + "/" + str(output_dir))
 
         # create console handler and set level to info
-        self.handler = logging.StreamHandler()
+        self.handler=logging.StreamHandler()
         self.handler.setLevel(loglevel_console)
-        self.formatter = logging.Formatter('%(asctime)s %(message)s')
+        self.formatter=logging.Formatter('%(asctime)s %(message)s')
         self.handler.setFormatter(self.formatter)
         self.logger.addHandler(self.handler)
 
         # create log file handler and set level to info
-        self.handler = logging.handlers.RotatingFileHandler(
+        self.handler=logging.handlers.RotatingFileHandler(
             os.path.join(output_dir, output_file), maxBytes=2000000, backupCount=5)
         self.handler.setLevel(loglevel_logfile)
-        self.formatter = logging.Formatter(
+        self.formatter=logging.Formatter(
             '%(asctime)s <%(levelname)s> [%(threadName)s:%(module)s] %(message)s')
         self.handler.setFormatter(self.formatter)
         self.logger.addHandler(self.handler)
@@ -419,51 +422,51 @@ class RBP_controller:
 
     def outlet_control(self, bus, outletnum):  # bus = "int" or "ext"
 
-        outlet = str(bus + "_outlet_" + outletnum)
-        #controltype = defs_common.readINIfile(outlet, "control_type", "Always", lock=self.threadlock, logger=self.logger)
-        controltype = self.AppPrefs.outletDict[outlet].control_type
+        outlet=str(bus + "_outlet_" + outletnum)
+        # controltype = defs_common.readINIfile(outlet, "control_type", "Always", lock=self.threadlock, logger=self.logger)
+        controltype=self.AppPrefs.outletDict[outlet].control_type
 
         # pin = GPIO_config.int_outletpins.get(outlet)
-        pin = 0
+        pin=0
 
         if outlet == "int_outlet_1":
-            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+            button_state=self.AppPrefs.int_outlet_buttonstates.get(
                 "int_outlet1_buttonstate")
         elif outlet == "int_outlet_2":
-            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+            button_state=self.AppPrefs.int_outlet_buttonstates.get(
                 "int_outlet2_buttonstate")
         elif outlet == "int_outlet_3":
-            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+            button_state=self.AppPrefs.int_outlet_buttonstates.get(
                 "int_outlet3_buttonstate")
         elif outlet == "int_outlet_4":
-            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+            button_state=self.AppPrefs.int_outlet_buttonstates.get(
                 "int_outlet4_buttonstate")
         elif outlet == "int_outlet_5":
-            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+            button_state=self.AppPrefs.int_outlet_buttonstates.get(
                 "int_outlet5_buttonstate")
         elif outlet == "int_outlet_6":
-            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+            button_state=self.AppPrefs.int_outlet_buttonstates.get(
                 "int_outlet6_buttonstate")
         elif outlet == "int_outlet_7":
-            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+            button_state=self.AppPrefs.int_outlet_buttonstates.get(
                 "int_outlet7_buttonstate")
         elif outlet == "int_outlet_8":
-            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+            button_state=self.AppPrefs.int_outlet_buttonstates.get(
                 "int_outlet8_buttonstate")
         else:
-            button_state = "OFF"
+            button_state="OFF"
 
-        curstate = self.AppPrefs.outletDict[outlet].button_state
+        curstate=self.AppPrefs.outletDict[outlet].button_state
         if curstate != button_state:
-            changerequest = {}
-            changerequest["section"] = outlet
-            changerequest["key"] = "button_state"
-            changerequest["value"] = button_state
+            changerequest={}
+            changerequest["section"]=outlet
+            changerequest["key"]="button_state"
+            changerequest["value"]=button_state
             self.logger.debug("outlet_control: change " + outlet +
                               " button_state to " + button_state + " (from " + curstate + ")")
             self.queue.put(changerequest)
             # testing to see if this works...
-            self.AppPrefs.outletDict[outlet].button_state = button_state
+            self.AppPrefs.outletDict[outlet].button_state=button_state
 
         # control type ALWAYS
         if controltype == "Always":
@@ -526,18 +529,18 @@ class RBP_controller:
             if (int(round(time.time()*1000)) - self.AppPrefs.ds18b20_SamplingTimeSeed) > self.AppPrefs.ds18b20_SamplingInterval:
                 for p in self.AppPrefs.tempProbeDict:
                     try:
-                        timestamp = datetime.now()
+                        timestamp=datetime.now()
                         # dstempC = float(ds18b20.read_temp(
                         #    self.AppPrefs.tempProbeDict[p].probeid, "C"))
-                        dstempC = 25
-                        dstempF = defs_common.convertCtoF(float(dstempC))
-                        dstempF = float(dstempF)
-                        tempData = str(dstempC) + "," + str(dstempF)
+                        dstempC=25
+                        dstempF=defs_common.convertCtoF(float(dstempC))
+                        dstempF=float(dstempF)
+                        tempData=str(dstempC) + "," + str(dstempF)
 
                         if str(self.AppPrefs.temperaturescale) == str(defs_common.SCALE_F):
-                            broadcasttemp = str("%.1f" % dstempF)
+                            broadcasttemp=str("%.1f" % dstempF)
                         else:
-                            broadcasttemp = str("%.1f" % dstempC)
+                            broadcasttemp=str("%.1f" % dstempC)
 
                         # self.tempProbeDict[p].lastLogTime = self.ds18b20_LastLogTimeDict
 
@@ -558,11 +561,11 @@ class RBP_controller:
                             # self.broadcastProbeStatus("ds18b20", "ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid, str(broadcasttemp), self.AppPrefs.tempProbeDict[p].name)
 
                             # self.ds18b20_LastLogTimeDict = int(round(time.time()*1000))
-                            self.AppPrefs.tempProbeDict[p].lastLogTime = int(
+                            self.AppPrefs.tempProbeDict[p].lastLogTime=int(
                                 round(time.time()*1000))
 
                             # self.AppPrefs.tempProbeDict[p].lastTemperature = dstempC
-                            self.AppPrefs.tempProbeDict[p].lastTemperature = broadcasttemp
+                            self.AppPrefs.tempProbeDict[p].lastTemperature=broadcasttemp
                         else:
                             self.logger.info(str("[ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + "] " +
                                                  self.AppPrefs.tempProbeDict[p].name + str(" = {:.1f}".format(dstempC)) + " C | " + str("{:.1f}".format(dstempF))) +
@@ -572,7 +575,7 @@ class RBP_controller:
                             # self.MQTTclient.publish("reefberrypi/demo",str(dstempC))
                             self.broadcastProbeStatus("ds18b20", "ds18b20_" + str(
                                 self.AppPrefs.tempProbeDict[p].probeid), str(broadcasttemp), self.AppPrefs.tempProbeDict[p].name)
-                            self.AppPrefs.tempProbeDict[p].lastTemperature = broadcasttemp
+                            self.AppPrefs.tempProbeDict[p].lastTemperature=broadcasttemp
                     except Exception as e:
                         defs_common.logtoconsole(str(
                             "<<<Error>>> Can not read ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid + " temperature data!"), fg="WHITE", bg="RED", style="BRIGHT")
@@ -580,7 +583,7 @@ class RBP_controller:
                                           self.AppPrefs.tempProbeDict[p].probeid + " temperature data!")
                         self.logger.error(e)
                 # record the new sampling time
-                self.AppPrefs.ds18b20_SamplingTimeSeed = int(
+                self.AppPrefs.ds18b20_SamplingTimeSeed=int(
                     round(time.time()*1000))  # convert time to milliseconds
 
             ################################################################################################################
@@ -595,20 +598,20 @@ class RBP_controller:
                     # result = self.dht_sensor.read()
                     # if result.is_valid():
                     # temp_c = result.temperature
-                    temp_c = 26
-                    temp_f = defs_common.convertCtoF(float(temp_c))
-                    temp_f = float(temp_f)
+                    temp_c=26
+                    temp_f=defs_common.convertCtoF(float(temp_c))
+                    temp_f=float(temp_f)
                     # hum = result.humidity
-                    hum = 40
-                    timestamp = datetime.now()
+                    hum=40
+                    timestamp=datetime.now()
 
                     if str(self.AppPrefs.temperaturescale) == str(defs_common.SCALE_F):
-                        broadcasttemp = str("%.1f" % temp_f)
+                        broadcasttemp=str("%.1f" % temp_f)
                     else:
-                        broadcasttemp = str("%.1f" % temp_c)
+                        broadcasttemp=str("%.1f" % temp_c)
 
                     if (int(round(time.time()*1000)) - self.AppPrefs.DHT_Sensor.get("dht11_lastlogtime")) > int(self.AppPrefs.DHT_Sensor.get("dht11_loginterval")):
-                        tempData = str("{:.1f}".format(
+                        tempData=str("{:.1f}".format(
                             temp_c)) + "," + str(temp_f)
 
                         # log and broadcast temperature value
@@ -638,7 +641,7 @@ class RBP_controller:
                         # self.WriteDataInfluxDB(json_body)
                         self.WriteProbeDataInfluxDB("dht_h", hum)
 
-                        self.AppPrefs.DHT_Sensor["dht11_lastlogtime"] = int(
+                        self.AppPrefs.DHT_Sensor["dht11_lastlogtime"]=int(
                             round(time.time()*1000))
                     else:
                         self.logger.info(str("[dht_t] " + self.AppPrefs.DHT_Sensor.get(
@@ -654,7 +657,7 @@ class RBP_controller:
                             broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
 
                     # record the new sampling time
-                    self.AppPrefs.DHT_Sensor["dht11_samplingtimeseed"] = int(
+                    self.AppPrefs.DHT_Sensor["dht11_samplingtimeseed"]=int(
                         round(time.time()*1000))  # convert time to milliseconds
 
             ##########################################################################################
@@ -669,7 +672,7 @@ class RBP_controller:
                         # defs_common.logtoconsole(str(self.mcp3008Dict[ch].ch_num) + " " + str(self.mcp3008Dict[ch].ch_name) + " " + str(self.mcp3008Dict[ch].ch_enabled) + " " + str(len(self.mcp3008Dict[ch].ch_dvlist)))
                         # dv = mcp3008.readadc(int(self.AppPrefs.mcp3008Dict[ch].ch_num), GPIO_config.SPICLK, GPIO_config.SPIMOSI,
                         #                     GPIO_config.SPIMISO, GPIO_config.SPICS)
-                        dv = 256
+                        dv=256
                         self.AppPrefs.mcp3008Dict[ch].ch_dvlist.append(dv)
                         # self.logger.info(str(self.mcp3008Dict[ch].ch_num) + " " + str(self.mcp3008Dict[ch].ch_name) + " " + str(self.mcp3008Dict[ch].ch_dvlist))
                     # once we hit our desired sample size of ph_numsamples (ie: 120)
@@ -682,13 +685,13 @@ class RBP_controller:
                         # do not affect our results
                         self.logger.info("mcp3008 ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num) + " raw data " + str(
                             self.AppPrefs.mcp3008Dict[ch].ch_name) + " " + str(self.AppPrefs.mcp3008Dict[ch].ch_dvlist))
-                        dv_FilteredCounts = numpy.array(
+                        dv_FilteredCounts=numpy.array(
                             self.AppPrefs.mcp3008Dict[ch].ch_dvlist)
-                        dv_FilteredMean = numpy.mean(dv_FilteredCounts, axis=0)
-                        dv_FlteredSD = numpy.std(dv_FilteredCounts, axis=0)
-                        dv_dvlistfiltered = [x for x in dv_FilteredCounts if
+                        dv_FilteredMean=numpy.mean(dv_FilteredCounts, axis=0)
+                        dv_FlteredSD=numpy.std(dv_FilteredCounts, axis=0)
+                        dv_dvlistfiltered=[x for x in dv_FilteredCounts if
                                              (x > dv_FilteredMean - float(self.AppPrefs.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
-                        dv_dvlistfiltered = [x for x in dv_dvlistfiltered if
+                        dv_dvlistfiltered=[x for x in dv_dvlistfiltered if
                                              (x < dv_FilteredMean + float(self.AppPrefs.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
 
                         self.logger.info("mcp3008 ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num) + " filtered " + str(
@@ -696,13 +699,13 @@ class RBP_controller:
 
                         # calculate the average of our filtered list
                         try:
-                            dv_AvgCountsFiltered = int(
+                            dv_AvgCountsFiltered=int(
                                 sum(dv_dvlistfiltered)/len(dv_dvlistfiltered))
                             # delete this line
                             print("{:.2f}".format(dv_AvgCountsFiltered))
                         except:
                             # need to revisit this error handling. Exception thrown when all
-                            dv_AvgCountsFiltered = 1
+                            dv_AvgCountsFiltered=1
                             # values were 1023
                             print("Error collecting data")
 
@@ -712,16 +715,16 @@ class RBP_controller:
                             # bug, somtimes value is coming back high, like really high, like 22.0.  this is an impossible
                             # value since max ph is 14.  need to figure this out later, but for now, lets log this val to aid in
                             # debugging
-                            orgval = dv_AvgCountsFiltered
+                            orgval=dv_AvgCountsFiltered
 
                             # convert digital value to ph
-                            lowCal = self.AppPrefs.mcp3008Dict[ch].ch_ph_low
-                            medCal = self.AppPrefs.mcp3008Dict[ch].ch_ph_med
-                            highCal = self.AppPrefs.mcp3008Dict[ch].ch_ph_high
+                            lowCal=self.AppPrefs.mcp3008Dict[ch].ch_ph_low
+                            medCal=self.AppPrefs.mcp3008Dict[ch].ch_ph_med
+                            highCal=self.AppPrefs.mcp3008Dict[ch].ch_ph_high
 
-                            dv_AvgCountsFiltered = ph_sensor.dv2ph(
+                            dv_AvgCountsFiltered=ph_sensor.dv2ph(
                                 dv_AvgCountsFiltered, ch, lowCal, medCal, highCal)
-                            dv_AvgCountsFiltered = float(
+                            dv_AvgCountsFiltered=float(
                                 "{:.2f}".format(dv_AvgCountsFiltered))
 
                             if dv_AvgCountsFiltered > 14:
@@ -732,7 +735,7 @@ class RBP_controller:
 
                         # if enough time has passed (ph_LogInterval) then log the data to file
                         # otherwise just print it to console
-                        timestamp = datetime.now()
+                        timestamp=datetime.now()
                         if (int(round(time.time()*1000)) - self.AppPrefs.mcp3008Dict[ch].LastLogTime) > self.AppPrefs.dv_LogInterval:
                             # sometimes a high value, like 22.4 gets recorded, i need to fix this, but for now don't log that
                             # if ph_AvgFiltered < 14.0:
@@ -744,7 +747,7 @@ class RBP_controller:
                                 "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num) + "_", "{:.2f}".format(dv_AvgCountsFiltered))
                             print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** dv = "
                                   + "{:.2f}".format(dv_AvgCountsFiltered) + Style.RESET_ALL)
-                            self.AppPrefs.mcp3008Dict[ch].LastLogTime = int(
+                            self.AppPrefs.mcp3008Dict[ch].LastLogTime=int(
                                 round(time.time()*1000))
                         else:
                             print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " dv = "
@@ -752,12 +755,12 @@ class RBP_controller:
 
                         self.broadcastProbeStatus("mcp3008", "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num), str(
                             dv_AvgCountsFiltered), str(self.AppPrefs.mcp3008Dict[ch].ch_name))
-                        self.AppPrefs.mcp3008Dict[ch].lastValue = str(
+                        self.AppPrefs.mcp3008Dict[ch].lastValue=str(
                             dv_AvgCountsFiltered)
                         # clear the list so we can populate it with new data for the next data set
                         self.AppPrefs.mcp3008Dict[ch].ch_dvlist.clear()
                         # record the new sampling time
-                        self.AppPrefs.dv_SamplingTimeSeed = int(
+                        self.AppPrefs.dv_SamplingTimeSeed=int(
                             round(time.time()*1000))  # convert time to milliseconds
 
             ##########################################################################################
@@ -767,7 +770,7 @@ class RBP_controller:
             # outlet1_control()
             # do each of the outlets on the internal bus (outlets 1-8)
             for x in range(1, 9):
-                status = self.outlet_control("int", str(x))
+                status=self.outlet_control("int", str(x))
 
                 self.broadcastOutletStatus("int_outlet_" + str(x),
                                            self.AppPrefs.outletDict["int_outlet_" + str(
@@ -792,18 +795,18 @@ class RBP_controller:
             ##########################################################################################
 
             if self.queue.qsize() > 0:
-                updatedPrefs = set({})
+                updatedPrefs=set({})
                 for i in range(0, self.queue.qsize()):
-                    msg = self.queue.get(0)
+                    msg=self.queue.get(0)
                     self.logger.info(
                         "Configuration update: [" + msg["section"] + "] [ " + msg["key"] + "] = " + msg["value"])
                     defs_common.writeINIfile(
                         msg["section"], msg["key"], msg["value"], lock=self.threadlock, logger=self.logger)
                     updatedPrefs.add(msg["section"])
-                    #print (msg)
-                    #print (self.queue.qsize())
+                    # print (msg)
+                    # print (self.queue.qsize())
 
-                self.refreshPrefs = True
+                self.refreshPrefs=True
                 # if a new value is written to the config, we also have to load it into memory into our
                 # AppPref class so this new setting will be used in the next cycle
                 print(str(updatedPrefs))
@@ -817,4 +820,4 @@ class RBP_controller:
             time.sleep(2)
 
 
-root = RBP_controller()
+root=RBP_controller()

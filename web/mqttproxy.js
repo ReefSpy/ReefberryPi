@@ -11,8 +11,8 @@ const wsServer = new webSocketServer({
 //var amqp = require("amqplib/callback_api");
 
 var mqtt = require("mqtt");
-//var mqttclient = mqtt.connect("ws://pi:reefberry@192.168.1.217:15675/ws");
-var mqttclient = mqtt.connect("ws://pi:reefberry@127.0.0.1:15675/ws");
+var mqttclient = mqtt.connect("ws://pi:reefberry@192.168.1.217:15675/ws");
+//var mqttclient = mqtt.connect("ws://pi:reefberry@127.0.0.1:15675/ws");
 
 // if the connection is closed or fails to be established at all, we will reconnect
 //var amqpConn = null;
@@ -91,11 +91,42 @@ function start() {
     });
   });
 
-  mqttclient.on("message", function(topic, message) {
+  mqttclient.on("message", function(topic, msg) {
     // message is Buffer
-    console.log(message.toString());
+    console.log(msg.toString());
     //mqttclient.end();
-    sendMessage(message.toString());
+    console.log(JSON.parse(msg)["uuid"]);
+    Object.keys(clients).map(client => {
+      //if (clients[client].rpcActivity.includes(msg.properties.correlationId)) {
+      if (clients[client].rpcActivity.includes(JSON.parse(msg)["uuid"])) {
+        //console.log ("Found a match!");
+
+        //console.log(msg.content.toString().length);
+        // if msg is zero length if caused a crash
+        if (msg.content.toString().length > 0) {
+          console.log(
+            getTimeStamp() + " [MQTT] Recieved: %s",
+            msg.content.toString()
+          );
+          handleRPC(msg);
+        }
+        //console.log(clients[client].rpcActivity);
+        // delete the correlation ID from the clients object after it has been sent
+        for (var i = 0; i < clients[client].rpcActivity.length; i++) {
+          if (clients[client].rpcActivity[i] === msg.properties.correlationId) {
+            clients[client].rpcActivity.splice(i, 1);
+          }
+          //console.log(clients[client].rpcActivity);
+        }
+      }
+      if (clients[client].rpcActivity.length == 0) {
+        console.log(getTimeStamp() + " RPC Queue is empty");
+      } else {
+        console.log(getTimeStamp() + " " + clients[client].rpcActivity.length);
+      }
+    });
+
+    //sendMessage(message.toString());
   });
 
   /*amqp.connect(
@@ -371,6 +402,7 @@ const sendMessage = msg => {
 //}
 
 function handleRPC(msg) {
+  console.log("Handle RPC");
   msgJSON = JSON.parse(msg.content.toString());
   rpcKey = Object.keys(msgJSON);
 

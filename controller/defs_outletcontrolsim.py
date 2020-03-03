@@ -21,7 +21,7 @@ def get_on_or_off(pin):
 def handle_on_off(controller, outlet, pin, targetstate):
 
     #currentOutletState = GPIO.input(pin)
-    currentOutletState = True
+    currentOutletState = PIN_ON
 
     # log any change
     if controller.AppPrefs.outletDict[outlet].enable_log == "True":
