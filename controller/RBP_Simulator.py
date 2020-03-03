@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, time
 from influxdb import InfluxDBClient
 from colorama import Fore, Back, Style
 import paho.mqtt.client as mqtt
-#import queue
+import queue
 import time
 import threading
 import logging
@@ -31,6 +31,7 @@ import numpy
 import ph_sensor
 # import mcp3008
 import json
+import defs_outletcontrolsim
 
 
 class RBP_controller:
@@ -40,7 +41,7 @@ class RBP_controller:
         defs_common.logtoconsole(
             "Application Start", fg="WHITE", style="BRIGHT")
         #self.threads = []
-        #self.queue = queue.Queue()
+        self.queue = queue.Queue()
 
         self.threadlock = threading.Lock()
 
@@ -137,6 +138,18 @@ class RBP_controller:
 
             response = json.dumps(response)
             self.logger.debug(str(response))
+
+        elif str(body["rpc_req"]) == "set_outletoperationmode":
+            defs_common.logtoconsole(
+                "set_outletoperationmode " + str(body), fg="GREEN", style="BRIGHT")
+            self.logger.info("set_outletoperationmode " + str(body))
+            outlet = str(str(body["bus"]) + "_outlet" + str(body["outletnum"]))
+            mode = str(body["opmode"]).upper()
+
+            # bad things happened when I tried to control outlets from this thread
+            # allow control to happen in the other thread by just changing the dictionary value
+            self.AppPrefs.int_outlet_buttonstates[str(
+                outlet) + "_buttonstate"] = mode
 
         try:
             message = response
@@ -290,6 +303,25 @@ class RBP_controller:
         # self.MQTTclient.publish("reefberrypi/demo", probeid + " : " + probeval)
         self.MQTTclient.publish("reefberrypi/demo", message)
 
+    def broadcastOutletStatus(self, outletid, outletname, outletbus, control_type, button_state, outletstate, statusmsg):
+        message = {
+            "status_currentoutletstate":
+            {
+                "outletid": str(outletid),
+                "outletname": str(outletname),
+                "outletbus": str(outletbus),
+                "control_type": str(control_type),
+                "button_state": str(button_state),
+                "outletstate": str(outletstate),
+                "statusmsg": str(statusmsg)
+            }
+        }
+
+        message = json.dumps(message)
+
+        self.logger.info("[MQTT Tx] " + message)
+        self.MQTTclient.publish("reefberrypi/demo", message)
+
     def get_probelist(self):
         probedict = {}
         config = configparser.ConfigParser()
@@ -385,6 +417,70 @@ class RBP_controller:
         # handler.setFormatter(formatter)
         # logger.addHandler(handler)
 
+    def outlet_control(self, bus, outletnum):  # bus = "int" or "ext"
+
+        outlet = str(bus + "_outlet_" + outletnum)
+        #controltype = defs_common.readINIfile(outlet, "control_type", "Always", lock=self.threadlock, logger=self.logger)
+        controltype = self.AppPrefs.outletDict[outlet].control_type
+
+        # pin = GPIO_config.int_outletpins.get(outlet)
+        pin = 0
+
+        if outlet == "int_outlet_1":
+            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+                "int_outlet1_buttonstate")
+        elif outlet == "int_outlet_2":
+            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+                "int_outlet2_buttonstate")
+        elif outlet == "int_outlet_3":
+            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+                "int_outlet3_buttonstate")
+        elif outlet == "int_outlet_4":
+            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+                "int_outlet4_buttonstate")
+        elif outlet == "int_outlet_5":
+            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+                "int_outlet5_buttonstate")
+        elif outlet == "int_outlet_6":
+            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+                "int_outlet6_buttonstate")
+        elif outlet == "int_outlet_7":
+            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+                "int_outlet7_buttonstate")
+        elif outlet == "int_outlet_8":
+            button_state = self.AppPrefs.int_outlet_buttonstates.get(
+                "int_outlet8_buttonstate")
+        else:
+            button_state = "OFF"
+
+        curstate = self.AppPrefs.outletDict[outlet].button_state
+        if curstate != button_state:
+            changerequest = {}
+            changerequest["section"] = outlet
+            changerequest["key"] = "button_state"
+            changerequest["value"] = button_state
+            self.logger.debug("outlet_control: change " + outlet +
+                              " button_state to " + button_state + " (from " + curstate + ")")
+            self.queue.put(changerequest)
+            # testing to see if this works...
+            self.AppPrefs.outletDict[outlet].button_state = button_state
+
+        # control type ALWAYS
+        if controltype == "Always":
+            return defs_outletcontrolsim.handle_outlet_always(self, outlet, button_state, pin)
+        # control type HEATER
+        elif controltype == "Heater":
+            return defs_outletcontrolsim.handle_outlet_heater(self, outlet, button_state, pin)
+        # control type RETURN PUMP
+        elif controltype == "Return Pump":
+            return defs_outletcontrolsim.handle_outlet_returnpump(self, outlet, button_state, pin)
+        elif controltype == "Skimmer":
+            return defs_outletcontrolsim.handle_outlet_skimmer(self, outlet, button_state, pin)
+        elif controltype == "Light":
+            return defs_outletcontrolsim.handle_outlet_light(self, outlet, button_state, pin)
+        elif controltype == "pH Control":
+            return defs_outletcontrolsim.handle_outlet_ph(self, outlet, button_state, pin)
+
     # def threadManager(self):
         # connection1= pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         # channel1 = connection1.channel()
@@ -444,20 +540,6 @@ class RBP_controller:
                             broadcasttemp = str("%.1f" % dstempC)
 
                         # self.tempProbeDict[p].lastLogTime = self.ds18b20_LastLogTimeDict
-
-# json_body = [
-# {
-# "measurement": "probevalues",
-# "tags": {
-# "appuid": self.AppPrefs.appuid,
-# "probeid": "ds18b20_" + self.AppPrefs.tempProbeDict[p].probeid
-# },
-# "time": datetime.utcnow(),
-# "fields": {
-# "value": float(dstempC),
-# }
-# }
-# ]
 
                         if (int(round(time.time()*1000)) - int(self.AppPrefs.tempProbeDict[p].lastLogTime)) > self.AppPrefs.ds18b20_LogInterval:
                             # log and broadcast temperature value
@@ -538,20 +620,6 @@ class RBP_controller:
                         self.broadcastProbeStatus("dht", "dht_t", str(
                             broadcasttemp), self.AppPrefs.DHT_Sensor.get("temperature_name"))
 
-# json_body = [
-# {
-# "measurement": "probevalues",
-# "tags": {
-# "appuid": self.AppPrefs.appuid,
-# "probeid": "dht_t"
-# },
-# "time": datetime.utcnow(),
-# "fields": {
-# "value": float(temp_c),
-# }
-# }
-# ]
-
                         # log to InfluxDB
                         # self.WriteDataInfluxDB(json_body)
                         self.WriteProbeDataInfluxDB("dht_t", temp_c)
@@ -565,19 +633,7 @@ class RBP_controller:
                             "***Logged*** [dht_h] " + self.AppPrefs.DHT_Sensor.get("humidity_name") + " = %d %%" % hum))
                         self.broadcastProbeStatus("dht", "dht_h", str(
                             hum), self.AppPrefs.DHT_Sensor.get("humidity_name"))
-# json_body = [
-# {
-# "measurement": "probevalues",
-# "tags": {
-# "appuid": self.AppPrefs.appuid,
-# "probeid": "dht_h"
-# },
-# "time": datetime.utcnow(),
-# "fields": {
-# "value": float(hum),
-# }
-# }
-# ]
+
                         # log to InfluxDB
                         # self.WriteDataInfluxDB(json_body)
                         self.WriteProbeDataInfluxDB("dht_h", hum)
@@ -705,9 +761,60 @@ class RBP_controller:
                             round(time.time()*1000))  # convert time to milliseconds
 
             ##########################################################################################
+            # handle outlet states (turn outlets on or off)
+            #
+            ##########################################################################################
+            # outlet1_control()
+            # do each of the outlets on the internal bus (outlets 1-8)
+            for x in range(1, 9):
+                status = self.outlet_control("int", str(x))
+
+                self.broadcastOutletStatus("int_outlet_" + str(x),
+                                           self.AppPrefs.outletDict["int_outlet_" + str(
+                                               x)].outletname,
+                                           "int",
+                                           self.AppPrefs.outletDict["int_outlet_" + str(
+                                               x)].control_type,
+                                           self.AppPrefs.int_outlet_buttonstates.get(
+                                               "int_outlet" + str(x) + "_buttonstate"),
+                                           "STATEUNKNOWN",
+                                           status)
+
+                self.logger.debug("int_outlet_" + str(x) +
+                                  " [label: " + self.AppPrefs.outletDict["int_outlet_" + str(x)].outletname +
+                                  "] [type: " + self.AppPrefs.outletDict["int_outlet_" + str(x)].control_type +
+                                  "] [button: " + self.AppPrefs.outletDict["int_outlet_" + str(x)].button_state +
+                                  "] [status: " + str(status) + "]" +
+                                  " [pin: " + "0" + "]")
+
+            ##########################################################################################
+            # update configuration file with any change requests sitting in the queue
+            ##########################################################################################
+
+            if self.queue.qsize() > 0:
+                updatedPrefs = set({})
+                for i in range(0, self.queue.qsize()):
+                    msg = self.queue.get(0)
+                    self.logger.info(
+                        "Configuration update: [" + msg["section"] + "] [ " + msg["key"] + "] = " + msg["value"])
+                    defs_common.writeINIfile(
+                        msg["section"], msg["key"], msg["value"], lock=self.threadlock, logger=self.logger)
+                    updatedPrefs.add(msg["section"])
+                    #print (msg)
+                    #print (self.queue.qsize())
+
+                self.refreshPrefs = True
+                # if a new value is written to the config, we also have to load it into memory into our
+                # AppPref class so this new setting will be used in the next cycle
+                print(str(updatedPrefs))
+                # update the section here...
+                for sec in updatedPrefs:
+                    self.AppPrefs.reloadPrefSection(self, sec)
+
+            ##########################################################################################
             # pause to slow down the loop, otherwise CPU usage spikes as program is busy waiting
             ##########################################################################################
-            time.sleep(.5)
+            time.sleep(2)
 
 
 root = RBP_controller()

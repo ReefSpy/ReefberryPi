@@ -11,9 +11,8 @@ const wsServer = new webSocketServer({
 //var amqp = require("amqplib/callback_api");
 
 var mqtt = require("mqtt");
-var mqttclient = mqtt.connect("ws://pi:reefberry@192.168.1.217:15675/ws");
-//var mqttclient = mqtt.connect("ws://pi:reefberry@127.0.0.1:15675/ws");
-
+//var mqttclient = mqtt.connect("ws://pi:reefberry@192.168.1.217:15675/ws");
+var mqttclient = mqtt.connect("ws://pi:reefberry@127.0.0.1:15675/ws");
 
 // if the connection is closed or fails to be established at all, we will reconnect
 //var amqpConn = null;
