@@ -55,6 +55,7 @@ wsServer.on("request", function(request) {
     console.log(
       getTimeStamp() + " [WS] " + message.utf8Data + " from " + userID
     );
+    
     clients[userID].rpcActivity.push(JSON.parse(message.utf8Data)["uuid"]); // add this request id to the list so we can compare it later
     console.log(
       getTimeStamp() +
@@ -105,7 +106,7 @@ function start() {
         // if msg is zero length if caused a crash
         if (msg.toString().length > 0) {
           console.log(getTimeStamp() + " [MQTT] Recieved: %s", msg.toString());
-          handleRPC(msg);
+         // handleRPC(msg);
         }
         console.log(clients[client].rpcActivity);
         // delete the correlation ID from the clients object after it has been sent
@@ -226,7 +227,7 @@ const sendMessage = msg => {
 //  CONTENT_CHANGE: "contentchange"
 //}
 
-function handleRPC(msg) {
+/*function handleRPC(msg) {
   console.log("Handle RPC");
   msgJSON = JSON.parse(msg.toString());
   rpcKey = Object.keys(msgJSON);
@@ -266,7 +267,7 @@ function handleRPC(msg) {
     // here
     sendMessage(msg.toString());
   }
-}
+} */
 
 function rpc_call(msg) {
   //correlationId = getUniqueID();

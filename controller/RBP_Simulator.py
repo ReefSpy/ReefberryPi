@@ -153,7 +153,17 @@ class RBP_controller:
             # allow control to happen in the other thread by just changing the dictionary value
             self.AppPrefs.int_outlet_buttonstates[str(
                 outlet) + "_buttonstate"] = mode
-
+###########
+            self.broadcastOutletStatus(outlet,
+                                           self.AppPrefs.outletDict[outlet].outletname,
+                                           "int",
+                                           self.AppPrefs.outletDict[outlet].control_type,
+                                           self.AppPrefs.int_outlet_buttonstates.get(
+                                               outlet + "_buttonstate"),
+                                           "STATEUNKNOWN",
+                                           "Waiting...",
+                                           str(body["uuid"]))
+#############
         elif str(body["rpc_req"]) == "get_probedata24h_ex":
             defs_common.logtoconsole("RPC: " + str(body["rpc_req"]) + " [" + str(
                 body["probetype"]) + ", " + str(body["probeid"]) + "]", fg="GREEN", style="BRIGHT")
@@ -329,7 +339,7 @@ class RBP_controller:
         # self.MQTTclient.publish("reefberrypi/demo", probeid + " : " + probeval)
         self.MQTTclient.publish("reefberrypi/demo", message)
 
-    def broadcastOutletStatus(self, outletid, outletname, outletbus, control_type, button_state, outletstate, statusmsg):
+    def broadcastOutletStatus(self, outletid, outletname, outletbus, control_type, button_state, outletstate, statusmsg, uuid=""):
         message = {
             "status_currentoutletstate":
             {
@@ -340,7 +350,8 @@ class RBP_controller:
                 "button_state": str(button_state),
                 "outletstate": str(outletstate),
                 "statusmsg": str(statusmsg)
-            }
+            },
+            "uuid": str(uuid)
         }
 
         message = json.dumps(message)
