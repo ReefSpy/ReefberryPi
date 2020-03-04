@@ -107,10 +107,11 @@ function start() {
           console.log(getTimeStamp() + " [MQTT] Recieved: %s", msg.toString());
           handleRPC(msg);
         }
-        //console.log(clients[client].rpcActivity);
+        console.log(clients[client].rpcActivity);
         // delete the correlation ID from the clients object after it has been sent
         for (var i = 0; i < clients[client].rpcActivity.length; i++) {
           if (clients[client].rpcActivity[i] === JSON.parse(msg)["uuid"]) {
+            console.log("delete rpc from list");
             clients[client].rpcActivity.splice(i, 1);
           }
           //console.log(clients[client].rpcActivity);
@@ -119,6 +120,8 @@ function start() {
       if (clients[client].rpcActivity.length == 0) {
         //console.log(getTimeStamp() + " RPC Queue is empty");
       } else {
+        //console.log(JSON.parse(msg)["uuid"]);
+        //console.log(clients[client].rpcActivity);
         console.log(getTimeStamp() + " " + clients[client].rpcActivity.length);
       }
     });
@@ -246,7 +249,7 @@ function start() {
 }
 
 // A worker that acks messages only if processed succesfully
-function startWorker() {
+/*function startWorker() {
   amqpConn.createChannel(function(err, ch) {
     if (closeOnErr(err)) return;
     ch.on("error", function(err) {
@@ -283,7 +286,7 @@ function startWorker() {
       });
     }
   });
-}
+} */
 
 function work(msg, cb) {
   //console.log("Got msg", msg.content.toString());

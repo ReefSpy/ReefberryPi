@@ -507,6 +507,69 @@ class RBP_controller:
         elif controltype == "pH Control":
             return defs_outletcontrolsim.handle_outlet_ph(self, outlet, button_state, pin)
 
+    def get_probedatadays(self, probetype, probeid, numdays):
+        if probetype == "":
+            return
+
+        #days_to_plot = 2
+        days_to_plot = numdays
+
+        xList = []  # datetime
+        yList = []  # temp in C or other probe data
+        zList = []  # temp in F
+        for d in reversed(range(0, days_to_plot)):
+
+            DateSeed = datetime.now() - timedelta(days=d)
+            TimeSeed = datetime.now()
+            LogFileName = probeid + "_" + \
+                DateSeed.strftime("%Y-%m-%d") + ".txt"
+            #print(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + " Reading data points from: %s" % LogFileName)
+            self.logger.info("Reading data points from: %s" % LogFileName)
+
+            try:
+                pullData = open("logs/" + LogFileName, "r").read()
+                dataList = pullData.split('\n')
+
+                for index, eachLine in enumerate(dataList):
+                    if len(eachLine) > 1:
+                        if probetype == "ds18b20" or probeid == "dht_t":
+                            x, y, z = eachLine.split(',')
+                        else:
+                            x, y = eachLine.split(',')
+                        x = datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
+                        if numdays == 2:  # if 2 days, just give the 24 hour daya meaning ignore data befor now time
+                            # in yesterdays log file (0 is today, 1 is yesterday etc...)
+                            if d == 1:
+                                # we only want data for last 24 hours, so ignore values created before that
+                                if x.strftime("%H:%M:%S") >= TimeSeed.strftime("%H:%M:%S"):
+                                    #print("D=0" + " x= " + str(x.strftime("%H:%M:%S")) + " TimeSeed = " + str(TimeSeed.strftime("%H:%M:%S")))
+                                    xList.append(x.strftime(
+                                        "%Y-%m-%d %H:%M:%S"))
+                                    yList.append(y)
+                                    if probetype == "ds18b20" or probeid == "dht_t":
+                                        zList.append(z)
+                            else:
+                                xList.append(x.strftime("%Y-%m-%d %H:%M:%S"))
+                                yList.append(y)
+                                if probetype == "ds18b20" or probeid == "dht_t":
+                                    zList.append(z)
+                        else:
+                            xList.append(x.strftime("%Y-%m-%d %H:%M:%S"))
+                            yList.append(y)
+                            if probetype == "ds18b20" or probeid == "dht_t":
+                                zList.append(z)
+
+            except:
+                #    print("Error parsing: %s" % LogFileName)
+                self.logger.error("Error parsing: %s" % LogFileName)
+        if probetype == "ds18b20" or probeid == "dht_t":
+            if str(defs_common.readINIfile("global", "tempscale", str(defs_common.SCALE_C), lock=self.threadlock, logger=self.logger)) == str(defs_common.SCALE_F):
+                return xList, zList
+            else:
+                return xList, yList
+        else:
+            return xList, yList
+
     # def threadManager(self):
         # connection1= pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         # channel1 = connection1.channel()
