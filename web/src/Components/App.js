@@ -51,7 +51,7 @@ export default class extends Component {
       //console.log(outletListArrayClone[outletClone]);
       if (outletListArrayClone[outletClone]["outletid"] === outletid) {
         console.log("I found a match");
-        outletListArrayClone[outletClone]["statusmsg"] = "waiting..."
+        outletListArrayClone[outletClone]["statusmsg"] = "waiting...";
         outletListArrayClone[outletClone]["buttonstate"] = buttonStates[val];
         outletListArrayClone[outletClone]["buttonstateidx"] = val;
 
@@ -125,6 +125,7 @@ export default class extends Component {
       if (msgJSON.hasOwnProperty("probedata")) {
         console.log("Got probedata for chart");
         // console.log(msgJSON["probedata"]["probeid"]);
+
         probeListArrayClone = this.handleProbeData(
           probeListArrayClone,
           probeClone,
@@ -262,6 +263,7 @@ export default class extends Component {
         // this.setState({ outletListArray: outletListArrayClone });
       }
     }
+    // console.log("handleCurrentOutletState");
   }
 
   handleProbeData(probeListArrayClone, probeClone, msgJSON) {
@@ -284,12 +286,13 @@ export default class extends Component {
         //console.log(c); // [[1, "a"], [2, "b"], [3, "c"]]
         probeListArrayClone[probeClone]["chartdata"] = c;
         //probeListArrayClone[probeClone]["chartdata"] = bplus;
-        console.log("probeListArrayClone", probeListArrayClone);
+        console.log("probeListArrayClone:", probeListArrayClone);
+        console.log("probeListArray:", this.state.probeListArray);
         console.log(msgJSON);
 
         this.setState({ probeListArray: probeListArrayClone });
         // console.log("state");
-        console.log(this.state.probeListArray);
+        console.log("probeListArray:", this.state.probeListArray);
       }
     }
     return probeListArrayClone;

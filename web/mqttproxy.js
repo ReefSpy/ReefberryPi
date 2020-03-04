@@ -41,6 +41,7 @@ wsServer.on("request", function(request) {
   const connection = request.accept(null, request.origin);
   clients[userID] = connection;
   clients[userID].rpcActivity = []; // create array to hold the uuids for commands sent in
+  clients[userID].clientID = userID;
   //console.log(clients);
 
   console.log(
@@ -106,9 +107,11 @@ function start() {
         // if msg is zero length if caused a crash
         if (msg.toString().length > 0) {
           console.log(getTimeStamp() + " [MQTT] Recieved: %s", msg.toString());
-         // handleRPC(msg);
+          // handleRPC(msg);
+          clients[client].sendUTF(msg);
         }
         console.log(clients[client].rpcActivity);
+        console.log(clients[client].clientID);
         // delete the correlation ID from the clients object after it has been sent
         for (var i = 0; i < clients[client].rpcActivity.length; i++) {
           if (clients[client].rpcActivity[i] === JSON.parse(msg)["uuid"]) {
@@ -117,17 +120,22 @@ function start() {
           }
           //console.log(clients[client].rpcActivity);
         }
-      }
-      if (clients[client].rpcActivity.length == 0) {
-        //console.log(getTimeStamp() + " RPC Queue is empty");
+        return;
       } else {
-        //console.log(JSON.parse(msg)["uuid"]);
-        //console.log(clients[client].rpcActivity);
-        console.log(getTimeStamp() + " " + clients[client].rpcActivity.length);
+        if (msg.toString().includes(["status_currentprobeval"])) {
+          //console.log(getTimeStamp(), clients[client].clientID, msg.toString());
+          clients[client].sendUTF(msg);
+        } else if (msg.toString().includes(["status_currentoutletstate"])) {
+          //console.log(getTimeStamp(), clients[client].clientID, msg.toString());
+          clients[client].sendUTF(msg);
+        }
+
+        // console.log(getTimeStamp(), clients[client].clientID, "outletstatus");
+        // clients[client].sendUTF(msg);
       }
     });
 
-    sendMessage(msg.toString());
+    //sendMessage(msg.toString());
   });
 }
 
@@ -197,7 +205,7 @@ const sendMessage = msg => {
   Object.keys(clients).map(client => {
     // uncomment to send status updates
     try {
-      console.log("sending message to", Object.keys(clients))
+      console.log("sending message to", Object.keys(clients));
       //console.log("sendMessage", msg);
       //console.log(JSON.parse(msg)["uuid"].toString());
       clients[client].sendUTF(msg);
