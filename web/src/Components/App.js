@@ -267,12 +267,13 @@ export default class extends Component {
   handleProbeData(probeListArrayClone, probeClone, msgJSON) {
     probeListArrayClone = this.state.probeListArray.slice(0);
     for (probeClone in probeListArrayClone) {
-      //console.log(probeListArrayClone[probeClone]);
+      //console.log("probeclone: ", probeListArrayClone[probeClone]);
       if (
         probeListArrayClone[probeClone]["probeid"] ===
         msgJSON["probedata"]["probeid"]
       ) {
         // we need to zip the date array and value arrays togther
+        console.log("match");
         var a = msgJSON["probedata"]["datetime"],
           b = msgJSON["probedata"]["probevalue"],
           bplus = b.map(Number);
@@ -283,7 +284,7 @@ export default class extends Component {
         //console.log(c); // [[1, "a"], [2, "b"], [3, "c"]]
         probeListArrayClone[probeClone]["chartdata"] = c;
         //probeListArrayClone[probeClone]["chartdata"] = bplus;
-        console.log(probeListArrayClone);
+        console.log("probeListArrayClone", probeListArrayClone);
         console.log(msgJSON);
 
         this.setState({ probeListArray: probeListArrayClone });

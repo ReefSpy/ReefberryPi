@@ -126,7 +126,7 @@ function start() {
       }
     });
 
-    //sendMessage(message.toString());
+    sendMessage(msg.toString());
   });
 
   /*amqp.connect(
