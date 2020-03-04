@@ -88,34 +88,41 @@ export default class extends Component {
     client.onmessage = message => {
       //console.log(message);
       var msgJSON = JSON.parse(message.data);
+      //console.log(Object.keys(msgJSON).toString());
       //if (Object.keys(msgJSON).toString() != "status_currentoutletstate") {
       //  console.log(message);
       //}
       //console.log(msgJSON);
       //console.log(JSON.stringify(msgJSON));
-      if (Object.keys(msgJSON).toString() === "probelist") {
+      //if (Object.keys(msgJSON).toString() === "probelist") {
+      if (msgJSON.hasOwnProperty("probelist")) {
         this.handleProbelist(msgJSON);
         this.getChartData(msgJSON);
       }
-      if (Object.keys(msgJSON).toString() === "outletlist") {
+      //if (Object.keys(msgJSON).toString() === "outletlist") {
+      if (msgJSON.hasOwnProperty("outletlist")) {
         this.handleOutletlist(msgJSON);
       }
-      if (Object.keys(msgJSON).toString() === "status_currentprobeval") {
+      //if (Object.keys(msgJSON).toString() === "status_currentprobeval") {
+      if (msgJSON.hasOwnProperty("status_currentprobeval")) {
         // console.log("Got probeval");
         // console.log(msgJSON["status_currentprobeval"]["probeid"]);
         var { probeListArrayClone, probeClone } = this.handleCurrentProbeVal(
           msgJSON
         );
       }
-      if (Object.keys(msgJSON).toString() === "status_currentoutletstate") {
+      //if (Object.keys(msgJSON).toString() === "status_currentoutletstate") {
+      if (msgJSON.hasOwnProperty("status_currentoutletstate")) {
         //console.log("Got outletstate");
         this.handleCurrentOutletState(msgJSON);
       }
-      if (Object.keys(msgJSON).toString() === "status_feedmode") {
+      //if (Object.keys(msgJSON).toString() === "status_feedmode") {
+      if (msgJSON.hasOwnProperty("status_feedmode")) {
         //console.log("Feed Mode");
         this.handleFeedMode(msgJSON);
       }
-      if (Object.keys(msgJSON).toString() === "probedata") {
+      //if (Object.keys(msgJSON).toString() === "probedata") {
+      if (msgJSON.hasOwnProperty("probedata")) {
         console.log("Got probedata for chart");
         // console.log(msgJSON["probedata"]["probeid"]);
         probeListArrayClone = this.handleProbeData(
@@ -124,7 +131,8 @@ export default class extends Component {
           msgJSON
         );
       }
-      if (Object.keys(msgJSON).toString() === "probedatadays") {
+      //if (Object.keys(msgJSON).toString() === "probedatadays") {
+      if (msgJSON.hasOwnProperty("probedatadays")) {
         console.log("Got probedatadays for chart");
         //console.log(msgJSON["probedata"]["probeid"]);
 
@@ -202,7 +210,7 @@ export default class extends Component {
   }
 
   handleOutletlist(msgJSON) {
-    console.log("Got outlet list");
+    // console.log("Got outlet list", msgJSON);
     this.setState({ outletList: msgJSON });
     var outletArray = [];
     for (var outlet in msgJSON["outletlist"]) {

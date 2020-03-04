@@ -93,34 +93,31 @@ function start() {
 
   mqttclient.on("message", function(topic, msg) {
     // message is Buffer
-    console.log(msg.toString());
+    //console.log(msg.toString());
     //mqttclient.end();
-    console.log(JSON.parse(msg)["uuid"]);
+    //console.log("uuid: ", JSON.parse(msg)["uuid"]);
     Object.keys(clients).map(client => {
       //if (clients[client].rpcActivity.includes(msg.properties.correlationId)) {
       if (clients[client].rpcActivity.includes(JSON.parse(msg)["uuid"])) {
-        //console.log ("Found a match!");
+        console.log("Found a match!");
 
         //console.log(msg.content.toString().length);
         // if msg is zero length if caused a crash
-        if (msg.content.toString().length > 0) {
-          console.log(
-            getTimeStamp() + " [MQTT] Recieved: %s",
-            msg.content.toString()
-          );
+        if (msg.toString().length > 0) {
+          console.log(getTimeStamp() + " [MQTT] Recieved: %s", msg.toString());
           handleRPC(msg);
         }
         //console.log(clients[client].rpcActivity);
         // delete the correlation ID from the clients object after it has been sent
         for (var i = 0; i < clients[client].rpcActivity.length; i++) {
-          if (clients[client].rpcActivity[i] === msg.properties.correlationId) {
+          if (clients[client].rpcActivity[i] === JSON.parse(msg)["uuid"]) {
             clients[client].rpcActivity.splice(i, 1);
           }
           //console.log(clients[client].rpcActivity);
         }
       }
       if (clients[client].rpcActivity.length == 0) {
-        console.log(getTimeStamp() + " RPC Queue is empty");
+        //console.log(getTimeStamp() + " RPC Queue is empty");
       } else {
         console.log(getTimeStamp() + " " + clients[client].rpcActivity.length);
       }
@@ -403,7 +400,7 @@ const sendMessage = msg => {
 
 function handleRPC(msg) {
   console.log("Handle RPC");
-  msgJSON = JSON.parse(msg.content.toString());
+  msgJSON = JSON.parse(msg.toString());
   rpcKey = Object.keys(msgJSON);
 
   if ((rpcKey = msgJSON["probelist"])) {
@@ -411,10 +408,10 @@ function handleRPC(msg) {
     console.log(
       getTimeStamp() + " Number of probes: " + Object.keys(probeKeys).length
     );
-    console.log(msg.properties.correlationId);
+    console.log(JSON.parse(msg)["uuid"]);
     // sendMessage(msg, msg.content.toString());
     // here
-    sendMessage(msg);
+    sendMessage(msg.toString());
   }
 
   if ((rpcKey = msgJSON["outletlist"])) {
@@ -424,22 +421,22 @@ function handleRPC(msg) {
     );
     //sendMessage(msg, msg.content.toString());
     // here
-    sendMessage(msg);
+    sendMessage(msg.toString());
   }
 
   if ((rpcKey = msgJSON["probedata"])) {
     probeKeys = msgJSON["probedata"];
-    console.log(msg.properties.correlationId);
+    console.log(JSON.parse(msg)["uuid"]);
     // sendMessage(msg, msg.content.toString());
     // here
-    sendMessage(msg);
+    sendMessage(msg.toString());
   }
   if ((rpcKey = msgJSON["probedatadays"])) {
     probeKeys = msgJSON["probedatadays"];
-    console.log(msg.properties.correlationId);
+    console.log(JSON.parse(msg)["uuid"]);
     // sendMessage(msg, msg.content.toString());
     // here
-    sendMessage(msg);
+    sendMessage(msg.toString());
   }
 }
 

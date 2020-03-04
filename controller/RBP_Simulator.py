@@ -154,6 +154,29 @@ class RBP_controller:
             self.AppPrefs.int_outlet_buttonstates[str(
                 outlet) + "_buttonstate"] = mode
 
+        elif str(body["rpc_req"]) == "get_probedata24h_ex":
+            defs_common.logtoconsole("RPC: " + str(body["rpc_req"]) + " [" + str(
+                body["probetype"]) + ", " + str(body["probeid"]) + "]", fg="GREEN", style="BRIGHT")
+            self.logger.info("RPC: " + str(body["rpc_req"]) + " [" + str(
+                body["probetype"]) + ", " + str(body["probeid"]) + "]")
+            #probelogdata = self.get_probedata24h(str(body["probetype"]), str(body["probeid"]))
+            probelogdata = self.get_probedatadays(str(body["probetype"]), str(
+                body["probeid"]), 2)  # 2 days to ensure you get yesterdays data too
+
+            try:
+                response = {"probedata": {
+                    "datetime": probelogdata[0],
+                    "probevalue": probelogdata[1],
+                    "probetype": str(body["probetype"]),
+                    "probeid": str(body["probeid"]),
+                },
+                    "uuid": str(body["uuid"])
+                }
+                response = json.dumps(response)
+                self.logger.debug(str(response))
+            except:
+                pass
+
         try:
             message = response
             self.logger.info("[MQTT Tx] " + message)
