@@ -11,8 +11,8 @@ const wsServer = new webSocketServer({
 //var amqp = require("amqplib/callback_api");
 
 var mqtt = require("mqtt");
-//var mqttclient = mqtt.connect("ws://pi:reefberry@192.168.1.217:15675/ws");
-var mqttclient = mqtt.connect("ws://pi:reefberry@127.0.0.1:15675/ws");
+var mqttclient = mqtt.connect("ws://pi:reefberry@192.168.1.217:15675/ws");
+//var mqttclient = mqtt.connect("ws://pi:reefberry@127.0.0.1:15675/ws");
 
 // if the connection is closed or fails to be established at all, we will reconnect
 //var amqpConn = null;
@@ -79,7 +79,7 @@ wsServer.on("request", function(request) {
     //sendMessage(JSON.stringify(json));
     // sendMessage('', 'disconnected');
     // here
-    sendMessage("disconnected");
+    //sendMessage("disconnected");
   });
 });
 
@@ -197,6 +197,7 @@ const sendMessage = msg => {
   Object.keys(clients).map(client => {
     // uncomment to send status updates
     try {
+      console.log("sending message to", Object.keys(clients))
       //console.log("sendMessage", msg);
       //console.log(JSON.parse(msg)["uuid"].toString());
       clients[client].sendUTF(msg);

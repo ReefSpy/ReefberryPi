@@ -51,7 +51,7 @@ export default class extends Component {
       //console.log(outletListArrayClone[outletClone]);
       if (outletListArrayClone[outletClone]["outletid"] === outletid) {
         console.log("I found a match");
-
+        outletListArrayClone[outletClone]["statusmsg"] = "waiting..."
         outletListArrayClone[outletClone]["buttonstate"] = buttonStates[val];
         outletListArrayClone[outletClone]["buttonstateidx"] = val;
 

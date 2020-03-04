@@ -915,9 +915,9 @@ class RBP_controller:
                     self.AppPrefs.reloadPrefSection(self, sec)
 
             ##########################################################################################
-            # pause to slow down the loop, otherwise CPU usage spikes as program is busy waiting
+            # pause to slow down the loop
             ##########################################################################################
-            time.sleep(2)
+            time.sleep(.5)
 
 
 root = RBP_controller()
