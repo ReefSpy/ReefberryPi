@@ -128,182 +128,8 @@ function start() {
 
     sendMessage(msg.toString());
   });
-
-  /*amqp.connect(
-    "amqp://pi:raspberry@192.168.1.168:5672" + "?heartbeat=60",
-    function(err, conn) {
-      if (err) {
-        console.error(getTimeStamp() + " [AMQP]", err.message);
-        return setTimeout(start, 1000);
-      }
-      conn.on("error", function(err) {
-        if (err.code == "ECONNRESET") {
-          console.error(getTimeStamp() + " [AMQP] reset error", err.code);
-        }
-        if (err.message !== "Connection closing") {
-          console.error(getTimeStamp() + " [AMQP] conn error", err.message);
-        }
-      });
-      conn.on("close", function() {
-        console.error(getTimeStamp() + " [AMQP] reconnecting");
-        return setTimeout(start, 1000);
-      });
-
-      console.log(getTimeStamp() + " [AMQP] connected");
-      amqpConn = conn;
-
-      amqpConn.createChannel(function(error1, channel) {
-        if (error1) {
-          console.log(
-            getTimeStamp() + " [AMQP] createChannel error1",
-            error1.message
-          );
-          throw error1;
-        }
-        channel.assertQueue(
-          "",
-          {
-            exclusive: true
-          },
-          function(error2, q) {
-            if (error2) {
-              console.error(
-                getTimeStamp() + " [AMQP] createChannel error2",
-                error2.message
-              );
-              throw error2;
-            }
-            //var correlationId = getUniqueID();
-            amqpChannel = channel;
-            amqpRPCqueue = q;
-
-            console.log(getTimeStamp() + " [AMQP] Assert Queue");
-            //console.log(" [x] Requesting fib");
-            channel.consume(
-              q.queue,
-              function(msg) {
-                console.log(
-                  getTimeStamp() +
-                    " [AMQP] " +
-                    msg.properties.correlationId +
-                    " vs " +
-                    correlationId
-                );
-                //if (clients[userID].rpcActivity.includes(msg.properties.correlationId)){
-                //  console.log("USER ID " + userID);
-
-                Object.keys(clients).map(client => {
-                  if (
-                    clients[client].rpcActivity.includes(
-                      msg.properties.correlationId
-                    )
-                  ) {
-                    //console.log ("Found a match!");
-
-                    //console.log(msg.content.toString().length);
-                    // if msg is zero length if caused a crash
-                    if (msg.content.toString().length > 0) {
-                      console.log(
-                        getTimeStamp() + " [AMQP] Recieved: %s",
-                        msg.content.toString()
-                      );
-                      handleRPC(msg);
-                    }
-                    //console.log(clients[client].rpcActivity);
-                    // delete the correlation ID from the clients object after it has been sent
-                    for (
-                      var i = 0;
-                      i < clients[client].rpcActivity.length;
-                      i++
-                    ) {
-                      if (
-                        clients[client].rpcActivity[i] ===
-                        msg.properties.correlationId
-                      ) {
-                        clients[client].rpcActivity.splice(i, 1);
-                      }
-                      //console.log(clients[client].rpcActivity);
-                    }
-                  }
-                  if (clients[client].rpcActivity.length == 0) {
-                    console.log(getTimeStamp() + " RPC Queue is empty");
-                  } else {
-                    console.log(
-                      getTimeStamp() + " " + clients[client].rpcActivity.length
-                    );
-                  }
-                });
-              },
-              {
-                noAck: true
-              }
-            );
-            console.log(getTimeStamp() + " [AMQP] queue: " + q.queue);
-          }
-        ); 
-      }); 
-
-      startWorker();
-    } 
-  ); */
 }
 
-// A worker that acks messages only if processed succesfully
-/*function startWorker() {
-  amqpConn.createChannel(function(err, ch) {
-    if (closeOnErr(err)) return;
-    ch.on("error", function(err) {
-      console.error("[AMQP] channel error", err.message);
-    });
-    ch.on("close", function() {
-      console.log(getTimeStamp() + " [AMQP] channel closed");
-    });
-    ch.prefetch(10);
-
-    var exchange = "rbp_currentstatus";
-    ch.assertExchange(exchange, "fanout", {
-      durable: false
-    });
-
-    ch.assertQueue("", { durable: false, exclusive: true }, function(err, q) {
-      if (closeOnErr(err)) return;
-      ch.bindQueue(q.queue, exchange, "");
-
-      ch.consume("", processMsg, { noAck: true });
-      console.log(getTimeStamp() + " [AMQP] Worker is started");
-    });
-
-    function processMsg(msg) {
-      work(msg, function(ok) {
-        try {
-          if (ok)
-            //ch.ack(msg);
-            return;
-          else ch.reject(msg, true);
-        } catch (e) {
-          closeOnErr(e);
-        }
-      });
-    }
-  });
-} */
-
-function work(msg, cb) {
-  //console.log("Got msg", msg.content.toString());
-
-  //sendMessage('', msg.content.toString());
-  // here
-  sendMessage(msg);
-
-  cb(true);
-}
-
-function closeOnErr(err) {
-  if (!err) return false;
-  console.error(getTimeStamp() + " [AMQP] error", err);
-  amqpConn.close();
-  return true;
-}
 // Generates unique ID for every new connection
 const getUniqueID = () => {
   const s4 = () =>
@@ -370,7 +196,7 @@ const sendMessage = msg => {
   Object.keys(clients).map(client => {
     // uncomment to send status updates
     try {
-      console.log("sendMessage", msg);
+      //console.log("sendMessage", msg);
       //console.log(JSON.parse(msg)["uuid"].toString());
       clients[client].sendUTF(msg);
     } catch (err) {
@@ -378,7 +204,6 @@ const sendMessage = msg => {
     }
     if (clients[client].rpcActivity[0] != undefined) {
       //if (clients[client].rpcActivity.includes(msg.properties.correlationId)) {
-      console.log("line 350", msg);
       //console.log(JSON.parse(msg)["uuid"]);
       if (
         clients[client].rpcActivity.includes(JSON.parse(msg)["uuid"]) !=
@@ -388,7 +213,7 @@ const sendMessage = msg => {
         clients[client].sendUTF(msg);
         console.log("keys:", Object.keys(clients));
         console.log("rpc activity:", clients[client].rpcActivity);
-        console.log(msg);
+        //console.log(msg);
       }
     }
 
@@ -447,12 +272,6 @@ function rpc_call(msg) {
   //correlationId = getUniqueID();
   correlationId = JSON.parse(msg)["uuid"].toString();
   console.log(getTimeStamp() + " RPC call: " + correlationId + " " + msg);
-
-  /* amqpChannel.sendToQueue("rpc_queue", Buffer.from(msg), {
-    expiration: 300000,
-    correlationId: correlationId,
-    replyTo: amqpRPCqueue.queue
-  }); */
 
   mqttclient.publish("reefberrypi/rpc", msg);
 }
