@@ -8,11 +8,35 @@ const wsServer = new webSocketServer({
   httpServer: server
 });
 
-//var amqp = require("amqplib/callback_api");
+var fs = require('fs')
+var ini = require('ini')
+
+console.log(getTimeStamp(), "Reefberry Pi MQTT Proxy starting...")
+
+if (!fs.existsSync('./config.ini')) {
+  //file doesn't exist
+  console.log(getTimeStamp(), "Configuration file does not exit, creating file...")
+  fs.writeFile('./config.ini', '', function (err) {
+    console.log(getTimeStamp(), 'File created successfully.');
+
+  }); 
+
+}
+
+console.log(getTimeStamp(), 'Reading configuration...');
+var config = ini.parse(fs.readFileSync('./config.ini', 'utf-8'))
+
+
+config.mqtt_broker_host = "127.0.0.1"
+
+
 
 var mqtt = require("mqtt");
 var mqttclient = mqtt.connect("ws://pi:reefberry@192.168.1.217:15675/ws");
 //var mqttclient = mqtt.connect("ws://pi:reefberry@127.0.0.1:15675/ws");
+
+console.log(getTimeStamp(), 'Connected to MQTT Server');
+console.log(getTimeStamp(), 'Waiting for communication...');
 
 // if the connection is closed or fails to be established at all, we will reconnect
 //var amqpConn = null;
