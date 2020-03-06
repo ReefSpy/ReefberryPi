@@ -20,33 +20,36 @@ var ini = require("ini");
 // read configuration from config.ini
 ///////////////////////////////////////////////////////////////////////////////
 
-if (!fs.existsSync("./config.ini")) {
+if (!fs.existsSync("./config/config.ini")) {
   //file doesn't exist
   console.log(
     getTimeStamp(),
     "Configuration file does not exit, creating file..."
   );
-  fs.writeFile("./config.ini", "", function(err) {
-    console.log(getTimeStamp(), "File created successfully.");
+  fs.writeFile("./config/config.ini", "", function(err) {
+    console.log(getTimeStamp(), "Configuration file created successfully.");
   });
+}
+while(!fs.existsSync("./config/config.ini")){
+  // wait for file to be created...
 }
 
 console.log(getTimeStamp(), "Reading configuration...");
-var config = ini.parse(fs.readFileSync("./config.ini", "utf-8"));
+var config = ini.parse(fs.readFileSync("./config/config.ini", "utf-8"));
 
 if (config.mqtt_broker_host == undefined) {
   config.mqtt_broker_host = "127.0.0.1";
-  fs.writeFileSync("./config.ini", ini.stringify(config));
+  fs.writeFileSync("./config/config.ini", ini.stringify(config));
 }
 
 if (config.mqtt_broker_port == undefined) {
   config.mqtt_broker_port = "15675";
-  fs.writeFileSync("./config.ini", ini.stringify(config));
+  fs.writeFileSync("./config/config.ini", ini.stringify(config));
 }
 
 if (config.web_sockets_server_port == undefined) {
   config.web_sockets_server_port = "8001";
-  fs.writeFileSync("./config.ini", ini.stringify(config));
+  fs.writeFileSync("./config/config.ini", ini.stringify(config));
 }
 
 var mqtt_broker_host = config.mqtt_broker_host;
