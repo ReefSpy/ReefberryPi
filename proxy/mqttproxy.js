@@ -1,47 +1,90 @@
-const webSocketsServerPort = 8001;
+///////////////////////////////////////////////////////////////////////////////
+// mqttproxy.js
+//
+// broker communication between the web application and MQTT server
+// over websockets
+//
+// Written by ReefSpy for the ReefBerry Pi, (c) 2020
+// www.youtube.com/reefspy
+//
+///////////////////////////////////////////////////////////////////////////////
+
+console.log(getTimeStamp(), "Reefberry Pi MQTT Proxy starting");
+
 const webSocketServer = require("websocket").server;
 const http = require("http");
-// Spinning the http server and the websocket server.
+var fs = require("fs");
+var ini = require("ini");
+
+///////////////////////////////////////////////////////////////////////////////
+// read configuration from config.ini
+///////////////////////////////////////////////////////////////////////////////
+
+if (!fs.existsSync("./config.ini")) {
+  //file doesn't exist
+  console.log(
+    getTimeStamp(),
+    "Configuration file does not exit, creating file..."
+  );
+  fs.writeFile("./config.ini", "", function(err) {
+    console.log(getTimeStamp(), "File created successfully.");
+  });
+}
+
+console.log(getTimeStamp(), "Reading configuration...");
+var config = ini.parse(fs.readFileSync("./config.ini", "utf-8"));
+
+if (config.mqtt_broker_host == undefined) {
+  config.mqtt_broker_host = "127.0.0.1";
+  fs.writeFileSync("./config.ini", ini.stringify(config));
+}
+
+if (config.mqtt_broker_port == undefined) {
+  config.mqtt_broker_port = "15675";
+  fs.writeFileSync("./config.ini", ini.stringify(config));
+}
+
+if (config.web_sockets_server_port == undefined) {
+  config.web_sockets_server_port = "8001";
+  fs.writeFileSync("./config.ini", ini.stringify(config));
+}
+
+var mqtt_broker_host = config.mqtt_broker_host;
+var mqtt_broker_port = config.mqtt_broker_port;
+var webSocketsServerPort = config.web_sockets_server_port;
+
+///////////////////////////////////////////////////////////////////////////////
+// Spinning up the http server and the websocket server.
+///////////////////////////////////////////////////////////////////////////////
 const server = http.createServer();
 server.listen(webSocketsServerPort);
 const wsServer = new webSocketServer({
   httpServer: server
 });
 
-var fs = require('fs')
-var ini = require('ini')
+console.log(
+  getTimeStamp(),
+  "Listening on Websocket Port",
+  webSocketsServerPort
+);
 
-console.log(getTimeStamp(), "Reefberry Pi MQTT Proxy starting...")
-
-if (!fs.existsSync('./config.ini')) {
-  //file doesn't exist
-  console.log(getTimeStamp(), "Configuration file does not exit, creating file...")
-  fs.writeFile('./config.ini', '', function (err) {
-    console.log(getTimeStamp(), 'File created successfully.');
-
-  }); 
-
-}
-
-console.log(getTimeStamp(), 'Reading configuration...');
-var config = ini.parse(fs.readFileSync('./config.ini', 'utf-8'))
-
-
-config.mqtt_broker_host = "127.0.0.1"
-
-
+///////////////////////////////////////////////////////////////////////////////
+// connect to MQTT server
+///////////////////////////////////////////////////////////////////////////////
 
 var mqtt = require("mqtt");
-var mqttclient = mqtt.connect("ws://pi:reefberry@192.168.1.217:15675/ws");
+var mqttclient = mqtt.connect(
+  "ws://pi:reefberry@" + mqtt_broker_host + ":" + mqtt_broker_port + "/ws"
+);
 //var mqttclient = mqtt.connect("ws://pi:reefberry@127.0.0.1:15675/ws");
 
-console.log(getTimeStamp(), 'Connected to MQTT Server');
-console.log(getTimeStamp(), 'Waiting for communication...');
+console.log(
+  getTimeStamp(),
+  "Connected to MQTT Server at",
+  mqtt_broker_host + ":" + mqtt_broker_port
+);
+console.log(getTimeStamp(), "Waiting for communication...");
 
-// if the connection is closed or fails to be established at all, we will reconnect
-//var amqpConn = null;
-//var amqpChannel = null;
-var amqpRPCqueue = null;
 var correlationId = null;
 
 // I'm maintaining all active connections in this object
@@ -152,6 +195,9 @@ function start() {
         } else if (msg.toString().includes(["status_currentoutletstate"])) {
           //console.log(getTimeStamp(), clients[client].clientID, msg.toString());
           clients[client].sendUTF(msg);
+        } else if (msg.toString().includes(["status_feedmode"])) {
+          //console.log(getTimeStamp(), clients[client].clientID, msg.toString());
+          clients[client].sendUTF(msg);
         }
 
         // console.log(getTimeStamp(), clients[client].clientID, "outletstatus");
@@ -259,48 +305,6 @@ const sendMessage = msg => {
 //  USER_EVENT: "userevent",
 //  CONTENT_CHANGE: "contentchange"
 //}
-
-/*function handleRPC(msg) {
-  console.log("Handle RPC");
-  msgJSON = JSON.parse(msg.toString());
-  rpcKey = Object.keys(msgJSON);
-
-  if ((rpcKey = msgJSON["probelist"])) {
-    probeKeys = msgJSON["probelist"];
-    console.log(
-      getTimeStamp() + " Number of probes: " + Object.keys(probeKeys).length
-    );
-    console.log(JSON.parse(msg)["uuid"]);
-    // sendMessage(msg, msg.content.toString());
-    // here
-    sendMessage(msg.toString());
-  }
-
-  if ((rpcKey = msgJSON["outletlist"])) {
-    outletKeys = msgJSON["outletlist"];
-    console.log(
-      getTimeStamp() + " Number of outlets: " + Object.keys(outletKeys).length
-    );
-    //sendMessage(msg, msg.content.toString());
-    // here
-    sendMessage(msg.toString());
-  }
-
-  if ((rpcKey = msgJSON["probedata"])) {
-    probeKeys = msgJSON["probedata"];
-    console.log(JSON.parse(msg)["uuid"]);
-    // sendMessage(msg, msg.content.toString());
-    // here
-    sendMessage(msg.toString());
-  }
-  if ((rpcKey = msgJSON["probedatadays"])) {
-    probeKeys = msgJSON["probedatadays"];
-    console.log(JSON.parse(msg)["uuid"]);
-    // sendMessage(msg, msg.content.toString());
-    // here
-    sendMessage(msg.toString());
-  }
-} */
 
 function rpc_call(msg) {
   //correlationId = getUniqueID();

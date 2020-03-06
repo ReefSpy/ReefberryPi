@@ -110,6 +110,7 @@ class RBP_controller:
         print(body)
         body = json.loads(body)
         print(body)
+        response = ""
 
         if str(body["rpc_req"]) == "get_probelist":
             defs_common.logtoconsole(
@@ -147,7 +148,8 @@ class RBP_controller:
                 "set_outletoperationmode " + str(body), fg="GREEN", style="BRIGHT")
             self.logger.info("set_outletoperationmode " + str(body))
             outlet = str(str(body["bus"]) + "_outlet" + str(body["outletnum"]))
-            outletnum = str(str(body["bus"]) + "_outlet_" + str(body["outletnum"]))
+            outletnum = str(str(body["bus"]) +
+                            "_outlet_" + str(body["outletnum"]))
             mode = str(body["opmode"]).upper()
 
             # bad things happened when I tried to control outlets from this thread
@@ -156,14 +158,14 @@ class RBP_controller:
                 outlet) + "_buttonstate"] = mode
 
             self.broadcastOutletStatus(outlet,
-                                           self.AppPrefs.outletDict[outletnum].outletname,
-                                           "int",
-                                           self.AppPrefs.outletDict[outletnum].control_type,
-                                           self.AppPrefs.int_outlet_buttonstates.get(
-                                               outletnum + "_buttonstate"),
-                                           "STATEUNKNOWN",
-                                           "Waiting...",
-                                           str(body["uuid"]))
+                                       self.AppPrefs.outletDict[outletnum].outletname,
+                                       "int",
+                                       self.AppPrefs.outletDict[outletnum].control_type,
+                                       self.AppPrefs.int_outlet_buttonstates.get(
+                                           outletnum + "_buttonstate"),
+                                       "STATEUNKNOWN",
+                                       "Waiting...",
+                                       str(body["uuid"]))
 
         elif str(body["rpc_req"]) == "get_probedata24h_ex":
             defs_common.logtoconsole("RPC: " + str(body["rpc_req"]) + " [" + str(
@@ -188,10 +190,28 @@ class RBP_controller:
             except:
                 pass
 
+        elif str(body["rpc_req"]) == "set_feedmode":
+            defs_common.logtoconsole(
+                "set_feedmode " + str(body), fg="GREEN", style="BRIGHT")
+            self.logger.info("set_feedmode " + str(body))
+            self.AppPrefs.feed_SamplingTimeSeed = int(
+                round(time.time()*1000))  # convert time to milliseconds
+            defs_common.logtoconsole(
+                "Mode is " + str(body["feedmode"]), fg="BLUE", style="BRIGHT")
+
+            self.AppPrefs.feed_CurrentMode = str(body["feedmode"])
+            self.AppPrefs.feed_PreviousMode = "CANCEL"
+
+            # if feed mode was cancelled, broadcast it out
+            if self.AppPrefs.feed_CurrentMode == "CANCEL":
+                self.broadcastFeedStatus(
+                    self.AppPrefs.feed_CurrentMode, "0", "")
+
         try:
-            message = response
-            self.logger.info("[MQTT Tx] " + message)
-            self.MQTTclient.publish("reefberrypi/demo", message)
+            if response != "":
+                message = response
+                self.logger.info("[MQTT Tx] " + message)
+                self.MQTTclient.publish("reefberrypi/demo", message)
 
         except:
             print("error with RPC publish")
@@ -340,8 +360,23 @@ class RBP_controller:
         # self.MQTTclient.publish("reefberrypi/demo", probeid + " : " + probeval)
         self.MQTTclient.publish("reefberrypi/demo", message)
 
+    def broadcastFeedStatus(self, feedmode, timeremaining, uuid):
+        message = {
+            "status_feedmode":
+            {
+                "feedmode": str(feedmode),
+                "timeremaining": str(timeremaining),
+            },
+            "uuid": str(uuid)
+        }
+
+        message = json.dumps(message)
+
+        self.logger.info("[MQTT Tx] " + message)
+        self.MQTTclient.publish("reefberrypi/demo", message)
+
     def broadcastOutletStatus(self, outletid, outletname, outletbus, control_type, button_state, outletstate, statusmsg, uuid):
-        print(uuid)
+        # print(uuid)
         message = {
             "status_currentoutletstate":
             {
@@ -861,6 +896,54 @@ class RBP_controller:
                         # record the new sampling time
                         self.AppPrefs.dv_SamplingTimeSeed = int(
                             round(time.time()*1000))  # convert time to milliseconds
+
+            ##########################################################################################
+            # check if Feed mode is enabled
+            #
+            ##########################################################################################
+
+            if self.AppPrefs.feed_CurrentMode == "A":
+                #self.AppPrefs.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_a", "60", lock=self.threadlock, logger=self.logger)
+                self.AppPrefs.feed_ModeTotaltime = self.AppPrefs.feed_a_time
+            elif self.AppPrefs.feed_CurrentMode == "B":
+                #self.AppPrefs.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_b", "60", lock=self.threadlock, logger=self.logger)
+                self.AppPrefs.feed_ModeTotaltime = self.AppPrefs.feed_b_time
+            elif self.AppPrefs.feed_CurrentMode == "C":
+                #self.AppPrefs.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_c", "60", lock=self.threadlock, logger=self.logger)
+                self.AppPrefs.feed_ModeTotaltime = self.AppPrefs.feed_c_time
+            elif self.AppPrefs.feed_CurrentMode == "D":
+                #self.AppPrefs.feed_ModeTotaltime = defs_common.readINIfile("feed_timers", "feed_d", "60", lock=self.threadlock, logger=self.logger)
+                self.AppPrefs.feed_ModeTotaltime = self.AppPrefs.feed_d_time
+            else:
+                self.AppPrefs.feed_ModeTotaltime = "0"
+
+            if self.AppPrefs.feed_CurrentMode != "CANCEL":
+                self.AppPrefs.feedTimeLeft = (int(self.AppPrefs.feed_ModeTotaltime)*1000) - (
+                    int(round(time.time()*1000)) - self.AppPrefs.feed_SamplingTimeSeed)
+                if self.AppPrefs.feedTimeLeft <= 0:
+                    print(Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                          " Feed Mode: " + self.AppPrefs.feed_CurrentMode + " COMPLETE" + Style.RESET_ALL)
+                    self.AppPrefs.feed_CurrentMode = "CANCEL"
+                    timestamp = datetime.now()
+
+                    self.broadcastFeedStatus(
+                        self.AppPrefs.feed_CurrentMode, self.AppPrefs.feedTimeLeft, "")
+
+                    self.AppPrefs.feed_ExtraTimeSeed = int(
+                        round(time.time()*1000))
+                    print("Extra time starts at: " + str(self.AppPrefs.feed_ExtraTimeSeed) +
+                          " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                else:
+                    print(Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                          " Feed Mode: " + self.AppPrefs.feed_CurrentMode +
+                          " (" + self.AppPrefs.feed_ModeTotaltime + "s) " +
+                          "Time Remaining: " +
+                          str(round(self.AppPrefs.feedTimeLeft/1000)) + "s"
+                          + Style.RESET_ALL)
+                    timestamp = datetime.now()
+
+                    self.broadcastFeedStatus(self.AppPrefs.feed_CurrentMode, round(
+                        self.AppPrefs.feedTimeLeft/1000), "")
 
             ##########################################################################################
             # handle outlet states (turn outlets on or off)
