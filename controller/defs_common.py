@@ -26,45 +26,45 @@ OUTLET_AUTO = 2
 OUTLET_ON = 3
 
 
-def logtoconsole(text, *args, **kwargs):
-    
-    init(autoreset=True) # auto resets colors back to default after use
+def logtoconsole_old(text, *args, **kwargs):
+
+    init(autoreset=True)  # auto resets colors back to default after use
 
     # STYLE
-    STYLE_RESET  = "\033[0m"      # reset all (colors and brightness)
+    STYLE_RESET = "\033[0m"      # reset all (colors and brightness)
     STYLE_BRIGHT = "\033[1m"      # bright
-    STYLE_DIM    = "\033[2m"      # dim (looks same as normal brightness)
+    STYLE_DIM = "\033[2m"      # dim (looks same as normal brightness)
     STYLE_NORMAL = "\033[22m"     # normal brightness
-      
+
     # FOREGROUND:
-    FG_BLACK    = "\033[30m"      # black
-    FG_RED      = "\033[31m"      # red
-    FG_GREEN    = "\033[32m"      # green
-    FG_YELLOW   = "\033[33m"      # yellow
-    FG_BLUE     = "\033[34m"      # blue
-    FG_MAGENTA  = "\033[35m"      # magenta
-    FG_CYAN     = "\033[36m"      # cyan
-    FG_WHITE    = "\033[37m"      # white
-    FG_RESET    = "\033[39m"      # reset
+    FG_BLACK = "\033[30m"      # black
+    FG_RED = "\033[31m"      # red
+    FG_GREEN = "\033[32m"      # green
+    FG_YELLOW = "\033[33m"      # yellow
+    FG_BLUE = "\033[34m"      # blue
+    FG_MAGENTA = "\033[35m"      # magenta
+    FG_CYAN = "\033[36m"      # cyan
+    FG_WHITE = "\033[37m"      # white
+    FG_RESET = "\033[39m"      # reset
 
     # BACKGROUND
-    BG_BLACK    = "\033[40m"      # black
-    BG_RED      = "\033[41m"      # red
-    BG_GREEN    = "\033[42m"      # green
-    BG_YELLOW   = "\033[43m"      # yellow
-    BG_BLUE     = "\033[44m"      # blue
-    BG_MAGENTA  = "\033[45m"      # magenta
-    BG_CYAN     = "\033[46m"      # cyan
-    BG_WHITE    = "\033[47m"      # white
-    BG_RESET    = "\033[49m"      # reset
+    BG_BLACK = "\033[40m"      # black
+    BG_RED = "\033[41m"      # red
+    BG_GREEN = "\033[42m"      # green
+    BG_YELLOW = "\033[43m"      # yellow
+    BG_BLUE = "\033[44m"      # blue
+    BG_MAGENTA = "\033[45m"      # magenta
+    BG_CYAN = "\033[46m"      # cyan
+    BG_WHITE = "\033[47m"      # white
+    BG_RESET = "\033[49m"      # reset
 
     style = ""
     fore = ""
     back = ""
-    
+
     for key, value in kwargs.items():
         #print("{0} = {1}".format(key, value))
-        if key=="Fore" or key=="fore" or key=="fg" or key=="foreground" or key=="Foreground":
+        if key == "Fore" or key == "fore" or key == "fg" or key == "foreground" or key == "Foreground":
             if value == "BLACK":
                 fore = FG_BLACK
             elif value == "RED":
@@ -86,7 +86,7 @@ def logtoconsole(text, *args, **kwargs):
             else:
                 fore = ""
 
-        if key=="Back" or key=="back" or key=="bg" or key=="background" or key=="Background":
+        if key == "Back" or key == "back" or key == "bg" or key == "background" or key == "Background":
             if value == "BLACK":
                 back = BG_BLACK
             elif value == "RED":
@@ -107,9 +107,9 @@ def logtoconsole(text, *args, **kwargs):
                 back = BG_RESET
             else:
                 back = ""
-             
-        if key=="Style" or key=="style":
-            if value ==  "BRIGHT":
+
+        if key == "Style" or key == "style":
+            if value == "BRIGHT":
                 style = STYLE_BRIGHT
             elif value == "DIM":
                 style = STYLE_DIM
@@ -119,19 +119,27 @@ def logtoconsole(text, *args, **kwargs):
                 style = STYLE_RESET
             else:
                 style = ""
-                      
+
     t = datetime.now()
     s = t.strftime('%Y-%m-%d %H:%M:%S,%f')
     s = s[:-3]
-    
+
     print(fore + back + style + s + " " + text)
     #print(fore + back + style + str(datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")) + " " + text)
-    
+
+
+def logtoconsole(text, *args, **kwargs):
+    t = datetime.now()
+    s = t.strftime('%Y-%m-%d %H:%M:%S,%f')
+    s = s[:-3]
+    print(s + " " + text)
+
 
 def logprobedata(log_prefix, data):
     # create time stamp
-    formatted_date=datetime.strptime(str(datetime.now()), "%Y-%m-%d %H:%M:%S.%f")
-    formatted_date=str(formatted_date.strftime("%Y-%m-%d %H:%M:%S"))
+    formatted_date = datetime.strptime(
+        str(datetime.now()), "%Y-%m-%d %H:%M:%S.%f")
+    formatted_date = str(formatted_date.strftime("%Y-%m-%d %H:%M:%S"))
     # write data to file
     log_file_name = log_prefix + datetime.now().strftime("%Y-%m-%d") + ".txt"
     log_dir = readINIfile("logs", "log_dir", "logs")
@@ -139,8 +147,8 @@ def logprobedata(log_prefix, data):
     fh = open(str(log_dir) + "/" + log_file_name, "a")
     fh.write(str(formatted_date) + "," + str(data) + "\n")
     fh.close()
-        
-    
+
+
 def convertCtoF(temp_c):
     temp_f = float(temp_c) * 9.0 / 5.0 + 32.0
     return "{:.1f}".format(temp_f)
@@ -150,17 +158,18 @@ def convertFtoC(degreesF):
     val = (float(degreesF)-32) * (5/9)
     return val
 
+
 def checkifconfigexists():
     if os.path.isfile(CONFIGFILENAME):
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
-                      CONFIGFILENAME + " exists, reading file")
+              CONFIGFILENAME + " exists, reading file")
     else:
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
-                      CONFIGFILENAME + " does not exists, creating file")
-        f = open(CONFIGFILENAME,"w+")
+              CONFIGFILENAME + " does not exists, creating file")
+        f = open(CONFIGFILENAME, "w+")
         f.close()
-        
-        
+
+
 def readINIfile(section, key, default, *args, **kwargs):
     # try to read the value from the config file
     # if the value does not exist, lets write the default value into the
@@ -168,7 +177,7 @@ def readINIfile(section, key, default, *args, **kwargs):
     # in the file
     useDefault = False
     useThreadLock = False
-    
+
     # to prevent multiple threads from woking on the file at the same time, we will check
     # the thread lock
     for keyarg, value in kwargs.items():
@@ -177,44 +186,42 @@ def readINIfile(section, key, default, *args, **kwargs):
             lck.acquire()
             useThreadLock = True
             #logtoconsole("Read Lock Aquired", fg = "WHITE", bg="MAGENTA", style="BRIGHT")
-        
 
     config = configparser.ConfigParser()
     config.read(CONFIGFILENAME)
-    
+
     if not section in config:
         config[section] = {}
-        with open(CONFIGFILENAME,'w') as configfile:
+        with open(CONFIGFILENAME, 'w') as configfile:
             config.write(configfile)
     if not key in config[section]:
         config[section][key] = str(default)
-        with open(CONFIGFILENAME,'w') as configfile:
-            config.write(configfile)   
+        with open(CONFIGFILENAME, 'w') as configfile:
+            config.write(configfile)
     if config[section][key] == "":
         config[section][key] = str(default)
-        with open(CONFIGFILENAME,'w') as configfile:
+        with open(CONFIGFILENAME, 'w') as configfile:
             config.write(configfile)
             useDefault = True
     for keyarg, value in kwargs.items():
         if keyarg == "logger":
             logger = value
-            logger.debug("readINIfile: " + "section=[" + section + "], key=[" + key + "], value=[" + config[section][key] + "]")
+            logger.debug(
+                "readINIfile: " + "section=[" + section + "], key=[" + key + "], value=[" + config[section][key] + "]")
             if useDefault == True:
                 logger.debug("readINIfile **used default value**: " + default)
-        
-
 
     if useThreadLock == True:
         lck.release()
         #logtoconsole("Read Lock Released", fg = "WHITE", bg="MAGENTA", style="BRIGHT")
-    
-    return config[section][key] 
 
-    
+    return config[section][key]
+
+
 def writeINIfile(section, key, value, *args, **kwargs):
 
     useThreadLock = False
-    
+
     # to prevent multiple threads from woking on the file at the same time, we will check
     # the thread lock
     for keyarg, val in kwargs.items():
@@ -223,31 +230,30 @@ def writeINIfile(section, key, value, *args, **kwargs):
             lck.acquire()
             useThreadLock = True
             #logtoconsole("Write Lock Aquired", fg = "WHITE", bg="BLUE", style="BRIGHT")
-        
-
 
     try:
         config = configparser.ConfigParser()
         config.read(CONFIGFILENAME)
-        
-        
+
         try:
-            config[str(section)].update({str(key):str(value)})
+            config[str(section)].update({str(key): str(value)})
         except:
-            config[str(section)] = {str(key):str(value)} # need this line if the key
-                                                         # is not found so it will create it
-        with open(CONFIGFILENAME,'w') as configfile:
+            # need this line if the key
+            config[str(section)] = {str(key): str(value)}
+            # is not found so it will create it
+        with open(CONFIGFILENAME, 'w') as configfile:
             config.write(configfile)
 
         for keyarg, val in kwargs.items():
             if keyarg == "logger":
                 logger = val
-                logger.debug("writeINIfile: " + "section=[" + str(section) + "], key=[" + str(key) + "], value=[" + str(config[section][key]) + "]")
+                logger.debug("writeINIfile: " + "section=[" + str(section) + "], key=[" + str(
+                    key) + "], value=[" + str(config[section][key]) + "]")
 
         if useThreadLock == True:
             lck.release()
             #logtoconsole("Write Lock Released", fg = "WHITE", bg="BLUE", style="BRIGHT")
-            
+
         return True
 
     except:
@@ -256,7 +262,7 @@ def writeINIfile(section, key, value, *args, **kwargs):
             lck.release()
             #logtoconsole("Write Lock Released", fg = "WHITE", bg="BLUE", style="BRIGHT")
         return False
-    
+
 
 def removesectionfromINIfile(section, *args, **kwargs):
 
@@ -270,7 +276,7 @@ def removesectionfromINIfile(section, *args, **kwargs):
             lck.acquire()
             useThreadLock = True
             #logtoconsole("Write Lock Aquired", fg = "WHITE", bg="BLUE", style="BRIGHT")
-    
+
     p = configparser.SafeConfigParser()
     with open(CONFIGFILENAME, "r") as f:
         p.readfp(f)
@@ -283,7 +289,3 @@ def removesectionfromINIfile(section, *args, **kwargs):
     if useThreadLock == True:
         lck.release()
         #logtoconsole("Write Lock Released", fg = "WHITE", bg="BLUE", style="BRIGHT")
-
-
-
-

@@ -40,6 +40,7 @@ class RBP_controller:
 
         defs_common.logtoconsole(
             "Application Start", fg="WHITE", style="BRIGHT")
+
         # self.threads = []
         self.queue = queue.Queue()
 
@@ -393,7 +394,7 @@ class RBP_controller:
 
         message = json.dumps(message)
 
-        self.logger.info("[MQTT Tx] " + message)
+        self.logger.debug("[MQTT Tx] " + message)
         self.MQTTclient.publish("reefberrypi/demo", message)
 
     def get_probelist(self):
@@ -879,8 +880,10 @@ class RBP_controller:
                                 "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num), "{:.2f}".format(dv_AvgCountsFiltered))
                             defs_common.logprobedata(
                                 "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num) + "_", "{:.2f}".format(dv_AvgCountsFiltered))
-                            print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** dv = "
-                                  + "{:.2f}".format(dv_AvgCountsFiltered) + Style.RESET_ALL)
+                            defs_common.logtoconsole("***Logged*** dv = " + "{:.2f}".format(dv_AvgCountsFiltered),
+                                                     fg="CYAN", style="BRIGHT")
+                           # print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** dv = "
+                           #       + "{:.2f}".format(dv_AvgCountsFiltered) + Style.RESET_ALL)
                             self.AppPrefs.mcp3008Dict[ch].LastLogTime = int(
                                 round(time.time()*1000))
                         else:
@@ -921,8 +924,10 @@ class RBP_controller:
                 self.AppPrefs.feedTimeLeft = (int(self.AppPrefs.feed_ModeTotaltime)*1000) - (
                     int(round(time.time()*1000)) - self.AppPrefs.feed_SamplingTimeSeed)
                 if self.AppPrefs.feedTimeLeft <= 0:
-                    print(Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-                          " Feed Mode: " + self.AppPrefs.feed_CurrentMode + " COMPLETE" + Style.RESET_ALL)
+                    defs_common.logtoconsole("Feed Mode: " + self.AppPrefs.feed_CurrentMode + " COMPLETE",
+                                             fg="WHITE", style="BRIGHT")
+                    # print(Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                    #      " Feed Mode: " + self.AppPrefs.feed_CurrentMode + " COMPLETE" + Style.RESET_ALL)
                     self.AppPrefs.feed_CurrentMode = "CANCEL"
                     timestamp = datetime.now()
 
@@ -934,12 +939,20 @@ class RBP_controller:
                     print("Extra time starts at: " + str(self.AppPrefs.feed_ExtraTimeSeed) +
                           " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                 else:
-                    print(Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-                          " Feed Mode: " + self.AppPrefs.feed_CurrentMode +
-                          " (" + self.AppPrefs.feed_ModeTotaltime + "s) " +
-                          "Time Remaining: " +
-                          str(round(self.AppPrefs.feedTimeLeft/1000)) + "s"
-                          + Style.RESET_ALL)
+
+                    defs_common.logtoconsole("Feed Mode: " + self.AppPrefs.feed_CurrentMode +
+                                             " (" + self.AppPrefs.feed_ModeTotaltime + "s) " +
+                                             "Time Remaining: " +
+                                             str(round(
+                                                 self.AppPrefs.feedTimeLeft/1000)) + "s",
+                                             fg="WHITE", style="BRIGHT")
+                    # print(Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                    #      " Feed Mode: " + self.AppPrefs.feed_CurrentMode +
+                    #      " (" + self.AppPrefs.feed_ModeTotaltime + "s) " +
+                    #      "Time Remaining: " +
+                    #      str(round(self.AppPrefs.feedTimeLeft/1000)) + "s"
+                    #      + Style.RESET_ALL)
+
                     timestamp = datetime.now()
 
                     self.broadcastFeedStatus(self.AppPrefs.feed_CurrentMode, round(
