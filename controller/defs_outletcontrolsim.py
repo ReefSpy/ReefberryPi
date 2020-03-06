@@ -321,7 +321,8 @@ def handle_outlet_returnpump(controller, outlet, button_state, pin):
                       + Style.RESET_ALL)
                 #GPIO.output(pin, True)
                 handle_on_off(controller, outlet, pin, PIN_OFF)
-                return "OFF (delay)"
+                # return "OFF (delay)"
+                return "OFF (delay " + str(round(difference)) + "s" + ")"
             else:
                 #GPIO.output(pin, False)
                 handle_on_off(controller, outlet, pin, PIN_ON)
@@ -421,7 +422,8 @@ def handle_outlet_skimmer(controller, outlet, button_state, pin):
                       + Style.RESET_ALL)
                 #GPIO.output(pin, True)
                 handle_on_off(controller, outlet, pin, PIN_OFF)
-                return "OFF (delay)"
+                # return "OFF (delay)"
+                return "OFF (delay " + str(round(difference)) + "s" + ")"
             else:
                 #GPIO.output(pin, False)
                 handle_on_off(controller, outlet, pin, PIN_ON)
