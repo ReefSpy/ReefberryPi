@@ -17,14 +17,13 @@ export class CenterPane extends React.Component {
         <h2 style={columnStyle}>Extras</h2>
         <div style={this.props.styles.Columns}></div>
         <FeedWidget
-          onClick={this.handleClick.bind(this)}
+          onClick={this.props.onFeedWidgetClick}
           feedmode={this.props.feedmode}
+          handleConfigSave={this.props.handleConfigSave}
+          handleConfigLoad={this.props.handleConfigLoad}
+          appConfig={this.props.appConfig}
         ></FeedWidget>
       </div>
     );
-  }
-  handleClick(val) {
-    console.log("Feed Click detected! " + val);
-    this.props.onFeedWidgetClick(val);
   }
 }

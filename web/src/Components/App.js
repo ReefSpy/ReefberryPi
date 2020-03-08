@@ -22,6 +22,7 @@ export default class extends Component {
       outletListArray: [],
       probeValueArray: [],
       primaryChartData: [],
+      appConfig: "",
       feedmode: {
         feedtimer: null,
         timeremaining: null
@@ -39,6 +40,55 @@ export default class extends Component {
       })
     );
   }
+
+  handleConfigSave(section, key, value) {
+    console.log("App got the config change request:", section, key, value);
+    // send request over to server
+
+    /*   client.send(
+      JSON.stringify({
+        rpc_req: "set_writeinifile",
+        section: str(section),
+        key: str(key),
+        value: str(value),
+        uuid: uuid.v4()
+      })
+    ); */
+  }
+
+  /* handleConfigLoad(section, key, defaultVal) {
+    console.log("App got the config load request:", section, key, defaultVal);
+
+    try {
+      client.send(
+        JSON.stringify({
+          rpc_req: "get_readinifile",
+          section: section,
+          key: key,
+          defaultval: defaultVal,
+          uuid: uuid.v4()
+        })
+      );
+    } catch (err) {
+      console.log(err);
+    }
+    return "130"; // temp return val for testing
+  } */
+
+  handleConfigLoad(section, key, defaultVal) {
+    console.log("App got the config load request");
+    try {
+      client.send(
+        JSON.stringify({
+          rpc_req: "get_appconfig",
+          uuid: uuid.v4()
+        })
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   handlePrimaryChartSelect(value) {
     console.log("App got the chart request! " + value);
     this.getChartDataDays();
@@ -138,6 +188,21 @@ export default class extends Component {
         //console.log(msgJSON["probedata"]["probeid"]);
 
         this.handleGraphPageData(msgJSON);
+      }
+      if (msgJSON.hasOwnProperty("readinifile")) {
+        console.log(
+          "Got readinifile value",
+          msgJSON["readinifile"],
+          msgJSON["uuid"]
+        );
+        this.setState({ configReturnVal: msgJSON["uuid"] });
+      }
+      if (msgJSON.hasOwnProperty("get_appconfig")) {
+        console.log("Got appConfig value", msgJSON["uuid"]);
+        console.log(JSON.parse(msgJSON["get_appconfig"]));
+
+        this.setState({ appConfig: JSON.parse(msgJSON["get_appconfig"]) });
+        console.log("feed a is: ", this.state.appConfig["feed_a_time"]);
       }
     };
   }
@@ -337,8 +402,11 @@ export default class extends Component {
               feedmode={this.state.feedmode}
               onOutletWidgetClick={this.handleOutletWidgetClick.bind(this)}
               onFeedWidgetClick={this.handleFeedWidgetClick.bind(this)}
+              onConfigSave={this.handleConfigSave.bind(this)}
+              onConfigLoad={this.handleConfigLoad.bind(this)}
               onPrimaryChartSelect={this.handlePrimaryChartSelect.bind(this)}
               primaryChartData={this.state.primaryChartData}
+              appConfig={this.state.appConfig}
             />
           </div>
         </div>

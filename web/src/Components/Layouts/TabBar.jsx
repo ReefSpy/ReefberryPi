@@ -98,6 +98,9 @@ export default props => (
             feedmode={props.feedmode}
             onOutletWidgetClick={props.onOutletWidgetClick}
             onFeedWidgetClick={props.onFeedWidgetClick}
+            handleConfigSave={props.onConfigSave}
+            handleConfigLoad={props.onConfigLoad}
+            appConfig={props.appConfig}
           />
         </Tab.Pane>
         <Tab.Pane eventKey="graphs">

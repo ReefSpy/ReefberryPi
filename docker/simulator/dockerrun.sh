@@ -1,6 +1,7 @@
-docker run -it --rm \
+docker run -d --rm \
 --name rbp_simulator \
 --network="host" \
 -v ~/RBPstack/simulator:/usr/src/reefberrypi \
 -w /usr/src/reefberrypi \
-python:3 \
+reefspy/reefberrypi \
+python3 RBP_Simulator.py

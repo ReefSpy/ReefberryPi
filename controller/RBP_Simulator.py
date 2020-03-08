@@ -32,6 +32,7 @@ import ph_sensor
 # import mcp3008
 import json
 import defs_outletcontrolsim
+import jsonpickle
 
 
 class RBP_controller:
@@ -48,7 +49,7 @@ class RBP_controller:
 
         LOG_FILEDIR = "logs"
         LOG_FILENAME = "RBP_controller.log"
-        LOGLEVEL_CONSOLE = logging.INFO  # DEBUG, INFO, ERROR
+        LOGLEVEL_CONSOLE = logging.DEBUG  # DEBUG, INFO, ERROR
         LOGLEVEL_LOGFILE = logging.INFO
 
         self.initialize_logger(LOG_FILEDIR, LOG_FILENAME,
@@ -59,6 +60,8 @@ class RBP_controller:
         # read prefs
         self.AppPrefs = cls_Preferences.AppPrefs(self)
         self.refreshPrefs = False
+
+        #AppPrefsJSON = jsonpickle.encode(self.AppPrefs)
 
         self.INFLUXDB_HOST = self.AppPrefs.influxdb_host
         self.INFLUXDB_PORT = self.AppPrefs.influxdb_port
@@ -207,6 +210,58 @@ class RBP_controller:
             if self.AppPrefs.feed_CurrentMode == "CANCEL":
                 self.broadcastFeedStatus(
                     self.AppPrefs.feed_CurrentMode, "0", "")
+
+        elif str(body["rpc_req"]) == "set_writeinifile":
+            # write values to the configuration file
+            defs_common.logtoconsole(
+                "set_writeinifile " + str(body), fg="GREEN", style="BRIGHT")
+            self.logger.debug("set_writeinifile " + str(body))
+
+            changerequest = {}
+            changerequest["section"] = str(body["section"])
+            changerequest["key"] = str(body["key"])
+            changerequest["value"] = str(body["value"])
+            self.queue.put(changerequest)
+
+        elif str(body["rpc_req"]) == "get_readinifile":
+            # read values from the configuration file
+            defs_common.logtoconsole(
+                "get_readinifile " + str(body), fg="GREEN", style="BRIGHT")
+            self.logger.debug("get_readinifile " + str(body))
+
+            # do the read here
+            returnval = defs_common.readINIfile(str(body["section"]), str(body["key"]), str(
+                body["defaultval"]), lock=self.threadlock, logger=self.logger)
+
+            # respond with result here...
+            response = {
+                "readinifile": returnval,
+                "uuid": str(body["uuid"])
+            }
+
+            response = json.dumps(response)
+            self.logger.debug(str(response))
+
+        elif str(body["rpc_req"]) == "get_appconfig":
+            # read values from the configuration file
+            defs_common.logtoconsole(
+                "get_appconfig " + str(body), fg="GREEN", style="BRIGHT")
+            self.logger.debug("get_appconfig " + str(body))
+
+            # do the read here
+            # returnval = defs_common.readINIfile(str(body["section"]), str(body["key"]), str(
+            #    body["defaultval"]), lock=self.threadlock, logger=self.logger)
+
+            returnval = jsonpickle.encode(self.AppPrefs)
+
+            # respond with result here...
+            response = {
+                "get_appconfig": returnval,
+                "uuid": str(body["uuid"])
+            }
+
+            response = json.dumps(response)
+            self.logger.debug(str(response))
 
         try:
             if response != "":
@@ -394,7 +449,7 @@ class RBP_controller:
 
         message = json.dumps(message)
 
-        self.logger.debug("[MQTT Tx] " + message)
+        #self.logger.debug("[MQTT Tx] " + message)
         self.MQTTclient.publish("reefberrypi/demo", message)
 
     def get_probelist(self):
@@ -979,12 +1034,12 @@ class RBP_controller:
                                            status,
                                            "")
 
-                self.logger.debug("int_outlet_" + str(x) +
-                                  " [label: " + self.AppPrefs.outletDict["int_outlet_" + str(x)].outletname +
-                                  "] [type: " + self.AppPrefs.outletDict["int_outlet_" + str(x)].control_type +
-                                  "] [button: " + self.AppPrefs.outletDict["int_outlet_" + str(x)].button_state +
-                                  "] [status: " + str(status) + "]" +
-                                  " [pin: " + "0" + "]")
+              #  self.logger.debug("int_outlet_" + str(x) +
+              #                    " [label: " + self.AppPrefs.outletDict["int_outlet_" + str(x)].outletname +
+              #                    "] [type: " + self.AppPrefs.outletDict["int_outlet_" + str(x)].control_type +
+              #                    "] [button: " + self.AppPrefs.outletDict["int_outlet_" + str(x)].button_state +
+              #                    "] [status: " + str(status) + "]" +
+              #                    " [pin: " + "0" + "]")
 
             ##########################################################################################
             # update configuration file with any change requests sitting in the queue
@@ -1005,7 +1060,7 @@ class RBP_controller:
                 self.refreshPrefs = True
                 # if a new value is written to the config, we also have to load it into memory into our
                 # AppPref class so this new setting will be used in the next cycle
-                print(str(updatedPrefs))
+                self.logger.info(str(updatedPrefs))
                 # update the section here...
                 for sec in updatedPrefs:
                     self.AppPrefs.reloadPrefSection(self, sec)

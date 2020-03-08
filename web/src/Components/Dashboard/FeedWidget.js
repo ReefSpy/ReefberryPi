@@ -164,6 +164,10 @@ export class FeedWidget extends React.Component {
           onHide={this.close}
           backdrop={"static"}
           onClose={this.handleClose.bind(this)}
+          onShow={this.handleShow.bind(this)}
+          onSave={this.handleConfigSave.bind(this)}
+          handleConfigLoad={this.props.handleConfigLoad}
+          appConfig={this.props.appConfig}
         ></FeedConfig>
       </div>
     );
@@ -171,6 +175,16 @@ export class FeedWidget extends React.Component {
 
   handleClose() {
     console.log("Close detected!");
+    this.close();
+  }
+
+  handleShow() {
+    console.log("Feed config shown");
+  }
+
+  handleConfigSave(section, key, value) {
+    console.log("Save detected!", section, key, value);
+    this.props.handleConfigSave(section, key, value);
     this.close();
   }
 }

@@ -30,7 +30,7 @@ if (!fs.existsSync("./config/config.ini")) {
     console.log(getTimeStamp(), "Configuration file created successfully.");
   });
 }
-while(!fs.existsSync("./config/config.ini")){
+while (!fs.existsSync("./config/config.ini")) {
   // wait for file to be created...
 }
 
@@ -201,6 +201,12 @@ function start() {
         } else if (msg.toString().includes(["status_feedmode"])) {
           //console.log(getTimeStamp(), clients[client].clientID, msg.toString());
           clients[client].sendUTF(msg);
+        } else if (msg.toString().includes(["get_readinifile"])) {
+          console.log(getTimeStamp(), clients[client].clientID, msg.toString());
+          clients[client.sendUTF(msg)];
+        } else if (msg.toString().includes(["get_appconfig"])) {
+          console.log(getTimeStamp(), clients[client].clientID, msg.toString());
+          clients[client.sendUTF(msg)];
         }
 
         // console.log(getTimeStamp(), clients[client].clientID, "outletstatus");

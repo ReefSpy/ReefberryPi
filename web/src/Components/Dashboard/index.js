@@ -38,25 +38,6 @@ export class Dashboard extends React.Component {
   handleOutletWidgetClick(val, outletid) {
     console.log("Dashboard got the click! " + val + " " + outletid);
     this.props.onOutletWidgetClick(val, outletid);
-    /* var outletListArrayClone = this.state.outletListArray.slice(0);
-        for (var outletClone in outletListArrayClone) {
-          //console.log(outletListArrayClone[outletClone]);
-          if (
-            outletListArrayClone[outletClone]["outletid"] ===
-            outletid
-          ) {
-            console.log("I found a match")
-           
-            outletListArrayClone[outletClone]["buttonstate"] =
-              buttonStates[val];
-            
-            this.setState({ outletListArray: outletListArrayClone });
-          }
-        }*/
-  }
-  handleFeedWidgetClick(val) {
-    console.log("Dashboard got the feed click! " + val);
-    this.props.onFeedWidgetClick(val);
   }
 
   render() {
@@ -82,7 +63,10 @@ export class Dashboard extends React.Component {
             styles={styles}
             feedmode={this.props.feedmode}
             onOutletWidgetClick={this.handleOutletWidgetClick.bind(this)}
-            onFeedWidgetClick={this.handleFeedWidgetClick.bind(this)}
+            onFeedWidgetClick={this.props.onFeedWidgetClick}
+            handleConfigSave={this.props.handleConfigSave}
+            handleConfigLoad={this.props.handleConfigLoad}
+            appConfig={this.props.appConfig}
           />
         </Row>
       </div>
