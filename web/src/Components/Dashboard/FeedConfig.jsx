@@ -10,12 +10,23 @@ export default class OutletConfig extends React.Component {
     super(props);
     this.state = {
       showModal: this.props.show,
-      feed_a: "",
-      feed_b: "",
-      feed_c: "",
-      feed_d: ""
+      feed_a: null,
+      feed_b: null,
+      feed_c: null,
+      feed_d: null
     };
+    this.handleInputChange = this.handleInputChange.bind(this);
   }
+  handleInputChange(event) {
+    const target = event.target;
+    const value = target.type === "checkbox" ? target.checked : target.value;
+    const name = target.name;
+
+    this.setState({
+      [name]: value
+    });
+  }
+
   getInitialState = () => {
     return { showModal: false };
   };
@@ -30,8 +41,15 @@ export default class OutletConfig extends React.Component {
     this.setState({ feed_b: this.getValue("feed_timers", "feed_b", "60") });
     this.setState({ feed_c: this.getValue("feed_timers", "feed_c", "60") });
     this.setState({ feed_d: this.getValue("feed_timers", "feed_d", "60") }); */
+    console.log("load feed config form");
     console.log(this.props.appConfig);
-    this.getValue();
+    //this.getValue();
+
+    this.props.handleConfigLoad();
+    this.setState({ feed_a: this.props.appConfig["feed_a_time"] });
+    this.setState({ feed_b: this.props.appConfig["feed_b_time"] });
+    this.setState({ feed_c: this.props.appConfig["feed_c_time"] });
+    this.setState({ feed_d: this.props.appConfig["feed_d_time"] });
     this.props.onShow();
   };
 
@@ -41,16 +59,26 @@ export default class OutletConfig extends React.Component {
 
   save = () => {
     this.setState({ showModal: false });
-    this.props.onSave("blah", "blah", "blah");
+    this.props.onSave("feed_timers", "feed_a", this.state.feed_a);
+    this.props.onSave("feed_timers", "feed_b", this.state.feed_b);
+    this.props.onSave("feed_timers", "feed_c", this.state.feed_c);
+    this.props.onSave("feed_timers", "feed_d", this.state.feed_d);
+    console.log(
+      "save feed config form",
+      this.state.feed_a,
+      this.state.feed_b,
+      this.state.feed_c,
+      this.state.feed_d
+    );
   };
 
-  getValue = () => {
-    console.log("getValue");
-    this.props.handleConfigLoad();
-  };
+  //getValue = () => {
+  //  console.log("getValue");
+  //  this.props.handleConfigLoad();
+  //};
 
   componentWillUpdate() {
-    //console.log("componentWillUpdate", this.props.configReturnVal);
+    //console.log("componentWillUpdate", this.props.appConfig["feed_a_time"]);
   }
 
   render() {
@@ -79,12 +107,14 @@ export default class OutletConfig extends React.Component {
                 <td>
                   <InputGroup>
                     <Form.Control
+                      name="feed_a"
                       as="input"
                       type="number"
                       min="0"
                       max="3600"
                       step="1"
-                      defaultValue={this.props.appConfig["feed_a_time"]}
+                      defaultValue={this.state.feed_a}
+                      onChange={this.handleInputChange}
                     />
                   </InputGroup>
                 </td>
@@ -94,12 +124,14 @@ export default class OutletConfig extends React.Component {
                 <td>
                   <InputGroup>
                     <Form.Control
+                      name="feed_b"
                       as="input"
                       type="number"
                       min="0"
                       max="3600"
                       step="1"
-                      defaultValue={this.props.appConfig["feed_b_time"]}
+                      defaultValue={this.state.feed_b}
+                      onChange={this.handleInputChange}
                     />
                   </InputGroup>
                 </td>
@@ -109,12 +141,14 @@ export default class OutletConfig extends React.Component {
                 <td>
                   <InputGroup>
                     <Form.Control
+                      name="feed_c"
                       as="input"
                       type="number"
                       min="0"
                       max="3600"
                       step="1"
-                      defaultValue={this.props.appConfig["feed_c_time"]}
+                      defaultValue={this.state.feed_c}
+                      onChange={this.handleInputChange}
                     />
                   </InputGroup>
                 </td>
@@ -124,12 +158,14 @@ export default class OutletConfig extends React.Component {
                 <td>
                   <InputGroup>
                     <Form.Control
+                      name="feed_d"
                       as="input"
                       type="number"
                       min="0"
                       max="3600"
                       step="1"
-                      defaultValue={this.props.appConfig["feed_d_time"]}
+                      defaultValue={this.state.feed_d}
+                      onChange={this.handleInputChange}
                     />
                   </InputGroup>
                 </td>
@@ -137,7 +173,6 @@ export default class OutletConfig extends React.Component {
             </tbody>
           </Table>
         </Modal.Body>
-        <h1>{this.props.appConfig["feed_d_time"]}</h1>
         <Modal.Footer>
           <Button variant="secondary" onClick={this.close}>
             Cancel

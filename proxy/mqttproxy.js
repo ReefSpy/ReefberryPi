@@ -207,6 +207,9 @@ function start() {
         } else if (msg.toString().includes(["get_appconfig"])) {
           console.log(getTimeStamp(), clients[client].clientID, msg.toString());
           clients[client.sendUTF(msg)];
+        } else if (msg.toString().includes(["set_writeinifile"])) {
+          console.log(getTimeStamp(), clients[client].clientID, msg.toString());
+          clients[client.sendUTF(msg)];
         }
 
         // console.log(getTimeStamp(), clients[client].clientID, "outletstatus");

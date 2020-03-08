@@ -1065,6 +1065,21 @@ class RBP_controller:
                 for sec in updatedPrefs:
                     self.AppPrefs.reloadPrefSection(self, sec)
 
+               # # if a change was made, broadcast it out...
+               # returnval = jsonpickle.encode(self.AppPrefs)
+
+               # # respond with result here...
+               # response = {
+               #     "get_appconfig": returnval,
+               #     "uuid": ""
+               # }
+               # response = json.dumps(response)
+               # self.logger.debug(str(response))
+
+               # if response != "":
+               #     self.logger.info("[MQTT Tx] " + response)
+               #     self.MQTTclient.publish("reefberrypi/demo", response)
+
             ##########################################################################################
             # pause to slow down the loop
             ##########################################################################################

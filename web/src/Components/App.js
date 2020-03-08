@@ -45,15 +45,18 @@ export default class extends Component {
     console.log("App got the config change request:", section, key, value);
     // send request over to server
 
-    /*   client.send(
+    client.send(
       JSON.stringify({
         rpc_req: "set_writeinifile",
-        section: str(section),
-        key: str(key),
-        value: str(value),
+        section: section,
+        key: key,
+        value: value,
         uuid: uuid.v4()
       })
-    ); */
+    );
+    // reload config after a short delay to give time to process on
+    // controller, then we will grab new values again
+    setTimeout(this.handleConfigLoad, 1000);
   }
 
   /* handleConfigLoad(section, key, defaultVal) {
@@ -75,7 +78,7 @@ export default class extends Component {
     return "130"; // temp return val for testing
   } */
 
-  handleConfigLoad(section, key, defaultVal) {
+  handleConfigLoad() {
     console.log("App got the config load request");
     try {
       client.send(
@@ -134,6 +137,7 @@ export default class extends Component {
       client.send(
         JSON.stringify({ rpc_req: "get_outletlist", uuid: uuid.v4() })
       );
+      this.handleConfigLoad();
     };
     client.onmessage = message => {
       //console.log(message);
@@ -200,9 +204,8 @@ export default class extends Component {
       if (msgJSON.hasOwnProperty("get_appconfig")) {
         console.log("Got appConfig value", msgJSON["uuid"]);
         console.log(JSON.parse(msgJSON["get_appconfig"]));
-
         this.setState({ appConfig: JSON.parse(msgJSON["get_appconfig"]) });
-        console.log("feed a is: ", this.state.appConfig["feed_a_time"]);
+        console.log("feed a:", this.state.appConfig["feed_a_time"]);
       }
     };
   }
