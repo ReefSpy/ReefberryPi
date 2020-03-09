@@ -7,6 +7,5 @@ docker run -d \
 -v ~/RBPstack/rabbitmq:/var/lib/rabbitmq \
 -e RABBITMQ_DEFAULT_USER=pi \
 -e RABBITMQ_DEFAULT_PASS=reefberry \
---name rbp_rabbitmq reefspy/rabbitmq \
-node mqttproxt.js
+--name rbp_rabbitmq reefspy/rabbitmq 
 
