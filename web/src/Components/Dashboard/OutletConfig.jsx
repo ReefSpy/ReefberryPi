@@ -13,7 +13,7 @@ import "../Layouts/datetime.css";
 export default class OutletConfig extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { showModal: this.props.show, controlType: null };
+    this.state = { showModal: this.props.show, controlType: null , control_type: null} ;
   }
   getInitialState = () => {
     return { showModal: false };
@@ -26,28 +26,46 @@ export default class OutletConfig extends React.Component {
 
   open = () => {
     this.setState({ showModal: true });
+  
   };
 
   onChangeControlType(e) {
     //console.log("Control type changed");
     //console.log(e.target.value);
-    this.setState({ controlType: e.target.value });
-
-    if (e.target.value === "always") {
-      this.setState({ controlType: <AlwaysConfig /> });
-    } else if (e.target.value === "heater") {
-      this.setState({ controlType: <HeaterConfig /> });
-    } else if (e.target.value === "light") {
-      this.setState({ controlType: <LightConfig /> });
-    } else if (e.target.value === "skimmer") {
-      this.setState({ controlType: <SkimmerConfig /> });
-    } else if (e.target.value === "returnpump") {
-      this.setState({ controlType: <ReturnConfig /> });
-    } else if (e.target.value === "phcontrol") {
-      this.setState({ controlType: <PhConfig /> });
-    }
+    this.selectFromDropDownList(e.target.value)
+    console.log(this.props)
   }
 
+  selectFromDropDownList (selection){
+    if (selection === "Always") {
+      this.setState({ controlType: <AlwaysConfig /> });
+      this.setState({control_type: "Always"})
+    } else if (selection === "Heater") {
+      this.setState({ controlType: <HeaterConfig /> });
+      this.setState({control_type: "Heater"})
+    } else if (selection === "Light") {
+      this.setState({ controlType: <LightConfig /> });
+      this.setState({control_type: "Light"})
+    } else if (selection === "Skimmer") {
+      this.setState({ controlType: <SkimmerConfig /> });
+      this.setState({control_type: "Skimmer"})
+    } else if (selection === "Return Pump") {
+      this.setState({ controlType: <ReturnConfig /> });
+      this.setState({control_type: "Return Pump"})
+    } else if (selection=== "pH Control") {
+      this.setState({ controlType: <PhConfig /> });
+      this.setState({control_type: "pH Control"})
+    }
+  
+  }
+componentWillMount(){
+  console.log("The outlet control type is:", this.props.outlet["control_type"])
+  console.log(this.props)
+  //this.setState({ controlType:this.props.outlet["control_type"]});
+  this.setState({ control_type:this.props.outlet.control_type});
+
+  this.selectFromDropDownList(this.props.outlet["control_type"])
+}
   render() {
     //console.log("config click");
     //console.log(this.props.show);
@@ -67,7 +85,7 @@ export default class OutletConfig extends React.Component {
           <Form>
             <Form.Group controlId="formOutletName">
               <Form.Label>Name</Form.Label>
-              <Form.Control type="text" placeholder={this.props.outletname} />
+              <Form.Control type="text" defaultValue={this.props.outletname} placeholder="Unnamed" />
             </Form.Group>
 
             <Form.Group controlId="formControlType">
@@ -75,13 +93,14 @@ export default class OutletConfig extends React.Component {
               <Form.Control
                 as="select"
                 onChange={this.onChangeControlType.bind(this)}
+                value = {this.state.control_type}
               >
-                <option value="always">Always</option>
-                <option value="heater">Heater</option>
-                <option value="light">Light</option>
-                <option value="returnpump">Return Pump</option>
-                <option value="skimmer">Skimmer</option>
-                <option value="phcontrol">pH Control</option>
+                <option value="Always">Always</option>
+                <option value="Heater">Heater</option>
+                <option value="Light">Light</option>
+                <option value="Return Pump">Return Pump</option>
+                <option value="Skimmer">Skimmer</option>
+                <option value="pH Control">pH Control</option>
               </Form.Control>
             </Form.Group>
 

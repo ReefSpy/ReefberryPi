@@ -17,6 +17,7 @@ export class RightPane extends React.Component {
           {this.props.outlets.map(outlet => (
             <OutletWidget
               key={outlet.outletid}
+              outlet={outlet}
               outletid={outlet.outletid}
               outletname={outlet.outletname}
               statusmsg={outlet.statusmsg}

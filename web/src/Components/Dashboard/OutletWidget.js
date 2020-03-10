@@ -107,6 +107,8 @@ export class OutletWidget extends React.Component {
                 onClose={this.handleClose.bind(this)}
                 outletname={this.props.outletname}
                 outletid={this.props.outletid}
+                outlettype={this.props.outlettype}
+                outlet={this.props.outlet}
               ></OutletConfig>
 
               <body className={outletStatusStyle}>{this.props.statusmsg}</body>
