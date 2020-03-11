@@ -16,7 +16,9 @@ export default class OutletConfig extends React.Component {
     this.state = {
       showModal: this.props.show,
       controlType: null,
-      control_type: null
+      control_type: null,
+      enable_log: null,
+
     };
   }
   getInitialState = () => {
@@ -30,13 +32,14 @@ export default class OutletConfig extends React.Component {
 
   open = () => {
     this.setState({ showModal: true });
+
   };
 
   onChangeControlType(e) {
     //console.log("Control type changed");
     //console.log(e.target.value);
     this.selectFromDropDownList(e.target.value);
-    console.log(this.props);
+
   }
 
   selectFromDropDownList(selection) {
@@ -59,16 +62,19 @@ export default class OutletConfig extends React.Component {
       this.setState({ controlType: <PhConfig /> });
       this.setState({ control_type: "pH Control" });
     }
+    console.log(this.props.appConfig) 
   }
   componentWillMount() {
     console.log(
       "The outlet control type is:",
-      this.props.outlet["control_type"]
+      this.props.outlet["control_type"],
+      this.props.outletid,
+      
+
     );
     console.log(this.props);
     //this.setState({ controlType:this.props.outlet["control_type"]});
     this.setState({ control_type: this.props.outlet.control_type });
-
     this.selectFromDropDownList(this.props.outlet["control_type"]);
   }
   render() {
