@@ -13,7 +13,11 @@ import "../Layouts/datetime.css";
 export default class OutletConfig extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { showModal: this.props.show, controlType: null , control_type: null} ;
+    this.state = {
+      showModal: this.props.show,
+      controlType: null,
+      control_type: null
+    };
   }
   getInitialState = () => {
     return { showModal: false };
@@ -26,46 +30,47 @@ export default class OutletConfig extends React.Component {
 
   open = () => {
     this.setState({ showModal: true });
-  
   };
 
   onChangeControlType(e) {
     //console.log("Control type changed");
     //console.log(e.target.value);
-    this.selectFromDropDownList(e.target.value)
-    console.log(this.props)
+    this.selectFromDropDownList(e.target.value);
+    console.log(this.props);
   }
 
-  selectFromDropDownList (selection){
+  selectFromDropDownList(selection) {
     if (selection === "Always") {
       this.setState({ controlType: <AlwaysConfig /> });
-      this.setState({control_type: "Always"})
+      this.setState({ control_type: "Always" });
     } else if (selection === "Heater") {
       this.setState({ controlType: <HeaterConfig /> });
-      this.setState({control_type: "Heater"})
+      this.setState({ control_type: "Heater" });
     } else if (selection === "Light") {
       this.setState({ controlType: <LightConfig /> });
-      this.setState({control_type: "Light"})
+      this.setState({ control_type: "Light" });
     } else if (selection === "Skimmer") {
       this.setState({ controlType: <SkimmerConfig /> });
-      this.setState({control_type: "Skimmer"})
+      this.setState({ control_type: "Skimmer" });
     } else if (selection === "Return Pump") {
       this.setState({ controlType: <ReturnConfig /> });
-      this.setState({control_type: "Return Pump"})
-    } else if (selection=== "pH Control") {
+      this.setState({ control_type: "Return Pump" });
+    } else if (selection === "pH Control") {
       this.setState({ controlType: <PhConfig /> });
-      this.setState({control_type: "pH Control"})
+      this.setState({ control_type: "pH Control" });
     }
-  
   }
-componentWillMount(){
-  console.log("The outlet control type is:", this.props.outlet["control_type"])
-  console.log(this.props)
-  //this.setState({ controlType:this.props.outlet["control_type"]});
-  this.setState({ control_type:this.props.outlet.control_type});
+  componentWillMount() {
+    console.log(
+      "The outlet control type is:",
+      this.props.outlet["control_type"]
+    );
+    console.log(this.props);
+    //this.setState({ controlType:this.props.outlet["control_type"]});
+    this.setState({ control_type: this.props.outlet.control_type });
 
-  this.selectFromDropDownList(this.props.outlet["control_type"])
-}
+    this.selectFromDropDownList(this.props.outlet["control_type"]);
+  }
   render() {
     //console.log("config click");
     //console.log(this.props.show);
@@ -85,7 +90,11 @@ componentWillMount(){
           <Form>
             <Form.Group controlId="formOutletName">
               <Form.Label>Name</Form.Label>
-              <Form.Control type="text" defaultValue={this.props.outletname} placeholder="Unnamed" />
+              <Form.Control
+                type="text"
+                defaultValue={this.props.outletname}
+                placeholder="Unnamed"
+              />
             </Form.Group>
 
             <Form.Group controlId="formControlType">
@@ -93,7 +102,7 @@ componentWillMount(){
               <Form.Control
                 as="select"
                 onChange={this.onChangeControlType.bind(this)}
-                value = {this.state.control_type}
+                value={this.state.control_type}
               >
                 <option value="Always">Always</option>
                 <option value="Heater">Heater</option>
