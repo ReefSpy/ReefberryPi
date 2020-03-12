@@ -17,12 +17,19 @@ export default class OutletConfig extends React.Component {
       showModal: this.props.show,
       controlType: null,
       control_type: null,
-      enable_log: null,
-
+      enable_log: null
     };
   }
   getInitialState = () => {
     return { showModal: false };
+  };
+
+  getTrueFalse = val => {
+    if (val == "True") {
+      return true;
+    } else {
+      return false;
+    }
   };
 
   close = () => {
@@ -32,14 +39,48 @@ export default class OutletConfig extends React.Component {
 
   open = () => {
     this.setState({ showModal: true });
+  };
 
+  show = () => {
+    console.log("Outlig Config Show");
+    console.log("props", this.props.appConfig);
+    console.log(
+      "enable log",
+      this.props.outletid,
+      this.props.appConfig["outletDict"][this.props.outletid]["enable_log"]
+    );
+
+    this.setState({
+      enable_log: this.props.appConfig["outletDict"][this.props.outletid][
+        "enable_log"
+      ]
+    });
+    this.setState({
+      control_type: this.props.appConfig["outletDict"][this.props.outletid][
+        "control_type"
+      ]
+    });
   };
 
   onChangeControlType(e) {
     //console.log("Control type changed");
     //console.log(e.target.value);
     this.selectFromDropDownList(e.target.value);
+  }
 
+  onChangeEnableLog() {
+    this.setState(this.setEnableLog);
+  }
+
+  setEnableLog(state, props) {
+    if (state.enable_log == "True") {
+      state.enable_log = "False";
+      console.log(this.props.outletid, "enable_log set to", state.enable_log);
+    } else {
+      state.enable_log = "True";
+      console.log(this.props.outletid, "enable_log set to", state.enable_log);
+    }
+    return { ...state, enable_log: state.enable_log };
   }
 
   selectFromDropDownList(selection) {
@@ -62,15 +103,12 @@ export default class OutletConfig extends React.Component {
       this.setState({ controlType: <PhConfig /> });
       this.setState({ control_type: "pH Control" });
     }
-    console.log(this.props.appConfig) 
   }
   componentWillMount() {
     console.log(
       "The outlet control type is:",
       this.props.outlet["control_type"],
-      this.props.outletid,
-      
-
+      this.props.outletid
     );
     console.log(this.props);
     //this.setState({ controlType:this.props.outlet["control_type"]});
@@ -83,6 +121,7 @@ export default class OutletConfig extends React.Component {
     return (
       <Modal
         show={this.props.show}
+        onShow={this.show}
         onHide={this.close}
         backdrop={"static"}
         centered
@@ -120,7 +159,12 @@ export default class OutletConfig extends React.Component {
             </Form.Group>
 
             <Form.Group controlId="formEnableLogging">
-              <Form.Check type="checkbox" label="Enable Logging" />
+              <Form.Check
+                type="checkbox"
+                label="Enable Logging"
+                checked={this.getTrueFalse(this.state.enable_log)}
+                onChange={this.onChangeEnableLog.bind(this)}
+              />
             </Form.Group>
             <hr />
             <Form.Group controlId="formConfiguration">
