@@ -60,6 +60,9 @@ export default class OutletConfig extends React.Component {
         "control_type"
       ]
     });
+    this.selectFromDropDownList(
+      this.props.appConfig["outletDict"][this.props.outletid]["control_type"]
+    );
   };
 
   onChangeControlType(e) {
@@ -97,7 +100,14 @@ export default class OutletConfig extends React.Component {
       this.setState({ controlType: <SkimmerConfig /> });
       this.setState({ control_type: "Skimmer" });
     } else if (selection === "Return Pump") {
-      this.setState({ controlType: <ReturnConfig /> });
+      this.setState({
+        controlType: (
+          <ReturnConfig
+            appConfig={this.props.appConfig}
+            outletid={this.props.outletid}
+          />
+        )
+      });
       this.setState({ control_type: "Return Pump" });
     } else if (selection === "pH Control") {
       this.setState({ controlType: <PhConfig /> });
@@ -345,8 +355,35 @@ class ReturnConfig extends React.Component {
     super(props);
     this.state = {};
   }
+  componentWillMount() {
+    try {
+      console.log("Outlet Widget ReturnConfig");
+      console.log("appConfig", this.props.appConfig);
+      console.log("outletid", this.props.outletid);
+      console.log(
+        "return_enable_feed_a",
+        this.props.appConfig["outletDict"][this.props.outletid][
+          "return_enable_feed_a"
+        ]
+      );
+      console.log(
+        "return_feed_delay_a",
+        this.props.appConfig["outletDict"][this.props.outletid][
+          "return_feed_delay_a"
+        ]
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   render() {
-    return <FeedTimerConfig></FeedTimerConfig>;
+    return (
+      <FeedTimerConfig
+        appConfig={this.props.appConfig}
+        outletid={this.props.outletid}
+      ></FeedTimerConfig>
+    );
   }
 }
 
@@ -422,11 +459,75 @@ class PhConfig extends React.Component {
 class FeedTimerConfig extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      return_enable_feed_a: null,
+      return_feed_delay_a: null,
+      return_enable_feed_b: null,
+      return_feed_delay_b: null,
+      return_enable_feed_c: null,
+      return_feed_delay_c: null,
+      return_enable_feed_d: null,
+      return_feed_delay_d: null
+    };
+  }
+  componentDidMount() {}
+
+  loadvals() {
+    try {
+      this.setState({
+        return_enable_feed_a: this.props.appConfig["outletDict"][
+          this.props.outletid
+        ]["return_enable_feed_a"]
+      });
+
+      this.setState({
+        return_feed_delay_a: this.props.appConfig["outletDict"][
+          this.props.outletid
+        ]["return_feed_delay_a"]
+      });
+
+      this.setState({
+        return_enable_feed_b: this.props.appConfig["outletDict"][
+          this.props.outletid
+        ]["return_enable_feed_b"]
+      });
+
+      this.setState({
+        return_feed_delay_b: this.props.appConfig["outletDict"][
+          this.props.outletid
+        ]["return_feed_delay_b"]
+      });
+
+      this.setState({
+        return_enable_feed_c: this.props.appConfig["outletDict"][
+          this.props.outletid
+        ]["return_enable_feed_c"]
+      });
+
+      this.setState({
+        return_feed_delay_c: this.props.appConfig["outletDict"][
+          this.props.outletid
+        ]["return_feed_delay_c"]
+      });
+
+      this.setState({
+        return_enable_feed_d: this.props.appConfig["outletDict"][
+          this.props.outletid
+        ]["return_enable_feed_d"]
+      });
+
+      this.setState({
+        return_feed_delay_d: this.props.appConfig["outletDict"][
+          this.props.outletid
+        ]["return_feed_delay_d"]
+      });
+    } catch (err) {
+      console.log(err);
+    }
   }
   render() {
     return (
-      <div>
+      <div onLoad={this.loadvals()}>
         <Table striped bordered size="sm">
           <thead>
             <tr>
@@ -444,11 +545,13 @@ class FeedTimerConfig extends React.Component {
               <td>
                 <InputGroup>
                   <Form.Control
+                    name="return_feed_delay_a"
                     as="input"
                     type="number"
                     min="0"
                     max="3600"
                     step="1"
+                    defaultValue={this.state.return_feed_delay_a}
                   />
                 </InputGroup>
               </td>
@@ -461,11 +564,13 @@ class FeedTimerConfig extends React.Component {
               <td>
                 <InputGroup>
                   <Form.Control
+                    name="return_feed_delay_b"
                     as="input"
                     type="number"
                     min="0"
                     max="3600"
                     step="1"
+                    defaultValue={this.state.return_feed_delay_b}
                   />
                 </InputGroup>
               </td>
@@ -479,11 +584,13 @@ class FeedTimerConfig extends React.Component {
               <td>
                 <InputGroup>
                   <Form.Control
+                    name="return_feed_delay_c"
                     as="input"
                     type="number"
                     min="0"
                     max="3600"
                     step="1"
+                    defaultValue={this.state.return_feed_delay_c}
                   />
                 </InputGroup>
               </td>
@@ -496,11 +603,13 @@ class FeedTimerConfig extends React.Component {
               <td>
                 <InputGroup>
                   <Form.Control
+                    name="return_feed_delay_d"
                     as="input"
                     type="number"
                     min="0"
                     max="3600"
                     step="1"
+                    defaultValue={this.state.return_feed_delay_d}
                   />
                 </InputGroup>
               </td>
