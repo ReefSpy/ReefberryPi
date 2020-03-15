@@ -11,7 +11,7 @@ export class AboutPage extends React.Component {
         <body>Reefberry Pi DIY aquarium controller</body>
         <br></br>
         <img
-          src={require("../Layouts/img/reefberry-pi-logo.svg")}
+          src={require("../Layouts/img/reefberry-pi-logo-reefspy.svg")}
           alt="logo"
           hspace="8"
         />

@@ -10,6 +10,14 @@ import Table from "react-bootstrap/Table";
 import "../Layouts/rbp.css";
 import "../Layouts/datetime.css";
 
+var getTrueFalse = val => {
+  if (val === "True") {
+    return true;
+  } else {
+    return false;
+  }
+};
+
 export default class OutletConfig extends React.Component {
   constructor(props) {
     super(props);
@@ -24,14 +32,6 @@ export default class OutletConfig extends React.Component {
     return { showModal: false };
   };
 
-  getTrueFalse = val => {
-    if (val == "True") {
-      return true;
-    } else {
-      return false;
-    }
-  };
-
   close = () => {
     this.setState({ showModal: false });
     this.props.onClose();
@@ -42,7 +42,7 @@ export default class OutletConfig extends React.Component {
   };
 
   show = () => {
-    console.log("Outlig Config Show");
+    console.log("Outlet Config Show");
     console.log("props", this.props.appConfig);
     console.log(
       "enable log",
@@ -76,7 +76,7 @@ export default class OutletConfig extends React.Component {
   }
 
   setEnableLog(state, props) {
-    if (state.enable_log == "True") {
+    if (state.enable_log === "True") {
       state.enable_log = "False";
       console.log(this.props.outletid, "enable_log set to", state.enable_log);
     } else {
@@ -88,7 +88,14 @@ export default class OutletConfig extends React.Component {
 
   selectFromDropDownList(selection) {
     if (selection === "Always") {
-      this.setState({ controlType: <AlwaysConfig /> });
+      this.setState({
+        controlType: (
+          <AlwaysConfig
+            appConfig={this.props.appConfig}
+            outletid={this.props.outletid}
+          />
+        )
+      });
       this.setState({ control_type: "Always" });
     } else if (selection === "Heater") {
       this.setState({ controlType: <HeaterConfig /> });
@@ -97,7 +104,9 @@ export default class OutletConfig extends React.Component {
       this.setState({ controlType: <LightConfig /> });
       this.setState({ control_type: "Light" });
     } else if (selection === "Skimmer") {
-      this.setState({ controlType: <SkimmerConfig /> });
+      this.setState({
+        controlType: <SkimmerConfig />
+      });
       this.setState({ control_type: "Skimmer" });
     } else if (selection === "Return Pump") {
       this.setState({
@@ -114,16 +123,14 @@ export default class OutletConfig extends React.Component {
       this.setState({ control_type: "pH Control" });
     }
   }
-  componentWillMount() {
+  componentDidMount() {
     console.log(
       "The outlet control type is:",
       this.props.outlet["control_type"],
       this.props.outletid
     );
     console.log(this.props);
-    //this.setState({ controlType:this.props.outlet["control_type"]});
     this.setState({ control_type: this.props.outlet.control_type });
-    this.selectFromDropDownList(this.props.outlet["control_type"]);
   }
   render() {
     //console.log("config click");
@@ -172,7 +179,7 @@ export default class OutletConfig extends React.Component {
               <Form.Check
                 type="checkbox"
                 label="Enable Logging"
-                checked={this.getTrueFalse(this.state.enable_log)}
+                checked={getTrueFalse(this.state.enable_log)}
                 onChange={this.onChangeEnableLog.bind(this)}
               />
             </Form.Group>
@@ -203,7 +210,19 @@ export default class OutletConfig extends React.Component {
 class AlwaysConfig extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      option: this.props.appConfig["outletDict"][this.props.outletid][
+        "always_state"
+      ]
+    };
+
+    console.log("Always config construct", this.props.appConfig);
+  }
+  handleOnCheck(option) {
+    console.log(option);
+    this.setState({
+      option: option
+    });
   }
   render() {
     return (
@@ -218,12 +237,16 @@ class AlwaysConfig extends React.Component {
               label="OFF"
               name="formHorizontalRadios"
               id="formHorizontalRadiosOff"
+              onChange={this.handleOnCheck.bind(this, "OFF")}
+              checked={this.state.option == "OFF"}
             />
             <Form.Check
               type="radio"
               label="ON"
               name="formHorizontalRadios"
               id="formHorizontalRadiosOn"
+              onChange={this.handleOnCheck.bind(this, "ON")}
+              checked={this.state.option == "ON"}
             />
           </Col>
         </Form.Group>
@@ -353,28 +376,7 @@ class HeaterConfig extends React.Component {
 class ReturnConfig extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
-  }
-  componentWillMount() {
-    try {
-      console.log("Outlet Widget ReturnConfig");
-      console.log("appConfig", this.props.appConfig);
-      console.log("outletid", this.props.outletid);
-      console.log(
-        "return_enable_feed_a",
-        this.props.appConfig["outletDict"][this.props.outletid][
-          "return_enable_feed_a"
-        ]
-      );
-      console.log(
-        "return_feed_delay_a",
-        this.props.appConfig["outletDict"][this.props.outletid][
-          "return_feed_delay_a"
-        ]
-      );
-    } catch (err) {
-      console.log(err);
-    }
+    console.log("return config construct", this.props.appConfig);
   }
 
   render() {
@@ -469,15 +471,22 @@ class FeedTimerConfig extends React.Component {
       return_enable_feed_d: null,
       return_feed_delay_d: null
     };
+    console.log("construvtor");
+    console.log(this.props.appConfig);
   }
-  componentDidMount() {}
+  componentDidMount() {
+    this.loadvals();
+  }
 
   loadvals() {
+    console.log("loadvals");
     try {
       this.setState({
-        return_enable_feed_a: this.props.appConfig["outletDict"][
-          this.props.outletid
-        ]["return_enable_feed_a"]
+        return_enable_feed_a: getTrueFalse(
+          this.props.appConfig["outletDict"][this.props.outletid][
+            "return_enable_feed_a"
+          ]
+        )
       });
 
       this.setState({
@@ -487,9 +496,11 @@ class FeedTimerConfig extends React.Component {
       });
 
       this.setState({
-        return_enable_feed_b: this.props.appConfig["outletDict"][
-          this.props.outletid
-        ]["return_enable_feed_b"]
+        return_enable_feed_b: getTrueFalse(
+          this.props.appConfig["outletDict"][this.props.outletid][
+            "return_enable_feed_b"
+          ]
+        )
       });
 
       this.setState({
@@ -499,9 +510,11 @@ class FeedTimerConfig extends React.Component {
       });
 
       this.setState({
-        return_enable_feed_c: this.props.appConfig["outletDict"][
-          this.props.outletid
-        ]["return_enable_feed_c"]
+        return_enable_feed_c: getTrueFalse(
+          this.props.appConfig["outletDict"][this.props.outletid][
+            "return_enable_feed_c"
+          ]
+        )
       });
 
       this.setState({
@@ -511,9 +524,11 @@ class FeedTimerConfig extends React.Component {
       });
 
       this.setState({
-        return_enable_feed_d: this.props.appConfig["outletDict"][
-          this.props.outletid
-        ]["return_enable_feed_d"]
+        return_enable_feed_d: getTrueFalse(
+          this.props.appConfig["outletDict"][this.props.outletid][
+            "return_enable_feed_d"
+          ]
+        )
       });
 
       this.setState({
@@ -525,9 +540,10 @@ class FeedTimerConfig extends React.Component {
       console.log(err);
     }
   }
+
   render() {
     return (
-      <div onLoad={this.loadvals()}>
+      <div>
         <Table striped bordered size="sm">
           <thead>
             <tr>
@@ -540,7 +556,11 @@ class FeedTimerConfig extends React.Component {
             <tr>
               <td>A</td>
               <td>
-                <Form.Check type="checkbox" />
+                <Form.Check
+                  name="return_enable_feed_a"
+                  type="checkbox"
+                  defaultChecked={this.state.return_enable_feed_a}
+                />
               </td>
               <td>
                 <InputGroup>
@@ -559,7 +579,11 @@ class FeedTimerConfig extends React.Component {
             <tr>
               <td>B</td>
               <td>
-                <Form.Check type="checkbox" />
+                <Form.Check
+                  name="return_enable_feed_b"
+                  type="checkbox"
+                  defaultChecked={this.state.return_enable_feed_b}
+                />
               </td>
               <td>
                 <InputGroup>
@@ -579,7 +603,11 @@ class FeedTimerConfig extends React.Component {
               <td>C</td>
               <td>
                 {" "}
-                <Form.Check type="checkbox" />
+                <Form.Check
+                  name="return_enable_feed_c"
+                  type="checkbox"
+                  defaultChecked={this.state.return_enable_feed_c}
+                />
               </td>
               <td>
                 <InputGroup>
@@ -598,7 +626,11 @@ class FeedTimerConfig extends React.Component {
             <tr>
               <td>D</td>
               <td>
-                <Form.Check type="checkbox" />
+                <Form.Check
+                  name="return_enable_feed_d"
+                  type="checkbox"
+                  defaultChecked={this.state.return_enable_feed_d}
+                />
               </td>
               <td>
                 <InputGroup>
