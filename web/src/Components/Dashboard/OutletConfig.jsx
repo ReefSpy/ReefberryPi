@@ -101,7 +101,14 @@ export default class OutletConfig extends React.Component {
       this.setState({ controlType: <HeaterConfig /> });
       this.setState({ control_type: "Heater" });
     } else if (selection === "Light") {
-      this.setState({ controlType: <LightConfig /> });
+      this.setState({
+        controlType: (
+          <LightConfig
+            appConfig={this.props.appConfig}
+            outletid={this.props.outletid}
+          />
+        )
+      });
       this.setState({ control_type: "Light" });
     } else if (selection === "Skimmer") {
       this.setState({
@@ -119,7 +126,14 @@ export default class OutletConfig extends React.Component {
       });
       this.setState({ control_type: "Return Pump" });
     } else if (selection === "pH Control") {
-      this.setState({ controlType: <PhConfig /> });
+      this.setState({
+        controlType: (
+          <PhConfig
+            appConfig={this.props.appConfig}
+            outletid={this.props.outletid}
+          />
+        )
+      });
       this.setState({ control_type: "pH Control" });
     }
   }
@@ -268,7 +282,11 @@ class LightConfig extends React.Component {
           <Datetime
             dateFormat={false}
             timeFormat="HH:mm"
-            defaultValue="08:00"
+            defaultValue={
+              this.props.appConfig["outletDict"][this.props.outletid][
+                "light_on"
+              ]
+            }
           />
           <InputGroup.Append>
             <InputGroup.Text>
@@ -289,7 +307,11 @@ class LightConfig extends React.Component {
           <Datetime
             dateFormat={false}
             timeFormat="HH:mm"
-            defaultValue="17:00"
+            defaultValue={
+              this.props.appConfig["outletDict"][this.props.outletid][
+                "light_off"
+              ]
+            }
           />
           <InputGroup.Append>
             <InputGroup.Text>
@@ -422,7 +444,18 @@ class PhConfig extends React.Component {
             <InputGroup.Prepend>
               <Button variant="secondary">-</Button>
             </InputGroup.Prepend>
-            <Form.Control as="input" type="number" min="0" max="14" step=".1" />
+            <Form.Control
+              as="input"
+              type="number"
+              min="0"
+              max="14"
+              step=".1"
+              defaultValue={
+                this.props.appConfig["outletDict"][this.props.outletid][
+                  "ph_high"
+                ]
+              }
+            />
             <InputGroup.Append>
               <InputGroup.Text>pH</InputGroup.Text>
             </InputGroup.Append>
@@ -437,7 +470,18 @@ class PhConfig extends React.Component {
             <InputGroup.Prepend>
               <Button variant="secondary">-</Button>
             </InputGroup.Prepend>
-            <Form.Control as="input" type="number" min="0" max="14" step=".1" />
+            <Form.Control
+              as="input"
+              type="number"
+              min="0"
+              max="14"
+              step=".1"
+              defaultValue={
+                this.props.appConfig["outletDict"][this.props.outletid][
+                  "ph_low"
+                ]
+              }
+            />
             <InputGroup.Append>
               <InputGroup.Text>pH</InputGroup.Text>
             </InputGroup.Append>
