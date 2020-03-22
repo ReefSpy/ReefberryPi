@@ -25,6 +25,7 @@ export class RightPane extends React.Component {
               buttonstate={outlet.buttonstate}
               buttonstateidx={outlet.buttonstateidx}
               appConfig={this.props.appConfig}
+              probes={this.props.probes}
             />
           ))}
         </div>

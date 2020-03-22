@@ -110,6 +110,7 @@ export class OutletWidget extends React.Component {
                 outlettype={this.props.outlettype}
                 outlet={this.props.outlet}
                 appConfig={this.props.appConfig}
+                probes={this.props.probes}
               ></OutletConfig>
 
               <body className={outletStatusStyle}>{this.props.statusmsg}</body>

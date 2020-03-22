@@ -55,6 +55,7 @@ export class Dashboard extends React.Component {
             item
             styles={styles}
             outlets={this.props.outlets}
+            probes={this.props.probes}
             feedmode={this.props.feedmode}
             onOutletWidgetClick={this.handleOutletWidgetClick.bind(this)}
             appConfig={this.props.appConfig}

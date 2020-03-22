@@ -112,7 +112,12 @@ export default class OutletConfig extends React.Component {
       this.setState({ control_type: "Light" });
     } else if (selection === "Skimmer") {
       this.setState({
-        controlType: <SkimmerConfig />
+        controlType: (
+          <SkimmerConfig
+            appConfig={this.props.appConfig}
+            outletid={this.props.outletid}
+          />
+        )
       });
       this.setState({ control_type: "Skimmer" });
     } else if (selection === "Return Pump") {
@@ -131,6 +136,7 @@ export default class OutletConfig extends React.Component {
           <PhConfig
             appConfig={this.props.appConfig}
             outletid={this.props.outletid}
+            probes={this.props.probes}
           />
         )
       });
@@ -198,7 +204,7 @@ export default class OutletConfig extends React.Component {
               />
             </Form.Group>
             <hr />
-            <Form.Group controlId="formConfiguration">
+            <Form.Group>
               <Form.Label>
                 <b>Configuration</b>
               </Form.Label>
@@ -252,7 +258,7 @@ class AlwaysConfig extends React.Component {
               name="formHorizontalRadios"
               id="formHorizontalRadiosOff"
               onChange={this.handleOnCheck.bind(this, "OFF")}
-              checked={this.state.option == "OFF"}
+              checked={this.state.option === "OFF"}
             />
             <Form.Check
               type="radio"
@@ -260,7 +266,7 @@ class AlwaysConfig extends React.Component {
               name="formHorizontalRadios"
               id="formHorizontalRadiosOn"
               onChange={this.handleOnCheck.bind(this, "ON")}
-              checked={this.state.option == "ON"}
+              checked={this.state.option === "ON"}
             />
           </Col>
         </Form.Group>
@@ -403,10 +409,10 @@ class ReturnConfig extends React.Component {
 
   render() {
     return (
-      <FeedTimerConfig
+      <FeedTimerReturnConfig
         appConfig={this.props.appConfig}
         outletid={this.props.outletid}
-      ></FeedTimerConfig>
+      ></FeedTimerReturnConfig>
     );
   }
 }
@@ -414,28 +420,66 @@ class ReturnConfig extends React.Component {
 class SkimmerConfig extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    console.log("skimmer config construct", this.props.appConfig);
   }
   render() {
-    return <FeedTimerConfig></FeedTimerConfig>;
+    return (
+      <FeedTimerSkimmerConfig
+        appConfig={this.props.appConfig}
+        outletid={this.props.outletid}
+      ></FeedTimerSkimmerConfig>
+    );
   }
 }
 
 class PhConfig extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      phProbes: [],
+      selectedProbe: ""
+    };
+  }
+  componentDidMount() {
+    let items = [];
+    console.log("PH Config Probe List:", this.props.probes);
+
+    var phProbeList = this.props.probes.slice(0);
+    console.log(phProbeList);
+    for (var phProbe in phProbeList) {
+      console.log(phProbe, phProbeList[phProbe]["probetype"]);
+      if (phProbeList[phProbe]["probetype"] === "mcp3008") {
+        console.log(
+          phProbeList[phProbe]["probeid"],
+          phProbeList[phProbe]["probename"]
+        );
+        items.push(
+          <option key={phProbe} value={phProbeList[phProbe]["probeid"]}>
+            {phProbeList[phProbe]["probename"]} [
+            {phProbeList[phProbe]["probeid"]}]
+          </option>
+        );
+      }
+    }
+    console.log("items", items);
+    this.setState({ phProbes: items });
+    this.setState({ selectedProbe: phProbeList[phProbe]["probeid"] });
+  }
+  onChangeProbe(e) {
+    console.log("onChangeProbe", e.target.value);
+    this.setState({ selectedProbe: e.target.value });
   }
   render() {
     return (
       <div>
         <Form.Group controlId="formPhProbe">
           <Form.Label>Probe Name</Form.Label>
-          <Form.Control as="select">
-            <option value="chone">channel one</option>
-            <option value="chtwo">channel two</option>
-            <option value="chthree">channel three</option>
-            <option value="chfour">channel four</option>
+          <Form.Control
+            as="select"
+            value={this.state.selectedProbe}
+            onChange={this.onChangeProbe.bind(this)}
+          >
+            {this.state.phProbes}
           </Form.Control>
         </Form.Group>
         <Form.Group controlId="formPhHigh">
@@ -502,7 +546,7 @@ class PhConfig extends React.Component {
   }
 }
 
-class FeedTimerConfig extends React.Component {
+class FeedTimerReturnConfig extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -686,6 +730,201 @@ class FeedTimerConfig extends React.Component {
                     max="3600"
                     step="1"
                     defaultValue={this.state.return_feed_delay_d}
+                  />
+                </InputGroup>
+              </td>
+            </tr>
+          </tbody>
+        </Table>
+      </div>
+    );
+  }
+}
+
+class FeedTimerSkimmerConfig extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      skimmer_enable_feed_a: null,
+      skimmer_feed_delay_a: null,
+      skimmer_enable_feed_b: null,
+      skimmer_feed_delay_b: null,
+      skimmer_enable_feed_c: null,
+      skimmer_feed_delay_c: null,
+      skimmer_enable_feed_d: null,
+      skimmer_feed_delay_d: null
+    };
+    //console.log("constructor");
+    console.log(this.props.appConfig);
+  }
+  componentDidMount() {
+    this.loadvals();
+  }
+
+  loadvals() {
+    console.log("loadvals");
+    try {
+      this.setState({
+        skimmer_enable_feed_a: getTrueFalse(
+          this.props.appConfig["outletDict"][this.props.outletid][
+            "skimmer_enable_feed_a"
+          ]
+        )
+      });
+
+      this.setState({
+        skimmer_feed_delay_a: this.props.appConfig["outletDict"][
+          this.props.outletid
+        ]["skimmer_feed_delay_a"]
+      });
+
+      this.setState({
+        skimmer_enable_feed_b: getTrueFalse(
+          this.props.appConfig["outletDict"][this.props.outletid][
+            "skimmer_enable_feed_b"
+          ]
+        )
+      });
+
+      this.setState({
+        skimmer_feed_delay_b: this.props.appConfig["outletDict"][
+          this.props.outletid
+        ]["skimmer_feed_delay_b"]
+      });
+
+      this.setState({
+        skimmer_enable_feed_c: getTrueFalse(
+          this.props.appConfig["outletDict"][this.props.outletid][
+            "skimmer_enable_feed_c"
+          ]
+        )
+      });
+
+      this.setState({
+        skimmer_feed_delay_c: this.props.appConfig["outletDict"][
+          this.props.outletid
+        ]["skimmer_feed_delay_c"]
+      });
+
+      this.setState({
+        skimmer_enable_feed_d: getTrueFalse(
+          this.props.appConfig["outletDict"][this.props.outletid][
+            "skimmer_enable_feed_d"
+          ]
+        )
+      });
+
+      this.setState({
+        skimmer_feed_delay_d: this.props.appConfig["outletDict"][
+          this.props.outletid
+        ]["skimmer_feed_delay_d"]
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  render() {
+    return (
+      <div>
+        <Table striped bordered size="sm">
+          <thead>
+            <tr>
+              <th>Feed Mode</th>
+              <th>Enable</th>
+              <th>Additional Feed Timer Delay (seconds)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>A</td>
+              <td>
+                <Form.Check
+                  name="skimmer_enable_feed_a"
+                  type="checkbox"
+                  defaultChecked={this.state.skimmer_enable_feed_a}
+                />
+              </td>
+              <td>
+                <InputGroup>
+                  <Form.Control
+                    name="skimmer_feed_delay_a"
+                    as="input"
+                    type="number"
+                    min="0"
+                    max="3600"
+                    step="1"
+                    defaultValue={this.state.skimmer_feed_delay_a}
+                  />
+                </InputGroup>
+              </td>
+            </tr>
+            <tr>
+              <td>B</td>
+              <td>
+                <Form.Check
+                  name="skimmer_enable_feed_b"
+                  type="checkbox"
+                  defaultChecked={this.state.skimmer_enable_feed_b}
+                />
+              </td>
+              <td>
+                <InputGroup>
+                  <Form.Control
+                    name="skimmer_feed_delay_b"
+                    as="input"
+                    type="number"
+                    min="0"
+                    max="3600"
+                    step="1"
+                    defaultValue={this.state.skimmer_feed_delay_b}
+                  />
+                </InputGroup>
+              </td>
+            </tr>
+            <tr>
+              <td>C</td>
+              <td>
+                {" "}
+                <Form.Check
+                  name="skimmer_enable_feed_c"
+                  type="checkbox"
+                  defaultChecked={this.state.skimmer_enable_feed_c}
+                />
+              </td>
+              <td>
+                <InputGroup>
+                  <Form.Control
+                    name="skimmer_feed_delay_c"
+                    as="input"
+                    type="number"
+                    min="0"
+                    max="3600"
+                    step="1"
+                    defaultValue={this.state.skimmer_feed_delay_c}
+                  />
+                </InputGroup>
+              </td>
+            </tr>
+            <tr>
+              <td>D</td>
+              <td>
+                <Form.Check
+                  name="skimmer_enable_feed_d"
+                  type="checkbox"
+                  defaultChecked={this.state.skimmer_enable_feed_d}
+                />
+              </td>
+              <td>
+                <InputGroup>
+                  <Form.Control
+                    name="skimmer_feed_delay_d"
+                    as="input"
+                    type="number"
+                    min="0"
+                    max="3600"
+                    step="1"
+                    defaultValue={this.state.skimmer_feed_delay_d}
                   />
                 </InputGroup>
               </td>
