@@ -8,6 +8,7 @@ import TabBar from "./Layouts/TabBar";
 //import ProbeWidget from "./RBP/ProbeWidget";
 
 const client = new W3CWebSocket("ws://127.0.0.1:8001");
+//const client = new W3CWebSocket("ws://192.168.1.2:8001");
 //const client = new W3CWebSocket("ws://192.168.1.217:8001");
 
 const buttonStates = ["OFF", "AUTO", "ON"];

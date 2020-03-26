@@ -98,7 +98,15 @@ export default class OutletConfig extends React.Component {
       });
       this.setState({ control_type: "Always" });
     } else if (selection === "Heater") {
-      this.setState({ controlType: <HeaterConfig /> });
+      this.setState({
+        controlType: (
+          <HeaterConfig
+            appConfig={this.props.appConfig}
+            outletid={this.props.outletid}
+            probes={this.props.probes}
+          />
+        )
+      });
       this.setState({ control_type: "Heater" });
     } else if (selection === "Light") {
       this.setState({
@@ -340,25 +348,153 @@ class LightConfig extends React.Component {
 class HeaterConfig extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      tempProbes: [],
+      selectedProbe: "",
+      onVal: "",
+      offVal: "",
+      scale: ""
+    };
   }
+
+  componentDidMount() {
+    let items = [];
+    console.log("Heater Config Probe List:", this.props.probes);
+
+    var tempProbeList = this.props.probes.slice(0);
+    console.log(tempProbeList);
+    for (var tempProbe in tempProbeList) {
+      console.log(tempProbe, tempProbeList[tempProbe]["probetype"]);
+      if (tempProbeList[tempProbe]["probetype"] === "ds18b20") {
+        console.log(
+          tempProbeList[tempProbe]["probeid"],
+          tempProbeList[tempProbe]["probename"]
+        );
+        items.push(
+          <option key={tempProbe} value={tempProbeList[tempProbe]["probeid"]}>
+            {tempProbeList[tempProbe]["probename"]} [
+            {tempProbeList[tempProbe]["probeid"].split("_", 2)[1]}]
+          </option>
+        );
+      }
+    }
+
+    this.setState({ tempProbes: items });
+    this.setState({
+      selectedProbe: this.props.appConfig["outletDict"][this.props.outletid][
+        "heater_probe"
+      ]
+    });
+
+    if (this.props.appConfig["temperaturescale"] == "1") {
+      console.log("Temperature scale is Fahrenheit");
+      this.setState({ scale: "°F" });
+
+      var onTempF =
+        1.8 *
+          this.props.appConfig["outletDict"][this.props.outletid]["heater_on"] +
+        32;
+      this.setState({
+        onVal: onTempF.toFixed(1)
+      });
+
+      var offTempF =
+        1.8 *
+          this.props.appConfig["outletDict"][this.props.outletid][
+            "heater_off"
+          ] +
+        32;
+      this.setState({
+        offVal: offTempF.toFixed(1)
+      });
+    } else {
+      console.log(
+        "Temperature scale is Celcius",
+        this.props.appConfig["temperaturescale"]
+      );
+      this.setState({ scale: "°C" });
+      this.setState({
+        onVal: this.props.appConfig["outletDict"][this.props.outletid][
+          "heater_on"
+        ]
+      });
+      this.setState({
+        offVal: this.props.appConfig["outletDict"][this.props.outletid][
+          "heater_off"
+        ]
+      });
+    }
+  }
+
+  onChangeProbe(e) {
+    console.log("onChangeProbe", e.target.value);
+    this.setState({ selectedProbe: e.target.value });
+  }
+
+  onOnValChange(e) {
+    console.log("On Val Change", e.target.value);
+    this.setState({
+      onVal: e.target.value
+    });
+  }
+
+  onOffValChange(e) {
+    console.log("Off Val Change", e.target.value);
+    this.setState({
+      offVal: e.target.value
+    });
+  }
+
+  increaseOnTemp() {
+    this.setState({
+      onVal: (parseFloat(this.state.onVal) + 0.1).toFixed(1)
+    });
+    console.log("on click +", this.state.onVal);
+  }
+  decreaseOnTemp() {
+    this.setState({
+      onVal: (parseFloat(this.state.onVal) - 0.1).toFixed(1)
+    });
+    console.log("on click -", this.state.onVal);
+  }
+
+  increaseOffTemp() {
+    this.setState({
+      offVal: (parseFloat(this.state.offVal) + 0.1).toFixed(1)
+    });
+    console.log("low click +", this.state.offVal);
+  }
+
+  decreaseOffTemp() {
+    this.setState({
+      offVal: (parseFloat(this.state.offVal) - 0.1).toFixed(1)
+    });
+    console.log("low click -", this.state.offVal);
+  }
+
   render() {
     return (
       <div>
         <Form.Group controlId="formHeaterTempProbe">
           <Form.Label>Temperature Probe</Form.Label>
-          <Form.Control as="select">
-            <option value="one">one</option>
-            <option value="two">two</option>
-            <option value="three">three</option>
-            <option value="four">four</option>
+          <Form.Control
+            as="select"
+            value={this.state.selectedProbe}
+            onChange={this.onChangeProbe.bind(this)}
+          >
+            {this.state.tempProbes}
           </Form.Control>
         </Form.Group>
         <Form.Group controlId="formHeaterOnTemp">
           <Form.Label>On Temperature</Form.Label>
           <InputGroup>
             <InputGroup.Prepend>
-              <Button variant="secondary">-</Button>
+              <Button
+                variant="secondary"
+                onClick={this.decreaseOnTemp.bind(this)}
+              >
+                -
+              </Button>
             </InputGroup.Prepend>
             <Form.Control
               as="input"
@@ -366,12 +502,19 @@ class HeaterConfig extends React.Component {
               min="0"
               max="300"
               step=".1"
+              value={this.state.onVal}
+              onChange={this.onOnValChange.bind(this)}
             />
             <InputGroup.Append>
-              <InputGroup.Text>°F</InputGroup.Text>
+              <InputGroup.Text>{this.state.scale}</InputGroup.Text>
             </InputGroup.Append>
             <InputGroup.Append>
-              <Button variant="secondary">+</Button>
+              <Button
+                variant="secondary"
+                onClick={this.increaseOnTemp.bind(this)}
+              >
+                +
+              </Button>
             </InputGroup.Append>
           </InputGroup>
         </Form.Group>
@@ -379,7 +522,12 @@ class HeaterConfig extends React.Component {
           <Form.Label>Off Temperature</Form.Label>
           <InputGroup>
             <InputGroup.Prepend>
-              <Button variant="secondary">-</Button>
+              <Button
+                variant="secondary"
+                onClick={this.decreaseOffTemp.bind(this)}
+              >
+                -
+              </Button>
             </InputGroup.Prepend>
             <Form.Control
               as="input"
@@ -387,12 +535,19 @@ class HeaterConfig extends React.Component {
               min="0"
               max="300"
               step=".1"
+              value={this.state.offVal}
+              onChange={this.onOffValChange.bind(this)}
             />
             <InputGroup.Append>
-              <InputGroup.Text>°F</InputGroup.Text>
+              <InputGroup.Text>{this.state.scale}</InputGroup.Text>
             </InputGroup.Append>
             <InputGroup.Append>
-              <Button variant="secondary">+</Button>
+              <Button
+                variant="secondary"
+                onClick={this.increaseOffTemp.bind(this)}
+              >
+                +
+              </Button>
             </InputGroup.Append>
           </InputGroup>
         </Form.Group>
@@ -437,7 +592,10 @@ class PhConfig extends React.Component {
     super(props);
     this.state = {
       phProbes: [],
-      selectedProbe: ""
+      selectedProbe: "",
+      onWhen: "",
+      highVal: "",
+      lowVal: ""
     };
   }
   componentDidMount() {
@@ -461,14 +619,82 @@ class PhConfig extends React.Component {
         );
       }
     }
-    console.log("items", items);
+
     this.setState({ phProbes: items });
-    this.setState({ selectedProbe: phProbeList[phProbe]["probeid"] });
+    this.setState({
+      selectedProbe: this.props.appConfig["outletDict"][this.props.outletid][
+        "ph_probe"
+      ]
+    });
+
+    this.setState({
+      onWhen: this.props.appConfig["outletDict"][this.props.outletid][
+        "ph_onwhen"
+      ]
+    });
+
+    this.setState({
+      highVal: this.props.appConfig["outletDict"][this.props.outletid][
+        "ph_high"
+      ]
+    });
+
+    this.setState({
+      lowVal: this.props.appConfig["outletDict"][this.props.outletid]["ph_low"]
+    });
   }
+
   onChangeProbe(e) {
     console.log("onChangeProbe", e.target.value);
     this.setState({ selectedProbe: e.target.value });
   }
+
+  onChangeWhen(e) {
+    console.log("onChangeWhen", e.target.value);
+    this.setState({ onWhen: e.target.value });
+  }
+
+  increaseHighVal() {
+    this.setState({
+      highVal: (parseFloat(this.state.highVal) + 0.1).toFixed(1)
+    });
+    console.log("high click +", this.state.highVal);
+  }
+  decreaseHighVal() {
+    this.setState({
+      highVal: (parseFloat(this.state.highVal) - 0.1).toFixed(1)
+    });
+    console.log("high click -", this.state.highVal);
+  }
+
+  increaseLowVal() {
+    this.setState({
+      lowVal: (parseFloat(this.state.lowVal) + 0.1).toFixed(1)
+    });
+    console.log("low click +", this.state.lowVal);
+  }
+
+  decreaseLowVal() {
+    this.setState({
+      lowVal: (parseFloat(this.state.lowVal) - 0.1).toFixed(1)
+    });
+    console.log("low click -", this.state.lowVal);
+  }
+
+  onHighValChange(e) {
+    console.log("High Val Change", e.target.value);
+    this.setState({
+      highVal: e.target.value
+    });
+  }
+
+  onLowValChange(e) {
+    console.log("Low Val Change", e.target.value);
+    this.setState({
+      lowVal: e.target.value
+    });
+  }
+
   render() {
     return (
       <div>
@@ -486,7 +712,12 @@ class PhConfig extends React.Component {
           <Form.Label>High Value</Form.Label>
           <InputGroup>
             <InputGroup.Prepend>
-              <Button variant="secondary">-</Button>
+              <Button
+                variant="secondary"
+                onClick={this.decreaseHighVal.bind(this)}
+              >
+                -
+              </Button>
             </InputGroup.Prepend>
             <Form.Control
               as="input"
@@ -494,17 +725,19 @@ class PhConfig extends React.Component {
               min="0"
               max="14"
               step=".1"
-              defaultValue={
-                this.props.appConfig["outletDict"][this.props.outletid][
-                  "ph_high"
-                ]
-              }
+              value={this.state.highVal}
+              onChange={this.onHighValChange.bind(this)}
             />
             <InputGroup.Append>
               <InputGroup.Text>pH</InputGroup.Text>
             </InputGroup.Append>
             <InputGroup.Append>
-              <Button variant="secondary">+</Button>
+              <Button
+                variant="secondary"
+                onClick={this.increaseHighVal.bind(this)}
+              >
+                +
+              </Button>
             </InputGroup.Append>
           </InputGroup>
         </Form.Group>
@@ -512,7 +745,12 @@ class PhConfig extends React.Component {
           <Form.Label>Low Vaue</Form.Label>
           <InputGroup>
             <InputGroup.Prepend>
-              <Button variant="secondary">-</Button>
+              <Button
+                variant="secondary"
+                onClick={this.decreaseLowVal.bind(this)}
+              >
+                -
+              </Button>
             </InputGroup.Prepend>
             <Form.Control
               as="input"
@@ -520,25 +758,31 @@ class PhConfig extends React.Component {
               min="0"
               max="14"
               step=".1"
-              defaultValue={
-                this.props.appConfig["outletDict"][this.props.outletid][
-                  "ph_low"
-                ]
-              }
+              value={this.state.lowVal}
+              onChange={this.onLowValChange.bind(this)}
             />
             <InputGroup.Append>
               <InputGroup.Text>pH</InputGroup.Text>
             </InputGroup.Append>
             <InputGroup.Append>
-              <Button variant="secondary">+</Button>
+              <Button
+                variant="secondary"
+                onClick={this.increaseLowVal.bind(this)}
+              >
+                +
+              </Button>
             </InputGroup.Append>
           </InputGroup>
         </Form.Group>
         <Form.Group controlId="formPhOnWhen">
           <Form.Label>On When</Form.Label>
-          <Form.Control as="select">
-            <option value="low">LOW</option>
-            <option value="high">HIGH</option>
+          <Form.Control
+            as="select"
+            value={this.state.onWhen}
+            onChange={this.onChangeWhen.bind(this)}
+          >
+            <option value="LOW">LOW</option>
+            <option value="HIGH">HIGH</option>
           </Form.Control>
         </Form.Group>
       </div>
