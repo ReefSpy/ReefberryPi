@@ -25,7 +25,8 @@ export default class OutletConfig extends React.Component {
       showModal: this.props.show,
       controlType: null,
       control_type: null,
-      enable_log: null
+      enable_log: null,
+      outletName: ""
     };
   }
   getInitialState = () => {
@@ -33,6 +34,46 @@ export default class OutletConfig extends React.Component {
   };
 
   close = () => {
+    this.setState({ showModal: false });
+
+    // set back to orig value or it bounces back on next load
+    this.setState({
+      outletName: this.props.appConfig["outletDict"][this.props.outletid][
+        "outletname"
+      ]
+    });
+
+    this.props.onClose();
+  };
+
+  save = () => {
+    console.log("Save Clicked");
+    this.props.handleConfigSave(
+      this.props.outletid,
+      "name",
+      this.state.outletName
+    );
+    console.log("Save outlet name", this.props.outletid, this.state.outletName);
+
+    this.props.handleConfigSave(
+      this.props.outletid,
+      "control_type",
+      this.state.control_type
+    );
+    console.log(
+      "Save control type",
+      this.props.outletid,
+      this.state.control_type
+    );
+
+    this.props.handleConfigSave(
+      this.props.outletid,
+      "enable_log",
+      this.state.enable_log
+    );
+    console.log("Save enable log", this.props.outletid, this.state.enable_log);
+
+    this.setState({ saveTrigger: true });
     this.setState({ showModal: false });
     this.props.onClose();
   };
@@ -60,6 +101,12 @@ export default class OutletConfig extends React.Component {
         "control_type"
       ]
     });
+    this.setState({
+      outletName: this.props.appConfig["outletDict"][this.props.outletid][
+        "outletname"
+      ]
+    });
+
     this.selectFromDropDownList(
       this.props.appConfig["outletDict"][this.props.outletid]["control_type"]
     );
@@ -160,6 +207,12 @@ export default class OutletConfig extends React.Component {
     console.log(this.props);
     this.setState({ control_type: this.props.outlet.control_type });
   }
+
+  onChangeName(e) {
+    console.log("onChangeName", e.target.value);
+    this.setState({ outletName: e.target.value });
+  }
+
   render() {
     //console.log("config click");
     //console.log(this.props.show);
@@ -182,8 +235,10 @@ export default class OutletConfig extends React.Component {
               <Form.Label>Name</Form.Label>
               <Form.Control
                 type="text"
-                defaultValue={this.props.outletname}
+                defaultValue={this.state.outletName}
                 placeholder="Unnamed"
+                onChange={this.onChangeName.bind(this)}
+                autoComplete="off"
               />
             </Form.Group>
 
@@ -226,7 +281,7 @@ export default class OutletConfig extends React.Component {
           <Button variant="secondary" onClick={this.close}>
             Cancel
           </Button>
-          <Button variant="primary" type="submit">
+          <Button variant="primary" type="submit" onClick={this.save}>
             Save
           </Button>
         </Modal.Footer>
@@ -252,6 +307,7 @@ class AlwaysConfig extends React.Component {
       option: option
     });
   }
+
   render() {
     return (
       <fieldset>

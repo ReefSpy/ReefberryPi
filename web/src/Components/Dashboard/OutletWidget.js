@@ -53,7 +53,8 @@ export class OutletWidget extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      showModal: false
+      showModal: false,
+      outletname: ""
     };
   }
   getInitialState = () => {
@@ -67,6 +68,7 @@ export class OutletWidget extends React.Component {
   open = () => {
     this.setState({ showModal: true });
   };
+
   render() {
     var outletStatusStyle = "outletStatus";
     if (!this.props.statusmsg.search("OFF")) {
@@ -111,6 +113,7 @@ export class OutletWidget extends React.Component {
                 outlet={this.props.outlet}
                 appConfig={this.props.appConfig}
                 probes={this.props.probes}
+                handleConfigSave={this.props.handleConfigSave}
               ></OutletConfig>
 
               <body className={outletStatusStyle}>{this.props.statusmsg}</body>

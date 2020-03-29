@@ -329,6 +329,8 @@ export default class extends Component {
         ] = buttonStates.indexOf(
           msgJSON["status_currentoutletstate"]["button_state"]
         );
+        outletListArrayClone[outletClone]["outletname"] =
+          msgJSON["status_currentoutletstate"]["outletname"];
         // this.setState({ outletListArray: outletListArrayClone });
       }
     }

@@ -58,6 +58,7 @@ export class Dashboard extends React.Component {
             probes={this.props.probes}
             feedmode={this.props.feedmode}
             onOutletWidgetClick={this.handleOutletWidgetClick.bind(this)}
+            handleConfigSave={this.props.handleConfigSave}
             appConfig={this.props.appConfig}
           />
           <CenterPane
