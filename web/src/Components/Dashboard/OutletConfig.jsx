@@ -26,7 +26,8 @@ export default class OutletConfig extends React.Component {
       controlType: null,
       control_type: null,
       enable_log: null,
-      outletName: ""
+      outletName: "",
+      always_state: null
     };
   }
   getInitialState = () => {
@@ -73,18 +74,35 @@ export default class OutletConfig extends React.Component {
     );
     console.log("Save enable log", this.props.outletid, this.state.enable_log);
 
-    this.setState({ saveTrigger: true });
+    // Always
+    if (this.state.always_state != null) {
+      this.props.handleConfigSave(
+        this.props.outletid,
+        "always_state",
+        this.state.always_state
+      );
+      console.log(
+        "Save always_state",
+        this.props.outletid,
+        this.state.always_state
+      );
+    }
+
     this.setState({ showModal: false });
     this.props.onClose();
   };
+
+  setAlwaysState(always_state_val) {
+    console.log("setAlwaysState", always_state_val);
+    this.setState({ always_state: always_state_val });
+  }
 
   open = () => {
     this.setState({ showModal: true });
   };
 
   show = () => {
-    console.log("Outlet Config Show");
-    console.log("props", this.props.appConfig);
+    console.log("Outlet Config Show, props", this.props.appConfig);
     console.log(
       "enable log",
       this.props.outletid,
@@ -140,6 +158,7 @@ export default class OutletConfig extends React.Component {
           <AlwaysConfig
             appConfig={this.props.appConfig}
             outletid={this.props.outletid}
+            set_always_state={this.setAlwaysState.bind(this)}
           />
         )
       });
@@ -306,6 +325,17 @@ class AlwaysConfig extends React.Component {
     this.setState({
       option: option
     });
+    this.props.set_always_state(option);
+  }
+
+  componentDidMount() {
+    //initialize initial save state values
+    this.props.set_always_state(this.state.option);
+    console.log(
+      "Always componentDidMount",
+      this.props.appConfig["outletDict"][this.props.outletid]["always_state"],
+      this.state.option
+    );
   }
 
   render() {
