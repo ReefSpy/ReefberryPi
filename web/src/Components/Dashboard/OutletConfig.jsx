@@ -151,6 +151,12 @@ export default class OutletConfig extends React.Component {
     return { ...state, enable_log: state.enable_log };
   }
 
+alwaysShown(){
+ console.log("alwaysShown", this.props.appConfig["outletDict"][this.props.outletid][
+  "always_state"
+])
+}
+
   selectFromDropDownList(selection) {
     if (selection === "Always") {
       this.setState({
@@ -159,6 +165,7 @@ export default class OutletConfig extends React.Component {
             appConfig={this.props.appConfig}
             outletid={this.props.outletid}
             set_always_state={this.setAlwaysState.bind(this)}
+            onShow={this.alwaysShown()}
           />
         )
       });
@@ -331,11 +338,14 @@ class AlwaysConfig extends React.Component {
   componentDidMount() {
     //initialize initial save state values
     this.props.set_always_state(this.state.option);
+    
     console.log(
       "Always componentDidMount",
       this.props.appConfig["outletDict"][this.props.outletid]["always_state"],
       this.state.option
     );
+
+   
   }
 
   render() {
