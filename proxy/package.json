@@ -9,7 +9,7 @@
   "author": "ReefSpy",
   "license": "ISC",
   "dependencies": {
-    "ini": "^1.3.5",
+    "ini": "^1.3.6",
     "mqtt": "^3.0.0",
     "websocket": "^1.0.31"
   }
