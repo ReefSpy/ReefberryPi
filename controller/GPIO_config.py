@@ -1,31 +1,30 @@
 import RPi.GPIO as GPIO
 
 # GPIO pins
-#dht11 = 14        # for dht11 temp and humidity sensor
+# dht11 = 14        # for dht11 temp and humidity sensor
 dht11 = 17        # for dht11 temp and humidity sensor
-#SPICLK = 18       # for MCP3008 ADC
+# SPICLK = 18       # for MCP3008 ADC
 SPICLK = 11       # for MCP3008 ADC
-#SPIMISO = 23      # for MCP3008 ADC
+# SPIMISO = 23      # for MCP3008 ADC
 SPIMISO = 9       # for MCP3008 ADC
-#SPIMOSI = 24      # for MCP3008 ADC
+# SPIMOSI = 24      # for MCP3008 ADC
 SPIMOSI = 10      # for MCP3008 ADC
-#SPICS = 25        # for MCP3008 ADC
+# SPICS = 25        # for MCP3008 ADC
 SPICS = 22        # for MCP3008 ADC
 relay_1 = 19
-#int_outlet_1 = 19
-#int_outlet_2 = 13
+# int_outlet_1 = 19
+# int_outlet_2 = 13
 
 int_outletpins = {
-        "int_outlet_1":19,
-        "int_outlet_2":13,
-        "int_outlet_3":6,
-        "int_outlet_4":5,
-        "int_outlet_5":26,
-        "int_outlet_6":12,
-        "int_outlet_7":16,
-        "int_outlet_8":20,
-    }
-
+    "int_outlet_1": 19,
+    "int_outlet_2": 13,
+    "int_outlet_3": 6,
+    "int_outlet_4": 5,
+    "int_outlet_5": 26,
+    "int_outlet_6": 12,
+    "int_outlet_7": 16,
+    "int_outlet_8": 20,
+}
 
 
 # MCP3008 pins
@@ -43,7 +42,7 @@ mcp3008_ch7 = 7
 def initGPIO():
     # turn off warnings
     GPIO.setwarnings(False)
-    
+
     # set pin mode
     GPIO.setmode(GPIO.BCM)
 

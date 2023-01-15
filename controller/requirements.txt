@@ -1,0 +1,4 @@
+influxdb-client==1.35.0
+Flask==2.2.2
+RPi.GPIO==0.7.1
+mysql-connector-python==8.0.31
