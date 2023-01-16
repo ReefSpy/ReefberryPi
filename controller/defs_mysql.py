@@ -198,4 +198,4 @@ def readOutletPrefs(mysqldb, appPrefs, logger):
             #appPrefs.outletDict(intoutlet) = 
         appPrefs.outletDict[intoutlet] = outlet
     print (appPrefs.outletDict)
-    exit()
+    

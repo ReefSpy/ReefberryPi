@@ -1,3 +1,11 @@
+##############################################################################
+# cls_Preferences.py
+#
+# preference class
+#
+# Written by ReefSpy for the ReefBerry Pi, (c) 2023
+# www.youtube.com/reefspy
+##############################################################################
 import configparser
 import time
 import defs_common
