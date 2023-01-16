@@ -161,6 +161,7 @@ def readOutletPrefs(mysqldb, appPrefs, logger):
                 ")"
             mycursor.execute(sql)
             mysqldb.commit()
+
             outlet.ischanged = "False"
             outlet.outletid = intoutlet
             outlet.outletname = "Unnamed"
@@ -195,7 +196,39 @@ def readOutletPrefs(mysqldb, appPrefs, logger):
             outlet.ph_onwhen = "HIGH"
         else:
             logger.info("Reading outlet configuration: " + intoutlet)
-            #appPrefs.outletDict(intoutlet) = 
+            outlet.outletid = myresult["outletid"]
+            outlet.button_state = myresult["button_state"]
+            outlet.outletname = myresult["outletname"]
+            outlet.control_type = myresult["control_type"]
+            outlet.always_state = myresult["always_state"] 
+            outlet.enable_log = myresult["enable_log"]
+            outlet.heater_probe = myresult["heater_probe"] 
+            outlet.heater_on = myresult["heater_on"]
+            outlet.heater_off = myresult["heater_off"]
+            outlet.light_on = myresult["light_on"]
+            outlet.light_off = myresult["light_off"]
+            outlet.return_enable_feed_a = myresult["return_enable_feed_a"]
+            outlet.return_feed_delay_a = myresult["return_feed_delay_a"]
+            outlet.return_enable_feed_b = myresult["return_enable_feed_b"]
+            outlet.return_feed_delay_b = myresult["return_feed_delay_b"]
+            outlet.return_enable_feed_c = myresult["return_enable_feed_c"]
+            outlet.return_feed_delay_c = myresult["return_feed_delay_c"]
+            outlet.return_enable_feed_d = myresult["return_enable_feed_d"]
+            outlet.return_feed_delay_d = myresult["return_feed_delay_d"]
+            outlet.skimmer_enable_feed_a = myresult["skimmer_enable_feed_a"]
+            outlet.skimmer_feed_delay_a = myresult["skimmer_feed_delay_a"]
+            outlet.skimmer_enable_feed_b = myresult["skimmer_enable_feed_b"]
+            outlet.skimmer_feed_delay_b = myresult["skimmer_feed_delay_b"]
+            outlet.skimmer_enable_feed_c = myresult["skimmer_enable_feed_c"]
+            outlet.skimmer_feed_delay_c = myresult["skimmer_feed_delay_c"]
+            outlet.skimmer_enable_feed_d = myresult["skimmer_enable_feed_d"]
+            outlet.skimmer_feed_delay_d = myresult["skimmer_feed_delay_d"]
+            outlet.ph_probe = myresult["ph_probe"]
+            outlet.ph_high = myresult["ph_high"]
+            outlet.ph_low = myresult["ph_low"]
+            outlet.ph_onwhen = myresult["ph_onwhen"]
+            
         appPrefs.outletDict[intoutlet] = outlet
-    print (appPrefs.outletDict)
-    
+    #print (appPrefs.outletDict["int_outlet_1"].outletname)
+    #print (appPrefs.outletDict["int_outlet_7"].outletname)
+    #exit()

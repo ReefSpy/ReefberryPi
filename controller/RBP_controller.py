@@ -71,7 +71,13 @@ outlets = [
 
 @app.route('/get_outlets', methods=['GET'])
 def get_outlets():
-    return jsonify({'outlets': outlets})
+    #return jsonify({'outlets': outlets})
+    outletdict = {}
+    for x in range(1, 9):
+        outletid = "int_outlet_" + str(x)
+        outletdict[outletid] = {"outletid": outletid, "outletname": AppPrefs.outletDict[outletid].outletname,
+                                        "outletbus": "int", "control_type": AppPrefs.outletDict[outletid].control_type}
+    return jsonify(outletdict)
 
 
 @app.route('/get_temp', methods=['GET'])
@@ -123,7 +129,7 @@ def apploop():
                 logger.debug(AppPrefs.tempProbeDict.get(tProbe).probeid + " Temp = " + str(dstempC) +
                              "C / " + str(dstempF) + "F")
         except:
-            logger.error("Unable to read ds18b20 temperature")
+            logger.error("Unable to read ds18b20 temperature: " + AppPrefs.tempProbeDict.get(tProbe).probeid)
         ###################################################################
         # dht11 temp and humidity data
         ###################################################################
