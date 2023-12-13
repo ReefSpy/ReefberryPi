@@ -1,4 +1,5 @@
-__pycache__/
+.DS_Store
 config.ini
 logs/
 node_modules/
+.vscode/
