@@ -3,3 +3,4 @@ config.ini
 logs/
 node_modules/
 .vscode/
+venv/
