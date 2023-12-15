@@ -1,7 +1,11 @@
 import mysql.connector
 import cls_Preferences
+from sqlalchemy import create_engine
+from sqlalchemy import MetaData
+from sqlalchemy import Table
+from sqlalchemy import select
 
-
+# directly talking to mysql
 def initMySQL(app_prefs, logger):
     try:
         mySQLdb = mysql.connector.connect(
@@ -17,12 +21,23 @@ def initMySQL(app_prefs, logger):
         logger.error("Can not connect to MySQL database! " + str(e))
         exit()
 
+# using sql alchemy
+def initMySQL_ex(app_prefs, logger):
+    try:
+        # create the engine
+        sqlengine = create_engine("mysql+pymysql://" + app_prefs.mysql_user + ":" + app_prefs.mysql_password + "@" + app_prefs.mysql_host + ":" + app_prefs.mysql_port + "/" + app_prefs.mysql_database + "?charset=utf8mb4")
+        #logger.debug("mysql+pymysql://" + app_prefs.mysql_user + ":" + app_prefs.mysql_password + "@" + app_prefs.mysql_host + ":" + app_prefs.mysql_port + "/" + app_prefs.mysql_database + "?charset=utf8mb4")
+        logger.info("Succesfully connected to MySQL database.")
+        return sqlengine
+    except Exception as e:
+        logger.error("Can not connect to MySQL database! " + str(e))
+        exit()
 
 def readTempProbes(mysqldb, appPrefs, logger):
     logger.info("Reading temperature probe data from database...")
-
+    
     appPrefs.tempProbeDict.clear()
-
+    
     mycursor = mysqldb.cursor()
     sql = "SELECT probeid, name, appuid FROM " + mysqldb.database + \
         ".ds18b20 WHERE appuid = '" + appPrefs.appuid + "'"
@@ -32,6 +47,8 @@ def readTempProbes(mysqldb, appPrefs, logger):
     row_headers = [x[0] for x in mycursor.description]
     myresult = mycursor.fetchall()
     json_data = []
+    mycursor.close()
+    mysqldb.commit()
     for result in myresult:
         json_data.append(dict(zip(row_headers, result)))
 
@@ -198,4 +215,45 @@ def readOutletPrefs(mysqldb, appPrefs, logger):
             #appPrefs.outletDict(intoutlet) = 
         appPrefs.outletDict[intoutlet] = outlet
     #print (appPrefs.outletDict)
-    exit()
+    #exit()
+
+def readOutletPrefs_ex(sqlengine, appPrefs, logger):
+    logger.info("Reading outlet prefs from database...")
+    appPrefs.outletDict.clear()
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    outlets_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+# we support 8 outlets on the internal bus of the Pi
+    intbus = ["int_outlet_1",
+              "int_outlet_2",
+              "int_outlet_3",
+              "int_outlet_4",
+              "int_outlet_5",
+              "int_outlet_6",
+              "int_outlet_7",
+              "int_outlet_8"]
+
+    for intoutlet in intbus:
+        outlet = cls_Preferences.outletPrefs()
+        stmt = select(outlets_table).where(outlets_table.c.appuid == appPrefs.appuid).where(outlets_table.c.outletid == intoutlet)
+        results = conn.execute(stmt)
+
+        
+      
+        
+        if results.rowcount == 0:
+            print("None found")
+
+        for row in results:
+            
+            print(row.appuid + " " + row.outletid + " " + row.outletname) 
+
+       
+
+
+
+
+    

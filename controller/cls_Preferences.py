@@ -13,6 +13,7 @@ MYSQL_HOST = "192.168.4.217"
 MYSQL_USER = "root"
 MYSQL_PASSWORD = "raspberry"
 MYSQL_DATABASE = "reefberrypi"
+MYSQL_PORT = "3306"
 
 
 class analogChannelClass():
@@ -151,5 +152,11 @@ class AppPrefs():
         self.mysql_database = defs_common.readINIfile('global',
                                                       'mysql_database',
                                                       MYSQL_DATABASE,
+                                                      lock=self.threadlock,
+                                                      logger=self.logger)
+        
+        self.mysql_port = defs_common.readINIfile('global',
+                                                      'mysql_port',
+                                                      MYSQL_PORT,
                                                       lock=self.threadlock,
                                                       logger=self.logger)

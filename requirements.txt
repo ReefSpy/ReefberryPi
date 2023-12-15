@@ -1,3 +1,5 @@
 influxdb-client
 mysql-connector-python
 RPi.GPIO
+sqlalchemy
+PyMySQL
