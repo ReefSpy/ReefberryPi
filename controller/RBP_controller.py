@@ -43,7 +43,8 @@ sqlengine = defs_mysql.initMySQL_ex(AppPrefs, logger)
 # temperature probes
 defs_mysql.readTempProbes(mySQLDB, AppPrefs, logger)
 defs_mysql.readGlobalPrefs(mySQLDB, AppPrefs, logger)
-defs_mysql.readOutletPrefs(mySQLDB, AppPrefs, logger)
+#defs_mysql.readOutletPrefs(mySQLDB, AppPrefs, logger)
+defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
 
 
 # set up the GPIO
@@ -111,14 +112,14 @@ def apploop():
             except:
                 logger.error("Error logging to InfluxDB!")
 
-            ##########################################################################################
-            # get outlet prefs form DB
-            ##########################################################################################
-            
-            try:
-                defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
-            except Exception as e:
-                logger.error("Error reading outlet data! " + str(e))
+        ##########################################################################################
+        # get outlet prefs from DB
+        ##########################################################################################
+        
+        try:
+            defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+        except Exception as e:
+            logger.error("Error reading outlet data! " + str(e))
         ##########################################################################################
         # pause to slow down the loop
         ##########################################################################################

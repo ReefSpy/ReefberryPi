@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import MetaData
 from sqlalchemy import Table
 from sqlalchemy import select
+from sqlalchemy import insert
 
 # directly talking to mysql
 def initMySQL(app_prefs, logger):
@@ -88,11 +89,145 @@ def readGlobalPrefs(mysqldb, appPrefs, logger):
         
     logger.info("Using temperature scale: " + appPrefs.temperaturescale)
     
-def readOutletPrefs(mysqldb, appPrefs, logger):
+# def readOutletPrefs(mysqldb, appPrefs, logger):
+#     logger.info("Reading outlet prefs from database...")
+#     appPrefs.outletDict.clear()
+#     mycursor = mysqldb.cursor(dictionary=True)
+#     # we support 8 outlets on the internal bus of the Pi
+#     intbus = ["int_outlet_1",
+#               "int_outlet_2",
+#               "int_outlet_3",
+#               "int_outlet_4",
+#               "int_outlet_5",
+#               "int_outlet_6",
+#               "int_outlet_7",
+#               "int_outlet_8"]
+
+#     for intoutlet in intbus:
+#         outlet = cls_Preferences.outletPrefs()
+#         sql = "SELECT * FROM " + mysqldb.database + \
+#                     ".outlets WHERE appuid = '" + appPrefs.appuid + "'" + " AND outletid = '" + intoutlet + "'"
+        
+#         mycursor.execute(sql)
+#         myresult = mycursor.fetchone()
+#         if myresult is None:
+#             logger.warn("Inserting outlet configuration into database: " + intoutlet)
+            
+#             sql = "INSERT into " + mysqldb.database + \
+#                 '''.outlets (appuid,
+#                 outletid,
+#                 button_state,
+#                 outletname,
+#                 control_type,
+#                 always_state,
+#                 enable_log,
+#                 heater_probe,
+#                 heater_on,
+#                 heater_off,
+#                 light_on,
+#                 light_off,
+#                 return_enable_feed_a,
+#                 return_feed_delay_a,
+#                 return_enable_feed_b,
+#                 return_feed_delay_b,
+#                 return_enable_feed_c,
+#                 return_feed_delay_c,
+#                 return_enable_feed_d,
+#                 return_feed_delay_d,
+#                 skimmer_enable_feed_a,
+#                 skimmer_feed_delay_a,
+#                 skimmer_enable_feed_b,
+#                 skimmer_feed_delay_b,
+#                 skimmer_enable_feed_c,
+#                 skimmer_feed_delay_c,
+#                 skimmer_enable_feed_d,
+#                 skimmer_feed_delay_d,
+#                 ph_probe,
+#                 ph_high,
+#                 ph_low,
+#                 ph_onwhen)''' + "values ('" + appPrefs.appuid + "'," + "'" + intoutlet + "'," + \
+#                 "'OFF'," + \
+#                 "'Unnamed'," + \
+#                 "'Always'," + \
+#                 "'False'," + \
+#                 "'False'," + \
+#                 "''," + \
+#                 "'25.0'," + \
+#                 "'25.5'," + \
+#                 "'08:00'," + \
+#                 "'17:00'," + \
+#                 "'False'," + \
+#                 "'0'," + \
+#                 "'False'," + \
+#                 "'0'," + \
+#                 "'False'," + \
+#                 "'0'," + \
+#                 "'False'," + \
+#                 "'0'," + \
+#                 "'False'," + \
+#                 "'0'," + \
+#                 "'False'," + \
+#                 "'0'," + \
+#                 "'False'," + \
+#                 "'0'," + \
+#                 "'False'," + \
+#                 "'0'," + \
+#                 "'mcp3008_ch1'," + \
+#                 "'8.0'," + \
+#                 "'7.9'," + \
+#                 "'HIGH'" + \
+#                 ")"
+#             mycursor.execute(sql)
+#             mysqldb.commit()
+#             outlet.ischanged = "False"
+#             outlet.outletid = intoutlet
+#             outlet.outletname = "Unnamed"
+#             outlet.control_type = "Always"
+#             outlet.always_state = "OFF"
+#             outlet.enable_log = "False"
+#             outlet.heater_probe = ""
+#             outlet.heater_on = "25.0"
+#             outlet.heater_off = "25.5"
+#             outlet.button_state = "OFF"
+#             outlet.light_on = "08:00"
+#             outlet.light_off = "17:00"
+#             outlet.return_enable_feed_a = "False"
+#             outlet.return_feed_delay_a = "0"
+#             outlet.return_enable_feed_b = "False"
+#             outlet.return_feed_delay_b = "0"
+#             outlet.return_enable_feed_c = "False"
+#             outlet.return_feed_delay_c = "0"
+#             outlet.return_enable_feed_d = "False"
+#             outlet.return_feed_delay_d = "0"
+#             outlet.skimmer_enable_feed_a = "False"
+#             outlet.skimmer_feed_delay_a = "0"
+#             outlet.skimmer_enable_feed_b = "False"
+#             outlet.skimmer_feed_delay_b = "0"
+#             outlet.skimmer_enable_feed_c = "False"
+#             outlet.skimmer_feed_delay_c = "0"
+#             outlet.skimmer_enable_feed_d = "False"
+#             outlet.skimmer_feed_delay_d = "0"
+#             outlet.ph_probe = "mcp3008_ch1"
+#             outlet.ph_high = "8.0"
+#             outlet.ph_low = "7.9"
+#             outlet.ph_onwhen = "HIGH"
+#         else:
+#             logger.info("Reading outlet configuration: " + intoutlet)
+#             #appPrefs.outletDict(intoutlet) = 
+#         appPrefs.outletDict[intoutlet] = outlet
+#     #print (appPrefs.outletDict)
+#     #exit()
+
+def readOutletPrefs_ex(sqlengine, appPrefs, logger):
     logger.info("Reading outlet prefs from database...")
     appPrefs.outletDict.clear()
-    mycursor = mysqldb.cursor(dictionary=True)
-    # we support 8 outlets on the internal bus of the Pi
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    outlets_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+# we support 8 outlets on the internal bus of the Pi
     intbus = ["int_outlet_1",
               "int_outlet_2",
               "int_outlet_3",
@@ -104,80 +239,14 @@ def readOutletPrefs(mysqldb, appPrefs, logger):
 
     for intoutlet in intbus:
         outlet = cls_Preferences.outletPrefs()
-        sql = "SELECT * FROM " + mysqldb.database + \
-                    ".outlets WHERE appuid = '" + appPrefs.appuid + "'" + " AND outletid = '" + intoutlet + "'"
+        stmt = select(outlets_table).where(outlets_table.c.appuid == appPrefs.appuid).where(outlets_table.c.outletid == intoutlet)
+        results = conn.execute(stmt)
+        conn.commit()
+
         
-        mycursor.execute(sql)
-        myresult = mycursor.fetchone()
-        if myresult is None:
-            logger.warn("Inserting outlet configuration into database: " + intoutlet)
+        if results.rowcount == 0:
+            logger.warn ("Outlet: [" + intoutlet  + "] not found! Creating entry.")
             
-            sql = "INSERT into " + mysqldb.database + \
-                '''.outlets (appuid,
-                outletid,
-                button_state,
-                outletname,
-                control_type,
-                always_state,
-                enable_log,
-                heater_probe,
-                heater_on,
-                heater_off,
-                light_on,
-                light_off,
-                return_enable_feed_a,
-                return_feed_delay_a,
-                return_enable_feed_b,
-                return_feed_delay_b,
-                return_enable_feed_c,
-                return_feed_delay_c,
-                return_enable_feed_d,
-                return_feed_delay_d,
-                skimmer_enable_feed_a,
-                skimmer_feed_delay_a,
-                skimmer_enable_feed_b,
-                skimmer_feed_delay_b,
-                skimmer_enable_feed_c,
-                skimmer_feed_delay_c,
-                skimmer_enable_feed_d,
-                skimmer_feed_delay_d,
-                ph_probe,
-                ph_high,
-                ph_low,
-                ph_onwhen)''' + "values ('" + appPrefs.appuid + "'," + "'" + intoutlet + "'," + \
-                "'OFF'," + \
-                "'Unnamed'," + \
-                "'Always'," + \
-                "'False'," + \
-                "'False'," + \
-                "''," + \
-                "'25.0'," + \
-                "'25.5'," + \
-                "'08:00'," + \
-                "'17:00'," + \
-                "'False'," + \
-                "'0'," + \
-                "'False'," + \
-                "'0'," + \
-                "'False'," + \
-                "'0'," + \
-                "'False'," + \
-                "'0'," + \
-                "'False'," + \
-                "'0'," + \
-                "'False'," + \
-                "'0'," + \
-                "'False'," + \
-                "'0'," + \
-                "'False'," + \
-                "'0'," + \
-                "'mcp3008_ch1'," + \
-                "'8.0'," + \
-                "'7.9'," + \
-                "'HIGH'" + \
-                ")"
-            mycursor.execute(sql)
-            mysqldb.commit()
             outlet.ischanged = "False"
             outlet.outletid = intoutlet
             outlet.outletname = "Unnamed"
@@ -210,46 +279,47 @@ def readOutletPrefs(mysqldb, appPrefs, logger):
             outlet.ph_high = "8.0"
             outlet.ph_low = "7.9"
             outlet.ph_onwhen = "HIGH"
-        else:
-            logger.info("Reading outlet configuration: " + intoutlet)
-            #appPrefs.outletDict(intoutlet) = 
-        appPrefs.outletDict[intoutlet] = outlet
-    #print (appPrefs.outletDict)
-    #exit()
 
-def readOutletPrefs_ex(sqlengine, appPrefs, logger):
-    logger.info("Reading outlet prefs from database...")
-    appPrefs.outletDict.clear()
-
-    # build table object from table in DB
-    metadata_obj = MetaData()
-    outlets_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-    conn = sqlengine.connect()
-# we support 8 outlets on the internal bus of the Pi
-    intbus = ["int_outlet_1",
-              "int_outlet_2",
-              "int_outlet_3",
-              "int_outlet_4",
-              "int_outlet_5",
-              "int_outlet_6",
-              "int_outlet_7",
-              "int_outlet_8"]
-
-    for intoutlet in intbus:
-        outlet = cls_Preferences.outletPrefs()
-        stmt = select(outlets_table).where(outlets_table.c.appuid == appPrefs.appuid).where(outlets_table.c.outletid == intoutlet)
-        results = conn.execute(stmt)
-
-        
-      
-        
-        if results.rowcount == 0:
-            print("None found")
+            stmt = insert(outlets_table).values(appuid = appPrefs.appuid, 
+                                                outletid = intoutlet,
+                                                button_state = "OFF",
+                                                outletname = outlet.outletname,
+                                                control_type = outlet.control_type,
+                                                always_state = outlet.always_state,
+                                                enable_log = outlet.enable_log,
+                                                heater_probe = outlet.heater_probe,
+                                                heater_on = outlet.heater_on,
+                                                heater_off = outlet.heater_off,
+                                                light_on = outlet.light_on,
+                                                light_off = outlet.light_off,
+                                                return_enable_feed_a = outlet.return_enable_feed_a,
+                                                return_feed_delay_a = outlet.return_feed_delay_a,
+                                                return_enable_feed_b = outlet.return_enable_feed_b,
+                                                return_feed_delay_b = outlet.return_feed_delay_b,
+                                                return_enable_feed_c = outlet.return_enable_feed_c,
+                                                return_feed_delay_c = outlet.return_feed_delay_c,
+                                                return_enable_feed_d = outlet.return_enable_feed_d,
+                                                return_feed_delay_d = outlet.return_feed_delay_d,
+                                                skimmer_enable_feed_a = outlet.skimmer_enable_feed_a,
+                                                skimmer_feed_delay_a = outlet.skimmer_feed_delay_a,
+                                                skimmer_enable_feed_b = outlet.skimmer_enable_feed_b,
+                                                skimmer_feed_delay_b = outlet.skimmer_feed_delay_b,
+                                                skimmer_enable_feed_c = outlet.skimmer_enable_feed_c,
+                                                skimmer_feed_delay_c = outlet.skimmer_feed_delay_c,
+                                                skimmer_enable_feed_d = outlet.skimmer_enable_feed_d,
+                                                skimmer_feed_delay_d = outlet.skimmer_feed_delay_d,
+                                                ph_probe = outlet.ph_probe,
+                                                ph_high = outlet.ph_high,
+                                                ph_low = outlet.ph_low,
+                                                ph_onwhen = outlet.ph_onwhen)
+            
+            conn.execute(stmt)
+            conn.commit()
 
         for row in results:
             
-            print(row.appuid + " " + row.outletid + " " + row.outletname) 
+            #print(row.appuid + " " + row.outletid + " " + row.outletname) 
+            logger.info("[" + row.appuid + " " + row.outletid + "] " + row.outletname + " = " + row.button_state)
 
        
 
