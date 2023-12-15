@@ -118,8 +118,14 @@ def apploop():
         
         try:
             defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+            for outlet in AppPrefs.outletDict:
+                 logger.info("[" + AppPrefs.outletDict.get(outlet).outletid + "] " + \
+                            AppPrefs.outletDict.get(outlet).outletname + " = " + \
+                            AppPrefs.outletDict.get(outlet).button_state  )
+
         except Exception as e:
             logger.error("Error reading outlet data! " + str(e))
+        
         ##########################################################################################
         # pause to slow down the loop
         ##########################################################################################
