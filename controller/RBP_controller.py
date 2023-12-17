@@ -12,6 +12,7 @@ import dht11
 from datetime import datetime
 import ds18b20
 import time
+import defs_outletcontrol
 
 
 logger = logging.getLogger()
@@ -113,19 +114,42 @@ def apploop():
                 logger.error("Error logging to InfluxDB!")
 
         ##########################################################################################
-        # get outlet prefs from DB
+        # Handle Outlets
         ##########################################################################################
-        
+        # read outlet prefs from DB
         try:
             defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+            
             for outlet in AppPrefs.outletDict:
-                 logger.info("[" + AppPrefs.outletDict.get(outlet).outletid + "] " + \
+                logger.info("[" + AppPrefs.outletDict.get(outlet).outletid + "] " + \
                             AppPrefs.outletDict.get(outlet).outletname + " = " + \
                             AppPrefs.outletDict.get(outlet).button_state  )
+                
+                pin = GPIO_config.int_outletpins.get(AppPrefs.outletDict.get(outlet).outletid)
+
+                # handle outlet actions based on settings
+                # control type ALWAYS
+                if AppPrefs.outletDict.get(outlet).control_type == "Always":
+                    defs_outletcontrol.handle_outlet_always(AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
+                # control type HEATER
+                # elif AppPrefs.outletDict.get(outlet).controltype == "Heater":
+                #     return defs_outletcontrolsim.handle_outlet_heater(self, outlet, button_state, pin)
+                # # control type RETURN PUMP
+                # elif AppPrefs.outletDict.get(outlet).controltype == "Return Pump":
+                #     return defs_outletcontrolsim.handle_outlet_returnpump(self, outlet, button_state, pin)
+                # elif AppPrefs.outletDict.get(outlet).controltype == "Skimmer":
+                #     return defs_outletcontrolsim.handle_outlet_skimmer(self, outlet, button_state, pin)
+                # elif AppPrefs.outletDict.get(outlet).controltype == "Light":
+                #     return defs_outletcontrolsim.handle_outlet_light(self, outlet, button_state, pin)
+                # elif AppPrefs.outletDict.get(outlet).controltype == "pH Control":
+                #     return defs_outletcontrolsim.handle_outlet_ph(self, outlet, button_state, pin)
+
 
         except Exception as e:
             logger.error("Error reading outlet data! " + str(e))
         
+        
+
         ##########################################################################################
         # pause to slow down the loop
         ##########################################################################################
