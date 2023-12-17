@@ -1,5 +1,5 @@
 # from datetime import datetime, timedelta, time
-# import defs_common
+import defs_common
 import RPi.GPIO as GPIO
 # import time
 
@@ -7,14 +7,14 @@ PIN_ON = False
 PIN_OFF = True
 
 
-# # def get_on_or_off(pin):
-# #     #currentOutletState = GPIO.input(pin)
-# #     if currentOutletState == PIN_ON:
-# #         return "ON"
-# #     elif currentOutletState == PIN_OFF:
-# #         return "OFF"
-# #     else:
-# #         return "UNKNOWN"
+def get_on_or_off(pin):
+    currentOutletState = GPIO.input(pin)
+    if currentOutletState == PIN_ON:
+        return "ON"
+    elif currentOutletState == PIN_OFF:
+        return "OFF"
+    else:
+        return "UNKNOWN"
 
 
 def handle_on_off(AppPrefs, outlet, pin, targetstate):
@@ -77,53 +77,52 @@ def handle_outlet_always(AppPrefs, outlet, button_state, pin):
         return "OFF"
 
 
-# def handle_outlet_heater(controller, outlet, button_state, pin):
-#     #global tempProbeDict
-#     if button_state == "OFF":
-#         #GPIO.output(pin, True)
-#         handle_on_off(controller, outlet, pin, PIN_OFF)
-#         return "OFF"
-#     elif button_state == "ON":
-#         #GPIO.output(pin, False)
-#         handle_on_off(controller, outlet, pin, PIN_ON)
-#         return "ON"
-#     elif button_state == "AUTO":
-#         # To do:  if no probe selected should show something in status box....
-#         probe = defs_common.readINIfile(
-#             outlet, "heater_probe", "28-000000000000", logger=controller.logger)
+def handle_outlet_heater(AppPrefs, outlet, button_state, pin):
+    #global tempProbeDict
+    if button_state == "OFF":
+        #GPIO.output(pin, True)
+        handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+        return "OFF"
+    elif button_state == "ON":
+        #GPIO.output(pin, False)
+        handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+        return "ON"
+    elif button_state == "AUTO":
+        
+        probe = AppPrefs.outletDict[outlet].heater_probe
 
-#         if controller.AppPrefs.temperaturescale == defs_common.SCALE_F:
-#             on_temp = defs_common.convertCtoF(
-#                 controller.AppPrefs.outletDict[outlet].heater_on)
-#         else:
-#             on_temp = controller.AppPrefs.outletDict[outlet].heater_on
+        if AppPrefs.temperaturescale == defs_common.SCALE_F:
+            on_temp = defs_common.convertCtoF(
+                AppPrefs.outletDict[outlet].heater_on)
+        else:
+            on_temp = AppPrefs.outletDict[outlet].heater_on
 
-#         if controller.AppPrefs.temperaturescale == defs_common.SCALE_F:
-#             off_temp = defs_common.convertCtoF(
-#                 controller.AppPrefs.outletDict[outlet].heater_off)
-#         else:
-#             off_temp = controller.AppPrefs.outletDict[outlet].heater_off
+        if AppPrefs.temperaturescale == defs_common.SCALE_F:
+            off_temp = defs_common.convertCtoF(
+                AppPrefs.outletDict[outlet].heater_off)
+        else:
+            off_temp = AppPrefs.outletDict[outlet].heater_off
 
-#         for p in controller.AppPrefs.tempProbeDict:
-#             if controller.AppPrefs.tempProbeDict[p].probeid == probe:
-#                 #print("last temp " + str(controller.AppPrefs.tempProbeDict[p].lastTemperature) + " On temp " + on_temp + " Off temp " + off_temp)
-#                 if float(controller.AppPrefs.tempProbeDict[p].lastTemperature) <= float(on_temp):
-#                     #GPIO.output(pin, False)
-#                     handle_on_off(controller, outlet, pin, PIN_ON)
-#                     return "ON (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"
-#                 elif float(controller.AppPrefs.tempProbeDict[p].lastTemperature) >= float(off_temp):
-#                     #GPIO.output(pin, True)
-#                     handle_on_off(controller, outlet, pin, PIN_OFF)
-#                     return "OFF (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"
-#                 else:
-#                     state = get_on_or_off(pin)
-#                     return state + " (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"
-#                 break
-
-#     else:
-#         #GPIO.output(pin, True)
-#         handle_on_off(controller, outlet, pin, PIN_OFF)
-#         return "OFF"
+        for p in AppPrefs.tempProbeDict:
+            if AppPrefs.tempProbeDict[p].probeid == probe:
+                #print("last temp " + str(controller.AppPrefs.tempProbeDict[p].lastTemperature) + " On temp " + on_temp + " Off temp " + off_temp)
+                if float(AppPrefs.tempProbeDict[p].lastTemperature) <= float(on_temp):
+                    #GPIO.output(pin, False)
+                    handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+                    AppPrefs.logger.debug( "ON (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")")
+                elif float(AppPrefs.tempProbeDict[p].lastTemperature) >= float(off_temp):
+                    #GPIO.output(pin, True)
+                    handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+                    AppPrefs.logger.debug( "OFF (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")")
+                else:
+                    state = get_on_or_off(pin)
+                    AppPrefs.logger.debug( state + " (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")")
+                break
+        
+    else:
+        #GPIO.output(pin, True)
+        handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+        return "OFF"
 
 
 # def handle_outlet_ph(controller, outlet, button_state, pin):

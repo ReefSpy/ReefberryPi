@@ -14,7 +14,8 @@ import os.path
 import configparser
 
 CONFIGFILENAME = "config.ini"
-
+SCALE_C = "C"
+SCALE_F = "F"
 
 def initialize_logger(logger, output_dir, output_file, loglevel_console, loglevel_logfile):
 

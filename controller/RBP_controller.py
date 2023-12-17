@@ -84,6 +84,8 @@ def apploop():
                 # print("ds18b20 Temp = " + str(dstempC) + "C / " + str(dstempF) + "F")
                 logger.debug(AppPrefs.tempProbeDict.get(tProbe).probeid + " Temp = " + str(dstempC) +
                              "C / " + str(dstempF) + "F")
+                
+                AppPrefs.tempProbeDict.get(tProbe).lastTemperature = str(dstempC)
         except:
             logger.error("Unable to read ds18b20 temperature")
         ###################################################################
@@ -132,9 +134,9 @@ def apploop():
                 if AppPrefs.outletDict.get(outlet).control_type == "Always":
                     defs_outletcontrol.handle_outlet_always(AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
                 # control type HEATER
-                # elif AppPrefs.outletDict.get(outlet).controltype == "Heater":
-                #     return defs_outletcontrolsim.handle_outlet_heater(self, outlet, button_state, pin)
-                # # control type RETURN PUMP
+                elif AppPrefs.outletDict.get(outlet).control_type == "Heater":
+                    defs_outletcontrol.handle_outlet_heater(AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
+                # control type RETURN PUMP
                 # elif AppPrefs.outletDict.get(outlet).controltype == "Return Pump":
                 #     return defs_outletcontrolsim.handle_outlet_returnpump(self, outlet, button_state, pin)
                 # elif AppPrefs.outletDict.get(outlet).controltype == "Skimmer":
