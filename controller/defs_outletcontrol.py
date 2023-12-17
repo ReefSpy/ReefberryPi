@@ -1,4 +1,4 @@
-# from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta, time
 import defs_common
 import RPi.GPIO as GPIO
 # import time
@@ -52,41 +52,65 @@ def handle_on_off(AppPrefs, outlet, pin, targetstate):
 
 
 def handle_outlet_always(AppPrefs, outlet, button_state, pin):
+    butstate = ""
     if button_state == "OFF":
         #GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
-        return "OFF"
+        #return "OFF"
+        butstate = "OFF"
     elif button_state == "ON":
         #GPIO.output(pin, False)
         handle_on_off(AppPrefs, outlet, pin, PIN_ON)
-        return "ON"
+        #return "ON"
+        butstate = "ON"
     elif button_state == "AUTO":
         #state = defs_common.readINIfile(outlet, "always_state", "OFF", logger=controller.logger)
         state = AppPrefs.outletDict[outlet].always_state
         if state == "OFF":
             #GPIO.output(pin, True)
             handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
-            return "OFF"
+            #return "OFF"
+            butstate = "OFF"
         elif state == "ON":
             #GPIO.output(pin, False)
             handle_on_off(AppPrefs, outlet, pin, PIN_ON)
-            return "ON"
+            #return "ON"
+            butstate = "ON"
     else:
         #GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
-        return "OFF"
+        #return "OFF"
+        butstate = "OFF"
 
+   # AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] "  + AppPrefs.outletDict[outlet].outletname + " = " + butstate)
+    AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
+                                "Type: " + AppPrefs.outletDict[outlet].control_type + \
+                                " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
+                                " | Mode: " + AppPrefs.outletDict[outlet].button_state + \
+                                " | Outlet: " + butstate)       
 
 def handle_outlet_heater(AppPrefs, outlet, button_state, pin):
+    butstate = ""
+
     #global tempProbeDict
     if button_state == "OFF":
         #GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
-        return "OFF"
+        #return "OFF"
+        butstate = "OFF"
+        AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
+                                "Type: " + AppPrefs.outletDict[outlet].control_type + \
+                                " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
+                                " | Mode: OFF | Outlet: OFF" )
     elif button_state == "ON":
         #GPIO.output(pin, False)
         handle_on_off(AppPrefs, outlet, pin, PIN_ON)
-        return "ON"
+        #return "ON"
+        butstate = "ON"
+        AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
+                                "Type: " + AppPrefs.outletDict[outlet].control_type + \
+                                " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
+                                " | Mode: ON | Outlet: OFF" )                        
     elif button_state == "AUTO":
         
         probe = AppPrefs.outletDict[outlet].heater_probe
@@ -109,20 +133,43 @@ def handle_outlet_heater(AppPrefs, outlet, button_state, pin):
                 if float(AppPrefs.tempProbeDict[p].lastTemperature) <= float(on_temp):
                     #GPIO.output(pin, False)
                     handle_on_off(AppPrefs, outlet, pin, PIN_ON)
-                    AppPrefs.logger.debug( "ON (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")")
+                    #AppPrefs.logger.debug(AppPrefs.outletDict[outlet].outletname +  " ON (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ") " + AppPrefs.tempProbeDict[p].lastTemperature)
+                    AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
+                                          "Type: " + AppPrefs.outletDict[outlet].control_type + \
+                                          " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
+                                          " | Mode: AUTO | Outlet: ON" + \
+                                          " | Range: (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")" + \
+                                          " | Current: " + AppPrefs.tempProbeDict[p].lastTemperature)
                 elif float(AppPrefs.tempProbeDict[p].lastTemperature) >= float(off_temp):
                     #GPIO.output(pin, True)
                     handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
-                    AppPrefs.logger.debug( "OFF (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")")
+                    #AppPrefs.logger.debug(AppPrefs.outletDict[outlet].outletname +  " OFF (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ") " + AppPrefs.tempProbeDict[p].lastTemperature)
+                    AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
+                                          "Type: " + AppPrefs.outletDict[outlet].control_type + \
+                                          " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
+                                          " | Mode: AUTO | Outlet: OFF" + \
+                                          " | Range: (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")" + \
+                                          " | Current: " + AppPrefs.tempProbeDict[p].lastTemperature)
                 else:
                     state = get_on_or_off(pin)
-                    AppPrefs.logger.debug( state + " (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")")
+                    #AppPrefs.logger.debug( state + " (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")")
+                    AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
+                                          "Type: " + AppPrefs.outletDict[outlet].control_type + \
+                                          " | Name: " + AppPrefs.outletDict[outlet].outletname +  state + \
+                                            " range (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ") " + \
+                                            " current = " + AppPrefs.tempProbeDict[p].lastTemperature)
+                
+ 
                 break
-        
+
+        butstate = "AUTO"
     else:
-        #GPIO.output(pin, True)
+        GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
-        return "OFF"
+        #return "OFF"
+        butstate = "OFF"
+
+   
 
 
 # def handle_outlet_ph(controller, outlet, button_state, pin):
@@ -177,56 +224,63 @@ def handle_outlet_heater(AppPrefs, outlet, button_state, pin):
 #         return "OFF"
 
 
-# def handle_outlet_light(controller, outlet, button_state, pin):
-#     if button_state == "OFF":
-#         #GPIO.output(pin, True)
-#         handle_on_off(controller, outlet, pin, PIN_OFF)
-#         return "OFF"
-#     elif button_state == "ON":
-#         #GPIO.output(pin, False)
-#         handle_on_off(controller, outlet, pin, PIN_ON)
-#         return "ON"
-#     elif button_state == "AUTO":
-#         #on_time = defs_common.readINIfile(outlet, "light_on", "08:00", logger=controller.logger)
-#         #off_time = defs_common.readINIfile(outlet, "light_off", "17:00", logger=controller.logger)
-#         on_time = controller.AppPrefs.outletDict[outlet].light_on
-#         off_time = controller.AppPrefs.outletDict[outlet].light_off
-#         now = datetime.now()
-#         now_time = now.time()
-#         on_time = datetime.strptime(on_time, '%H:%M')
-#         off_time = datetime.strptime(off_time, '%H:%M')
-#         # on time before off time
-#         if datetime.time(on_time) < datetime.time(off_time):
-#             if now_time >= datetime.time(on_time) and now_time <= datetime.time(off_time):
-#                 # GPIO.output(pin, False) #turn on light
-#                 handle_on_off(controller, outlet, pin, PIN_ON)
-#                 status = "ON" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
-#                     " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
-#                 return status
-#             else:
-#                 # GPIO.output(pin, True) #turn off light
-#                 handle_on_off(controller, outlet, pin, PIN_OFF)
-#                 status = "OFF" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
-#                     " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
-#                 return status
-#         else:  # on time after off time
-#             if now_time <= datetime.time(on_time) and now_time >= datetime.time(off_time):
-#                 # GPIO.output(pin, True) #turn off light
-#                 handle_on_off(controller, outlet, pin, PIN_OFF)
-#                 status = "OFF" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
-#                     " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
-#                 return status
-#             else:
-#                 # GPIO.output(pin, False) #turn on light
-#                 handle_on_off(controller, outlet, pin, PIN_ON)
-#                 status = "ON" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
-#                     " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
-#                 return status
-#     else:
-#         #GPIO.output(pin, True)
-#         handle_on_off(controller, outlet, pin, PIN_OFF)
-#         return "OFF"
+def handle_outlet_light(AppPrefs, outlet, button_state, pin):
+    if button_state == "OFF":
+        #GPIO.output(pin, True)
+        handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+        #return "OFF"
+        status = "OFF"
+    elif button_state == "ON":
+        #GPIO.output(pin, False)
+        handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+        #return "ON"
+        status = "ON"
+    elif button_state == "AUTO":
+        #on_time = defs_common.readINIfile(outlet, "light_on", "08:00", logger=controller.logger)
+        #off_time = defs_common.readINIfile(outlet, "light_off", "17:00", logger=controller.logger)
+        on_time = AppPrefs.outletDict[outlet].light_on
+        off_time = AppPrefs.outletDict[outlet].light_off
+        now = datetime.now()
+        now_time = now.time()
+        on_time = datetime.strptime(on_time, '%H:%M')
+        off_time = datetime.strptime(off_time, '%H:%M')
+        # on time before off time
+        if datetime.time(on_time) < datetime.time(off_time):
+            if now_time >= datetime.time(on_time) and now_time <= datetime.time(off_time):
+                GPIO.output(pin, False) #turn on light
+                handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+                status = "ON" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
+                    " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
+                #return status
+            else:
+                GPIO.output(pin, True) #turn off light
+                handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+                status = "OFF" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
+                    " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
+                #return status
+        else:  # on time after off time
+            if now_time <= datetime.time(on_time) and now_time >= datetime.time(off_time):
+                GPIO.output(pin, True) #turn off light
+                handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+                status = "OFF" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
+                    " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
+                #return status
+            else:
+                GPIO.output(pin, False) #turn on light
+                handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+                status = "ON" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
+                    " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
+                #return status
+    else:
+        GPIO.output(pin, True)
+        handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+        #return "OFF"
 
+    AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
+                                          "Type: " + AppPrefs.outletDict[outlet].control_type + \
+                                          " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
+                                          " | Mode: " + AppPrefs.outletDict[outlet].button_state + \
+                                          " | Status: " + status  )
 
 # def handle_outlet_returnpump(controller, outlet, button_state, pin):
 #     #global feed_PreviousMode

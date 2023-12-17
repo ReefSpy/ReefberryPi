@@ -86,8 +86,8 @@ def apploop():
                              "C / " + str(dstempF) + "F")
                 
                 AppPrefs.tempProbeDict.get(tProbe).lastTemperature = str(dstempC)
-        except:
-            logger.error("Unable to read ds18b20 temperature")
+        except Exception as e:
+            logger.error("Unable to read ds18b20 temperature! " + str(e))
         ###################################################################
         # dht11 temp and humidity data
         ###################################################################
@@ -123,9 +123,9 @@ def apploop():
             defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
             
             for outlet in AppPrefs.outletDict:
-                logger.info("[" + AppPrefs.outletDict.get(outlet).outletid + "] " + \
-                            AppPrefs.outletDict.get(outlet).outletname + " = " + \
-                            AppPrefs.outletDict.get(outlet).button_state  )
+                # logger.info("[" + AppPrefs.outletDict.get(outlet).outletid + "] " + \
+                #             AppPrefs.outletDict.get(outlet).outletname + " = " + \
+                #             AppPrefs.outletDict.get(outlet).button_state  )
                 
                 pin = GPIO_config.int_outletpins.get(AppPrefs.outletDict.get(outlet).outletid)
 
@@ -141,8 +141,9 @@ def apploop():
                 #     return defs_outletcontrolsim.handle_outlet_returnpump(self, outlet, button_state, pin)
                 # elif AppPrefs.outletDict.get(outlet).controltype == "Skimmer":
                 #     return defs_outletcontrolsim.handle_outlet_skimmer(self, outlet, button_state, pin)
-                # elif AppPrefs.outletDict.get(outlet).controltype == "Light":
-                #     return defs_outletcontrolsim.handle_outlet_light(self, outlet, button_state, pin)
+                # control type LIGHT
+                elif AppPrefs.outletDict.get(outlet).control_type == "Light":
+                    defs_outletcontrol.handle_outlet_light(AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
                 # elif AppPrefs.outletDict.get(outlet).controltype == "pH Control":
                 #     return defs_outletcontrolsim.handle_outlet_ph(self, outlet, button_state, pin)
 

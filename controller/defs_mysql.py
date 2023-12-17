@@ -109,7 +109,17 @@ def readOutletPrefs_ex(sqlengine, appPrefs, logger):
                 "int_outlet_6",
                 "int_outlet_7",
                 "int_outlet_8"]
+        ##########################
+        # get all outlets at once
+        ##########################
+        # stmt = select(outlets_table).where(outlets_table.c.appuid == appPrefs.appuid)
+        # results = conn.execute(stmt)
+        # conn.commit()
 
+        # for row in results:
+        #     logger.debug(row.outletid)
+
+        ##########################
         for intoutlet in intbus:
             outlet = cls_Preferences.outletPrefs()
             stmt = select(outlets_table).where(outlets_table.c.appuid == appPrefs.appuid).where(outlets_table.c.outletid == intoutlet)
