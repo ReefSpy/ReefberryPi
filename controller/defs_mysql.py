@@ -6,6 +6,7 @@ from sqlalchemy import Table
 from sqlalchemy import select
 from sqlalchemy import insert
 
+
 # directly talking to mysql
 def initMySQL(app_prefs, logger):
     try:

@@ -83,6 +83,9 @@ class AppPrefs():
         self.initDictionaries()
         self.readInitPrefs()
         # self.readAllPrefs()
+        self.feed_CurrentMode = ""
+        self.feed_PreviousMode = ""
+        self.feed_ExtraTimeSeed = "0"
 
     def initDictionaries(self):
         self.outletDict = {}

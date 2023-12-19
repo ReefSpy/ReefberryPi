@@ -137,8 +137,8 @@ def apploop():
                 elif AppPrefs.outletDict.get(outlet).control_type == "Heater":
                     defs_outletcontrol.handle_outlet_heater(AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
                 # control type RETURN PUMP
-                # elif AppPrefs.outletDict.get(outlet).controltype == "Return Pump":
-                #     return defs_outletcontrolsim.handle_outlet_returnpump(self, outlet, button_state, pin)
+                elif AppPrefs.outletDict.get(outlet).control_type == "Return Pump":
+                    defs_outletcontrol.handle_outlet_returnpump(AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
                 # elif AppPrefs.outletDict.get(outlet).controltype == "Skimmer":
                 #     return defs_outletcontrolsim.handle_outlet_skimmer(self, outlet, button_state, pin)
                 # control type LIGHT
@@ -156,7 +156,7 @@ def apploop():
         ##########################################################################################
         # pause to slow down the loop
         ##########################################################################################
-        time.sleep(1)
+        time.sleep(.5)
 
 
 apploop()
