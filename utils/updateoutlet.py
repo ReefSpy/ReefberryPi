@@ -5,7 +5,6 @@ from sqlalchemy import Table, Column, Integer, String
 from sqlalchemy import select
 from sqlalchemy import update
 from sqlalchemy import insert
-from sqlalchemy import update
 import requests
 
 APPUID = "QV3BIZZV"

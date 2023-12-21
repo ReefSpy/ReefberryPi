@@ -13,7 +13,11 @@ from datetime import datetime
 import ds18b20
 import time
 import defs_outletcontrol
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+from sqlalchemy import MetaData
+from sqlalchemy import Table, Column, Integer, String
+from sqlalchemy import select
+from sqlalchemy import update
 
 app = Flask(__name__)
 
@@ -251,6 +255,53 @@ def reloadprefs():
     defs_mysql.readGlobalPrefs(mySQLDB, AppPrefs, logger)
     defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
     return "Reload Prefs"
+
+@app.route('/set_outlet_light/', methods = ['GET'])
+def set_outlet_light():
+    global AppPrefs
+    global sqlengine
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    #some_table = Table("first_table", metadata_obj, autoload_with=engine)
+    outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+
+    params = request.args.to_dict()
+    
+    print (params)
+
+    AppPrefs.appuid = params["appuid"]
+    AppPrefs.outletDict[params["outletid"]].outletname = params["outletname"]
+    AppPrefs.outletDict[params["outletid"]].control_type = params["control_type"]
+    AppPrefs.outletDict[params["outletid"]].enable_log = params["enable_log"]       
+    AppPrefs.outletDict[params["outletid"]].button_state = params["button_state"] 
+    AppPrefs.outletDict[params["outletid"]].light_on = params["light_on"] 
+    AppPrefs.outletDict[params["outletid"]].light_off = params["light_off"] 
+    
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid ==  AppPrefs.outletDict[params["outletid"]].outletid)
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(outletname = AppPrefs.outletDict[params["outletid"]].outletname,
+                control_type = AppPrefs.outletDict[params["outletid"]].control_type,
+                enable_log = AppPrefs.outletDict[params["outletid"]].enable_log,
+                button_state = AppPrefs.outletDict[params["outletid"]].button_state,
+                light_on = AppPrefs.outletDict[params["outletid"]].light_on,
+                light_off = AppPrefs.outletDict[params["outletid"]].light_off
+                )
+    )
+    conn = sqlengine.connect()
+
+    conn.execute(stmt)
+    conn.commit()
+        
+    return f"Looking for {params}"
+
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run()
