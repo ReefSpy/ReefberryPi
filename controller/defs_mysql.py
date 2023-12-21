@@ -90,6 +90,31 @@ def readGlobalPrefs(mysqldb, appPrefs, logger):
         
     logger.info("Using temperature scale: " + appPrefs.temperaturescale)
     
+def readGlobalPrefs_ex(sqlengine, appPrefs, logger):    
+    logger.info("Reading global prefs from database...")
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    global_table = Table("global", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    stmt = select(global_table).where(global_table.c.appuid == appPrefs.appuid)
+    results = conn.execute(stmt)
+    conn.commit()
+ 
+    for row in results:
+        appPrefs.temperaturescale = row.tempscale
+        appPrefs.appuid = row.appuid
+        appPrefs.feed_a_time = row.feed_a_time
+        appPrefs.feed_b_time = row.feed_b_time
+        appPrefs.feed_c_time = row.feed_c_time
+        appPrefs.feed_d_time = row.feed_d_time
+
+    logger.info("Using temperature scale: " + appPrefs.temperaturescale)
+    logger.info("Read Feed Mode A: " + appPrefs.feed_a_time)  
+    logger.info("Read Feed Mode B: " + appPrefs.feed_b_time)
+    logger.info("Read Feed Mode C: " + appPrefs.feed_c_time)
+    logger.info("Read Feed Mode D: " + appPrefs.feed_d_time)              
 
 def readOutletPrefs_ex(sqlengine, appPrefs, logger):
     try:

@@ -83,9 +83,15 @@ class AppPrefs():
         self.initDictionaries()
         self.readInitPrefs()
         # self.readAllPrefs()
-        self.feed_CurrentMode = ""
-        self.feed_PreviousMode = ""
-        self.feed_ExtraTimeSeed = "0"
+        self.feed_CurrentMode = "CANCEL"
+        self.feed_PreviousMode = "CANCEL"
+        self.feed_ExtraTimeSeed = int(round(time.time()*1000))  #extra time after feed is over
+        self.feed_ExtraTimeAdded = 0 # initialze to 0 extra time added
+        self.feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+        self.feed_a_time = ""
+        self.feed_b_time = ""
+        self.feed_c_time = ""
+        self.feed_d_time = ""
 
     def initDictionaries(self):
         self.outletDict = {}

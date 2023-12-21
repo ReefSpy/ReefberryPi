@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy import update
 from sqlalchemy import insert
 from sqlalchemy import update
+import requests
 
 APPUID = "QV3BIZZV"
 
@@ -103,3 +104,8 @@ while True:
             print(row)
 
     print()
+
+    url = 'http://127.0.0.1:5000/reloadprefs/'
+    headers = {'Content-Type': 'text/html'}
+    
+    print (requests.get(url, headers=headers))

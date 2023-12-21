@@ -87,30 +87,29 @@ def handle_outlet_always(AppPrefs, outlet, button_state, pin):
                                 "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                 " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
                                 " | Mode: " + AppPrefs.outletDict[outlet].button_state + \
-                                " | Outlet: " + butstate)       
+                                " | Status: " + get_on_or_off(pin))       
 
 def handle_outlet_heater(AppPrefs, outlet, button_state, pin):
-    butstate = ""
 
     #global tempProbeDict
     if button_state == "OFF":
         #GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
         #return "OFF"
-        butstate = "OFF"
         AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                 "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                 " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
-                                " | Mode: OFF | Outlet: OFF" )
+                                " | Mode: OFF" + \
+                                " | Status: " + get_on_or_off(pin) )
     elif button_state == "ON":
         #GPIO.output(pin, False)
         handle_on_off(AppPrefs, outlet, pin, PIN_ON)
-        #return "ON"
-        butstate = "ON"
+        #return "ON""
         AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                 "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                 " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
-                                " | Mode: ON | Outlet: OFF" )                        
+                                " | Mode: ON" + \
+                                " | Status: " + get_on_or_off(pin) )                        
     elif button_state == "AUTO":
         
         probe = AppPrefs.outletDict[outlet].heater_probe
@@ -139,7 +138,8 @@ def handle_outlet_heater(AppPrefs, outlet, button_state, pin):
                                           " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
                                           " | Mode: AUTO | Outlet: ON" + \
                                           " | Range: (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")" + \
-                                          " | Current: " + AppPrefs.tempProbeDict[p].lastTemperature)
+                                          " | Current: " + AppPrefs.tempProbeDict[p].lastTemperature +\
+                                          " | Status: " + get_on_or_off(pin))
                 elif float(AppPrefs.tempProbeDict[p].lastTemperature) >= float(off_temp):
                     #GPIO.output(pin, True)
                     handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
@@ -149,25 +149,27 @@ def handle_outlet_heater(AppPrefs, outlet, button_state, pin):
                                           " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
                                           " | Mode: AUTO | Outlet: OFF" + \
                                           " | Range: (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")" + \
-                                          " | Current: " + AppPrefs.tempProbeDict[p].lastTemperature)
+                                          " | Current: " + AppPrefs.tempProbeDict[p].lastTemperature + \
+                                          " | Status: " + get_on_or_off(pin))
                 else:
                     state = get_on_or_off(pin)
                     #AppPrefs.logger.debug( state + " (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")")
                     AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                           "Type: " + AppPrefs.outletDict[outlet].control_type + \
-                                          " | Name: " + AppPrefs.outletDict[outlet].outletname +  state + \
-                                            " range (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ") " + \
-                                            " current = " + AppPrefs.tempProbeDict[p].lastTemperature)
+                                          " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
+                                          " | Mode: AUTO | Outlet: OFF" + \
+                                          " | Range: (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")" + \
+                                          " | Current: " + AppPrefs.tempProbeDict[p].lastTemperature + \
+                                          " | Status: " + get_on_or_off(pin))
                 
  
                 break
 
-        butstate = "AUTO"
     else:
         GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
         #return "OFF"
-        butstate = "OFF"
+
 
    
 
@@ -364,7 +366,7 @@ def handle_outlet_returnpump(AppPrefs, outlet, button_state, pin):
                 #       " (" + str(controller.AppPrefs.feed_ExtraTimeAdded) + "s) " +
                 #       " Delay Time Remaining: " + str(round(difference)) + "s"
                 #       + Style.RESET_ALL)
-                AppPrefs.logger.debug(" Delay Mode: " + outlet +
+                AppPrefs.logger.debug("Delay Mode: " + outlet +
                       " (" + str(AppPrefs.feed_ExtraTimeAdded) + "s) " +
                       " Delay Time Remaining: " + str(round(difference)) + "s")
                 #GPIO.output(pin, True)
@@ -384,105 +386,115 @@ def handle_outlet_returnpump(AppPrefs, outlet, button_state, pin):
                                           "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                           " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
                                           " | Mode: " + AppPrefs.outletDict[outlet].button_state + \
-                                          " | Status: "   )
+                                          " | Status: " + get_on_or_off(pin)  )
 
 
-# def handle_outlet_skimmer(controller, outlet, button_state, pin):
-#     if controller.AppPrefs.feed_PreviousMode == "A":
-#         #controller.AppPrefs.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "skimmer_feed_delay_a", "0")
-#         controller.AppPrefs.feed_ExtraTimeAdded = controller.AppPrefs.outletDict[
-#             outlet].skimmer_feed_delay_a
-#     elif controller.AppPrefs.feed_PreviousMode == "B":
-#         #controller.AppPrefs.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "skimmer_feed_delay_b", "0")
-#         controller.AppPrefs.feed_ExtraTimeAdded = controller.AppPrefs.outletDict[
-#             outlet].skimmer_feed_delay_b
-#     elif controller.AppPrefs.feed_PreviousMode == "C":
-#         #controller.AppPrefs.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "skimmer_feed_delay_c", "0")
-#         controller.AppPrefs.feed_ExtraTimeAdded = controller.AppPrefs.outletDict[
-#             outlet].skimmer_feed_delay_c
-#     elif controller.AppPrefs.feed_PreviousMode == "D":
-#         #controller.AppPrefs.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "skimmer_feed_delay_d", "0")
-#         controller.AppPrefs.feed_ExtraTimeAdded = controller.AppPrefs.outletDict[
-#             outlet].skimmer_feed_delay_d
-#     else:
-#         controller.AppPrefs.feed_ExtraTimeAdded = 0
+def handle_outlet_skimmer(AppPrefs, outlet, button_state, pin):
+    if AppPrefs.feed_PreviousMode == "A":
+        #controller.AppPrefs.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "skimmer_feed_delay_a", "0")
+        AppPrefs.feed_ExtraTimeAdded = AppPrefs.outletDict[
+            outlet].skimmer_feed_delay_a
+    elif AppPrefs.feed_PreviousMode == "B":
+        #controller.AppPrefs.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "skimmer_feed_delay_b", "0")
+        AppPrefs.feed_ExtraTimeAdded = AppPrefs.outletDict[
+            outlet].skimmer_feed_delay_b
+    elif AppPrefs.feed_PreviousMode == "C":
+        #controller.AppPrefs.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "skimmer_feed_delay_c", "0")
+        AppPrefs.feed_ExtraTimeAdded = AppPrefs.outletDict[
+            outlet].skimmer_feed_delay_c
+    elif AppPrefs.feed_PreviousMode == "D":
+        #controller.AppPrefs.feed_ExtraTimeAdded = defs_common.readINIfile(outlet, "skimmer_feed_delay_d", "0")
+        AppPrefs.feed_ExtraTimeAdded = AppPrefs.outletDict[
+            outlet].skimmer_feed_delay_d
+    else:
+        AppPrefs.feed_ExtraTimeAdded = 0
 
-#     if button_state == "OFF":
-#         #GPIO.output(pin, True)
-#         handle_on_off(controller, outlet, pin, PIN_OFF)
-#         return "OFF"
-#     elif button_state == "ON":
-#         #GPIO.output(pin, False)
-#         handle_on_off(controller, outlet, pin, PIN_ON)
-#         return "ON"
-#     elif button_state == "AUTO":
-#         if controller.AppPrefs.feed_CurrentMode == "A":
-#             #skimmer_enable_feed_a = defs_common.readINIfile(outlet, "skimmer_enable_feed_a", "False")
-#             skimmer_enable_feed_a = controller.AppPrefs.outletDict[outlet].skimmer_enable_feed_a
-#             controller.AppPrefs.feed_PreviousMode = "A"
-#             if skimmer_enable_feed_a == "True":
-#                 #GPIO.output(pin, True)
-#                 handle_on_off(controller, outlet, pin, PIN_OFF)
-#                 return "OFF (feed)"
-#             elif skimmer_enable_feed_a == "False":
-#                 #GPIO.output(pin, False)
-#                 handle_on_off(controller, outlet, pin, PIN_ON)
-#                 return "ON"
-#         elif controller.AppPrefs.feed_CurrentMode == "B":
-#             #skimmer_enable_feed_b = defs_common.readINIfile(outlet, "skimmer_enable_feed_b", "False")
-#             skimmer_enable_feed_b = controller.AppPrefs.outletDict[outlet].skimmer_enable_feed_b
-#             controller.AppPrefs.feed_PreviousMode = "B"
-#             if skimmer_enable_feed_b == "True":
-#                 #GPIO.output(pin, True)
-#                 handle_on_off(controller, outlet, pin, PIN_OFF)
-#                 return "OFF (feed)"
-#             elif skimmer_enable_feed_b == "False":
-#                 #GPIO.output(pin, False)
-#                 handle_on_off(controller, outlet, pin, PIN_ON)
-#                 return "ON"
-#         elif controller.AppPrefs.feed_CurrentMode == "C":
-#             #skimmer_enable_feed_c = defs_common.readINIfile(outlet, "skimmer_enable_feed_c", "False")
-#             skimmer_enable_feed_c = controller.AppPrefs.outletDict[outlet].skimmer_enable_feed_c
-#             controller.AppPrefs.feed_PreviousMode = "C"
-#             if skimmer_enable_feed_c == "True":
-#                 #GPIO.output(pin, True)
-#                 handle_on_off(controller, outlet, pin, PIN_OFF)
-#                 return "OFF (feed)"
-#             elif skimmer_enable_feed_c == "False":
-#                 #GPIO.output(pin, False)
-#                 handle_on_off(controller, outlet, pin, PIN_ON)
-#                 return "ON"
-#         elif controller.AppPrefs.feed_CurrentMode == "D":
-#             #skimmer_enable_feed_d = defs_common.readINIfile(outlet, "skimmer_enable_feed_d", "False")
-#             skimmer_enable_feed_d = controller.AppPrefs.outletDict[outlet].skimmer_enable_feed_d
-#             controller.AppPrefs.feed_PreviousMode = "D"
-#             if skimmer_enable_feed_d == "True":
-#                 #GPIO.output(pin, True)
-#                 handle_on_off(controller, outlet, pin, PIN_OFF)
-#                 return "OFF (feed)"
-#             elif skimmer_enable_feed_d == "False":
-#                 #GPIO.output(pin, False)
-#                 handle_on_off(controller, outlet, pin, PIN_ON)
-#                 return "ON"
-#         else:
-#             difference = round(((int(controller.AppPrefs.feed_ExtraTimeSeed) + (int(
-#                 controller.AppPrefs.feed_ExtraTimeAdded)*1000)) - int(round(time.time())*1000))/1000)
-#             if int(round(time.time())*1000) <= int(controller.AppPrefs.feed_ExtraTimeSeed) + (int(controller.AppPrefs.feed_ExtraTimeAdded)*1000):
-#                 #print("Extra feed time remaining: " + str(difference) + "s")
-#                 print(Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-#                       " Delay Mode: " + outlet +
-#                       " (" + str(controller.AppPrefs.feed_ExtraTimeAdded) + "s) " +
-#                       " Delay Time Remaining: " + str(round(difference)) + "s"
-#                       + Style.RESET_ALL)
-#                 #GPIO.output(pin, True)
-#                 handle_on_off(controller, outlet, pin, PIN_OFF)
-#                 # return "OFF (delay)"
-#                 return "OFF (delay " + str(round(difference)) + "s" + ")"
-#             else:
-#                 #GPIO.output(pin, False)
-#                 handle_on_off(controller, outlet, pin, PIN_ON)
-#                 return "ON"
-#     else:
-#         #GPIO.output(pin, True)
-#         handle_on_off(controller, outlet, pin, PIN_OFF)
-#         return "OFF"
+    if button_state == "OFF":
+        #GPIO.output(pin, True)
+        handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+        # return "OFF"
+    elif button_state == "ON":
+        #GPIO.output(pin, False)
+        handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+        # return "ON"
+    elif button_state == "AUTO":
+        if AppPrefs.feed_CurrentMode == "A":
+            #skimmer_enable_feed_a = defs_common.readINIfile(outlet, "skimmer_enable_feed_a", "False")
+            skimmer_enable_feed_a = AppPrefs.outletDict[outlet].skimmer_enable_feed_a
+            AppPrefs.feed_PreviousMode = "A"
+            if skimmer_enable_feed_a == "True":
+                #GPIO.output(pin, True)
+                handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+                # return "OFF (feed)"
+            elif skimmer_enable_feed_a == "False":
+                #GPIO.output(pin, False)
+                handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+                # return "ON"
+        elif AppPrefs.feed_CurrentMode == "B":
+            #skimmer_enable_feed_b = defs_common.readINIfile(outlet, "skimmer_enable_feed_b", "False")
+            skimmer_enable_feed_b = AppPrefs.outletDict[outlet].skimmer_enable_feed_b
+            AppPrefs.feed_PreviousMode = "B"
+            if skimmer_enable_feed_b == "True":
+                #GPIO.output(pin, True)
+                handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+                # return "OFF (feed)"
+            elif skimmer_enable_feed_b == "False":
+                #GPIO.output(pin, False)
+                handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+                # return "ON"
+        elif AppPrefs.feed_CurrentMode == "C":
+            #skimmer_enable_feed_c = defs_common.readINIfile(outlet, "skimmer_enable_feed_c", "False")
+            skimmer_enable_feed_c = AppPrefs.outletDict[outlet].skimmer_enable_feed_c
+            AppPrefs.feed_PreviousMode = "C"
+            if skimmer_enable_feed_c == "True":
+                #GPIO.output(pin, True)
+                handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+                # return "OFF (feed)"
+            elif skimmer_enable_feed_c == "False":
+                #GPIO.output(pin, False)
+                handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+                # return "ON"
+        elif AppPrefs.feed_CurrentMode == "D":
+            #skimmer_enable_feed_d = defs_common.readINIfile(outlet, "skimmer_enable_feed_d", "False")
+            skimmer_enable_feed_d = AppPrefs.outletDict[outlet].skimmer_enable_feed_d
+            AppPrefs.feed_PreviousMode = "D"
+            if skimmer_enable_feed_d == "True":
+                #GPIO.output(pin, True)
+                handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+                # return "OFF (feed)"
+            elif skimmer_enable_feed_d == "False":
+                #GPIO.output(pin, False)
+                handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+                # return "ON"
+        else:
+            difference = round(((int(AppPrefs.feed_ExtraTimeSeed) + (int(
+                AppPrefs.feed_ExtraTimeAdded)*1000)) - int(round(time.time())*1000))/1000)
+            if int(round(time.time())*1000) <= int(AppPrefs.feed_ExtraTimeSeed) + (int(AppPrefs.feed_ExtraTimeAdded)*1000):
+                #print("Extra feed time remaining: " + str(difference) + "s")
+                # print(Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                #       " Delay Mode: " + outlet +
+                #       " (" + str(controller.AppPrefs.feed_ExtraTimeAdded) + "s) " +
+                #       " Delay Time Remaining: " + str(round(difference)) + "s"
+                #       + Style.RESET_ALL)
+                
+                AppPrefs.logger.info ("Delay Mode: " + outlet +
+                      " (" + str(AppPrefs.feed_ExtraTimeAdded) + "s) " +
+                      " Delay Time Remaining: " + str(round(difference)) + "s")
+                #GPIO.output(pin, True)
+                handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+                # return "OFF (delay)"
+                # return "OFF (delay " + str(round(difference)) + "s" + ")"
+            else:
+                #GPIO.output(pin, False)
+                handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+                # return "ON"
+    else:
+        #GPIO.output(pin, True)
+        handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+        # return "OFF"
+
+    AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
+                                          "Type: " + AppPrefs.outletDict[outlet].control_type + \
+                                          " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
+                                          " | Mode: " + AppPrefs.outletDict[outlet].button_state + \
+                                          " | Status: " + get_on_or_off(pin)  )

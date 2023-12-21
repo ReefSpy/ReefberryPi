@@ -3,3 +3,6 @@ mysql-connector-python
 RPi.GPIO
 sqlalchemy
 PyMySQL
+flask
+requests
+

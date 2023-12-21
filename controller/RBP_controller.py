@@ -13,7 +13,9 @@ from datetime import datetime
 import ds18b20
 import time
 import defs_outletcontrol
+from flask import Flask, jsonify
 
+app = Flask(__name__)
 
 logger = logging.getLogger()
 LOG_FILEDIR = "logs"
@@ -43,7 +45,8 @@ sqlengine = defs_mysql.initMySQL_ex(AppPrefs, logger)
 # read preferences from DB
 # temperature probes
 defs_mysql.readTempProbes(mySQLDB, AppPrefs, logger)
-defs_mysql.readGlobalPrefs(mySQLDB, AppPrefs, logger)
+#defs_mysql.readGlobalPrefs(mySQLDB, AppPrefs, logger)
+defs_mysql.readGlobalPrefs_ex(sqlengine, AppPrefs, logger)
 #defs_mysql.readOutletPrefs(mySQLDB, AppPrefs, logger)
 defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
 
@@ -57,11 +60,13 @@ dht_sensor = dht11.DHT11(pin=GPIO_config.dht11)
 
 def apploop():
 
+    global AppPrefs
+    
     while True:
         ###################################################################
         # read temp probe list
         ###################################################################
-        defs_mysql.readTempProbes(mySQLDB, AppPrefs, logger)
+        #defs_mysql.readTempProbes(mySQLDB, AppPrefs, logger)
         ###################################################################
         # ds18b20 Temperture sensor
         ###################################################################
@@ -112,15 +117,56 @@ def apploop():
                 logger.debug("dht11 Humidity = " + str(hum) + "%")
                 Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "humidity", "tags": {
                                     "appuid": AppPrefs.appuid, "probeid": "dht11-hum"}, "fields": {"value": hum}, "time": datetime.utcnow()}])
-            except:
-                logger.error("Error logging to InfluxDB!")
+            except Exception as e:
+                logger.error("Error logging DHT data to InfluxDB!" + str(e))
+
+
+        ##########################################################################################
+        # check if Feed mode is enabled
+        ##########################################################################################
+        
+        if AppPrefs.feed_CurrentMode == "A":
+            AppPrefs.feed_ModeTotaltime = AppPrefs.feed_a_time
+        elif AppPrefs.feed_CurrentMode == "B":
+            AppPrefs.feed_ModeTotaltime = AppPrefs.feed_b_time
+        elif AppPrefs.feed_CurrentMode == "C":
+            AppPrefs.feed_ModeTotaltime = AppPrefs.feed_c_time
+        elif AppPrefs.feed_CurrentMode == "D":
+            AppPrefs.feed_ModeTotaltime = AppPrefs.feed_d_time
+        else:
+            AppPrefs.feed_ModeTotaltime = "0"
+
+        if AppPrefs.feed_CurrentMode != "CANCEL":
+            AppPrefs.feedTimeLeft = (int(AppPrefs.feed_ModeTotaltime)*1000) - (int(round(time.time()*1000)) - AppPrefs.feed_SamplingTimeSeed)
+            if AppPrefs.feedTimeLeft <=0:
+                # print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                #         " Feed Mode: " + self.AppPrefs.feed_CurrentMode + " COMPLETE" + Style.RESET_ALL)
+                logging.info("Feed Mode " + AppPrefs.feed_CurrentMode + " Complete")
+                AppPrefs.feed_CurrentMode = "CANCEL"
+                # timestamp = datetime.now()
+
+                # self.broadcastFeedStatus(self.AppPrefs.feed_CurrentMode, self.AppPrefs.feedTimeLeft)
+                        
+                AppPrefs.feed_ExtraTimeSeed = int(round(time.time()*1000))
+                print ("Extra time starts at: " + str(AppPrefs.feed_ExtraTimeSeed) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            else:    
+                # print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                #         " Feed Mode: " + self.AppPrefs.feed_CurrentMode + " (" + self.AppPrefs.feed_ModeTotaltime + "s) " + "Time Remaining: " + str(round(self.AppPrefs.feedTimeLeft/1000)) + "s"
+                #         + Style.RESET_ALL)
+                # timestamp = datetime.now()
+                logging.info("Feed Mode: " + AppPrefs.feed_CurrentMode + " (" + AppPrefs.feed_ModeTotaltime + "s) " + "Time Remaining: " + str(round(AppPrefs.feedTimeLeft/1000)) + "s")
+
+                # self.broadcastFeedStatus(self.AppPrefs.feed_CurrentMode, round(self.AppPrefs.feedTimeLeft/1000))
+
+
+
 
         ##########################################################################################
         # Handle Outlets
         ##########################################################################################
         # read outlet prefs from DB
         try:
-            defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+            # defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
             
             for outlet in AppPrefs.outletDict:
                 # logger.info("[" + AppPrefs.outletDict.get(outlet).outletid + "] " + \
@@ -139,24 +185,72 @@ def apploop():
                 # control type RETURN PUMP
                 elif AppPrefs.outletDict.get(outlet).control_type == "Return Pump":
                     defs_outletcontrol.handle_outlet_returnpump(AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
-                # elif AppPrefs.outletDict.get(outlet).controltype == "Skimmer":
-                #     return defs_outletcontrolsim.handle_outlet_skimmer(self, outlet, button_state, pin)
+                # contriol type SKIMMER
+                elif AppPrefs.outletDict.get(outlet).control_type == "Skimmer":
+                    defs_outletcontrol.handle_outlet_skimmer(AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
                 # control type LIGHT
                 elif AppPrefs.outletDict.get(outlet).control_type == "Light":
                     defs_outletcontrol.handle_outlet_light(AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
                 # elif AppPrefs.outletDict.get(outlet).controltype == "pH Control":
                 #     return defs_outletcontrolsim.handle_outlet_ph(self, outlet, button_state, pin)
-
-
+            
         except Exception as e:
             logger.error("Error reading outlet data! " + str(e))
         
         
-
+       
         ##########################################################################################
         # pause to slow down the loop
         ##########################################################################################
         time.sleep(.5)
 
 
-apploop()
+#apploop()
+
+# Start the main loop in a separate thread
+import threading
+thread = threading.Thread(target=apploop)
+thread.start()
+
+# Define the Flask routes
+@app.route('/')
+def index():
+    return 'Hello, ReefberryPi!'
+
+@app.route('/set_var1/<int:value>')
+def set_var1(value):
+    global var1
+    var1 = value
+    return f"var1 set to {value}"
+
+@app.route('/set_var2/<int:value>')
+def set_var2(value):
+    global var2
+    var2 = value
+    return f"var2 set to {value}"
+
+@app.route('/get_vars')
+def get_vars():
+    global var1, var2
+    return jsonify({'var1': var1, 'var2': var2})
+
+@app.route('/set_feedmode/<value>')
+def set_feedmode(value):
+    global AppPrefs
+    AppPrefs.feed_CurrentMode = value
+    AppPrefs.feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+    return f"AppPrefs.feed_CurrentMode set to {value}"
+
+@app.route('/reloadprefs/')
+def reloadprefs():
+    global AppPrefs
+    global mySQLDB
+    global logger
+    
+    defs_mysql.readTempProbes(mySQLDB, AppPrefs, logger)
+    defs_mysql.readGlobalPrefs(mySQLDB, AppPrefs, logger)
+    defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+    return "Reload Prefs"
+
+if __name__ == '__main__':
+    app.run()
