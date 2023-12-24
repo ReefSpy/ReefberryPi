@@ -238,13 +238,6 @@ def get_vars():
     global var1, var2
     return jsonify({'var1': var1, 'var2': var2})
 
-@app.route('/set_feedmode/<value>')
-def set_feedmode(value):
-    global AppPrefs
-    AppPrefs.feed_CurrentMode = value
-    AppPrefs.feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
-    return f"AppPrefs.feed_CurrentMode set to {value}"
-
 @app.route('/reloadprefs/')
 def reloadprefs():
     global AppPrefs
@@ -256,6 +249,21 @@ def reloadprefs():
     defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
     return "Reload Prefs"
 
+#####################################################################
+# set_feedmode
+# to start a feed mode.  Must specify Feed mode A, B, C, D or Cancel
+#####################################################################
+@app.route('/set_feedmode/<value>')
+def set_feedmode(value):
+    global AppPrefs
+    AppPrefs.feed_CurrentMode = value
+    AppPrefs.feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+    return f"AppPrefs.feed_CurrentMode set to {value}"
+
+#####################################################################
+# set_outlet_light
+# set the parameters for a light outlet
+#####################################################################
 @app.route('/set_outlet_light/', methods = ['GET'])
 def set_outlet_light():
     global AppPrefs
@@ -263,7 +271,6 @@ def set_outlet_light():
 
     # build table object from table in DB
     metadata_obj = MetaData()
-    #some_table = Table("first_table", metadata_obj, autoload_with=engine)
     outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
 
     params = request.args.to_dict()
@@ -297,11 +304,53 @@ def set_outlet_light():
         
     return f"Looking for {params}"
 
+#####################################################################
+# get_outlet_list
+# return list of outlets on the internal bus
+#####################################################################
+@app.route('/get_outlet_list/', methods = ['GET'])
+def get_outlet_list():
+    
+    try:
+        global AppPrefs
+        
+        outletdict = {}
+        
+        # loop through each section and see if it is an outlet on internl bus
+        for outlet in AppPrefs.outletDict:
+            outletdict[outlet]={"outletid": AppPrefs.outletDict[outlet].outletid , "outletname": AppPrefs.outletDict[outlet].outletname, "control_type": AppPrefs.outletDict[outlet].control_type}
+            
+        return outletdict    
+    
+    except Exception as e:
+        AppPrefs.logger.error("get_outlet_list: " +  str(e))
 
+#####################################################################
+# get_tempprobe_list
+# return list of ds18b20 temperature probes 
+#####################################################################
+@app.route('/get_tempprobe_list/', methods = ['GET'])
+def get_tempprobe_list():
+    
+    try:
+        global AppPrefs
+        
+        probedict = {}
+        
+        # loop through each section and see if it is an outlet on internl bus
+        for probe in AppPrefs.tempProbeDict:
+            probedict[probe]={"probetype": "ds18b20" , 
+                              "probeid": AppPrefs.tempProbeDict[probe].probeid, 
+                              "probename": AppPrefs.tempProbeDict[probe].name,
+                              "sensortype": "temperature", 
+                              "lastTemperature": AppPrefs.tempProbeDict[probe].lastTemperature}
+            
+        return probedict    
+    
+    except Exception as e:
+        AppPrefs.logger.error("get_tempprobe_list: " +  str(e))
 
-
-
-
+#######################################################################
 
 if __name__ == '__main__':
     app.run()
