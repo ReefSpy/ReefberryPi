@@ -337,7 +337,7 @@ def get_tempprobe_list():
         
         probedict = {}
         
-        # loop through each section and see if it is an outlet on internl bus
+        # loop through each section
         for probe in AppPrefs.tempProbeDict:
             probedict[probe]={"probetype": "ds18b20" , 
                               "probeid": AppPrefs.tempProbeDict[probe].probeid, 
