@@ -2,33 +2,34 @@ import React, { Component } from "react";
 import { ProbeWidget } from "./Components/ProbeWidget";
 import "./App.css";
 
-const apiUrl = "http://xpi01.local:5000/get_tempprobe_list/";
+const URL_get_tempprobe_list = "http://xpi01.local:5000/get_tempprobe_list/";
+const URL_get_outlet_list = "http://xpi01.local:5000/get_outlet_list/";
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       apiResponse: null,
+      ProbeArray: [],
+      OutletArray: []
     };
+
+    this.setProbeData = this.setProbeData.bind(this);
   }
 
   async componentDidMount() {
+    // probe list
     this.interval = setInterval(() => {
-      this.apiCall(apiUrl, this.setProbeData);
+      this.apiCall(URL_get_tempprobe_list, this.setProbeData);
+    }, 2000);
+    // outlet list
+    this.interval2 = setInterval(() => {
+      this.apiCall(URL_get_outlet_list, this.setOutletData);
     }, 2000);
   }
 
-  // componentDidMount() {
-  //   this.interval = setInterval(() => {
-  //     fetch("http://xpi01.local:5000/get_tempprobe_list/")
-  //       .then((response) => response.json())
-  //       .then((apiResponse) => this.setState({ apiResponse }));
-  //   }, 2000);
-  // }
-
   // generic API call structure
   apiCall(endpoint, callback) {
-    // let returnVal = "";
     fetch(endpoint)
       .then((response) => {
         if (!response.ok) {
@@ -43,10 +44,7 @@ class App extends Component {
         return response.json();
       })
       .then((data) => {
-        //console.log(JSON.stringify(data, null, 2));
-        // returnVal = JSON.stringify(data, null, 2);
         this.setState({ apiResponse: data });
-        // console.log(returnVal);
         callback(data);
       })
       .catch((error) => {
@@ -56,84 +54,46 @@ class App extends Component {
 
   setProbeData(probedata) {
     console.log(probedata);
-    const arr = [];
-    // console.log(json)
 
+    let ProbeArray = [];
     for (let probe in probedata) {
       let probename = probedata[probe]["probename"];
       let lastTemp = probedata[probe]["lastTemperature"];
-      console.log(probedata[probe]);
+      // console.log(probedata[probe]);
       console.log(probename + " = " + lastTemp);
-      arr.push(probedata[probe]);
+      ProbeArray.push(probedata[probe]);
     }
-    //this.setState({ apiResponse: arr });
+    if (ProbeArray.length > 0) {
 
-    console.log(arr);
-    return arr;
+      this.setState({ ProbeArray });
+    }
+
+    console.log(ProbeArray);
+
+    return ProbeArray;
   }
+
+setOutletData(outletdata){
+  console.log(outletdata)
+}
+
 
   componentWillUnmount() {
     clearInterval(this.interval);
+    clearInterval(this.interval2);
   }
   render() {
-    var probeArray = this.setProbeData(this.state.apiResponse);
+    //  var probeArray = this.setProbeData(this.state.apiResponse);
 
     return (
       <div className="App">
-        <h1>Welcome</h1>
-        {/* <ProbeWidget
-          data={this.state.apiResponse}
-        ></ProbeWidget> */}
-        <ProbeWidget data = {probeArray}></ProbeWidget>
+        <h1>Reefberry Pi Demo</h1>
+
+         {this.state.ProbeArray.map(probe => (<div key = {probe.probeid}>
+           <ProbeWidget data = {probe}></ProbeWidget>
+         </div> ))}
       </div>
     );
   }
 }
 export default App;
-
-// import React, { Component } from 'react';
-
-// class App extends Component {
-//   constructor(props) {
-//     super(props);
-
-//     this.state = {
-//       data: [],
-//     };
-//   }
-
-//   componentDidMount() {
-//     this.interval = setInterval(() => {
-//       fetch("http://xpi01.local:5000/get_tempprobe_list/")
-//         .then(response => response.json())
-//         .then(data => this.setState({ data }));
-//     }, 2000);
-//   }
-
-//   componentWillUnmount() {
-//     clearInterval(this.interval);
-//   }
-
-//   processData(data) {
-//     // Process the data here
-//     return data;
-//   }
-
-//   render() {
-//     return (
-//       <div>
-//         <ChildComponent data={this.processData(this.state.data)} />
-//       </div>
-//     );
-//   }
-// }
-
-// function ChildComponent(props) {
-//   console.log(props.data)
-//   return (
-//     <div>
-//      {JSON.stringify(props.data)}
-//     </div>
-//   );
-// }
-// export default App;
