@@ -73,6 +73,7 @@ class outletPrefs():
     ph_high = ""
     ph_low = ""
     ph_onwhen = ""
+    outletstatus = ""
 
 
 class AppPrefs():

@@ -318,7 +318,12 @@ def get_outlet_list():
         
         # loop through each section and see if it is an outlet on internl bus
         for outlet in AppPrefs.outletDict:
-            outletdict[outlet]={"outletid": AppPrefs.outletDict[outlet].outletid , "outletname": AppPrefs.outletDict[outlet].outletname, "control_type": AppPrefs.outletDict[outlet].control_type}
+            outletdict[outlet]={"outletid": AppPrefs.outletDict[outlet].outletid , 
+                                "outletname": AppPrefs.outletDict[outlet].outletname, 
+                                "control_type": AppPrefs.outletDict[outlet].control_type, 
+                                "outletstatus": AppPrefs.outletDict[outlet].outletstatus,
+                                "button_state": AppPrefs.outletDict[outlet].button_state
+                                }
             
         return outletdict    
     
@@ -349,6 +354,48 @@ def get_tempprobe_list():
     
     except Exception as e:
         AppPrefs.logger.error("get_tempprobe_list: " +  str(e))
+
+#####################################################################
+# get_chartdata_24hr
+# return array of chart data with date/time and values
+        # must specify scale (C or F), AppUID, and ProbeID
+#####################################################################
+@app.route('/get_chartdata_24hr/', methods = ['GET'])
+def get_chartdata_24hr():
+    
+    try:
+        global AppPrefs
+        
+        bucket = "reefberrypi_probe_1dy"
+
+        query_api = Influx_client.query_api()
+
+        query = 'from(bucket: "reefberrypi_probe_1dy") \
+        |> range(start: -24h) \
+        |> filter(fn: (r) => r["_measurement"] == "temperature_c") \
+        |> filter(fn: (r) => r["_field"] == "value") \
+        |> filter(fn: (r) => r["appuid"] == "QV3BIZZV") \
+        |> filter(fn: (r) => r["probeid"] == "ds18b20_28-0416525f5eff") \
+        |> aggregateWindow(every: 10m, fn: mean, createEmpty: false) \
+        |> yield(name: "mean")'
+
+
+        result = query_api.query(org=AppPrefs.influxdb_org, query=query)
+
+        results = []
+        for table in result:
+            for record in table.records:
+                results.append((record.get_time(), record.get_value()))
+
+        for result in results:
+            format_string = '%Y-%m-%d %H:%M:%S'
+            date_string = result[0].strftime(format_string)
+            print(date_string)
+    
+        return results
+
+    except Exception as e:
+        AppPrefs.logger.error("get_chartdata_24hr: " +  str(e))
 
 #######################################################################
 
