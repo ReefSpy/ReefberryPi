@@ -12,7 +12,7 @@ class App extends Component {
     this.state = {
       apiResponse: null,
       ProbeArray: [],
-      OutletArray: []
+      OutletArray: [],
     };
 
     this.setProbeData = this.setProbeData.bind(this);
@@ -66,7 +66,6 @@ class App extends Component {
       ProbeArray.push(probedata[probe]);
     }
     if (ProbeArray.length > 0) {
-
       this.setState({ ProbeArray });
     }
 
@@ -75,12 +74,12 @@ class App extends Component {
     return ProbeArray;
   }
 
-setOutletData(outletdata){
-  console.log(outletdata)
+  setOutletData(outletdata) {
+    console.log(outletdata);
 
-  let OutletArray = [];
+    let OutletArray = [];
     for (let outlet in outletdata) {
-      let outletid = outletdata[outlet]["outletid"]
+      let outletid = outletdata[outlet]["outletid"];
       let outletname = outletdata[outlet]["outletname"];
       let control_type = outletdata[outlet]["control_type"];
       // console.log(probedata[probe]);
@@ -88,16 +87,13 @@ setOutletData(outletdata){
       OutletArray.push(outletdata[outlet]);
     }
     if (OutletArray.length > 0) {
-
       this.setState({ OutletArray });
     }
 
     console.log(OutletArray);
 
     return OutletArray;
-
-}
-
+  }
 
   componentWillUnmount() {
     clearInterval(this.interval);
@@ -109,13 +105,17 @@ setOutletData(outletdata){
     return (
       <div className="App">
         <h1>Reefberry Pi Demo</h1>
-         {this.state.ProbeArray.map(probe => (<div key = {probe.probeid}>
-           <ProbeWidget data = {probe}></ProbeWidget>
-         </div> ))}
+        {this.state.ProbeArray.map((probe) => (
+          <div key={probe.probeid}>
+            <ProbeWidget data={probe}></ProbeWidget>
+          </div>
+        ))}
 
-         {this.state.OutletArray.map(outlet => (<div key = {outlet.outletid}>
-           <OutletWidget data = {outlet}></OutletWidget>
-         </div> ))}
+        {this.state.OutletArray.map((outlet) => (
+          <div key={outlet.outletid}>
+            <OutletWidget data={outlet}></OutletWidget>
+          </div>
+        ))}
       </div>
     );
   }
