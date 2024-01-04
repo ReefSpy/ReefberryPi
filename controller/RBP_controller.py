@@ -318,7 +318,12 @@ def get_outlet_list():
         
         # loop through each section and see if it is an outlet on internl bus
         for outlet in AppPrefs.outletDict:
-            outletdict[outlet]={"outletid": AppPrefs.outletDict[outlet].outletid , "outletname": AppPrefs.outletDict[outlet].outletname, "control_type": AppPrefs.outletDict[outlet].control_type}
+            outletdict[outlet]={"outletid": AppPrefs.outletDict[outlet].outletid , 
+                                "outletname": AppPrefs.outletDict[outlet].outletname, 
+                                "control_type": AppPrefs.outletDict[outlet].control_type, 
+                                "outletstatus": AppPrefs.outletDict[outlet].outletstatus,
+                                "button_state": AppPrefs.outletDict[outlet].button_state
+                                }
             
         return outletdict    
     

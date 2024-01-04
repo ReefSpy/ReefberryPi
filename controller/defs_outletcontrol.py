@@ -83,6 +83,7 @@ def handle_outlet_always(AppPrefs, outlet, button_state, pin):
         butstate = "OFF"
 
    # AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] "  + AppPrefs.outletDict[outlet].outletname + " = " + butstate)
+    AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin)
     AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                 "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                 " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
@@ -96,6 +97,7 @@ def handle_outlet_heater(AppPrefs, outlet, button_state, pin):
         #GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
         #return "OFF"
+        AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin)
         AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                 "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                 " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
@@ -105,6 +107,7 @@ def handle_outlet_heater(AppPrefs, outlet, button_state, pin):
         #GPIO.output(pin, False)
         handle_on_off(AppPrefs, outlet, pin, PIN_ON)
         #return "ON""
+        AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin)
         AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                 "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                 " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
@@ -133,6 +136,7 @@ def handle_outlet_heater(AppPrefs, outlet, button_state, pin):
                     #GPIO.output(pin, False)
                     handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                     #AppPrefs.logger.debug(AppPrefs.outletDict[outlet].outletname +  " ON (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ") " + AppPrefs.tempProbeDict[p].lastTemperature)
+                    AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin) + " (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"
                     AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                           "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                           " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
@@ -144,6 +148,7 @@ def handle_outlet_heater(AppPrefs, outlet, button_state, pin):
                     #GPIO.output(pin, True)
                     handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                     #AppPrefs.logger.debug(AppPrefs.outletDict[outlet].outletname +  " OFF (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ") " + AppPrefs.tempProbeDict[p].lastTemperature)
+                    AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin) + " (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"
                     AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                           "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                           " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
@@ -154,6 +159,7 @@ def handle_outlet_heater(AppPrefs, outlet, button_state, pin):
                 else:
                     state = get_on_or_off(pin)
                     #AppPrefs.logger.debug( state + " (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")")
+                    AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin) + " (" + str("%.1f" % float(on_temp)) + " - " + str("%.1f" % float(off_temp)) + ")"
                     AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                           "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                           " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
@@ -277,7 +283,9 @@ def handle_outlet_light(AppPrefs, outlet, button_state, pin):
         GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
         #return "OFF"
-
+    AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin) + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
+                    " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
+    
     AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                           "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                           " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
@@ -381,7 +389,8 @@ def handle_outlet_returnpump(AppPrefs, outlet, button_state, pin):
         #GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
         # return "OFF"
-    
+
+    AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin)
     AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                           "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                           " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
@@ -492,7 +501,8 @@ def handle_outlet_skimmer(AppPrefs, outlet, button_state, pin):
         #GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
         # return "OFF"
-
+    
+    AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin)
     AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                           "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                           " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
