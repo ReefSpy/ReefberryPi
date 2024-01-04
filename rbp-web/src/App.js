@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { ProbeWidget } from "./Components/ProbeWidget";
+import { OutletWidget } from "./Components/OutletWidget";
 import "./App.css";
 
 const URL_get_tempprobe_list = "http://xpi01.local:5000/get_tempprobe_list/";
@@ -15,6 +16,7 @@ class App extends Component {
     };
 
     this.setProbeData = this.setProbeData.bind(this);
+    this.setOutletData = this.setOutletData.bind(this);
   }
 
   async componentDidMount() {
@@ -75,6 +77,25 @@ class App extends Component {
 
 setOutletData(outletdata){
   console.log(outletdata)
+
+  let OutletArray = [];
+    for (let outlet in outletdata) {
+      let outletid = outletdata[outlet]["outletid"]
+      let outletname = outletdata[outlet]["outletname"];
+      let control_type = outletdata[outlet]["control_type"];
+      // console.log(probedata[probe]);
+      console.log(outletid + ": " + outletname + " = " + control_type);
+      OutletArray.push(outletdata[outlet]);
+    }
+    if (OutletArray.length > 0) {
+
+      this.setState({ OutletArray });
+    }
+
+    console.log(OutletArray);
+
+    return OutletArray;
+
 }
 
 
@@ -88,9 +109,12 @@ setOutletData(outletdata){
     return (
       <div className="App">
         <h1>Reefberry Pi Demo</h1>
-
          {this.state.ProbeArray.map(probe => (<div key = {probe.probeid}>
            <ProbeWidget data = {probe}></ProbeWidget>
+         </div> ))}
+
+         {this.state.OutletArray.map(outlet => (<div key = {outlet.outletid}>
+           <OutletWidget data = {outlet}></OutletWidget>
          </div> ))}
       </div>
     );
