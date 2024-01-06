@@ -1,0 +1,66 @@
+.toggle-wrapper {
+    margin: 0.1em auto;
+  }
+  
+  .toggle-wrapper label {
+    padding: 0.3em;
+    font-size: 14px;
+    font-weight: bold;
+    display: block;
+    text-align: right;
+    width: 100%;
+    
+  }
+  
+  .toggleContainer {
+    width: 100%;
+    position: relative;
+    background: #747c8e;
+    border: 2px solid #85868c;
+    border-radius: 30px;
+  }
+  
+  .toggleContainer .toggleOption {
+    display: inline-block;
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    height: 24px;
+    line-height: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.5s ease-in-out;
+    color: #ffffff;
+    font-size: 0.8em;
+  }
+  
+  .toggleContainer .toggleOption.selected {
+    color: #000000;
+    cursor: initial;
+  }
+  
+  .toggleContainer .toggle {
+    position: absolute;
+    height: 100%;
+    bottom: 0;
+    left: 0;
+    transition: all 0.1s ease-in-out;
+    background: #ffa500;
+    border-radius: 30px;
+  }
+  
+  .optionDisabled {
+    background: #e6e6e6;
+    cursor: no-drop !important;
+  }
+  
+  .toggleContainer .styleOn {
+    background: #99e34f;
+  }
+  .toggleContainer .styleAuto {
+    background: #ffa500;
+  }
+  .toggleContainer .styleOff {
+    background: #e6e6e6;
+  }
+  

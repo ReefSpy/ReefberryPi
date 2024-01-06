@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import { ProbeWidget } from "./Components/ProbeWidget";
 import { OutletWidget } from "./Components/OutletWidget";
+
+
 import "./App.css";
 
 const URL_get_tempprobe_list = "http://xpi01.local:5000/get_tempprobe_list/";
@@ -17,14 +19,17 @@ class App extends Component {
 
     this.setProbeData = this.setProbeData.bind(this);
     this.setOutletData = this.setOutletData.bind(this);
+    this.handleOutletButtonClick = this.handleOutletButtonClick.bind(this)
   }
 
   async componentDidMount() {
     // probe list
+    this.apiCall(URL_get_tempprobe_list, this.setProbeData);
     this.interval = setInterval(() => {
       this.apiCall(URL_get_tempprobe_list, this.setProbeData);
     }, 2000);
     // outlet list
+    this.apiCall(URL_get_outlet_list, this.setOutletData);
     this.interval2 = setInterval(() => {
       this.apiCall(URL_get_outlet_list, this.setOutletData);
     }, 2000);
@@ -82,7 +87,6 @@ class App extends Component {
       let outletid = outletdata[outlet]["outletid"];
       let outletname = outletdata[outlet]["outletname"];
       let control_type = outletdata[outlet]["control_type"];
-      // console.log(probedata[probe]);
       console.log(outletid + ": " + outletname + " = " + control_type);
       OutletArray.push(outletdata[outlet]);
     }
@@ -95,12 +99,16 @@ class App extends Component {
     return OutletArray;
   }
 
+handleOutletButtonClick(outletid, buttonval){
+  console.log("I'm handling the button click "+ outletid + " " + buttonval)
+  console.log(this.state.OutletArray)
+}
+
   componentWillUnmount() {
     clearInterval(this.interval);
     clearInterval(this.interval2);
   }
   render() {
-    //  var probeArray = this.setProbeData(this.state.apiResponse);
 
     return (
       <div className="App">
@@ -113,7 +121,7 @@ class App extends Component {
 
         {this.state.OutletArray.map((outlet) => (
           <div key={outlet.outletid}>
-            <OutletWidget data={outlet}></OutletWidget>
+            <OutletWidget data={outlet} onButtonStateChange = {this.handleOutletButtonClick}></OutletWidget>
           </div>
         ))}
       </div>
