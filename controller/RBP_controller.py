@@ -360,8 +360,8 @@ def get_tempprobe_list():
 # return array of chart data with date/time and values
         # must specify scale (C or F), AppUID, and ProbeID
 #####################################################################
-@app.route('/get_chartdata_24hr/', methods = ['GET'])
-def get_chartdata_24hr():
+@app.route('/get_chartdata_24hr/<appuid>/<probeid>', methods = ['GET'])
+def get_chartdata_24hr(appuid, probeid):
     
     try:
         global AppPrefs
@@ -370,12 +370,12 @@ def get_chartdata_24hr():
 
         query_api = Influx_client.query_api()
 
-        query = 'from(bucket: "reefberrypi_probe_1dy") \
+        query = f'from(bucket: "reefberrypi_probe_1dy") \
         |> range(start: -24h) \
         |> filter(fn: (r) => r["_measurement"] == "temperature_c") \
         |> filter(fn: (r) => r["_field"] == "value") \
-        |> filter(fn: (r) => r["appuid"] == "QV3BIZZV") \
-        |> filter(fn: (r) => r["probeid"] == "ds18b20_28-0416525f5eff") \
+        |> filter(fn: (r) => r["appuid"] == "{appuid}") \
+        |> filter(fn: (r) => r["probeid"] == "{probeid}") \
         |> aggregateWindow(every: 10m, fn: mean, createEmpty: false) \
         |> yield(name: "mean")'
 
@@ -390,7 +390,7 @@ def get_chartdata_24hr():
         for result in results:
             format_string = '%Y-%m-%d %H:%M:%S'
             date_string = result[0].strftime(format_string)
-            print(date_string)
+            #print(date_string)
     
         return results
 
