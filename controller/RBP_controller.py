@@ -397,6 +397,42 @@ def get_chartdata_24hr(appuid, probeid):
     except Exception as e:
         AppPrefs.logger.error("get_chartdata_24hr: " +  str(e))
 
+#####################################################################
+# put_outlet_buttonstate
+# change the value of button state
+# must specify Appuid, outlet ID and either ON, OFF, or AUTO
+#####################################################################
+@app.route('/put_outlet_buttonstate/<appuid>/<outletid>/<buttonstate>', methods = ['PUT'])
+def put_outlet_buttonstate(appuid, outletid, buttonstate):
+    global logger
+
+    try:
+        global AppPrefs
+
+        # build table object from table in DB
+        metadata_obj = MetaData()
+
+        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+        
+        stmt = (
+            update(outlet_table)
+            .where(outlet_table.c.outletid == outletid)
+            .where(outlet_table.c.appuid == appuid)
+            .values(outlet_table=buttonstate)
+            )
+
+
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+
+        return "OK"
+    
+    except Exception as e:
+            AppPrefs.logger.error("put_outlet_buttonstate: " +  str(e))
+
 #######################################################################
 
 if __name__ == '__main__':
