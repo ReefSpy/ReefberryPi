@@ -402,7 +402,7 @@ def get_chartdata_24hr(appuid, probeid):
 # change the value of button state
 # must specify Appuid, outlet ID and either ON, OFF, or AUTO
 #####################################################################
-@app.route('/put_outlet_buttonstate/<appuid>/<outletid>/<buttonstate>', methods = ['PUT'])
+@app.route('/put_outlet_buttonstate/<appuid>/<outletid>/<buttonstate>', methods = ['GET','PUT'])
 def put_outlet_buttonstate(appuid, outletid, buttonstate):
     global logger
 
@@ -418,7 +418,7 @@ def put_outlet_buttonstate(appuid, outletid, buttonstate):
             update(outlet_table)
             .where(outlet_table.c.outletid == outletid)
             .where(outlet_table.c.appuid == appuid)
-            .values(outlet_table=buttonstate)
+            .values(button_state=buttonstate)
             )
 
 
@@ -426,7 +426,7 @@ def put_outlet_buttonstate(appuid, outletid, buttonstate):
             result = conn.execute(stmt)
             conn.commit()
 
-        # defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
 
         return "OK"
     
