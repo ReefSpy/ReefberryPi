@@ -1,0 +1,43 @@
+.outletcontainer {
+    grid-template-columns: 300px;
+    grid-template-rows: 60px;
+    display: grid;
+    justify-content: center;
+
+  }
+  
+  .outletitem {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .outletname {
+    grid-column-start: 1;
+    grid-column-end: 1;
+
+    height: 60px;
+    line-height: 18px;
+    font-size: 14px;
+    text-align: left;
+    align-self: center;
+    grid-row-start: 1;
+    border-style: dotted;
+    border-color: black;
+    border-width: 1px;
+    border-radius: 4px;
+    background-color: lightgray;
+  }
+
+  .multitoggle {
+    grid-column-start: 1;
+    grid-column-end: 1;
+    grid-row-start: 1;
+    height: 60px;
+    line-height: 16px;
+    font-size: 16px;
+    text-align: left;
+    align-self: center;
+    background-color: transparent;
+  }

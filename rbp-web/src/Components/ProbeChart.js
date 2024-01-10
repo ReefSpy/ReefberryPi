@@ -29,7 +29,7 @@ const HighchartsWrapper = props => {
     chart: {
       type: "spline",
       height: 100,
-      width: 200,
+      width: 180,
       borderColor: "#85868c",
       borderWidth: 2,
       borderRadius: 5,

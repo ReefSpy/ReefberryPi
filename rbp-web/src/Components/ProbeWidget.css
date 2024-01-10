@@ -1,0 +1,41 @@
+.probecontainer {
+  grid-template-columns: 120px 180px;
+  grid-template-rows: 24px 84px;
+
+  display: grid;
+  justify-content: center;
+}
+
+.item {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+}
+
+.probename {
+  grid-column-start: 1;
+  grid-column-end: 2;
+  height: 18px;
+  line-height: 16px;
+  font-size: 16px;
+  text-align: center;
+  align-self: center;
+}
+
+.probevalue {
+    grid-column-start: 1;
+  grid-column-end: 2;
+  height: 20px;
+  line-height: 20px;
+  font-size: 48px;
+  text-align: center;
+  align-self: center;
+  }
+
+.chartdata {
+  grid-column-start: 2;
+  grid-column-end: 2;
+  grid-row-start: 1;
+  grid-row-end: span 2;
+  height: 80px;
+  
+}

@@ -2,11 +2,12 @@ import React, { Component } from "react";
 import { ProbeWidget } from "./Components/ProbeWidget";
 import { OutletWidget } from "./Components/OutletWidget";
 
-
 import "./App.css";
 
 const URL_get_tempprobe_list = "http://xpi01.local:5000/get_tempprobe_list/";
 const URL_get_outlet_list = "http://xpi01.local:5000/get_outlet_list/";
+const URL_put_outlet_buttonstate =
+  "http://xpi01.local:5000/put_outlet_buttonstate/";
 
 class App extends Component {
   constructor(props) {
@@ -19,7 +20,9 @@ class App extends Component {
 
     this.setProbeData = this.setProbeData.bind(this);
     this.setOutletData = this.setOutletData.bind(this);
-    this.handleOutletButtonClick = this.handleOutletButtonClick.bind(this)
+    this.createOutletSet = this.createOutletSet.bind(this);
+    this.handleOutletButtonClick = this.handleOutletButtonClick.bind(this);
+    this.handleCurrentOutletState = this.handleCurrentOutletState.bind(this);
   }
 
   async componentDidMount() {
@@ -29,9 +32,9 @@ class App extends Component {
       this.apiCall(URL_get_tempprobe_list, this.setProbeData);
     }, 2000);
     // outlet list
-    this.apiCall(URL_get_outlet_list, this.setOutletData);
+    this.apiCall(URL_get_outlet_list, this.createOutletSet);
     this.interval2 = setInterval(() => {
-      this.apiCall(URL_get_outlet_list, this.setOutletData);
+      this.apiCall(URL_get_outlet_list, this.handleCurrentOutletState);
     }, 2000);
   }
 
@@ -60,23 +63,62 @@ class App extends Component {
   }
 
   setProbeData(probedata) {
-    console.log(probedata);
+    // console.log(probedata);
 
     let ProbeArray = [];
     for (let probe in probedata) {
       let probename = probedata[probe]["probename"];
       let lastTemp = probedata[probe]["lastTemperature"];
       // console.log(probedata[probe]);
-      console.log(probename + " = " + lastTemp);
+      // console.log(probename + " = " + lastTemp);
       ProbeArray.push(probedata[probe]);
     }
     if (ProbeArray.length > 0) {
       this.setState({ ProbeArray });
     }
 
-    console.log(ProbeArray);
+    // console.log(ProbeArray);
 
     return ProbeArray;
+  }
+
+  createOutletSet(outletdata) {
+    console.log("Create Outlet Set");
+    console.log(outletdata);
+
+    let OutletArray = [];
+    for (let outlet in outletdata) {
+      OutletArray.push(outletdata[outlet]);
+    }
+    if (OutletArray.length > 0) {
+      this.setState({ OutletArray });
+    }
+
+    console.log(OutletArray);
+
+    return OutletArray;
+  }
+  handleCurrentOutletState(outletdata) {
+    var outletListArrayClone = this.state.OutletArray.slice(0);
+    console.log(outletdata);
+
+    for (var outlet in outletdata) {
+      for (var outletClone in outletListArrayClone) {
+        if (
+          outletListArrayClone[outletClone]["outletid"] ===
+          outletdata[outlet].outletid
+        ) {
+          console.log("Found a match");
+         // console.log(outletdata[outlet].outletid);
+         // console.log(outletListArrayClone[outletClone]["outletid"]);
+          outletListArrayClone[outletClone]["outletstatus"] = outletdata[outlet].outletstatus
+          outletListArrayClone[outletClone]["button_state"] = outletdata[outlet].button_state
+        }
+      }
+      //console.log(this.state.OutletArray)
+      this.setState({ OutletArray: outletListArrayClone });
+      // console.log(this.state.OutletArray)
+    }
   }
 
   setOutletData(outletdata) {
@@ -84,10 +126,6 @@ class App extends Component {
 
     let OutletArray = [];
     for (let outlet in outletdata) {
-      let outletid = outletdata[outlet]["outletid"];
-      let outletname = outletdata[outlet]["outletname"];
-      let control_type = outletdata[outlet]["control_type"];
-      console.log(outletid + ": " + outletname + " = " + control_type);
       OutletArray.push(outletdata[outlet]);
     }
     if (OutletArray.length > 0) {
@@ -99,17 +137,42 @@ class App extends Component {
     return OutletArray;
   }
 
-handleOutletButtonClick(outletid, buttonval){
-  console.log("I'm handling the button click "+ outletid + " " + buttonval)
-  console.log(this.state.OutletArray)
-}
+  handleOutletButtonClick(outletid, buttonval) {
+    console.log("I'm handling the button click " + outletid + " " + buttonval);
+    var outletListArrayClone = this.state.OutletArray.slice(0);
+    for (var outletClone in outletListArrayClone) {
+      if (
+        outletListArrayClone[outletClone]["outletid"] ===
+        outletid
+      ) {
+        console.log("Found a match");
+       // console.log(outletdata[outlet].outletid);
+       // console.log(outletListArrayClone[outletClone]["outletid"]);
+        outletListArrayClone[outletClone]["button_state"] = buttonval
+        outletListArrayClone[outletClone]["ischanged"] = true
+      }
+    }
+    //console.log(this.state.OutletArray)
+    this.setState({ OutletArray: outletListArrayClone });
+    console.log(this.state.OutletArray)
+
+    let apiURL = URL_put_outlet_buttonstate.concat("QV3BIZZV/")
+      .concat(outletid)
+      .concat("/")
+      .concat(buttonval);
+    //console.log(apiURL)
+    this.apiCall(apiURL);
+  }
+
+  buttonClickCallback() {
+    console.log();
+  }
 
   componentWillUnmount() {
     clearInterval(this.interval);
     clearInterval(this.interval2);
   }
   render() {
-
     return (
       <div className="App">
         <h1>Reefberry Pi Demo</h1>
@@ -121,7 +184,10 @@ handleOutletButtonClick(outletid, buttonval){
 
         {this.state.OutletArray.map((outlet) => (
           <div key={outlet.outletid}>
-            <OutletWidget data={outlet} onButtonStateChange = {this.handleOutletButtonClick}></OutletWidget>
+            <OutletWidget
+              data={outlet}
+              onButtonStateChange={this.handleOutletButtonClick}
+            ></OutletWidget>
           </div>
         ))}
       </div>
