@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import MultiToggle from "react-multi-toggle";
 import "./togglestyle.css";
+import "./OutletWidget.css"
+import cogicon from "../Images/cog.svg";
 
 const groupOptions = [
   {
@@ -23,7 +25,7 @@ const groupOptions = [
 export class OutletWidget extends Component {
   constructor(props) {
     super(props);
-    this.state = {buttonstateidx: undefined};
+    this.state = { buttonstateidx: undefined };
   }
 
   onToggleSelect = (value) => {
@@ -34,34 +36,48 @@ export class OutletWidget extends Component {
 
   handleClick(val, outletid) {
     console.log("Click detected! " + val + " " + outletid);
-    console.log(this.props.data)
-    
-    this.setState({buttonstateidx: val})
+    console.log(this.props.data);
+
+    this.setState({ buttonstateidx: val });
     //this.props.onOutletWidgetClick(val, outletid);
-    this.props.onButtonStateChange( outletid, val)
+    this.props.onButtonStateChange(outletid, val);
   }
-componentDidMount(){
-  this.setState({buttonstateidx: this.props.data.button_state})
-}
+  componentDidMount() {
+    this.setState({ buttonstateidx: this.props.data.button_state });
+  }
 
   render() {
-    
+    const widgetstyle = {
+      color: "black",
+      backgroundColor: "white",
+      padding: "10px",
+      border: "1px solid black",
+      width: "300px",
+      display: "block",
+    };
+
+
     return (
-      <div>
-        <h3>
-          {this.props.data.outletid} : {this.props.data.outletname} :{" "}
-          {this.props.data.control_type} : {this.props.data.button_state} :{" "}
-          {this.props.data.outletstatus}{" "}
-        </h3>
-        <MultiToggle
-          options={groupOptions}
-          label={this.props.data.outletstatus}
-          onSelectOption={this.onToggleSelect}
-          selectedOption={this.props.data.button_state}
-          className={"outletSlider"}
-        />
-        {/* <h1>{(this.props.data.outletname)}</h1> */}
-        {/* <h4>{this.props.data.control_type}</h4> */}
+      <div class="outletcontainer">
+        <div class="outletitem outletname">{this.props.data.outletname}</div>
+        <div class = "outletitem multitoggle">
+          <MultiToggle
+            options={groupOptions}
+            label={this.props.data.outletstatus}
+            onSelectOption={this.onToggleSelect}
+            selectedOption={this.props.data.button_state}
+            //selectedOption={this.state.buttonstateidx}
+            className={"outletSlider"}
+          />
+        </div>
+        <div class="outletitem outletseticon">
+          <button class = "outletsetbtn"><img
+            src={cogicon}
+            alt="settings"
+            height="14"
+            width="14"
+          /></button>
+        </div>
       </div>
     );
   }
