@@ -1,8 +1,9 @@
 .outletcontainer {
     grid-template-columns: 300px;
-    grid-template-rows: 60px;
+    grid-template-rows: 55px;
     display: grid;
     justify-content: center;
+    margin: 10px;
 
   }
   
@@ -11,6 +12,7 @@
     font-weight: bold;
     padding-left: 10px;
     padding-right: 10px;
+    
   }
 
   .outletname {
@@ -18,7 +20,7 @@
     grid-column-end: 1;
 
     height: 60px;
-    line-height: 18px;
+    line-height: 24px;
     font-size: 14px;
     text-align: left;
     align-self: center;

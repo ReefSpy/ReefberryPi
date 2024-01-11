@@ -1,9 +1,10 @@
 .probecontainer {
   grid-template-columns: 120px 180px;
-  grid-template-rows: 24px 84px;
+  grid-template-rows: 24px 60px 22px;
 
   display: grid;
   justify-content: center;
+  margin: 4px;
 }
 
 .item {
@@ -22,20 +23,52 @@
 }
 
 .probevalue {
-    grid-column-start: 1;
+  grid-column-start: 1;
   grid-column-end: 2;
-  height: 20px;
-  line-height: 20px;
+  grid-row-start: 2;
+  grid-row-end: 3;
+  height: 18px;
+  line-height: 10px;
   font-size: 48px;
   text-align: center;
   align-self: center;
+  
   }
 
 .chartdata {
   grid-column-start: 2;
   grid-column-end: 2;
   grid-row-start: 1;
+  grid-row-end: 3;
   grid-row-end: span 2;
   height: 80px;
   
+}
+
+.probeseticon{
+  grid-column-start: 1;
+  grid-row-start: 3;
+  align-items: center;
+  display: flex;
+  height: 16px;
+
+}
+
+.probesetbtn{
+  height: 16px;
+  width: 30px;
+background-color: transparent;
+border-style: none;
+border-radius: 5px;;
+opacity: 20%;
+
+}
+
+.probesetbtn:hover{
+  background-color: orange;
+  opacity: 100%;
+}
+
+.probesetbtn:active{
+  background-color: grey;
 }

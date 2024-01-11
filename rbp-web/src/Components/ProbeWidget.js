@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import HighchartsWrapper from "./ProbeChart";
 import "./ProbeWidget.css";
+import cogicon from "../Images/cog.svg";
+
 export class ProbeWidget extends Component {
   constructor(props) {
     super(props);
@@ -58,7 +60,6 @@ export class ProbeWidget extends Component {
   }
 
   render() {
-   
     return (
       <div class="probecontainer">
         <div class="item probename">{this.props.data.probename}</div>
@@ -72,6 +73,18 @@ export class ProbeWidget extends Component {
             />
           </div>
         </div>
+        <div class="probeseticon">
+          <button class = "probesetbtn"><img
+            src={cogicon}
+            alt="settings"
+            height="14"
+            width="14"
+          
+
+          /></button>
+          
+        </div>
+       
       </div>
     );
   }
