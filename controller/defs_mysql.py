@@ -64,6 +64,75 @@ def readTempProbes(mysqldb, appPrefs, logger):
         logger.info("read temperature probe from db: probeid = " +
                     probe.probeid + ", probename = " + probe.name)
 
+# def readTempProbes_ex(sqlengine, appPrefs, logger):
+#     logger.info("Reading temperature probe data from database...")
+    
+#     appPrefs.tempProbeDict.clear()
+#     ########
+#     # build table object from table in DB
+#     metadata_obj = MetaData()
+#     ds18b20_table = Table("ds18b20", metadata_obj, autoload_with=sqlengine)
+
+#     conn = sqlengine.connect()
+
+#     stmt = select(ds18b20_table).where(ds18b20_table.c.appuid == appPrefs.appuid)
+#     results = conn.execute(stmt)
+#     conn.commit()
+#     #########
+#     # mycursor = mysqldb.cursor()
+#     # sql = "SELECT probeid, name, appuid FROM " + mysqldb.database + \
+#     #     ".ds18b20 WHERE appuid = '" + appPrefs.appuid + "'"
+#     # #logger.info(sql)
+#     # mycursor.execute(sql)
+
+#     ##############
+#     # this will extract row headers
+#     row_headers = [x[0] for x in mycursor.description]
+#     myresult = mycursor.fetchall()
+#     json_data = []
+#     mycursor.close()
+#     mysqldb.commit()
+#     for result in myresult:
+#         json_data.append(dict(zip(row_headers, result)))
+
+#     logger.info(json_data)
+
+#     for k in json_data:
+#         probe = cls_Preferences.tempProbeClass()
+#         probe.probeid = k["probeid"]
+#         probe.name = k["name"]
+#         appPrefs.tempProbeDict[probe.probeid] = probe
+#         logger.info("read temperature probe from db: probeid = " +
+#                     probe.probeid + ", probename = " + probe.name)
+
+def readDHTSensor_ex (sqlengine, appPrefs, logger):
+    logger.info("Reading DHT sensor data from database...")
+
+    appPrefs.dhtDict.clear()
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    dht_table = Table("dht", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    stmt = select(dht_table).where(dht_table.c.appuid == appPrefs.appuid)
+    results = conn.execute(stmt)
+    conn.commit()
+    dhtsensor = cls_Preferences.dhtSensorClass()
+    for row in results:    
+        logger.info(row)
+        dhtsensor.temperature_name = row.temperature_name
+        dhtsensor.humidity_name = row.humidity_name
+        appPrefs.dhtDict["DHT"] = dhtsensor
+        logger.info("read dht sensor information from db: Temperature Probe Name = " +
+                    dhtsensor.temperature_name + ", Humidity Probe Name = " + dhtsensor.humidity_name)
+
+
+
+    
+    
+
 
 def readGlobalPrefs(mysqldb, appPrefs, logger):
     logger.info("Reading global prefs from database...")
@@ -109,12 +178,14 @@ def readGlobalPrefs_ex(sqlengine, appPrefs, logger):
         appPrefs.feed_b_time = row.feed_b_time
         appPrefs.feed_c_time = row.feed_c_time
         appPrefs.feed_d_time = row.feed_d_time
+        appPrefs.dht_enable = row.dht_enable
 
     logger.info("Using temperature scale: " + appPrefs.temperaturescale)
     logger.info("Read Feed Mode A: " + appPrefs.feed_a_time)  
     logger.info("Read Feed Mode B: " + appPrefs.feed_b_time)
     logger.info("Read Feed Mode C: " + appPrefs.feed_c_time)
-    logger.info("Read Feed Mode D: " + appPrefs.feed_d_time)              
+    logger.info("Read Feed Mode D: " + appPrefs.feed_d_time)     
+    logger.info("DHT Sensor Enabled: " + appPrefs.dht_enable)           
 
 def readOutletPrefs_ex(sqlengine, appPrefs, logger):
     try:
@@ -256,6 +327,7 @@ def readOutletPrefs_ex(sqlengine, appPrefs, logger):
                     outlet.ph_high = row.ph_high
                     outlet.ph_low = row.ph_low
                     outlet.ph_onwhen = row.ph_onwhen
+                    outlet.outletstatus = "Loading..."
                
                 
 

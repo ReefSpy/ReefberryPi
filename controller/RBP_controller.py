@@ -47,12 +47,13 @@ mySQLDB = defs_mysql.initMySQL(AppPrefs, logger)
 sqlengine = defs_mysql.initMySQL_ex(AppPrefs, logger)
 
 # read preferences from DB
-# temperature probes
-defs_mysql.readTempProbes(mySQLDB, AppPrefs, logger)
 #defs_mysql.readGlobalPrefs(mySQLDB, AppPrefs, logger)
 defs_mysql.readGlobalPrefs_ex(sqlengine, AppPrefs, logger)
+# temperature probes
+defs_mysql.readTempProbes(mySQLDB, AppPrefs, logger)
 #defs_mysql.readOutletPrefs(mySQLDB, AppPrefs, logger)
 defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
 
 
 # set up the GPIO
@@ -100,29 +101,33 @@ def apploop():
         ###################################################################
         # dht11 temp and humidity data
         ###################################################################
-        result = dht_sensor.read()
-        if result.is_valid():
-            temp_c = result.temperature
-            hum = result.humidity
-            try:
-                # print("dht11 Temp C = " + str(temp_c) + " C")
-                Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_c", "tags": {
-                                    "appuid": AppPrefs.appuid, "probeid": "dht11-temp"}, "fields": {"value": float(temp_c)}, "time": datetime.utcnow()}])
+        if AppPrefs.dht_enable == "True":
+            result = dht_sensor.read()
+            if result.is_valid():
+                temp_c = result.temperature
+                hum = result.humidity
 
-                temp_f = float(defs_common.convertCtoF(temp_c))
-                # print("dht11 Temp F =  " + str(temp_f) + " F")
-                Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_f", "tags": {
-                                    "appuid": AppPrefs.appuid, "probeid": "dht11-temp"}, "fields": {"value": temp_f}, "time": datetime.utcnow()}])
+                AppPrefs.dhtDict.get("DHT").lastTemperature = str(temp_c)
+                AppPrefs.dhtDict.get("DHT").lastHumidity = str(hum)
+                try:
+                    # print("dht11 Temp C = " + str(temp_c) + " C")
+                    Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_c", "tags": {
+                                        "appuid": AppPrefs.appuid, "probeid": "DHT-T"}, "fields": {"value": float(temp_c)}, "time": datetime.utcnow()}])
 
-                # print("dht11 Temp = " + str(temp_c) + "C / " + str(temp_f) + "F")
-                # print("dht11 Humidity = " + str(hum) + "%")
-                logger.debug("dht11 Temp = " + str(temp_c) +
-                            "C / " + str(temp_f) + "F")
-                logger.debug("dht11 Humidity = " + str(hum) + "%")
-                Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "humidity", "tags": {
-                                    "appuid": AppPrefs.appuid, "probeid": "dht11-hum"}, "fields": {"value": hum}, "time": datetime.utcnow()}])
-            except Exception as e:
-                logger.error("Error logging DHT data to InfluxDB!" + str(e))
+                    temp_f = float(defs_common.convertCtoF(temp_c))
+                    # print("dht11 Temp F =  " + str(temp_f) + " F")
+                    Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_f", "tags": {
+                                        "appuid": AppPrefs.appuid, "probeid": "DHT-T"}, "fields": {"value": temp_f}, "time": datetime.utcnow()}])
+
+                    # print("dht11 Temp = " + str(temp_c) + "C / " + str(temp_f) + "F")
+                    # print("dht11 Humidity = " + str(hum) + "%")
+                    logger.debug("dht11 Temp = " + str(temp_c) +
+                                "C / " + str(temp_f) + "F")
+                    logger.debug("dht11 Humidity = " + str(hum) + "%")
+                    Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "humidity", "tags": {
+                                        "appuid": AppPrefs.appuid, "probeid": "DHT-H"}, "fields": {"value": hum}, "time": datetime.utcnow()}])
+                except Exception as e:
+                    logger.error("Error logging DHT data to InfluxDB!" + str(e))
 
 
         ##########################################################################################
@@ -316,7 +321,7 @@ def get_outlet_list():
         
         outletdict = {}
         
-        # loop through each section and see if it is an outlet on internl bus
+        # loop through each outlet 
         for outlet in AppPrefs.outletDict:
             outletdict[outlet]={"outletid": AppPrefs.outletDict[outlet].outletid , 
                                 "outletname": AppPrefs.outletDict[outlet].outletname, 
@@ -324,8 +329,10 @@ def get_outlet_list():
                                 "outletstatus": AppPrefs.outletDict[outlet].outletstatus,
                                 "button_state": AppPrefs.outletDict[outlet].button_state
                                 }
-            
-        return outletdict    
+        if len(outletdict) < 8:
+            return "Error getting list"     
+        else:
+            return outletdict    
     
     except Exception as e:
         AppPrefs.logger.error("get_outlet_list: " +  str(e))
@@ -348,7 +355,7 @@ def get_tempprobe_list():
                               "probeid": AppPrefs.tempProbeDict[probe].probeid, 
                               "probename": AppPrefs.tempProbeDict[probe].name,
                               "sensortype": "temperature", 
-                              "lastTemperature": AppPrefs.tempProbeDict[probe].lastTemperature}
+                              "lastValue": AppPrefs.tempProbeDict[probe].lastTemperature}
             
         return probedict    
     
@@ -356,12 +363,44 @@ def get_tempprobe_list():
         AppPrefs.logger.error("get_tempprobe_list: " +  str(e))
 
 #####################################################################
+# get_dht_sensor
+# return values of dht temperature/humidity sensor if enabled
+#####################################################################
+@app.route('/get_dht_sensor/', methods = ['GET'])
+def get_dht_sensor():
+    
+    try:
+        global AppPrefs
+        
+        dhtdict = {}
+
+        if AppPrefs.dht_enable == "True":
+            dhtdict["DHT-Temp"]={"sensortype": "temperature" , 
+                                "probename": AppPrefs.dhtDict["DHT"].temperature_name,
+                                "probeid": "DHT-T", 
+                                "probetype": "DHT11/22", 
+                                "lastValue": AppPrefs.dhtDict["DHT"].lastTemperature}
+            dhtdict["DHT-Hum"]={"sensortype": "humidity" , 
+                                "probename": AppPrefs.dhtDict["DHT"].humidity_name,
+                                "probeid": "DHT-H", 
+                                "probetype": "DHT11/22", 
+                                "lastValue": AppPrefs.dhtDict["DHT"].lastHumidity}
+            
+            return dhtdict    
+        else:
+            return "DHT Disabled"    
+    
+    except Exception as e:
+        AppPrefs.logger.error("get_dht_sensor: " +  str(e))
+
+#####################################################################
 # get_chartdata_24hr
 # return array of chart data with date/time and values
-        # must specify scale (C or F), AppUID, and ProbeID
+# must specify AppUID, ProbeID, and scale (temperature_c,
+# temperature_f, or humidity)
 #####################################################################
-@app.route('/get_chartdata_24hr/<appuid>/<probeid>', methods = ['GET'])
-def get_chartdata_24hr(appuid, probeid):
+@app.route('/get_chartdata_24hr/<appuid>/<probeid>/<unit>', methods = ['GET'])
+def get_chartdata_24hr(appuid, probeid, unit):
     
     try:
         global AppPrefs
@@ -372,7 +411,7 @@ def get_chartdata_24hr(appuid, probeid):
 
         query = f'from(bucket: "reefberrypi_probe_1dy") \
         |> range(start: -24h) \
-        |> filter(fn: (r) => r["_measurement"] == "temperature_c") \
+        |> filter(fn: (r) => r["_measurement"] == "{unit}") \
         |> filter(fn: (r) => r["_field"] == "value") \
         |> filter(fn: (r) => r["appuid"] == "{appuid}") \
         |> filter(fn: (r) => r["probeid"] == "{probeid}") \
@@ -427,7 +466,7 @@ def put_outlet_buttonstate(appuid, outletid, buttonstate):
             conn.commit()
 
         defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
-
+       
         return "OK"
     
     except Exception as e:

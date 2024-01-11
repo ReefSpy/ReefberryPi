@@ -39,6 +39,11 @@ class tempProbeClass():
     lastTemperature = "0"
     lastLogTime = ""
 
+class dhtSensorClass():
+    temperature_name = ""
+    humidity_name = ""
+    lastTemperature = ""
+    lastHumidity = ""
 
 class outletPrefs():
     ischanged = ""
@@ -93,11 +98,13 @@ class AppPrefs():
         self.feed_b_time = ""
         self.feed_c_time = ""
         self.feed_d_time = ""
+        self.dht_enable = ""
 
     def initDictionaries(self):
         self.outletDict = {}
         self.mcp3008Dict = {}
         self.tempProbeDict = {}
+        self.dhtDict = {}
 
     def readInitPrefs(self):
         self.logger.info("read global prefs")
