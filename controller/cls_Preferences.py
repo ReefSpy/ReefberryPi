@@ -36,7 +36,7 @@ class analogChannelClass():
 class tempProbeClass():
     name = ""
     probeid = ""
-    lastTemperature = "0"
+    lastTemperature = ""
     lastLogTime = ""
 
 

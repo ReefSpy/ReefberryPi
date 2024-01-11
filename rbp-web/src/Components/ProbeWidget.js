@@ -7,7 +7,7 @@ export class ProbeWidget extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      LastTemp: "0.00",
+      LastTemp: "--",
       ProbeName: "Unkown",
       apiResponse: null,
       ChartData: null,
@@ -39,10 +39,17 @@ export class ProbeWidget extends Component {
   }
 
   componentDidMount() {
+    let unit_type = "unknown"
+    if (this.props.data.sensortype === "humidity"){
+       unit_type = "humidity" 
+    } else if (this.props.data.sensortype === "temperature"){
+       unit_type = "temperature_c" 
+    } 
+
     //console.log(this.props.probename)
     let apiURL = "http://xpi01.local:5000/get_chartdata_24hr/QV3BIZZV/".concat(
       this.props.data.probeid
-    );
+    ).concat("/").concat(unit_type);
     this.apiCall(apiURL, this.GetChartData);
 
     // outlet list
@@ -63,7 +70,7 @@ export class ProbeWidget extends Component {
     return (
       <div class="probecontainer">
         <div class="item probename">{this.props.data.probename}</div>
-        <div class="item probevalue">{this.props.data.lastTemperature} </div>
+        <div class="item probevalue">{this.props.data.lastValue} </div>
         <div class="item chartdata">
           <div>
             <HighchartsWrapper

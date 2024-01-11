@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import MultiToggle from "react-multi-toggle";
 import "./togglestyle.css";
 import "./OutletWidget.css"
+import cogicon from "../Images/cog.svg";
 
 const groupOptions = [
   {
@@ -68,10 +69,15 @@ export class OutletWidget extends Component {
             //selectedOption={this.state.buttonstateidx}
             className={"outletSlider"}
           />
-    
         </div>
-        {/* <h1>{(this.props.data.outletname)}</h1> */}
-        {/* <h4>{this.props.data.control_type}</h4> */}
+        <div class="outletitem outletseticon">
+          <button class = "outletsetbtn"><img
+            src={cogicon}
+            alt="settings"
+            height="14"
+            width="14"
+          /></button>
+        </div>
       </div>
     );
   }

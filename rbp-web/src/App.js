@@ -1,13 +1,16 @@
 import React, { Component } from "react";
 import { ProbeWidget } from "./Components/ProbeWidget";
 import { OutletWidget } from "./Components/OutletWidget";
-
+import appicon from "./Images/reefberry-pi-logo.svg";
 import "./App.css";
 
 const URL_get_tempprobe_list = "http://xpi01.local:5000/get_tempprobe_list/";
 const URL_get_outlet_list = "http://xpi01.local:5000/get_outlet_list/";
 const URL_put_outlet_buttonstate =
   "http://xpi01.local:5000/put_outlet_buttonstate/";
+
+const URL_get_dht_sensor = "http://xpi01.local:5000/get_dht_sensor/"
+
 
 class App extends Component {
   constructor(props) {
@@ -16,6 +19,7 @@ class App extends Component {
       apiResponse: null,
       ProbeArray: [],
       OutletArray: [],
+      DHTArray:[],
     };
 
     this.setProbeData = this.setProbeData.bind(this);
@@ -23,6 +27,7 @@ class App extends Component {
     this.createOutletSet = this.createOutletSet.bind(this);
     this.handleOutletButtonClick = this.handleOutletButtonClick.bind(this);
     this.handleCurrentOutletState = this.handleCurrentOutletState.bind(this);
+    this.setDHTData = this.setDHTData.bind(this)
   }
 
   async componentDidMount() {
@@ -35,6 +40,11 @@ class App extends Component {
     this.apiCall(URL_get_outlet_list, this.createOutletSet);
     this.interval2 = setInterval(() => {
       this.apiCall(URL_get_outlet_list, this.handleCurrentOutletState);
+    }, 2000);
+    // dht sensor list
+    this.apiCall(URL_get_dht_sensor, this.setDHTData);
+    this.interval3 = setInterval(() => {
+      this.apiCall(URL_get_dht_sensor, this.setDHTData);
     }, 2000);
   }
 
@@ -62,13 +72,26 @@ class App extends Component {
       });
   }
 
+  setDHTData(probedata){
+    console.log(probedata);
+    let DHTArray = [];
+    for (let probe in probedata) {
+      DHTArray.push(probedata[probe]);
+    }
+    if (DHTArray.length > 0) {
+      this.setState({ DHTArray });
+    }
+    // console.log(ProbeArray);
+    return DHTArray;
+  }
+
   setProbeData(probedata) {
-    // console.log(probedata);
+      console.log(probedata);
 
     let ProbeArray = [];
     for (let probe in probedata) {
-      let probename = probedata[probe]["probename"];
-      let lastTemp = probedata[probe]["lastTemperature"];
+      // let probename = probedata[probe]["probename"];
+      // let lastTemp = probedata[probe]["lastTemperature"];
       // console.log(probedata[probe]);
       // console.log(probename + " = " + lastTemp);
       ProbeArray.push(probedata[probe]);
@@ -108,11 +131,13 @@ class App extends Component {
           outletListArrayClone[outletClone]["outletid"] ===
           outletdata[outlet].outletid
         ) {
-          console.log("Found a match");
-         // console.log(outletdata[outlet].outletid);
-         // console.log(outletListArrayClone[outletClone]["outletid"]);
-          outletListArrayClone[outletClone]["outletstatus"] = outletdata[outlet].outletstatus
-          outletListArrayClone[outletClone]["button_state"] = outletdata[outlet].button_state
+          // console.log("Found a match");
+          // console.log(outletdata[outlet].outletid);
+          // console.log(outletListArrayClone[outletClone]["outletid"]);
+          outletListArrayClone[outletClone]["outletstatus"] =
+            outletdata[outlet].outletstatus;
+          outletListArrayClone[outletClone]["button_state"] =
+            outletdata[outlet].button_state;
         }
       }
       //console.log(this.state.OutletArray)
@@ -141,20 +166,17 @@ class App extends Component {
     console.log("I'm handling the button click " + outletid + " " + buttonval);
     var outletListArrayClone = this.state.OutletArray.slice(0);
     for (var outletClone in outletListArrayClone) {
-      if (
-        outletListArrayClone[outletClone]["outletid"] ===
-        outletid
-      ) {
+      if (outletListArrayClone[outletClone]["outletid"] === outletid) {
         console.log("Found a match");
-       // console.log(outletdata[outlet].outletid);
-       // console.log(outletListArrayClone[outletClone]["outletid"]);
-        outletListArrayClone[outletClone]["button_state"] = buttonval
-        outletListArrayClone[outletClone]["ischanged"] = true
+        // console.log(outletdata[outlet].outletid);
+        // console.log(outletListArrayClone[outletClone]["outletid"]);
+        outletListArrayClone[outletClone]["button_state"] = buttonval;
+        outletListArrayClone[outletClone]["ischanged"] = true;
       }
     }
     //console.log(this.state.OutletArray)
     this.setState({ OutletArray: outletListArrayClone });
-    console.log(this.state.OutletArray)
+    console.log(this.state.OutletArray);
 
     let apiURL = URL_put_outlet_buttonstate.concat("QV3BIZZV/")
       .concat(outletid)
@@ -171,25 +193,37 @@ class App extends Component {
   componentWillUnmount() {
     clearInterval(this.interval);
     clearInterval(this.interval2);
+    clearInterval(this.interval3);
   }
   render() {
     return (
       <div className="App">
-        <h1>Reefberry Pi Demo</h1>
-        {this.state.ProbeArray.map((probe) => (
-          <div key={probe.probeid}>
-            <ProbeWidget data={probe}></ProbeWidget>
-          </div>
-        ))}
+        <div class="appheader"><img class="appicon" src={appicon} alt="logo"></img>Reefberry Pi Controller</div>
+        <div class="maingridcontainer">
+          <div class="maincol1">
+          {this.state.ProbeArray.map((probe) => (
+            <div class="col1items" key={probe.probeid}>
+              <ProbeWidget data={probe}></ProbeWidget>
+            </div>
+          ))}
+{this.state.DHTArray.map((probe) => (
+            <div class="col1items" key={probe.probeid}>
+              <ProbeWidget data={probe}></ProbeWidget>
+            </div>
+          ))}
 
-        {this.state.OutletArray.map((outlet) => (
-          <div key={outlet.outletid}>
-            <OutletWidget
-              data={outlet}
-              onButtonStateChange={this.handleOutletButtonClick}
-            ></OutletWidget>
           </div>
-        ))}
+          <div class="maincol2">
+          {this.state.OutletArray.map((outlet) => (
+            <div class="col2items" key={outlet.outletid}>
+              <OutletWidget
+                data={outlet}
+                onButtonStateChange={this.handleOutletButtonClick}
+              ></OutletWidget>
+            </div>
+          ))}
+          </div>
+        </div>
       </div>
     );
   }

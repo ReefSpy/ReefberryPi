@@ -29,7 +29,7 @@
   grid-row-end: 3;
   height: 18px;
   line-height: 10px;
-  font-size: 48px;
+  font-size: 38px;
   text-align: center;
   align-self: center;
   
@@ -51,22 +51,26 @@
   align-items: center;
   display: flex;
   height: 16px;
+  margin-left: 6px;
 
 }
 
 .probesetbtn{
   height: 16px;
-  width: 30px;
+  width: 16px;
 background-color: transparent;
 border-style: none;
 border-radius: 5px;;
-opacity: 20%;
+opacity: 30%;
+padding-left: 0px;
+padding-right: 0px;;
 
 }
 
 .probesetbtn:hover{
   background-color: orange;
   opacity: 100%;
+  cursor: pointer;
 }
 
 .probesetbtn:active{
