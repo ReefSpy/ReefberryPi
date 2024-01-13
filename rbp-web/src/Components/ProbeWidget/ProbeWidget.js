@@ -1,18 +1,41 @@
 import React, { Component } from "react";
 import HighchartsWrapper from "./ProbeChart";
 import "./ProbeWidget.css";
-import cogicon from "../Images/cog.svg";
+import cogicon from "./cog.svg";
+import ProbePrefsModal from "./ProbePrefsModal";
 
 export class ProbeWidget extends Component {
   constructor(props) {
     super(props);
     this.state = {
       LastTemp: "--",
-      ProbeName: "Unkown",
+      ProbeName: "Unknown",
       apiResponse: null,
       ChartData: null,
+      isProbePrefsModalOpen: false,
+      setProbePrefsModalOpen: false,
+      probeprefsFormData: null,
+      setProbePrefsFormData: null,
     };
   }
+
+  ///////
+  handleOpenProbePrefsModal = () => {
+    this.setState({ setProbePrefsModalOpen: true });
+    this.setState({ isProbePrefsModalOpen: true });
+  };
+
+  handleCloseProbePrefsModal = () => {
+    this.setState({ setProbePrefsModalOpen: false });
+    this.setState({ isProbePrefsModalOpen: false });
+  };
+
+  handleProbePrefsFormSubmit = (data) => {
+    this.setState({ setProbePrefsFormData: data });
+    this.handleCloseProbePrefsModal();
+    console.log(data)
+  };
+  //////
 
   // generic API call structure
   apiCall(endpoint, callback) {
@@ -39,17 +62,18 @@ export class ProbeWidget extends Component {
   }
 
   componentDidMount() {
-    let unit_type = "unknown"
-    if (this.props.data.sensortype === "humidity"){
-       unit_type = "humidity" 
-    } else if (this.props.data.sensortype === "temperature"){
-       unit_type = "temperature_c" 
-    } 
+    let unit_type = "unknown";
+    if (this.props.data.sensortype === "humidity") {
+      unit_type = "humidity";
+    } else if (this.props.data.sensortype === "temperature") {
+      unit_type = "temperature_c";
+    }
 
     //console.log(this.props.probename)
-    let apiURL = "http://xpi01.local:5000/get_chartdata_24hr/QV3BIZZV/".concat(
-      this.props.data.probeid
-    ).concat("/").concat(unit_type);
+    let apiURL = "http://xpi01.local:5000/get_chartdata_24hr/QV3BIZZV/"
+      .concat(this.props.data.probeid)
+      .concat("/")
+      .concat(unit_type);
     this.apiCall(apiURL, this.GetChartData);
 
     // outlet list
@@ -74,24 +98,30 @@ export class ProbeWidget extends Component {
         <div class="item chartdata">
           <div>
             <HighchartsWrapper
-              probename={this.props.probename}
+              probename={this.props.data.probename}
               chartdata={this.state.ChartData}
               oneToOne={true}
             />
           </div>
         </div>
         <div class="probeseticon">
-          <button class = "probesetbtn"><img
-            src={cogicon}
-            alt="settings"
-            height="14"
-            width="14"
-          
-
-          /></button>
-          
+          <button class="probesetbtn">
+            <img
+              src={cogicon}
+              alt="settings"
+              height="14"
+              width="14"
+              onClick={this.handleOpenProbePrefsModal}
+            />
+          </button>
         </div>
-       
+        <ProbePrefsModal
+          isOpen={this.state.isProbePrefsModalOpen}
+          onSubmit={this.handleProbePrefsFormSubmit}
+          onClose={this.handleCloseProbePrefsModal}
+          ProbeName={this.props.data.probename}
+          ProbeID={this.props.data.probeid}
+        />
       </div>
     );
   }

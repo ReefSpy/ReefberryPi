@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import { ProbeWidget } from "./Components/ProbeWidget";
-import { OutletWidget } from "./Components/OutletWidget";
+import { ProbeWidget } from "./Components/ProbeWidget/ProbeWidget";
+import { OutletWidget } from "./Components/OutletWidget/OutletWidget";
 import appicon from "./Images/reefberry-pi-logo.svg";
 import "./App.css";
 
@@ -31,6 +31,7 @@ class App extends Component {
   }
 
   async componentDidMount() {
+    document.title = "Reefberry Pi";
     // probe list
     this.apiCall(URL_get_tempprobe_list, this.setProbeData);
     this.interval = setInterval(() => {
@@ -198,7 +199,7 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        <div class="appheader"><img class="appicon" src={appicon} alt="logo"></img>Reefberry Pi Controller</div>
+        <div class="appheader"><img class="appicon" src={appicon} alt="logo"></img>Reefberry Pi Aquarium Controller</div>
         <div class="maingridcontainer">
           <div class="maincol1">
           {this.state.ProbeArray.map((probe) => (
