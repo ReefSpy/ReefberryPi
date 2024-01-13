@@ -88,6 +88,12 @@ padding-right: 0px;;
   display: block;
   font-family: Arial, Helvetica, sans-serif;
   text-align: left;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.form-row input{
+  font-weight: normal;
 }
 
 .submitbutton{
@@ -97,6 +103,8 @@ padding-right: 0px;;
   border-style: solid;
   font-family: Arial, Helvetica, sans-serif;
   text-align: center;
+  font-size: 14px;
+  font-weight: bold;
 }
 
 .submitbutton:hover{
@@ -105,4 +113,12 @@ padding-right: 0px;;
 
 .submitbutton:active{
   background-color: gray;
+}
+
+.plainlabel{
+  font-weight: normal;
+  font-size: 14px;
+  text-align: left;
+  font-family: Arial, Helvetica, sans-serif;
+  display: block;
 }

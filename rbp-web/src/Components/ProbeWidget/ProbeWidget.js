@@ -121,6 +121,7 @@ export class ProbeWidget extends Component {
           onClose={this.handleCloseProbePrefsModal}
           ProbeName={this.props.data.probename}
           ProbeID={this.props.data.probeid}
+          SensorType={this.props.data.sensortype}
         />
       </div>
     );
