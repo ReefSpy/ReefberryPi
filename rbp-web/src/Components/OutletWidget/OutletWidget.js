@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import MultiToggle from "react-multi-toggle";
 import "./togglestyle.css";
 import "./OutletWidget.css"
-import cogicon from "../Images/cog.svg";
+import cogicon from "./cog.svg";
 
 const groupOptions = [
   {
@@ -47,14 +47,14 @@ export class OutletWidget extends Component {
   }
 
   render() {
-    const widgetstyle = {
-      color: "black",
-      backgroundColor: "white",
-      padding: "10px",
-      border: "1px solid black",
-      width: "300px",
-      display: "block",
-    };
+    // const widgetstyle = {
+    //   color: "black",
+    //   backgroundColor: "white",
+    //   padding: "10px",
+    //   border: "1px solid black",
+    //   width: "300px",
+    //   display: "block",
+    // };
 
 
     return (

@@ -10,6 +10,7 @@
 .item {
   font-family: Arial, Helvetica, sans-serif;
   font-weight: bold;
+
 }
 
 .probename {
@@ -68,11 +69,56 @@ padding-right: 0px;;
 }
 
 .probesetbtn:hover{
-  background-color: orange;
+
   opacity: 100%;
   cursor: pointer;
 }
 
 .probesetbtn:active{
   background-color: grey;
+}
+
+.form-row + .form-row {
+  margin-top: 1rem;
+}
+
+.form-row label,
+.form-row input{
+  width: 100%;
+  display: block;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: left;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.form-row input{
+  font-weight: normal;
+}
+
+.submitbutton{
+  background-color: orange;
+  color: black;
+  border-radius: 5px;
+  border-style: solid;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.submitbutton:hover{
+  background-color: lightgray;
+}
+
+.submitbutton:active{
+  background-color: gray;
+}
+
+.plainlabel{
+  font-weight: normal;
+  font-size: 14px;
+  text-align: left;
+  font-family: Arial, Helvetica, sans-serif;
+  display: block;
 }
