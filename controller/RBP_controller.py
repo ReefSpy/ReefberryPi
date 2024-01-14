@@ -43,14 +43,15 @@ Influx_write_api = Influx_client.write_api(write_options=SYNCHRONOUS)
 
 
 # initialize MySQL database
-mySQLDB = defs_mysql.initMySQL(AppPrefs, logger)
+# mySQLDB = defs_mysql.initMySQL(AppPrefs, logger)
 sqlengine = defs_mysql.initMySQL_ex(AppPrefs, logger)
 
 # read preferences from DB
 #defs_mysql.readGlobalPrefs(mySQLDB, AppPrefs, logger)
 defs_mysql.readGlobalPrefs_ex(sqlengine, AppPrefs, logger)
 # temperature probes
-defs_mysql.readTempProbes(mySQLDB, AppPrefs, logger)
+#defs_mysql.readTempProbes(mySQLDB, AppPrefs, logger)
+defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
 #defs_mysql.readOutletPrefs(mySQLDB, AppPrefs, logger)
 defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
 defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
@@ -249,8 +250,8 @@ def reloadprefs():
     global mySQLDB
     global logger
     
-    defs_mysql.readTempProbes(mySQLDB, AppPrefs, logger)
-    defs_mysql.readGlobalPrefs(mySQLDB, AppPrefs, logger)
+    defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
+    defs_mysql.readGlobalPrefs_ex(sqlengine, AppPrefs, logger)
     defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
     return "Reload Prefs"
 
@@ -472,7 +473,42 @@ def put_outlet_buttonstate(appuid, outletid, buttonstate):
     except Exception as e:
             AppPrefs.logger.error("put_outlet_buttonstate: " +  str(e))
 
-#######################################################################
+
+#####################################################################
+# set_probe_name
+# set the name of the probe
+# must specify ProbeID and Name
+#####################################################################
+@app.route('/set_probe_name/<probeid>/<probename>', methods = ['GET','PUT'])
+def set_probe_name(probeid, probename):
+    global logger
+
+    try:
+        global AppPrefs
+        # build table object from table in DB
+        metadata_obj = MetaData()
+        probe_table = Table("ds18b20", metadata_obj, autoload_with=sqlengine)
+        
+        stmt = (
+            update(probe_table)
+            .where(probe_table.c.probeid == probeid)
+            .where(probe_table.c.appuid == AppPrefs.appuid)
+            .values(name=probename)
+            )
+
+
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
+       
+        return "OK"
+    
+    except Exception as e:
+            AppPrefs.logger.error("set_probe_name: " +  str(e))
+
+###############################################
 
 if __name__ == '__main__':
     app.run()
