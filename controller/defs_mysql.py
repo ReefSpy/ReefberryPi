@@ -1,4 +1,4 @@
-import mysql.connector
+# import mysql.connector
 import cls_Preferences
 from sqlalchemy import create_engine
 from sqlalchemy import MetaData
@@ -7,21 +7,21 @@ from sqlalchemy import select
 from sqlalchemy import insert
 
 
-# directly talking to mysql
-def initMySQL(app_prefs, logger):
-    try:
-        mySQLdb = mysql.connector.connect(
-            host=app_prefs.mysql_host,
-            user=app_prefs.mysql_user,
-            password=app_prefs.mysql_password,
-            database=app_prefs.mysql_database
-        )
+# # directly talking to mysql
+# def initMySQL(app_prefs, logger):
+#     try:
+#         mySQLdb = mysql.connector.connect(
+#             host=app_prefs.mysql_host,
+#             user=app_prefs.mysql_user,
+#             password=app_prefs.mysql_password,
+#             database=app_prefs.mysql_database
+#         )
 
-        logger.info("Succesfully connected to MySQL database.")
-        return mySQLdb
-    except Exception as e:
-        logger.error("Can not connect to MySQL database! " + str(e))
-        exit()
+#         logger.info("Succesfully connected to MySQL database.")
+#         return mySQLdb
+#     except Exception as e:
+#         logger.error("Can not connect to MySQL database! " + str(e))
+#         exit()
 
 # using sql alchemy
 def initMySQL_ex(app_prefs, logger):
@@ -35,57 +35,16 @@ def initMySQL_ex(app_prefs, logger):
         logger.error("Can not connect to MySQL database! " + str(e))
         exit()
 
-def readTempProbes(mysqldb, appPrefs, logger):
-    logger.info("Reading temperature probe data from database...")
-    
-    appPrefs.tempProbeDict.clear()
-    
-    mycursor = mysqldb.cursor()
-    sql = "SELECT probeid, name, appuid FROM " + mysqldb.database + \
-        ".ds18b20 WHERE appuid = '" + appPrefs.appuid + "'"
-    #logger.info(sql)
-    mycursor.execute(sql)
-    # this will extract row headers
-    row_headers = [x[0] for x in mycursor.description]
-    myresult = mycursor.fetchall()
-    json_data = []
-    mycursor.close()
-    mysqldb.commit()
-    for result in myresult:
-        json_data.append(dict(zip(row_headers, result)))
-
-    logger.info(json_data)
-
-    for k in json_data:
-        probe = cls_Preferences.tempProbeClass()
-        probe.probeid = k["probeid"]
-        probe.name = k["name"]
-        appPrefs.tempProbeDict[probe.probeid] = probe
-        logger.info("read temperature probe from db: probeid = " +
-                    probe.probeid + ", probename = " + probe.name)
-
-# def readTempProbes_ex(sqlengine, appPrefs, logger):
+# def readTempProbes(mysqldb, appPrefs, logger):
 #     logger.info("Reading temperature probe data from database...")
     
 #     appPrefs.tempProbeDict.clear()
-#     ########
-#     # build table object from table in DB
-#     metadata_obj = MetaData()
-#     ds18b20_table = Table("ds18b20", metadata_obj, autoload_with=sqlengine)
-
-#     conn = sqlengine.connect()
-
-#     stmt = select(ds18b20_table).where(ds18b20_table.c.appuid == appPrefs.appuid)
-#     results = conn.execute(stmt)
-#     conn.commit()
-#     #########
-#     # mycursor = mysqldb.cursor()
-#     # sql = "SELECT probeid, name, appuid FROM " + mysqldb.database + \
-#     #     ".ds18b20 WHERE appuid = '" + appPrefs.appuid + "'"
-#     # #logger.info(sql)
-#     # mycursor.execute(sql)
-
-#     ##############
+    
+#     mycursor = mysqldb.cursor()
+#     sql = "SELECT probeid, name, appuid FROM " + mysqldb.database + \
+#         ".ds18b20 WHERE appuid = '" + appPrefs.appuid + "'"
+#     #logger.info(sql)
+#     mycursor.execute(sql)
 #     # this will extract row headers
 #     row_headers = [x[0] for x in mycursor.description]
 #     myresult = mycursor.fetchall()
@@ -104,6 +63,38 @@ def readTempProbes(mysqldb, appPrefs, logger):
 #         appPrefs.tempProbeDict[probe.probeid] = probe
 #         logger.info("read temperature probe from db: probeid = " +
 #                     probe.probeid + ", probename = " + probe.name)
+
+def readTempProbes_ex(sqlengine, appPrefs, logger):
+    logger.info("Reading temperature probe data from database...")
+    
+    appPrefs.tempProbeDict.clear()
+    ########
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    ds18b20_table = Table("ds18b20", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    stmt = select(ds18b20_table).where(ds18b20_table.c.appuid == appPrefs.appuid)
+    row_headers = conn.execute(stmt).keys()
+    print(row_headers)
+    myresult = conn.execute(stmt)
+    conn.commit()
+
+    json_data = []
+    for result in myresult:
+        json_data.append(dict(zip(row_headers, result)))
+        
+    logger.info(json_data)
+
+    for k in json_data:
+            probe = cls_Preferences.tempProbeClass()
+            probe.probeid = k["probeid"]
+            probe.name = k["name"]
+            appPrefs.tempProbeDict[probe.probeid] = probe
+            logger.info("read temperature probe from db: probeid = " +
+                        probe.probeid + ", probename = " + probe.name)
+
 
 def readDHTSensor_ex (sqlengine, appPrefs, logger):
     logger.info("Reading DHT sensor data from database...")
@@ -134,30 +125,30 @@ def readDHTSensor_ex (sqlengine, appPrefs, logger):
     
 
 
-def readGlobalPrefs(mysqldb, appPrefs, logger):
-    logger.info("Reading global prefs from database...")
+# def readGlobalPrefs(mysqldb, appPrefs, logger):
+#     logger.info("Reading global prefs from database...")
 
-    mycursor = mysqldb.cursor()
+#     mycursor = mysqldb.cursor()
 
-    sql = "SELECT tempscale FROM " + mysqldb.database + \
-        ".global WHERE appuid = '" + appPrefs.appuid + "'"
-    logger.info(sql)
-    mycursor.execute(sql)
-    myresult = mycursor.fetchone()
-    #print(myresult)
+#     sql = "SELECT tempscale FROM " + mysqldb.database + \
+#         ".global WHERE appuid = '" + appPrefs.appuid + "'"
+#     logger.info(sql)
+#     mycursor.execute(sql)
+#     myresult = mycursor.fetchone()
+#     #print(myresult)
 
-    if myresult is not None:
-        appPrefs.temperaturescale = myresult[0]
-    else:
-        #print("error")
-        appPrefs.temperaturescale = "C"
-        sql = "INSERT into " + mysqldb.database + \
-                ".global (appuid, tempscale) values ('" + appPrefs.appuid + "'," + "'" + "C" + "')"
-        #print(sql)
-        mycursor.execute(sql)
-        mysqldb.commit()
+#     if myresult is not None:
+#         appPrefs.temperaturescale = myresult[0]
+#     else:
+#         #print("error")
+#         appPrefs.temperaturescale = "C"
+#         sql = "INSERT into " + mysqldb.database + \
+#                 ".global (appuid, tempscale) values ('" + appPrefs.appuid + "'," + "'" + "C" + "')"
+#         #print(sql)
+#         mycursor.execute(sql)
+#         mysqldb.commit()
         
-    logger.info("Using temperature scale: " + appPrefs.temperaturescale)
+#     logger.info("Using temperature scale: " + appPrefs.temperaturescale)
     
 def readGlobalPrefs_ex(sqlengine, appPrefs, logger):    
     logger.info("Reading global prefs from database...")
