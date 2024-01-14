@@ -2,7 +2,8 @@ import React, { Component } from "react";
 import HighchartsWrapper from "./ProbeChart";
 import "./ProbeWidget.css";
 import cogicon from "./cog.svg";
-import ProbePrefsModal from "./ProbePrefsModal";
+import ProbeWidgetModal from "./ProbeWidgetModal";
+
 
 export class ProbeWidget extends Component {
   constructor(props) {
@@ -28,12 +29,19 @@ export class ProbeWidget extends Component {
   handleCloseProbePrefsModal = () => {
     this.setState({ setProbePrefsModalOpen: false });
     this.setState({ isProbePrefsModalOpen: false });
+
   };
 
   handleProbePrefsFormSubmit = (data) => {
     this.setState({ setProbePrefsFormData: data });
     this.handleCloseProbePrefsModal();
     console.log(data)
+
+    let updateApiURL = "http://xpi01.local:5000/set_probe_name/"
+      .concat(data.probeid)
+      .concat("/")
+      .concat(data.probename);
+    this.apiCall(updateApiURL, );
   };
   //////
 
@@ -115,13 +123,14 @@ export class ProbeWidget extends Component {
             />
           </button>
         </div>
-        <ProbePrefsModal
-          isOpen={this.state.isProbePrefsModalOpen}
-          onSubmit={this.handleProbePrefsFormSubmit}
-          onClose={this.handleCloseProbePrefsModal}
-          ProbeName={this.props.data.probename}
-          ProbeID={this.props.data.probeid}
-          SensorType={this.props.data.sensortype}
+       
+        <ProbeWidgetModal
+        isOpen={this.state.isProbePrefsModalOpen}
+        onSubmit={this.handleProbePrefsFormSubmit}
+        onClose={this.handleCloseProbePrefsModal}
+        ProbeName={this.props.data.probename}
+        ProbeID={this.props.data.probeid}
+        SensorType={this.props.data.sensortype}
         />
       </div>
     );

@@ -1,0 +1,31 @@
+.modal::backdrop {
+    background: hsl(0 0% 0% / 50%);
+  }
+  
+  .modal {
+    max-width: 20rem;
+    padding: 2rem;
+    border: 0;
+    border-radius: 0.5rem;
+    position: relative;
+    box-shadow: hsl(0 0% 0% / 10%) 0 0 0.5rem 0.25rem;
+width: 200px;
+  }
+  
+  .modal-close-btn {
+    opacity: 100%;
+    position: absolute;
+    top: 0.25em;
+    right: 0.25em;
+    background-color: transparent;
+    border-style: none;
+  }
+  
+  .modal-close-btn:hover {
+    opacity: 70%;
+    cursor: pointer;
+  }
+
+  .modal-close-btn:active {
+    opacity: 100%;
+  }

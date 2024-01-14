@@ -9,8 +9,7 @@ const URL_get_outlet_list = "http://xpi01.local:5000/get_outlet_list/";
 const URL_put_outlet_buttonstate =
   "http://xpi01.local:5000/put_outlet_buttonstate/";
 
-const URL_get_dht_sensor = "http://xpi01.local:5000/get_dht_sensor/"
-
+const URL_get_dht_sensor = "http://xpi01.local:5000/get_dht_sensor/";
 
 class App extends Component {
   constructor(props) {
@@ -19,7 +18,8 @@ class App extends Component {
       apiResponse: null,
       ProbeArray: [],
       OutletArray: [],
-      DHTArray:[],
+      DHTArray: [],
+      AppUID: "QV3BIZZV",
     };
 
     this.setProbeData = this.setProbeData.bind(this);
@@ -27,7 +27,7 @@ class App extends Component {
     this.createOutletSet = this.createOutletSet.bind(this);
     this.handleOutletButtonClick = this.handleOutletButtonClick.bind(this);
     this.handleCurrentOutletState = this.handleCurrentOutletState.bind(this);
-    this.setDHTData = this.setDHTData.bind(this)
+    this.setDHTData = this.setDHTData.bind(this);
   }
 
   async componentDidMount() {
@@ -73,7 +73,7 @@ class App extends Component {
       });
   }
 
-  setDHTData(probedata){
+  setDHTData(probedata) {
     console.log(probedata);
     let DHTArray = [];
     for (let probe in probedata) {
@@ -87,7 +87,7 @@ class App extends Component {
   }
 
   setProbeData(probedata) {
-      console.log(probedata);
+    console.log(probedata);
 
     let ProbeArray = [];
     for (let probe in probedata) {
@@ -199,30 +199,32 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        <div class="appheader"><img class="appicon" src={appicon} alt="logo"></img>Reefberry Pi Aquarium Controller</div>
+        <div class="appheader">
+          <img class="appicon" src={appicon} alt="logo"></img>Reefberry Pi
+          Aquarium Controller
+        </div>
         <div class="maingridcontainer">
           <div class="maincol1">
-          {this.state.ProbeArray.map((probe) => (
-            <div class="col1items" key={probe.probeid}>
-              <ProbeWidget data={probe}></ProbeWidget>
-            </div>
-          ))}
-{this.state.DHTArray.map((probe) => (
-            <div class="col1items" key={probe.probeid}>
-              <ProbeWidget data={probe}></ProbeWidget>
-            </div>
-          ))}
-
+            {this.state.ProbeArray.map((probe) => (
+              <div class="col1items" key={probe.probeid}>
+                <ProbeWidget data={probe}></ProbeWidget>
+              </div>
+            ))}
+            {this.state.DHTArray.map((probe) => (
+              <div class="col1items" key={probe.probeid}>
+                <ProbeWidget data={probe}></ProbeWidget>
+              </div>
+            ))}
           </div>
           <div class="maincol2">
-          {this.state.OutletArray.map((outlet) => (
-            <div class="col2items" key={outlet.outletid}>
-              <OutletWidget
-                data={outlet}
-                onButtonStateChange={this.handleOutletButtonClick}
-              ></OutletWidget>
-            </div>
-          ))}
+            {this.state.OutletArray.map((outlet) => (
+              <div class="col2items" key={outlet.outletid}>
+                <OutletWidget
+                  data={outlet}
+                  onButtonStateChange={this.handleOutletButtonClick}
+                ></OutletWidget>
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -105,10 +105,13 @@ padding-right: 0px;;
   text-align: center;
   font-size: 14px;
   font-weight: bold;
+  height:2.5em;
+  width: 8em
 }
 
 .submitbutton:hover{
   background-color: lightgray;
+  cursor: pointer;
 }
 
 .submitbutton:active{
