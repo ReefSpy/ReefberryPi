@@ -25,7 +25,7 @@
     text-align: left;
     align-self: center;
     grid-row-start: 1;
-    border-style: dotted;
+    border-style: none;
     border-color: black;
     border-width: 1px;
     border-radius: 4px;
@@ -78,5 +78,9 @@
   
   .outletsetbtn:active{
     background-color: grey;
+  }
+
+  .controltype{
+    display: block
   }
   

@@ -1,25 +1,25 @@
 import React, { useRef, useEffect, useState } from "react";
-import "./ProbeWidget.css";
+import "./OutletWidget.css";
 import closeCircle from "./close-circle.svg";
 
-const initialProbePrefsModalData = {
-  probename: "",
-  probeid: "",
+const initialOutletPrefsModalData = {
+  outletname: "",
+  outletid: "",
 };
 
-const ProbeWidgetModal = ({
+const OutletWidgetModal = ({
   onSubmit,
   isOpen,
   hasCloseBtn = true,
   onClose,
-  ProbeName,
-  ProbeID,
-  SensorType,
-  Model
+  OutletName,
+  OutletID,
+  ControlType
+
 }) => {
   const [isModalOpen, setModalOpen] = useState(isOpen);
   const modalRef = useRef(null);
-  const [formState, setFormState] = useState(initialProbePrefsModalData);
+  const [formState, setFormState] = useState(initialOutletPrefsModalData);
   const focusInputRef = useRef(null);
   const formRef = useRef(null);
 
@@ -57,7 +57,7 @@ const ProbeWidgetModal = ({
   const handleSubmit = (event) => {
     event.preventDefault();
     onSubmit(formState);
-    setFormState(initialProbePrefsModalData);
+    setFormState(initialOutletPrefsModalData);
     formRef.current.reset();
   };
 
@@ -65,7 +65,7 @@ const ProbeWidgetModal = ({
     const { name, value } = event.target;
     setFormState((prevFormData) => ({
       ...prevFormData,
-      [name]: value, probeid: ProbeID,
+      [name]: value, outletid: OutletID,
     }));
 
   };
@@ -79,13 +79,13 @@ const ProbeWidgetModal = ({
       )}
       <form onSubmit={handleSubmit} ref={formRef}>
         <div className="form-row">
-          <label htmlFor="probename">Probe Name</label>
+          <label htmlFor="outletname">Outlet Name</label>
           <input
             ref={focusInputRef}
             type="text"
-            id="probename"
-            name="probename"
-            Value={ProbeName}
+            id="outletname"
+            name="outletname"
+            Value={OutletName}
             autocomplete="off"
             onChange={handleInputChange}
             required
@@ -94,18 +94,27 @@ const ProbeWidgetModal = ({
         </div>
 
         <div className="form-row">
-          <label htmlFor="probeid">Probe ID</label>
-          <span className="plainlabel">{ProbeID}</span>
+          <label htmlFor="outletid">Outlet ID</label>
+          <span className="plainlabel">{OutletID}</span>
         </div>
 
         <div className="form-row">
-          <label htmlFor="probeid">Sensor Type</label>
-          <span className="plainlabel">{SensorType}</span>
-        </div>
-
-        <div className="form-row">
-          <label htmlFor="model">Model</label>
-          <span className="plainlabel">{Model}</span>
+          <label htmlFor="controlType">Control Type</label>
+          <select
+            className="controltype"
+            id="controlType"
+            name="controlType"
+            value={ControlType}
+            onChange={handleInputChange}
+            required
+          >
+            <option value="Always">Always</option>
+            <option value="Light">Light</option>
+            <option value="Heater">Heater</option>
+            <option value="Skimmer">Skimmer</option>
+            <option value="Return">Return</option>
+            <option value="PH">PH</option>
+          </select>
         </div>
 
         <div className="form-row">
@@ -118,4 +127,4 @@ const ProbeWidgetModal = ({
   );
 };
 
-export default ProbeWidgetModal;
+export default OutletWidgetModal;
