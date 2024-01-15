@@ -5,6 +5,7 @@ import closeCircle from "./close-circle.svg";
 const initialOutletPrefsModalData = {
   outletname: "",
   outletid: "",
+  controlType: ""
 };
 
 const OutletWidgetModal = ({
@@ -17,6 +18,10 @@ const OutletWidgetModal = ({
   ControlType
 
 }) => {
+  initialOutletPrefsModalData.controlType = ControlType
+  initialOutletPrefsModalData.outletid = OutletID
+  initialOutletPrefsModalData.outletname = OutletName
+  
   const [isModalOpen, setModalOpen] = useState(isOpen);
   const modalRef = useRef(null);
   const [formState, setFormState] = useState(initialOutletPrefsModalData);
@@ -104,7 +109,7 @@ const OutletWidgetModal = ({
             className="controltype"
             id="controlType"
             name="controlType"
-            value={ControlType}
+            value={formState.controlType}
             onChange={handleInputChange}
             required
           >
