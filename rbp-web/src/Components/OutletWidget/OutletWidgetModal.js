@@ -7,7 +7,7 @@ const initialOutletPrefsModalData = {
   outletname: "",
   outletid: "",
   controlType: "",
-  selectedIndex: 0
+  selectedIndex: 0,
 };
 
 const OutletWidgetModal = ({
@@ -17,14 +17,30 @@ const OutletWidgetModal = ({
   onClose,
   OutletName,
   OutletID,
-  ControlType
-
+  ControlType,
 }) => {
-  initialOutletPrefsModalData.controlType = ControlType
-  initialOutletPrefsModalData.outletid = OutletID
-  initialOutletPrefsModalData.outletname = OutletName
-
+  initialOutletPrefsModalData.controlType = ControlType;
+  initialOutletPrefsModalData.outletid = OutletID;
+  initialOutletPrefsModalData.outletname = OutletName;
   
+const getIndex =  () =>{
+    if (ControlType === "Always") {
+      initialOutletPrefsModalData.selectedIndex = 0;
+    } else if (ControlType === "Light") {
+      initialOutletPrefsModalData.selectedIndex = 1;
+    } else if (ControlType === "Heater") {
+      initialOutletPrefsModalData.selectedIndex = 2;
+    } else if (ControlType === "Skimmer") {
+      initialOutletPrefsModalData.selectedIndex = 3;
+    } else if (ControlType === "Return") {
+      initialOutletPrefsModalData.selectedIndex = 4;
+    } else if (ControlType === "PH") {
+      initialOutletPrefsModalData.selectedIndex = 5;
+    }
+}
+
+getIndex()
+
   const [isModalOpen, setModalOpen] = useState(isOpen);
   const modalRef = useRef(null);
   const [formState, setFormState] = useState(initialOutletPrefsModalData);
@@ -32,9 +48,13 @@ const OutletWidgetModal = ({
   const formRef = useRef(null);
 
 
+
+
   const handleCloseModal = () => {
     if (onClose) {
       onClose();
+      getIndex();
+      setFormState(initialOutletPrefsModalData)
       formRef.current.reset();
     }
     setModalOpen(false);
@@ -73,9 +93,9 @@ const OutletWidgetModal = ({
     const { name, value } = event.target;
     setFormState((prevFormData) => ({
       ...prevFormData,
-      [name]: value, outletid: OutletID,
+      [name]: value,
+      outletid: OutletID,
     }));
-
   };
 
   const handleSelectionChange = (event) => {
@@ -84,7 +104,7 @@ const OutletWidgetModal = ({
     // this.setState({ selectedIndex: Number(event.target.value) });
     setFormState((prevFormData) => ({
       ...prevFormData,
-      selectedIndex: Number(event.target.value)
+      selectedIndex: Number(event.target.value),
     }));
   };
 
@@ -117,28 +137,26 @@ const OutletWidgetModal = ({
         </div>
 
         <div className="form-row">
-            <label htmlFor="controlType">Control Type</label>
-            <select
-              className="controltype"
-              id="controlType"
-              name="controlType"
-              onChange={handleSelectionChange}
-              required
-            >
-              <option value="0">Always</option>
-              <option value="1">Light</option>
-              <option value="2">Heater</option>
-              <option value="3">Skimmer</option>
-              <option value="4">Return</option>
-              <option value="5">PH</option>
-            </select>
+          <label htmlFor="controlType">Control Type</label>
+          <select
+            className="controltype"
+            id="controlType"
+            name="controlType"
+            value={formState.selectedIndex}
+            onChange={handleSelectionChange}
+            required
+          >
+            <option value="0">Always</option>
+            <option value="1">Light</option>
+            <option value="2">Heater</option>
+            <option value="3">Skimmer</option>
+            <option value="4">Return</option>
+            <option value="5">PH</option>
+          </select>
         </div>
-
-      
-        
       </form>
 
-      <PrefPaneContainer data = {formState}></PrefPaneContainer>
+      <PrefPaneContainer data={formState}></PrefPaneContainer>
     </dialog>
   );
 };

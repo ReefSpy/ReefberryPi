@@ -4,12 +4,6 @@ import { OutletWidget } from "./Components/OutletWidget/OutletWidget";
 import appicon from "./Images/reefberry-pi-logo.svg";
 import "./App.css";
 
-const URL_get_tempprobe_list = "http://xpi01.local:5000/get_tempprobe_list/";
-const URL_get_outlet_list = "http://xpi01.local:5000/get_outlet_list/";
-const URL_put_outlet_buttonstate =
-  "http://xpi01.local:5000/put_outlet_buttonstate/";
-
-const URL_get_dht_sensor = "http://xpi01.local:5000/get_dht_sensor/";
 
 class App extends Component {
   constructor(props) {
@@ -19,7 +13,7 @@ class App extends Component {
       ProbeArray: [],
       OutletArray: [],
       DHTArray: [],
-      AppUID: "QV3BIZZV",
+      AppUID: "",
     };
 
     this.setProbeData = this.setProbeData.bind(this);
@@ -33,19 +27,20 @@ class App extends Component {
   async componentDidMount() {
     document.title = "Reefberry Pi";
     // probe list
-    this.apiCall(URL_get_tempprobe_list, this.setProbeData);
+    console.log( process.env.REACT_APP_API_GET_TEMPPROBE_LIST)
+    this.apiCall(process.env.REACT_APP_API_GET_TEMPPROBE_LIST, this.setProbeData);
     this.interval = setInterval(() => {
-      this.apiCall(URL_get_tempprobe_list, this.setProbeData);
+      this.apiCall(process.env.REACT_APP_API_GET_TEMPPROBE_LIST, this.setProbeData);
     }, 2000);
     // outlet list
-    this.apiCall(URL_get_outlet_list, this.createOutletSet);
+    this.apiCall(process.env.REACT_APP_API_GET_OUTLET_LIST, this.createOutletSet);
     this.interval2 = setInterval(() => {
-      this.apiCall(URL_get_outlet_list, this.handleCurrentOutletState);
+      this.apiCall(process.env.REACT_APP_API_GET_OUTLET_LIST, this.handleCurrentOutletState);
     }, 2000);
     // dht sensor list
-    this.apiCall(URL_get_dht_sensor, this.setDHTData);
+    this.apiCall(process.env.REACT_APP_API_GET_DHT_SENSOR, this.setDHTData);
     this.interval3 = setInterval(() => {
-      this.apiCall(URL_get_dht_sensor, this.setDHTData);
+      this.apiCall(process.env.REACT_APP_API_GET_DHT_SENSOR, this.setDHTData);
     }, 2000);
   }
 
@@ -178,7 +173,7 @@ class App extends Component {
     this.setState({ OutletArray: outletListArrayClone });
     console.log(this.state.OutletArray);
 
-    let apiURL = URL_put_outlet_buttonstate.concat("QV3BIZZV/")
+    let apiURL = process.env.REACT_APP_API_PUT_OUTLET_BUTTONSTATE
       .concat(outletid)
       .concat("/")
       .concat(buttonval);
