@@ -1,11 +1,13 @@
 import React, { useRef, useEffect, useState } from "react";
 import "./OutletWidget.css";
 import closeCircle from "./close-circle.svg";
+import PrefPaneContainer from "./PrefPaneContainer";
 
 const initialOutletPrefsModalData = {
   outletname: "",
   outletid: "",
-  controlType: ""
+  controlType: "",
+  selectedIndex: 0
 };
 
 const OutletWidgetModal = ({
@@ -21,6 +23,7 @@ const OutletWidgetModal = ({
   initialOutletPrefsModalData.controlType = ControlType
   initialOutletPrefsModalData.outletid = OutletID
   initialOutletPrefsModalData.outletname = OutletName
+
   
   const [isModalOpen, setModalOpen] = useState(isOpen);
   const modalRef = useRef(null);
@@ -75,6 +78,16 @@ const OutletWidgetModal = ({
 
   };
 
+  const handleSelectionChange = (event) => {
+    console.log("Selection changed");
+    console.log(event.target.value);
+    // this.setState({ selectedIndex: Number(event.target.value) });
+    setFormState((prevFormData) => ({
+      ...prevFormData,
+      selectedIndex: Number(event.target.value)
+    }));
+  };
+
   return (
     <dialog ref={modalRef} onKeyDown={handleKeyDown} className="modal">
       {hasCloseBtn && (
@@ -104,30 +117,28 @@ const OutletWidgetModal = ({
         </div>
 
         <div className="form-row">
-          <label htmlFor="controlType">Control Type</label>
-          <select
-            className="controltype"
-            id="controlType"
-            name="controlType"
-            value={formState.controlType}
-            onChange={handleInputChange}
-            required
-          >
-            <option value="Always">Always</option>
-            <option value="Light">Light</option>
-            <option value="Heater">Heater</option>
-            <option value="Skimmer">Skimmer</option>
-            <option value="Return">Return</option>
-            <option value="PH">PH</option>
-          </select>
+            <label htmlFor="controlType">Control Type</label>
+            <select
+              className="controltype"
+              id="controlType"
+              name="controlType"
+              onChange={handleSelectionChange}
+              required
+            >
+              <option value="0">Always</option>
+              <option value="1">Light</option>
+              <option value="2">Heater</option>
+              <option value="3">Skimmer</option>
+              <option value="4">Return</option>
+              <option value="5">PH</option>
+            </select>
         </div>
 
-        <div className="form-row">
-          <button type="submit" className="submitbutton">
-            Submit
-          </button>
-        </div>
+      
+        
       </form>
+
+      <PrefPaneContainer data = {formState}></PrefPaneContainer>
     </dialog>
   );
 };
