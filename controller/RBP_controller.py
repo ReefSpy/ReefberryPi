@@ -108,8 +108,8 @@ def apploop():
                 temp_c = result.temperature
                 hum = result.humidity
 
-                AppPrefs.dhtDict.get("DHT").lastTemperature = str(temp_c)
-                AppPrefs.dhtDict.get("DHT").lastHumidity = str(hum)
+                AppPrefs.dhtDict.get("DHT-T").lastValue = str(temp_c)
+                AppPrefs.dhtDict.get("DHT-H").lastValue = str(hum)
                 try:
                     # print("dht11 Temp C = " + str(temp_c) + " C")
                     Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_c", "tags": {
@@ -193,7 +193,7 @@ def apploop():
                 elif AppPrefs.outletDict.get(outlet).control_type == "Heater":
                     defs_outletcontrol.handle_outlet_heater(AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
                 # control type RETURN PUMP
-                elif AppPrefs.outletDict.get(outlet).control_type == "Return Pump":
+                elif AppPrefs.outletDict.get(outlet).control_type == "Return":
                     defs_outletcontrol.handle_outlet_returnpump(AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
                 # contriol type SKIMMER
                 elif AppPrefs.outletDict.get(outlet).control_type == "Skimmer":
@@ -201,7 +201,7 @@ def apploop():
                 # control type LIGHT
                 elif AppPrefs.outletDict.get(outlet).control_type == "Light":
                     defs_outletcontrol.handle_outlet_light(AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
-                # elif AppPrefs.outletDict.get(outlet).controltype == "pH Control":
+                # elif AppPrefs.outletDict.get(outlet).controltype == "PH":
                 #     return defs_outletcontrolsim.handle_outlet_ph(self, outlet, button_state, pin)
             
         except Exception as e:
@@ -374,18 +374,18 @@ def get_dht_sensor():
         global AppPrefs
         
         dhtdict = {}
-
+        print(dhtdict)
         if AppPrefs.dht_enable == "True":
-            dhtdict["DHT-Temp"]={"sensortype": "temperature" , 
-                                "probename": AppPrefs.dhtDict["DHT"].temperature_name,
-                                "probeid": "DHT-T", 
-                                "probetype": "DHT11/22", 
-                                "lastValue": AppPrefs.dhtDict["DHT"].lastTemperature}
-            dhtdict["DHT-Hum"]={"sensortype": "humidity" , 
-                                "probename": AppPrefs.dhtDict["DHT"].humidity_name,
-                                "probeid": "DHT-H", 
-                                "probetype": "DHT11/22", 
-                                "lastValue": AppPrefs.dhtDict["DHT"].lastHumidity}
+            dhtdict["DHT-T"]={"sensortype": AppPrefs.dhtDict["DHT-T"].sensortype , 
+                                "probename": AppPrefs.dhtDict["DHT-T"].name,
+                                "probeid": AppPrefs.dhtDict["DHT-T"].probeid, 
+                                "probetype": AppPrefs.dhtDict["DHT-T"].probetype, 
+                                "lastValue": AppPrefs.dhtDict["DHT-T"].lastValue}
+            dhtdict["DHT-H"]={"sensortype": AppPrefs.dhtDict["DHT-H"].sensortype , 
+                                "probename": AppPrefs.dhtDict["DHT-H"].name,
+                                "probeid": AppPrefs.dhtDict["DHT-H"].probeid, 
+                                "probetype": AppPrefs.dhtDict["DHT-H"].probetype, 
+                                "lastValue": AppPrefs.dhtDict["DHT-H"].lastValue}
             
             return dhtdict    
         else:
@@ -397,11 +397,11 @@ def get_dht_sensor():
 #####################################################################
 # get_chartdata_24hr
 # return array of chart data with date/time and values
-# must specify AppUID, ProbeID, and scale (temperature_c,
+# must specify ProbeID, and scale (temperature_c,
 # temperature_f, or humidity)
 #####################################################################
-@app.route('/get_chartdata_24hr/<appuid>/<probeid>/<unit>', methods = ['GET'])
-def get_chartdata_24hr(appuid, probeid, unit):
+@app.route('/get_chartdata_24hr/<probeid>/<unit>', methods = ['GET'])
+def get_chartdata_24hr(probeid, unit):
     
     try:
         global AppPrefs
@@ -414,7 +414,7 @@ def get_chartdata_24hr(appuid, probeid, unit):
         |> range(start: -24h) \
         |> filter(fn: (r) => r["_measurement"] == "{unit}") \
         |> filter(fn: (r) => r["_field"] == "value") \
-        |> filter(fn: (r) => r["appuid"] == "{appuid}") \
+        |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
         |> filter(fn: (r) => r["probeid"] == "{probeid}") \
         |> aggregateWindow(every: 10m, fn: mean, createEmpty: false) \
         |> yield(name: "mean")'
@@ -440,10 +440,10 @@ def get_chartdata_24hr(appuid, probeid, unit):
 #####################################################################
 # put_outlet_buttonstate
 # change the value of button state
-# must specify Appuid, outlet ID and either ON, OFF, or AUTO
+# must specify outlet ID and either ON, OFF, or AUTO
 #####################################################################
-@app.route('/put_outlet_buttonstate/<appuid>/<outletid>/<buttonstate>', methods = ['GET','PUT'])
-def put_outlet_buttonstate(appuid, outletid, buttonstate):
+@app.route('/put_outlet_buttonstate/<outletid>/<buttonstate>', methods = ['GET','PUT'])
+def put_outlet_buttonstate(outletid, buttonstate):
     global logger
 
     try:
@@ -457,7 +457,7 @@ def put_outlet_buttonstate(appuid, outletid, buttonstate):
         stmt = (
             update(outlet_table)
             .where(outlet_table.c.outletid == outletid)
-            .where(outlet_table.c.appuid == appuid)
+            .where(outlet_table.c.appuid == AppPrefs.appuid)
             .values(button_state=buttonstate)
             )
 

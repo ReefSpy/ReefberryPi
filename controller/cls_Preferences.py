@@ -39,11 +39,18 @@ class tempProbeClass():
     lastTemperature = ""
     lastLogTime = ""
 
+# class dhtSensorClass():
+#     temperature_name = ""
+#     humidity_name = ""
+#     lastTemperature = ""
+#     lastHumidity = ""
+
 class dhtSensorClass():
-    temperature_name = ""
-    humidity_name = ""
-    lastTemperature = ""
-    lastHumidity = ""
+    name = ""
+    probeid = ""
+    lastValue = ""
+    sensortype = ""
+    probetype = ""
 
 class outletPrefs():
     ischanged = ""

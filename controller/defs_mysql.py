@@ -71,11 +71,11 @@ def readTempProbes_ex(sqlengine, appPrefs, logger):
     ########
     # build table object from table in DB
     metadata_obj = MetaData()
-    ds18b20_table = Table("ds18b20", metadata_obj, autoload_with=sqlengine)
+    ds18b20_table = Table("probes", metadata_obj, autoload_with=sqlengine)
 
     conn = sqlengine.connect()
 
-    stmt = select(ds18b20_table).where(ds18b20_table.c.appuid == appPrefs.appuid)
+    stmt = select(ds18b20_table).where(ds18b20_table.c.appuid == appPrefs.appuid).where(ds18b20_table.c.probetype=="ds18b20")
     row_headers = conn.execute(stmt).keys()
     print(row_headers)
     myresult = conn.execute(stmt)
@@ -103,21 +103,24 @@ def readDHTSensor_ex (sqlengine, appPrefs, logger):
 
     # build table object from table in DB
     metadata_obj = MetaData()
-    dht_table = Table("dht", metadata_obj, autoload_with=sqlengine)
+    # dht_table = Table("dht", metadata_obj, autoload_with=sqlengine)
+    dht_table = Table("probes", metadata_obj, autoload_with=sqlengine)
 
     conn = sqlengine.connect()
 
-    stmt = select(dht_table).where(dht_table.c.appuid == appPrefs.appuid)
+    stmt = select(dht_table).where(dht_table.c.appuid == appPrefs.appuid).where(dht_table.c.probetype == "dht")
     results = conn.execute(stmt)
     conn.commit()
-    dhtsensor = cls_Preferences.dhtSensorClass()
+    
     for row in results:    
+        dhtsensor = cls_Preferences.dhtSensorClass()
         logger.info(row)
-        dhtsensor.temperature_name = row.temperature_name
-        dhtsensor.humidity_name = row.humidity_name
-        appPrefs.dhtDict["DHT"] = dhtsensor
+        dhtsensor.name = row.name
+        dhtsensor.probeid = row.probeid
+        dhtsensor.sensortype = row.sensortype
+        appPrefs.dhtDict[row.probeid] = dhtsensor
         logger.info("read dht sensor information from db: Temperature Probe Name = " +
-                    dhtsensor.temperature_name + ", Humidity Probe Name = " + dhtsensor.humidity_name)
+                    dhtsensor.name + ", SensorType = " + dhtsensor.sensortype)
 
 
 
