@@ -105,7 +105,6 @@ class App extends Component {
 
     return ProbeArray;
   }
-
   createOutletSet(outletdata) {
     console.log("Create Outlet Set");
     console.log(outletdata);

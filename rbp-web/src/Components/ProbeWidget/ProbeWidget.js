@@ -131,6 +131,7 @@ export class ProbeWidget extends Component {
         ProbeName={this.props.data.probename}
         ProbeID={this.props.data.probeid}
         SensorType={this.props.data.sensortype}
+        Model={this.props.data.probetype}
         />
       </div>
     );

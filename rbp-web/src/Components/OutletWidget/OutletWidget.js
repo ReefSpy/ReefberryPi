@@ -3,6 +3,7 @@ import MultiToggle from "react-multi-toggle";
 import "./togglestyle.css";
 import "./OutletWidget.css"
 import cogicon from "./cog.svg";
+import OutletWidgetModal from "./OutletWidgetModal";
 
 const groupOptions = [
   {
@@ -46,6 +47,32 @@ export class OutletWidget extends Component {
     this.setState({ buttonstateidx: this.props.data.button_state });
   }
 
+///////
+handleOpenOutletPrefsModal = () => {
+  this.setState({ setOutletPrefsModalOpen: true });
+  this.setState({ isOutletPrefsModalOpen: true });
+};
+
+handleCloseOutletPrefsModal = () => {
+  this.setState({ setOutletPrefsModalOpen: false });
+  this.setState({ isOutletPrefsModalOpen: false });
+
+};
+
+handleOutletPrefsFormSubmit = (data) => {
+  this.setState({ setOutletPrefsFormData: data });
+  this.handleCloseOutletPrefsModal();
+  console.log(data)
+
+  // let updateApiURL = "http://xpi01.local:5000/set_probe_name/"
+  //   .concat(data.probeid)
+  //   .concat("/")
+  //   .concat(data.probename);
+  // this.apiCall(updateApiURL, );
+};
+//////
+
+
   render() {
     // const widgetstyle = {
     //   color: "black",
@@ -76,8 +103,18 @@ export class OutletWidget extends Component {
             alt="settings"
             height="14"
             width="14"
+            onClick={this.handleOpenOutletPrefsModal}
           /></button>
         </div>
+
+        <OutletWidgetModal
+        isOpen={this.state.isOutletPrefsModalOpen}
+        onSubmit={this.handleOutletPrefsFormSubmit}
+        onClose={this.handleCloseOutletPrefsModal}
+        OutletName={this.props.data.outletname}
+        OutletID={this.props.data.outletid}
+        ControlType={this.props.data.control_type}
+        />
       </div>
     );
   }

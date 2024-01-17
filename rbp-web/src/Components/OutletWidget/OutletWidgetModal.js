@@ -1,25 +1,33 @@
 import React, { useRef, useEffect, useState } from "react";
-import "./ProbeWidget.css";
+import "./OutletWidget.css";
 import closeCircle from "./close-circle.svg";
+import PrefPaneContainer from "./PrefPaneContainer";
 
-const initialProbePrefsModalData = {
-  probename: "",
-  probeid: "",
+const initialOutletPrefsModalData = {
+  outletname: "",
+  outletid: "",
+  controlType: "",
+  selectedIndex: 0
 };
 
-const ProbeWidgetModal = ({
+const OutletWidgetModal = ({
   onSubmit,
   isOpen,
   hasCloseBtn = true,
   onClose,
-  ProbeName,
-  ProbeID,
-  SensorType,
-  Model
+  OutletName,
+  OutletID,
+  ControlType
+
 }) => {
+  initialOutletPrefsModalData.controlType = ControlType
+  initialOutletPrefsModalData.outletid = OutletID
+  initialOutletPrefsModalData.outletname = OutletName
+
+  
   const [isModalOpen, setModalOpen] = useState(isOpen);
   const modalRef = useRef(null);
-  const [formState, setFormState] = useState(initialProbePrefsModalData);
+  const [formState, setFormState] = useState(initialOutletPrefsModalData);
   const focusInputRef = useRef(null);
   const formRef = useRef(null);
 
@@ -57,7 +65,7 @@ const ProbeWidgetModal = ({
   const handleSubmit = (event) => {
     event.preventDefault();
     onSubmit(formState);
-    setFormState(initialProbePrefsModalData);
+    setFormState(initialOutletPrefsModalData);
     formRef.current.reset();
   };
 
@@ -65,9 +73,19 @@ const ProbeWidgetModal = ({
     const { name, value } = event.target;
     setFormState((prevFormData) => ({
       ...prevFormData,
-      [name]: value, probeid: ProbeID,
+      [name]: value, outletid: OutletID,
     }));
 
+  };
+
+  const handleSelectionChange = (event) => {
+    console.log("Selection changed");
+    console.log(event.target.value);
+    // this.setState({ selectedIndex: Number(event.target.value) });
+    setFormState((prevFormData) => ({
+      ...prevFormData,
+      selectedIndex: Number(event.target.value)
+    }));
   };
 
   return (
@@ -79,13 +97,13 @@ const ProbeWidgetModal = ({
       )}
       <form onSubmit={handleSubmit} ref={formRef}>
         <div className="form-row">
-          <label htmlFor="probename">Probe Name</label>
+          <label htmlFor="outletname">Outlet Name</label>
           <input
             ref={focusInputRef}
             type="text"
-            id="probename"
-            name="probename"
-            Value={ProbeName}
+            id="outletname"
+            name="outletname"
+            Value={OutletName}
             autocomplete="off"
             onChange={handleInputChange}
             required
@@ -94,28 +112,35 @@ const ProbeWidgetModal = ({
         </div>
 
         <div className="form-row">
-          <label htmlFor="probeid">Probe ID</label>
-          <span className="plainlabel">{ProbeID}</span>
+          <label htmlFor="outletid">Outlet ID</label>
+          <span className="plainlabel">{OutletID}</span>
         </div>
 
         <div className="form-row">
-          <label htmlFor="probeid">Sensor Type</label>
-          <span className="plainlabel">{SensorType}</span>
+            <label htmlFor="controlType">Control Type</label>
+            <select
+              className="controltype"
+              id="controlType"
+              name="controlType"
+              onChange={handleSelectionChange}
+              required
+            >
+              <option value="0">Always</option>
+              <option value="1">Light</option>
+              <option value="2">Heater</option>
+              <option value="3">Skimmer</option>
+              <option value="4">Return</option>
+              <option value="5">PH</option>
+            </select>
         </div>
 
-        <div className="form-row">
-          <label htmlFor="model">Model</label>
-          <span className="plainlabel">{Model}</span>
-        </div>
-
-        <div className="form-row">
-          <button type="submit" className="submitbutton">
-            Submit
-          </button>
-        </div>
+      
+        
       </form>
+
+      <PrefPaneContainer data = {formState}></PrefPaneContainer>
     </dialog>
   );
 };
 
-export default ProbeWidgetModal;
+export default OutletWidgetModal;

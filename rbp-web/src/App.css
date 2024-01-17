@@ -1,38 +1,39 @@
 .App {
   text-align: center;
+
 }
 
-.maingridcontainer{
+.maingridcontainer {
   display: grid;
   grid-template-columns: 320px 320px;
   justify-content: center;
 }
 
-.maincol1{
-  background-color: darkgray;
+.maincol1 {
+  background-color: #747c8e;
   margin-right: 10px;
   border-radius: 5px;
 }
-.maincol2{
-  background-color: darkgray;
+.maincol2 {
+  background-color: #747c8e;
   margin-right: 10px;
   border-radius: 5px;
 }
 
-.appheader{
+.appheader {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 34px;
   font-weight: bold;
-color: white;
- text-align: center;
- margin-bottom: 15px;
- background-color: gray;
- line-height: 60px;
+  color: white;
+  text-align: center;
+  margin-bottom: 15px;
+  background-color: #747c8e;
+  line-height: 60px;
 }
 
 .appicon {
-  height:48px;
+  height: 48px;
   width: 48px;
   vertical-align: middle;
-  padding-right: 10px;;
+  padding-right: 10px;
 }
