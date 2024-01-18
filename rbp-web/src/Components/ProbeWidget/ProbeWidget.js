@@ -37,7 +37,7 @@ export class ProbeWidget extends Component {
     this.handleCloseProbePrefsModal();
     console.log(data)
 
-    let updateApiURL = "http://xpi01.local:5000/set_probe_name/"
+    let updateApiURL = process.env.REACT_APP_API_SET_PROBE_NAME 
       .concat(data.probeid)
       .concat("/")
       .concat(data.probename);
@@ -78,7 +78,7 @@ export class ProbeWidget extends Component {
     }
 
     //console.log(this.props.probename)
-    let apiURL = "http://xpi01.local:5000/get_chartdata_24hr/QV3BIZZV/"
+    let apiURL = process.env.REACT_APP_API_GET_CHART_DATA_24HR 
       .concat(this.props.data.probeid)
       .concat("/")
       .concat(unit_type);

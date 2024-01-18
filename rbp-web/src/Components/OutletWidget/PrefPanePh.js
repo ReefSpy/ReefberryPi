@@ -13,7 +13,7 @@ class PrefPanePh extends Component {
   render() {
     return (
       <div>
-        The PH Pane
+        PH Control Coming soon
         <button>PH Button</button> 
       </div>
     );
