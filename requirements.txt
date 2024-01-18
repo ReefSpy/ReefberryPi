@@ -5,4 +5,4 @@ sqlalchemy
 PyMySQL
 flask
 requests
-
+flask-cors

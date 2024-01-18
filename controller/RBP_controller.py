@@ -14,12 +14,16 @@ import ds18b20
 import time
 import defs_outletcontrol
 from flask import Flask, jsonify, request
+from flask_cors import CORS, cross_origin
 from sqlalchemy import MetaData
 from sqlalchemy import Table, Column, Integer, String
 from sqlalchemy import select
 from sqlalchemy import update
 
 app = Flask(__name__)
+cors = CORS(app)
+
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 logger = logging.getLogger()
 LOG_FILEDIR = "logs"
@@ -260,6 +264,7 @@ def reloadprefs():
 # to start a feed mode.  Must specify Feed mode A, B, C, D or Cancel
 #####################################################################
 @app.route('/set_feedmode/<value>')
+@cross_origin()
 def set_feedmode(value):
     global AppPrefs
     AppPrefs.feed_CurrentMode = value
@@ -271,6 +276,7 @@ def set_feedmode(value):
 # set the parameters for a light outlet
 #####################################################################
 @app.route('/set_outlet_light/', methods = ['GET'])
+@cross_origin()
 def set_outlet_light():
     global AppPrefs
     global sqlengine
@@ -315,6 +321,7 @@ def set_outlet_light():
 # return list of outlets on the internal bus
 #####################################################################
 @app.route('/get_outlet_list/', methods = ['GET'])
+@cross_origin()
 def get_outlet_list():
     
     try:
@@ -328,7 +335,9 @@ def get_outlet_list():
                                 "outletname": AppPrefs.outletDict[outlet].outletname, 
                                 "control_type": AppPrefs.outletDict[outlet].control_type, 
                                 "outletstatus": AppPrefs.outletDict[outlet].outletstatus,
-                                "button_state": AppPrefs.outletDict[outlet].button_state
+                                "button_state": AppPrefs.outletDict[outlet].button_state,
+                                "heater_on": AppPrefs.outletDict[outlet].heater_on,
+                                "heater_off": AppPrefs.outletDict[outlet].heater_off,
                                 }
         if len(outletdict) < 8:
             return "Error getting list"     
@@ -343,6 +352,7 @@ def get_outlet_list():
 # return list of ds18b20 temperature probes 
 #####################################################################
 @app.route('/get_tempprobe_list/', methods = ['GET'])
+@cross_origin()
 def get_tempprobe_list():
     
     try:
@@ -368,6 +378,7 @@ def get_tempprobe_list():
 # return values of dht temperature/humidity sensor if enabled
 #####################################################################
 @app.route('/get_dht_sensor/', methods = ['GET'])
+@cross_origin()
 def get_dht_sensor():
     
     try:
@@ -379,12 +390,12 @@ def get_dht_sensor():
             dhtdict["DHT-T"]={"sensortype": AppPrefs.dhtDict["DHT-T"].sensortype , 
                                 "probename": AppPrefs.dhtDict["DHT-T"].name,
                                 "probeid": AppPrefs.dhtDict["DHT-T"].probeid, 
-                                "probetype": AppPrefs.dhtDict["DHT-T"].probetype, 
+                                "probetype": "DHT", 
                                 "lastValue": AppPrefs.dhtDict["DHT-T"].lastValue}
             dhtdict["DHT-H"]={"sensortype": AppPrefs.dhtDict["DHT-H"].sensortype , 
                                 "probename": AppPrefs.dhtDict["DHT-H"].name,
                                 "probeid": AppPrefs.dhtDict["DHT-H"].probeid, 
-                                "probetype": AppPrefs.dhtDict["DHT-H"].probetype, 
+                                "probetype": "DHT", 
                                 "lastValue": AppPrefs.dhtDict["DHT-H"].lastValue}
             
             return dhtdict    
@@ -401,6 +412,7 @@ def get_dht_sensor():
 # temperature_f, or humidity)
 #####################################################################
 @app.route('/get_chartdata_24hr/<probeid>/<unit>', methods = ['GET'])
+@cross_origin()
 def get_chartdata_24hr(probeid, unit):
     
     try:
@@ -443,6 +455,7 @@ def get_chartdata_24hr(probeid, unit):
 # must specify outlet ID and either ON, OFF, or AUTO
 #####################################################################
 @app.route('/put_outlet_buttonstate/<outletid>/<buttonstate>', methods = ['GET','PUT'])
+@cross_origin()
 def put_outlet_buttonstate(outletid, buttonstate):
     global logger
 
@@ -480,6 +493,7 @@ def put_outlet_buttonstate(outletid, buttonstate):
 # must specify ProbeID and Name
 #####################################################################
 @app.route('/set_probe_name/<probeid>/<probename>', methods = ['GET','PUT'])
+@cross_origin()
 def set_probe_name(probeid, probename):
     global logger
 
@@ -487,7 +501,7 @@ def set_probe_name(probeid, probename):
         global AppPrefs
         # build table object from table in DB
         metadata_obj = MetaData()
-        probe_table = Table("ds18b20", metadata_obj, autoload_with=sqlengine)
+        probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
         
         stmt = (
             update(probe_table)
@@ -502,6 +516,7 @@ def set_probe_name(probeid, probename):
             conn.commit()
 
         defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
+        defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
        
         return "OK"
     
