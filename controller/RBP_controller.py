@@ -338,6 +338,10 @@ def get_outlet_list():
                                 "button_state": AppPrefs.outletDict[outlet].button_state,
                                 "heater_on": AppPrefs.outletDict[outlet].heater_on,
                                 "heater_off": AppPrefs.outletDict[outlet].heater_off,
+                                "light_on": AppPrefs.outletDict[outlet].light_on,
+                                "light_off": AppPrefs.outletDict[outlet].light_off,
+                                "always_state": AppPrefs.outletDict[outlet].always_state,
+
                                 }
         if len(outletdict) < 8:
             return "Error getting list"     
