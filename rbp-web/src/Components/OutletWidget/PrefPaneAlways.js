@@ -10,6 +10,12 @@ class PrefPaneAlways extends Component {
     };
   }
 
+
+  componentDidMount() {
+
+  }
+
+
   render() {
     return (
       <div>
@@ -22,6 +28,7 @@ class PrefPaneAlways extends Component {
             id="always_state_on"
             name="always_state"
             value="ON"
+            checked={this.props.data.always_state === "ON" ? true: null}
           />
 
           <label htmlFor="always_state_on">ON</label>
@@ -31,6 +38,7 @@ class PrefPaneAlways extends Component {
             id="always_state_off"
             name="always_state"
             value="OFF"
+            checked={this.props.data.always_state === "OFF" ? true: null}
           />
           <label htmlFor="always_state_off">OFF</label>
 

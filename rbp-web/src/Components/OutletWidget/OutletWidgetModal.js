@@ -19,6 +19,7 @@ const OutletWidgetModal = ({
   OutletID,
   ControlType,
   data,
+  probearray
 }) => {
   initialOutletPrefsModalData.controlType = ControlType;
   initialOutletPrefsModalData.outletid = OutletID;
@@ -110,7 +111,7 @@ getIndex()
   };
 
   return (
-    <dialog ref={modalRef} onKeyDown={handleKeyDown} className="modal">
+    <dialog ref={modalRef} onKeyDown={handleKeyDown} className="outletmodal">
       {hasCloseBtn && (
         <button className="modal-close-btn" onClick={handleCloseModal}>
           <img src={closeCircle} alt="close" height="24px" width="24px"></img>
@@ -157,7 +158,8 @@ getIndex()
         </div>
       </form>
 
-      <PrefPaneContainer data={formState}></PrefPaneContainer>
+      {/* <PrefPaneContainer data={formState}></PrefPaneContainer> */}
+      <PrefPaneContainer data={data} selectedTab={formState.selectedIndex} probearray={probearray}></PrefPaneContainer>
     </dialog>
   );
 };

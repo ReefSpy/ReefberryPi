@@ -14,12 +14,12 @@ class PrefPaneContainer extends Component {
     super(props);
 
     this.outletTypes = [
-      { name: "Always", desc: <PrefPaneAlways /> },
-      { name: "Light", desc: <PrefPaneLight /> },
-      { name: "Heater", desc: <PrefPaneHeater /> },
-      { name: "Skimmer", desc: <PrefPaneSkimmer /> },
-      { name: "Return", desc: <PrefPaneReturn /> },
-      { name: "PH", desc: <PrefPanePh /> },
+      { name: "Always", desc: <PrefPaneAlways data={this.props.data}/> },
+      { name: "Light", desc: <PrefPaneLight data={this.props.data}/> },
+      { name: "Heater", desc: <PrefPaneHeater data={this.props.data} probearray={this.props.probearray}/>} ,
+      { name: "Skimmer", desc: <PrefPaneSkimmer data={this.props.data}/> },
+      { name: "Return", desc: <PrefPaneReturn data={this.props.data}/> },
+      { name: "PH", desc: <PrefPanePh data={this.props.data}/> },
     ];
 
     this.state = {
@@ -49,7 +49,7 @@ class PrefPaneContainer extends Component {
 
           <div>
             <Tabs
-              selectedIndex={this.props.data.selectedIndex}
+              selectedIndex={this.props.selectedTab}
               onSelect={(selectedIndex) => this.setState({ selectedIndex })}
               selectedTabClassName="outlet-tab--selected"
               selectedTabPanelClassName="outlet-tab-panel--selected"
