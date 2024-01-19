@@ -37,12 +37,12 @@ class PrefPaneHeater extends Component {
             <label htmlFor="heater">On Temperature</label>
           </div>
 
-          <input type="number" id="temp_on" name="temp_on" min="0" max="212" step=".1"></input>
+          <input type="number" id="temp_on" name="temp_on" min="0" max="212" step=".1" ></input>
           <div className="form-row">
             <label htmlFor="heater">Off Temperature</label>
           </div>
 
-          <input type="number" id="temp_off" name="temp_off" min="0" max="212" step=".1"></input>
+          <input type="number" id="temp_off" name="temp_off" min="0" max="212" step=".1" ></input>
 
           <div className="submit_row">
             <button type="submit" className="submitbutton">

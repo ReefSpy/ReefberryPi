@@ -114,6 +114,7 @@ handleOutletPrefsFormSubmit = (data) => {
         OutletName={this.props.data.outletname}
         OutletID={this.props.data.outletid}
         ControlType={this.props.data.control_type}
+        data={this.props.data}
         />
       </div>
     );

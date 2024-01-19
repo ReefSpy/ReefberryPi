@@ -18,6 +18,7 @@ const OutletWidgetModal = ({
   OutletName,
   OutletID,
   ControlType,
+  data,
 }) => {
   initialOutletPrefsModalData.controlType = ControlType;
   initialOutletPrefsModalData.outletid = OutletID;
