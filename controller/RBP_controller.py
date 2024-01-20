@@ -527,7 +527,118 @@ def set_probe_name(probeid, probename):
     except Exception as e:
             AppPrefs.logger.error("set_probe_name: " +  str(e))
 
-###############################################
+#####################################################################
+# set_outlet_params_light/<outletid>
+# set the paramters for outlet of type: Light
+# must specify outletid and deliver payload in json
+#####################################################################
+
+@app.route('/set_outlet_params_light/<outletid>' , methods=["PUT", "POST"])
+@cross_origin()
+def set_outlet_params_light(outletid):
+    global logger
+
+    try:
+        global AppPrefs
+
+        print(outletid)
+        response = {}
+        payload = request.get_json()
+        print(payload)
+        light_on = payload["light_on"]
+        light_off = payload["light_off"]
+        outletname = payload["outletname"]
+        control_type = payload["control_type"]
+
+        response = jsonify({"msg": 'Updated outlet data for type: Light',
+                            "outletid": outletid,
+                            "outletname": outletname,
+                            "control_type": control_type,
+                            "light_on": light_on,
+                            "light_off": light_off,
+                            })
+
+        response.status_code = 200      
+
+        # build table object from table in DB
+        metadata_obj = MetaData()
+        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+        
+        stmt = (
+            update(outlet_table)
+            .where(outlet_table.c.outletid == outletid)
+            .where(outlet_table.c.appuid == AppPrefs.appuid)
+            .values(outletname=outletname, light_on=light_on, light_off=light_off, control_type=control_type )
+            )
+
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+
+        return response
+    
+    except Exception as e:
+        AppPrefs.logger.error("set_outlet_params_light: " +  str(e))
+
+
+#####################################################################
+# set_outlet_params_always/<outletid>
+# set the paramters for outlet of type: Always
+# must specify outletid and deliver payload in json
+#####################################################################     
+
+@app.route('/set_outlet_params_always/<outletid>' , methods=["PUT", "POST"])
+@cross_origin()
+def set_outlet_params_always(outletid):
+    global logger
+
+    try:
+        global AppPrefs
+
+        print(outletid)
+        response = {}
+        payload = request.get_json()
+        print(payload)
+        always_state = payload["always_state"]
+        outletname = payload["outletname"]
+        control_type = payload["control_type"]
+
+        response = jsonify({"msg": 'Updated outlet data for type: Always',
+                            "outletid": outletid,
+                            "outletname": outletname,
+                            "control_type": control_type,
+                            "always_state": always_state,
+                            })
+
+        response.status_code = 200      
+
+        # build table object from table in DB
+        metadata_obj = MetaData()
+        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+        
+        stmt = (
+            update(outlet_table)
+            .where(outlet_table.c.outletid == outletid)
+            .where(outlet_table.c.appuid == AppPrefs.appuid)
+            .values(outletname=outletname, always_state=always_state, control_type=control_type )
+            )
+
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+
+        return response
+    
+    except Exception as e:
+        AppPrefs.logger.error("set_outlet_params_always: " +  str(e))
+
+
+
+############################################################
 
 if __name__ == '__main__':
     app.run()
