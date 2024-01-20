@@ -11,6 +11,10 @@ class PrefPaneHeater extends Component {
     };
   }
 
+  handleProbeChange = (event) => {
+    this.setState({ selectedTempProbe: event.target.value });
+  }
+
   render() {
     const { tempProbes, selectedTempProbe } = this.state;
     return (
@@ -23,6 +27,7 @@ class PrefPaneHeater extends Component {
               id="tempProbe"
               name="tempProbe"
               required
+              onChange={this.handleProbeChange}
             >
               {tempProbes.map((tempProbe, index) => (
                 <option key={index} value={tempProbe.probename}>

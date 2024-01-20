@@ -107,6 +107,7 @@ handleOutletPrefsFormSubmit = (data) => {
           /></button>
         </div>
 
+        {(this.state.isOutletPrefsModalOpen) ? 
         <OutletWidgetModal
         isOpen={this.state.isOutletPrefsModalOpen}
         onSubmit={this.handleOutletPrefsFormSubmit}
@@ -116,7 +117,7 @@ handleOutletPrefsFormSubmit = (data) => {
         ControlType={this.props.data.control_type}
         data={this.props.data}
         probearray={this.props.probearray}
-        />
+        /> : null}
       </div>
     );
   }

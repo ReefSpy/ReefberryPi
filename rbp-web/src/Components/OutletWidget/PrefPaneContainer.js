@@ -13,15 +13,6 @@ class PrefPaneContainer extends Component {
   constructor(props) {
     super(props);
 
-    this.outletTypes = [
-      { name: "Always", desc: <PrefPaneAlways data={this.props.data}/> },
-      { name: "Light", desc: <PrefPaneLight data={this.props.data}/> },
-      { name: "Heater", desc: <PrefPaneHeater data={this.props.data} probearray={this.props.probearray}/>} ,
-      { name: "Skimmer", desc: <PrefPaneSkimmer data={this.props.data}/> },
-      { name: "Return", desc: <PrefPaneReturn data={this.props.data}/> },
-      { name: "PH", desc: <PrefPanePh data={this.props.data}/> },
-    ];
-
     this.state = {
       selectedIndex: 0,
     };
@@ -31,10 +22,20 @@ class PrefPaneContainer extends Component {
     const tabs = [];
     const tabPanels = [];
 
+    const outletTypes = [
+      { name: "Always", desc: <PrefPaneAlways data={this.props.data} isOpen={this.props.isOpen} onClose={this.props.onClose}/> },
+      { name: "Light", desc: <PrefPaneLight data={this.props.data}/> },
+      { name: "Heater", desc: <PrefPaneHeater data={this.props.data} probearray={this.props.probearray}/>} ,
+      { name: "Skimmer", desc: <PrefPaneSkimmer data={this.props.data}/> },
+      { name: "Return", desc: <PrefPaneReturn data={this.props.data}/> },
+      { name: "PH", desc: <PrefPanePh data={this.props.data}/> },
+    ];
+
+
     return (
       <div>
         <div>
-          {this.outletTypes.forEach(({ name, desc }) => {
+          {outletTypes.forEach(({ name, desc }) => {
             tabs.push(
               <Tab className="outlet-tab" key={name}>
                 {name}
