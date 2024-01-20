@@ -34,7 +34,7 @@ class PrefPaneAlways extends Component {
 
     return (
       <div>
-        <form>
+        
           <div className="form-row">
             <label htmlFor="always_state">Always State</label>
           </div>
@@ -59,12 +59,9 @@ class PrefPaneAlways extends Component {
             <label htmlFor="always_state_off">OFF</label>
           </div>
 
-          <div className="submit_row">
-            <button type="submit" className="submitbutton">
-              Submit
-            </button>
-          </div>
-        </form>
+
+         
+        
       </div>
     );
   }
