@@ -18,12 +18,12 @@ class PrefPaneLight extends Component {
             <label htmlFor="light">On Time</label>
           </div>
 
-          <input type="time" id="time_on" name="time_on"></input>
+          <input type="time" id="time_on" name="time_on" value={this.props.data.light_on}></input>
           <div className="form-row">
             <label htmlFor="light">Off Time</label>
           </div>
 
-          <input type="time" id="time_off" name="time_off"></input>
+          <input type="time" id="time_off" name="time_off" value={this.props.data.light_off}></input>
 
           <div className="submit_row">
             <button type="submit" className="submitbutton">

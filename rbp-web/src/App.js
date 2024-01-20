@@ -216,6 +216,7 @@ class App extends Component {
                 <OutletWidget
                   data={outlet}
                   onButtonStateChange={this.handleOutletButtonClick}
+                  probearray={this.state.ProbeArray}
                 ></OutletWidget>
               </div>
             ))}

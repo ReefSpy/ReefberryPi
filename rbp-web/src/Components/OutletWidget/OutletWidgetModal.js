@@ -19,10 +19,12 @@ const OutletWidgetModal = ({
   OutletID,
   ControlType,
   data,
+  probearray
 }) => {
   initialOutletPrefsModalData.controlType = ControlType;
   initialOutletPrefsModalData.outletid = OutletID;
   initialOutletPrefsModalData.outletname = OutletName;
+
   
 const getIndex =  () =>{
     if (ControlType === "Always") {
@@ -55,7 +57,6 @@ getIndex()
     if (onClose) {
       onClose();
       getIndex();
-      setFormState(initialOutletPrefsModalData)
       formRef.current.reset();
     }
     setModalOpen(false);
@@ -69,6 +70,8 @@ getIndex()
 
   useEffect(() => {
     setModalOpen(isOpen);
+    console.log("Modal Open: ".concat(OutletID).concat(" ").concat(OutletName))
+    setFormState(initialOutletPrefsModalData)
   }, [isOpen]);
 
   useEffect(() => {
@@ -86,8 +89,9 @@ getIndex()
   const handleSubmit = (event) => {
     event.preventDefault();
     onSubmit(formState);
-    setFormState(initialOutletPrefsModalData);
+    // setFormState(initialOutletPrefsModalData);
     formRef.current.reset();
+    console.log("Form Submit")
   };
 
   const handleInputChange = (event) => {
@@ -97,6 +101,7 @@ getIndex()
       [name]: value,
       outletid: OutletID,
     }));
+
   };
 
   const handleSelectionChange = (event) => {
@@ -106,11 +111,13 @@ getIndex()
     setFormState((prevFormData) => ({
       ...prevFormData,
       selectedIndex: Number(event.target.value),
+      controlType: event.target[event.target.value].text,
     }));
+    console.log(event.target[event.target.value].text)
   };
 
   return (
-    <dialog ref={modalRef} onKeyDown={handleKeyDown} className="modal">
+    <dialog ref={modalRef} onKeyDown={handleKeyDown} className="outletmodal">
       {hasCloseBtn && (
         <button className="modal-close-btn" onClick={handleCloseModal}>
           <img src={closeCircle} alt="close" height="24px" width="24px"></img>
@@ -155,9 +162,11 @@ getIndex()
             <option value="5">PH</option>
           </select>
         </div>
+        <PrefPaneContainer data={data} selectedTab={formState.selectedIndex} probearray={probearray} isOpen={isOpen} ></PrefPaneContainer>
       </form>
 
-      <PrefPaneContainer data={formState}></PrefPaneContainer>
+      {/* <PrefPaneContainer data={formState}></PrefPaneContainer> */}
+     
     </dialog>
   );
 };
