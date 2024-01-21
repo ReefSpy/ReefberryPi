@@ -29,12 +29,12 @@ class PrefPaneAlways extends Component {
     );
   }
 
+
+
   render() {
-
-
     return (
       <div>
-        <form>
+        
           <div className="form-row">
             <label htmlFor="always_state">Always State</label>
           </div>
@@ -45,6 +45,7 @@ class PrefPaneAlways extends Component {
               name="always_state"
               value="ON"
               checked={this.state.always_state === "ON" ? true : null}
+          
             />
 
             <label htmlFor="always_state_on">ON</label>
@@ -55,16 +56,14 @@ class PrefPaneAlways extends Component {
               name="always_state"
               value="OFF"
               checked={this.state.always_state === "OFF" ? true : null}
+           
             />
             <label htmlFor="always_state_off">OFF</label>
           </div>
 
-          <div className="submit_row">
-            <button type="submit" className="submitbutton">
-              Submit
-            </button>
-          </div>
-        </form>
+
+         
+        
       </div>
     );
   }

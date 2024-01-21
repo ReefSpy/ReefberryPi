@@ -60,7 +60,7 @@ handleCloseOutletPrefsModal = () => {
 };
 
 handleOutletPrefsFormSubmit = (data) => {
-  this.setState({ setOutletPrefsFormData: data });
+ // this.setState({ setOutletPrefsFormData: data });
   this.handleCloseOutletPrefsModal();
   console.log(data)
 
