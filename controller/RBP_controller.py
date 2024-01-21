@@ -338,9 +338,18 @@ def get_outlet_list():
                                 "button_state": AppPrefs.outletDict[outlet].button_state,
                                 "heater_on": AppPrefs.outletDict[outlet].heater_on,
                                 "heater_off": AppPrefs.outletDict[outlet].heater_off,
+                                "heater_probe": AppPrefs.outletDict[outlet].heater_probe,
                                 "light_on": AppPrefs.outletDict[outlet].light_on,
                                 "light_off": AppPrefs.outletDict[outlet].light_off,
                                 "always_state": AppPrefs.outletDict[outlet].always_state,
+                                "return_enable_feed_a": AppPrefs.outletDict[outlet].return_enable_feed_a,
+                                "return_enable_feed_b": AppPrefs.outletDict[outlet].return_enable_feed_b,
+                                "return_enable_feed_c": AppPrefs.outletDict[outlet].return_enable_feed_c,
+                                "return_enable_feed_d": AppPrefs.outletDict[outlet].return_enable_feed_d,
+                                "return_feed_delay_a": AppPrefs.outletDict[outlet].return_feed_delay_a,
+                                "return_feed_delay_b": AppPrefs.outletDict[outlet].return_feed_delay_b,
+                                "return_feed_delay_c": AppPrefs.outletDict[outlet].return_feed_delay_c,
+                                "return_feed_delay_d": AppPrefs.outletDict[outlet].return_feed_delay_d,
 
                                 }
         if len(outletdict) < 8:
@@ -636,7 +645,146 @@ def set_outlet_params_always(outletid):
     except Exception as e:
         AppPrefs.logger.error("set_outlet_params_always: " +  str(e))
 
+#####################################################################
+# set_outlet_params_heater/<outletid>
+# set the paramters for outlet of type: Heater
+# must specify outletid and deliver payload in json
+#####################################################################     
 
+@app.route('/set_outlet_params_heater/<outletid>' , methods=["PUT", "POST"])
+@cross_origin()
+def set_outlet_params_heater(outletid):
+    global logger
+
+    try:
+        global AppPrefs
+
+        print(outletid)
+        response = {}
+        payload = request.get_json()
+        print(payload)
+        heater_on = payload["heater_on"]
+        heater_off = payload["heater_off"]
+        heater_probe = payload["heater_probe"]
+        outletname = payload["outletname"]
+        control_type = payload["control_type"]
+
+        response = jsonify({"msg": 'Updated outlet data for type: Heater',
+                            "outletid": outletid,
+                            "outletname": outletname,
+                            "control_type": control_type,
+                            "heater_on": heater_on,
+                            "heater_off": heater_off,
+                            "heater_probe": heater_probe,
+                            })
+
+        response.status_code = 200      
+
+        # build table object from table in DB
+        metadata_obj = MetaData()
+        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+        
+        stmt = (
+            update(outlet_table)
+            .where(outlet_table.c.outletid == outletid)
+            .where(outlet_table.c.appuid == AppPrefs.appuid)
+            .values(outletname=outletname, heater_on=heater_on, heater_off=heater_off, heater_probe=heater_probe, control_type=control_type )
+            )
+
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+
+        return response
+    
+    except Exception as e:
+        AppPrefs.logger.error("set_outlet_params_heater: " +  str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500 
+        return response
+
+
+#####################################################################
+# set_outlet_params_return/<outletid>
+# set the paramters for outlet of type: Return
+# must specify outletid and deliver payload in json
+#####################################################################     
+
+@app.route('/set_outlet_params_return/<outletid>' , methods=["PUT", "POST"])
+@cross_origin()
+def set_outlet_params_return(outletid):
+    global logger
+
+    try:
+        global AppPrefs
+
+        print(outletid)
+        response = {}
+        payload = request.get_json()
+        print(payload)
+        return_enable_feed_a = payload["return_enable_feed_a"]
+        return_enable_feed_b = payload["return_enable_feed_b"]
+        return_enable_feed_c = payload["return_enable_feed_c"]
+        return_enable_feed_d = payload["return_enable_feed_d"]
+        return_feed_delay_a = payload["return_feed_delay_a"]
+        return_feed_delay_b = payload["return_feed_delay_b"]
+        return_feed_delay_c = payload["return_feed_delay_c"]
+        return_feed_delay_d = payload["return_feed_delay_d"]
+        outletname = payload["outletname"]
+        control_type = payload["control_type"]
+
+        response = jsonify({"msg": 'Updated outlet data for type: Return',
+                            "outletid": outletid,
+                            "outletname": outletname,
+                            "control_type": control_type,
+                            "return_enable_feed_a": return_enable_feed_a,
+                            "return_enable_feed_b": return_enable_feed_b,
+                            "return_enable_feed_c": return_enable_feed_c,
+                            "return_enable_feed_d": return_enable_feed_d,
+                            "return_feed_delay_a": return_feed_delay_a,
+                            "return_feed_delay_b": return_feed_delay_b,
+                            "return_feed_delay_c": return_feed_delay_c,
+                            "return_feed_delay_d": return_feed_delay_d,
+                            })
+
+        response.status_code = 200      
+
+        # build table object from table in DB
+        metadata_obj = MetaData()
+        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+        
+        stmt = (
+            update(outlet_table)
+            .where(outlet_table.c.outletid == outletid)
+            .where(outlet_table.c.appuid == AppPrefs.appuid)
+            .values(outletname=outletname, 
+                    control_type=control_type, 
+                    return_enable_feed_a=return_enable_feed_a, 
+                    return_enable_feed_b=return_enable_feed_b,
+                    return_enable_feed_c=return_enable_feed_c,
+                    return_enable_feed_d=return_enable_feed_d,
+                    return_feed_delay_a=return_feed_delay_a,
+                    return_feed_delay_b=return_feed_delay_b,
+                    return_feed_delay_c=return_feed_delay_c,
+                    return_feed_delay_d=return_feed_delay_d,
+                        )
+            )
+
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+
+        return response
+    
+    except Exception as e:
+        AppPrefs.logger.error("set_outlet_params_return: " +  str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500 
+        return response
 
 ############################################################
 
