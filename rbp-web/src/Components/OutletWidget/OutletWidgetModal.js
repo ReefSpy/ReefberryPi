@@ -87,7 +87,7 @@ const OutletWidgetModal = ({
     onSubmit(formState);
     console.log(formState.controlType);
     // setFormState(initialOutletPrefsModalData);
-    //formRef.current.reset();
+    // formRef.current.reset();
     console.log("Form Submit");
     console.log(event.target.outletname.value);
     console.log(OutletID);
@@ -119,12 +119,46 @@ const OutletWidgetModal = ({
     }
     // heater
     else if (formState.controlType === "Heater") {
+      let apiURL =
+        process.env.REACT_APP_API_SET_OUTLET_PARAMS_HEATER.concat(OutletID);
+
+      console.log(probearray[event.target.tempProbe.selectedIndex].probeid);
+      console.log(event.target.tempProbe.selectedIndex);
+      let payload = {
+        outletname: event.target.outletname.value,
+        outletid: OutletID,
+        control_type: formState.controlType,
+        heater_on: event.target.temp_on.value,
+        heater_off: event.target.temp_off.value,
+        heater_probe: probearray[event.target.tempProbe.selectedIndex].probeid,
+      };
+      apiCall(apiURL, payload);
     }
     // skimmer
     else if (formState.controlType === "Skimmer") {
     }
     // return
     else if (formState.controlType === "Return") {
+      let apiURL =
+        process.env.REACT_APP_API_SET_OUTLET_PARAMS_RETURN.concat(OutletID);
+
+
+      console.log(event.target.return_enable_feed_a.checked)
+      let payload = {
+        outletname: event.target.outletname.value,
+        outletid: OutletID,
+        control_type: formState.controlType,
+        return_enable_feed_a: String(event.target.return_enable_feed_a.checked),
+        return_enable_feed_b: String(event.target.return_enable_feed_b.checked),
+        return_enable_feed_c: String(event.target.return_enable_feed_c.checked),
+        return_enable_feed_d: String(event.target.return_enable_feed_d.checked),
+        return_feed_delay_a: event.target.return_feed_delay_a.value,
+        return_feed_delay_b: event.target.return_feed_delay_b.value,
+        return_feed_delay_c: event.target.return_feed_delay_c.value,
+        return_feed_delay_d: event.target.return_feed_delay_d.value,
+
+      };
+      apiCall(apiURL, payload);
     }
     // PH
     else if (formState.controlType === "PH") {

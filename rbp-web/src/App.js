@@ -212,11 +212,12 @@ class App extends Component {
           </div>
           <div class="maincol2">
             {this.state.OutletArray.map((outlet) => (
-              <div class="col2items" key={outlet.outletid}>
+              <div class="col2items" >
                 <OutletWidget
                   data={outlet}
                   onButtonStateChange={this.handleOutletButtonClick}
                   probearray={this.state.ProbeArray}
+                  key={outlet.outletid}
                 ></OutletWidget>
               </div>
             ))}
