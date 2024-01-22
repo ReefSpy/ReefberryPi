@@ -178,22 +178,64 @@ class App extends Component {
           outletListArrayClone[outletClone]["outletid"] ===
           outletdata[outlet].outletid
         ) {
-          // console.log("Found a match");
-          // console.log(outletdata[outlet].outletid);
-          // console.log(outletListArrayClone[outletClone]["outletid"]);
-          outletListArrayClone[outletClone]["outletstatus"] =
-            outletdata[outlet].outletstatus;
+          outletListArrayClone[outletClone]["always_state"] =
+            outletdata[outlet].always_state;  
           outletListArrayClone[outletClone]["button_state"] =
             outletdata[outlet].button_state;
-          outletListArrayClone[outletClone]["outletname"] =
-            outletdata[outlet].outletname;
           outletListArrayClone[outletClone]["control_type"] =
             outletdata[outlet].control_type;
+          outletListArrayClone[outletClone]["heater_off"] =
+            outletdata[outlet].heater_off;
+          outletListArrayClone[outletClone]["heater_on"] =
+            outletdata[outlet].heater_on;
+          outletListArrayClone[outletClone]["heater_probe"] =
+            outletdata[outlet].heater_probe;
+          outletListArrayClone[outletClone]["light_off"] =
+            outletdata[outlet].light_off;
+          outletListArrayClone[outletClone]["light_on"] =
+            outletdata[outlet].light_on;
+          outletListArrayClone[outletClone]["outletid"] =
+            outletdata[outlet].outletid;
+          outletListArrayClone[outletClone]["outletname"] =
+            outletdata[outlet].outletname;
+          outletListArrayClone[outletClone]["outletstatus"] =
+            outletdata[outlet].outletstatus;
+          outletListArrayClone[outletClone]["return_enable_feed_a"] =
+            outletdata[outlet].return_enable_feed_a;
+          outletListArrayClone[outletClone]["return_enable_feed_b"] =
+            outletdata[outlet].return_enable_feed_b;
+          outletListArrayClone[outletClone]["return_enable_feed_c"] =
+            outletdata[outlet].return_enable_feed_c;
+          outletListArrayClone[outletClone]["return_enable_feed_d"] =
+            outletdata[outlet].return_enable_feed_d;
+          outletListArrayClone[outletClone]["return_feed_delay_a"] =
+            outletdata[outlet].return_feed_delay_a;
+          outletListArrayClone[outletClone]["return_feed_delay_b"] =
+            outletdata[outlet].return_feed_delay_b;
+          outletListArrayClone[outletClone]["return_feed_delay_c"] =
+            outletdata[outlet].return_feed_delay_c;
+          outletListArrayClone[outletClone]["return_feed_delay_d"] =
+            outletdata[outlet].return_feed_delay_d;
+          outletListArrayClone[outletClone]["skimmer_enable_feed_a"] =
+            outletdata[outlet].skimmer_enable_feed_a;
+          outletListArrayClone[outletClone]["skimmer_enable_feed_b"] =
+            outletdata[outlet].skimmer_enable_feed_b;
+          outletListArrayClone[outletClone]["skimmer_enable_feed_c"] =
+            outletdata[outlet].skimmer_enable_feed_c;
+          outletListArrayClone[outletClone]["skimmer_enable_feed_d"] =
+            outletdata[outlet].skimmer_enable_feed_d;
+          outletListArrayClone[outletClone]["skimmer_feed_delay_a"] =
+            outletdata[outlet].skimmer_feed_delay_a;
+          outletListArrayClone[outletClone]["skimmer_feed_delay_b"] =
+            outletdata[outlet].skimmer_feed_delay_b;
+          outletListArrayClone[outletClone]["skimmer_feed_delay_c"] =
+            outletdata[outlet].skimmer_feed_delay_c;
+          outletListArrayClone[outletClone]["skimmer_feed_delay_d"] =
+            outletdata[outlet].skimmer_feed_delay_d;
+          
         }
       }
-      //console.log(this.state.OutletArray)
       this.setState({ OutletArray: outletListArrayClone });
-      // console.log(this.state.OutletArray)
     }
   }
 
