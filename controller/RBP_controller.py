@@ -100,26 +100,36 @@ def apploop():
                 logger.debug(AppPrefs.tempProbeDict.get(tProbe).probeid + " Temp = " + str(dstempC) +
                              "C / " + str(dstempF) + "F")
                 
-                AppPrefs.tempProbeDict.get(tProbe).lastTemperature = str(dstempC)
+                if AppPrefs.temperaturescale == "F":
+                    AppPrefs.tempProbeDict.get(tProbe).lastTemperature = str(dstempF)
+                else:
+                    AppPrefs.tempProbeDict.get(tProbe).lastTemperature = str(dstempC)
+
         except Exception as e:
             logger.error("Unable to read ds18b20 temperature! " + str(e))
         ###################################################################
         # dht11 temp and humidity data
         ###################################################################
-        if AppPrefs.dht_enable == "True":
+        if AppPrefs.dht_enable == "true":
             result = dht_sensor.read()
             if result.is_valid():
                 temp_c = result.temperature
                 hum = result.humidity
+                temp_f = float(defs_common.convertCtoF(temp_c))
 
-                AppPrefs.dhtDict.get("DHT-T").lastValue = str(temp_c)
+                if AppPrefs.temperaturescale == "F":
+                    AppPrefs.dhtDict.get("DHT-T").lastValue = str(temp_f)
+                else: 
+                    AppPrefs.dhtDict.get("DHT-T").lastValue = str(temp_c)
+
                 AppPrefs.dhtDict.get("DHT-H").lastValue = str(hum)
+
                 try:
                     # print("dht11 Temp C = " + str(temp_c) + " C")
                     Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_c", "tags": {
                                         "appuid": AppPrefs.appuid, "probeid": "DHT-T"}, "fields": {"value": float(temp_c)}, "time": datetime.utcnow()}])
 
-                    temp_f = float(defs_common.convertCtoF(temp_c))
+                    
                     # print("dht11 Temp F =  " + str(temp_f) + " F")
                     Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_f", "tags": {
                                         "appuid": AppPrefs.appuid, "probeid": "DHT-T"}, "fields": {"value": temp_f}, "time": datetime.utcnow()}])
@@ -408,7 +418,7 @@ def get_dht_sensor():
         
         dhtdict = {}
         print(dhtdict)
-        if AppPrefs.dht_enable == "True":
+        if AppPrefs.dht_enable == "true":
             dhtdict["DHT-T"]={"sensortype": AppPrefs.dhtDict["DHT-T"].sensortype , 
                                 "probename": AppPrefs.dhtDict["DHT-T"].name,
                                 "probeid": AppPrefs.dhtDict["DHT-T"].probeid, 
@@ -422,10 +432,20 @@ def get_dht_sensor():
             
             return dhtdict    
         else:
-            return "DHT Disabled"    
+            response = jsonify({"msg": 'DHT Disabled',
+                                "dht_enable": 'false'
+                            })
+
+            response.status_code = 200  
+
+            return response
+           
     
     except Exception as e:
         AppPrefs.logger.error("get_dht_sensor: " +  str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500 
+        return response
 
 #####################################################################
 # get_chartdata_24hr
@@ -436,10 +456,15 @@ def get_dht_sensor():
 @app.route('/get_chartdata_24hr/<probeid>/<unit>', methods = ['GET'])
 @cross_origin()
 def get_chartdata_24hr(probeid, unit):
-    
+
     try:
         global AppPrefs
-        
+        if unit == "temperature":
+            if AppPrefs.temperaturescale =="F":
+                unit = "temperature_f"
+            else:
+                unit = "temperature_c"
+
         bucket = "reefberrypi_probe_1dy"
 
         query_api = Influx_client.query_api()
@@ -871,6 +896,106 @@ def set_outlet_params_skimmer(outletid):
     
     except Exception as e:
         AppPrefs.logger.error("set_outlet_params_skimmer: " +  str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500 
+        return response
+
+#####################################################################
+# get_global_prefs/
+# get the global paramters for the controlled
+# things like temperature scale, etc...
+#####################################################################     
+
+@app.route('/get_global_prefs/' , methods=["GET"])
+@cross_origin()
+def get_global_prefs():
+    global logger
+
+    try:
+        global AppPrefs
+
+        response = {}
+       
+
+        response = jsonify({"msg": 'Global preferences delivered',
+                            "appuid": AppPrefs.appuid,
+                            "tempscale": AppPrefs.temperaturescale,
+                            "dht_enable": AppPrefs.dht_enable
+                            })
+
+        response.status_code = 200      
+
+
+
+        return response
+    
+    except Exception as e:
+        AppPrefs.logger.error("get_global_prefs: " +  str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500 
+        return response
+
+#####################################################################
+# set_global_prefs/
+# set the global parameters such as temps scale C or F
+# must specify outletid and deliver payload in json
+#####################################################################     
+
+@app.route('/set_global_prefs/' , methods=["PUT", "POST"])
+@cross_origin()
+def set_global_prefs():
+    global logger
+
+    try:
+        global AppPrefs
+
+        response = {}
+        payload = request.get_json()
+        print(payload)
+        tempscale = payload["tempscale"]
+        dht_enable = payload["dht_enable"]
+        feed_a_time = payload["feed_a_time"]
+        feed_b_time = payload["feed_b_time"]
+        feed_c_time = payload["feed_c_time"]
+        feed_d_time = payload["feed_d_time"]
+
+        response = jsonify({"msg": 'Updated Global Prefs',
+                            "tempscale": tempscale,
+                            "dht_enable": dht_enable,
+                            "feed_a_time": feed_a_time,
+                            "feed_b_time": feed_b_time,
+                            "feed_c_time": feed_c_time,
+                            "feed_d_time": feed_d_time,
+                            })
+
+        response.status_code = 200      
+
+        # build table object from table in DB
+        metadata_obj = MetaData()
+        global_table = Table("global", metadata_obj, autoload_with=sqlengine)
+        
+        stmt = (
+            update(global_table)
+            .where(global_table.c.appuid == AppPrefs.appuid)
+            .values(tempscale=tempscale, 
+                    dht_enable=dht_enable, 
+                    feed_a_time=feed_a_time,
+                    feed_b_time=feed_b_time,
+                    feed_c_time=feed_c_time,
+                    feed_d_time=feed_d_time,
+                        )
+            )
+
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        defs_mysql.readGlobalPrefs_ex(sqlengine, AppPrefs, logger)
+
+        return response
+    
+    except Exception as e:
+        AppPrefs.logger.error("set_global_prefs: " +  str(e))
         response = jsonify({"msg": str(e)})
         response.status_code = 500 
         return response
