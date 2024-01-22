@@ -136,14 +136,30 @@ const OutletWidgetModal = ({
     }
     // skimmer
     else if (formState.controlType === "Skimmer") {
+      let apiURL =
+      process.env.REACT_APP_API_SET_OUTLET_PARAMS_SKIMMER.concat(OutletID);
+
+    let payload = {
+      outletname: event.target.outletname.value,
+      outletid: OutletID,
+      control_type: formState.controlType,
+      skimmer_enable_feed_a: String(event.target.skimmer_enable_feed_a.checked),
+      skimmer_enable_feed_b: String(event.target.skimmer_enable_feed_b.checked),
+      skimmer_enable_feed_c: String(event.target.skimmer_enable_feed_c.checked),
+      skimmer_enable_feed_d: String(event.target.skimmer_enable_feed_d.checked),
+      skimmer_feed_delay_a: event.target.skimmer_feed_delay_a.value,
+      skimmer_feed_delay_b: event.target.skimmer_feed_delay_b.value,
+      skimmer_feed_delay_c: event.target.skimmer_feed_delay_c.value,
+      skimmer_feed_delay_d: event.target.skimmer_feed_delay_d.value,
+
+    };
+    apiCall(apiURL, payload);
     }
     // return
     else if (formState.controlType === "Return") {
       let apiURL =
         process.env.REACT_APP_API_SET_OUTLET_PARAMS_RETURN.concat(OutletID);
 
-
-      console.log(event.target.return_enable_feed_a.checked)
       let payload = {
         outletname: event.target.outletname.value,
         outletid: OutletID,
@@ -163,6 +179,7 @@ const OutletWidgetModal = ({
     // PH
     else if (formState.controlType === "PH") {
     }
+
   };
 
   const handleInputChange = (event) => {
@@ -256,7 +273,6 @@ const OutletWidgetModal = ({
         </div>
       </form>
 
-      {/* <PrefPaneContainer data={formState}></PrefPaneContainer> */}
     </dialog>
   );
 };
