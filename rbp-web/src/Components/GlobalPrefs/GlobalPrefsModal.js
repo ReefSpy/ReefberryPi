@@ -78,7 +78,7 @@ const GlobalPrefsModal = ({
         <div className="form-row">
           <label htmlFor="tempScale">Temperature Scale</label>
         </div>
-        <div onChange={(event) => handleInputChange(event)}>
+        <div onChange={(event) => handleInputChange(event)} >
           <input
             type="radio"
             id="tempScale"

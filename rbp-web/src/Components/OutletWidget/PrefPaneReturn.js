@@ -123,7 +123,7 @@ class PrefPaneReturn extends Component {
           <div class="feedmoderow feedcol2 feedrowA" grid-row-start="2">
             <input
               type="checkbox"
-              onClick={(event) => this.handleInputChangeA(event)}
+              onChange={(event) => this.handleInputChangeA(event)}
               id="return_enable_feed_a"
               name="return_enable_feed_a"
               checked={this.state.return_enable_feed_a}
@@ -132,7 +132,7 @@ class PrefPaneReturn extends Component {
           <div class="feedmoderow feedcol2 feedrowB" grid-row-start="3">
             <input
               type="checkbox"
-              onClick={(event) => this.handleInputChangeB(event)}
+              onChange={(event) => this.handleInputChangeB(event)}
               id="return_enable_feed_b"
               name="return_enable_feed_b"
               checked={this.state.return_enable_feed_b}
@@ -141,7 +141,7 @@ class PrefPaneReturn extends Component {
           <div class="feedmoderow feedcol2 feedrowC" grid-row-start="4">
             <input
               type="checkbox"
-              onClick={(event) => this.handleInputChangeC(event)}
+              onChange={(event) => this.handleInputChangeC(event)}
               id="return_enable_feed_c"
               name="return_enable_feed_c"
               checked={this.state.return_enable_feed_c}
@@ -150,7 +150,7 @@ class PrefPaneReturn extends Component {
           <div class="feedmoderow feedcol2 feedrowD" grid-row-start="5">
             <input
               type="checkbox"
-              onClick={(event) => this.handleInputChangeD(event)}
+              onChange={(event) => this.handleInputChangeD(event)}
               id="return_enable_feed_d"
               name="return_enable_feed_d"
               checked={this.state.return_enable_feed_d}
@@ -167,7 +167,7 @@ class PrefPaneReturn extends Component {
               value={this.state.return_feed_delay_a}
               min="0"
               max="3600"
-              defaultValue={0}
+              // defaultValue={0}
               onChange={(event) => this.handleNumChangeA(event)}
               // onKeyUp={(event) => this.validateNumberA(event)}
               
@@ -181,7 +181,7 @@ class PrefPaneReturn extends Component {
               value={this.state.return_feed_delay_b}
               min="0"
               max="3600"
-              defaultValue={0}
+              // defaultValue={0}
               onChange={(event) => this.handleNumChangeB(event)}
               // onKeyUp={(event) => this.validateNumberB(event)}
             />
@@ -193,7 +193,7 @@ class PrefPaneReturn extends Component {
               value={this.state.return_feed_delay_c}
               min="0"
               max="3600"
-              defaultValue={0}
+              // defaultValue={0}
               onChange={(event) => this.handleNumChangeC(event)}
               // onKeyUp={(event) => this.validateNumberC(event)}
             />
@@ -205,7 +205,7 @@ class PrefPaneReturn extends Component {
               value={this.state.return_feed_delay_d}
               min="0"
               max="3600"
-              defaultValue={0}
+              // defaultValue={0}
               onChange={(event) => this.handleNumChangeD(event)}
               // onKeyUp={(event) => this.validateNumberD(event)}
             />
