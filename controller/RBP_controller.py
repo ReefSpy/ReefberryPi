@@ -341,13 +341,22 @@ def get_outlet_list():
         
         # loop through each outlet 
         for outlet in AppPrefs.outletDict:
+#           convert temperature values to F if using Fahrenheit
+            if AppPrefs.temperaturescale == "F":
+                heater_on_x = defs_common.convertCtoF(AppPrefs.outletDict[outlet].heater_on)
+                heater_off_x = defs_common.convertCtoF(AppPrefs.outletDict[outlet].heater_off)
+            else:
+                heater_on_x = AppPrefs.outletDict[outlet].heater_on
+                heater_off_x = AppPrefs.outletDict[outlet].heater_off
+
+
             outletdict[outlet]={"outletid": AppPrefs.outletDict[outlet].outletid , 
                                 "outletname": AppPrefs.outletDict[outlet].outletname, 
                                 "control_type": AppPrefs.outletDict[outlet].control_type, 
                                 "outletstatus": AppPrefs.outletDict[outlet].outletstatus,
                                 "button_state": AppPrefs.outletDict[outlet].button_state,
-                                "heater_on": AppPrefs.outletDict[outlet].heater_on,
-                                "heater_off": AppPrefs.outletDict[outlet].heater_off,
+                                "heater_on": heater_on_x,
+                                "heater_off": heater_off_x,
                                 "heater_probe": AppPrefs.outletDict[outlet].heater_probe,
                                 "light_on": AppPrefs.outletDict[outlet].light_on,
                                 "light_off": AppPrefs.outletDict[outlet].light_off,
@@ -371,6 +380,9 @@ def get_outlet_list():
                                 "skimmer_feed_delay_d": AppPrefs.outletDict[outlet].skimmer_feed_delay_d,
 
                                 }
+            
+                             
+
         if len(outletdict) < 8:
             return "Error getting list"     
         else:
@@ -703,6 +715,11 @@ def set_outlet_params_heater(outletid):
         outletname = payload["outletname"]
         control_type = payload["control_type"]
 
+        if AppPrefs.temperaturescale == "F":
+            heater_on = defs_common.convertFtoC(heater_on)
+            heater_off = defs_common.convertFtoC(heater_off)
+
+
         response = jsonify({"msg": 'Updated outlet data for type: Heater',
                             "outletid": outletid,
                             "outletname": outletname,
@@ -718,6 +735,8 @@ def set_outlet_params_heater(outletid):
         metadata_obj = MetaData()
         outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
         
+       
+
         stmt = (
             update(outlet_table)
             .where(outlet_table.c.outletid == outletid)

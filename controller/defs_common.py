@@ -55,6 +55,10 @@ def convertCtoF(temp_c):
     temp_f = float(temp_c) * 9.0 / 5.0 + 32.0
     return "{:.1f}".format(temp_f)
 
+def convertFtoC(temp_f):
+    temp_c = (float(temp_f) - 32) * 5/9
+    return "{:.1f}".format(temp_c)
+
 def readINIfile(section, key, default, *args, **kwargs):
     # try to read the value from the config file
     # if the value does not exist, lets write the default value into the
