@@ -42,6 +42,7 @@ export class ProbeWidget extends Component {
       .concat("/")
       .concat(data.probename);
     this.apiCall(updateApiURL, );
+
   };
   //////
 
@@ -74,7 +75,7 @@ export class ProbeWidget extends Component {
     if (this.props.data.sensortype === "humidity") {
       unit_type = "humidity";
     } else if (this.props.data.sensortype === "temperature") {
-      unit_type = "temperature_c";
+      unit_type = "temperature";
     }
 
     //console.log(this.props.probename)
