@@ -1,0 +1,168 @@
+.probecontainer {
+  grid-template-columns: 120px 180px;
+  grid-template-rows: 24px 60px 22px;
+
+  display: grid;
+  justify-content: center;
+  margin: 4px;
+  background-color: lightgray;
+  border-style: none;
+  border-color: black;
+  border-width: 1px;
+  border-radius: 4px;
+  padding-top: 4px;
+  padding-right: 4px;
+}
+
+.item {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+
+}
+
+.probename {
+  grid-column-start: 1;
+  grid-column-end: 2;
+  height: 18px;
+  line-height: 16px;
+  font-size: 16px;
+  text-align: center;
+  align-self: center;
+}
+
+.probevalue {
+  grid-column-start: 1;
+  grid-column-end: 2;
+  grid-row-start: 2;
+  grid-row-end: 3;
+  height: 18px;
+  line-height: 10px;
+  font-size: 38px;
+  text-align: center;
+  align-self: center;
+  
+  }
+
+.chartdata {
+  grid-column-start: 2;
+  grid-column-end: 2;
+  grid-row-start: 1;
+  grid-row-end: 3;
+  grid-row-end: span 2;
+  height: 80px;
+  
+}
+
+.probeseticon{
+  grid-column-start: 1;
+  grid-row-start: 3;
+  align-items: center;
+  display: flex;
+  height: 16px;
+  margin-left: 6px;
+
+}
+
+.probesetbtn{
+  height: 16px;
+  width: 16px;
+background-color: transparent;
+border-style: none;
+border-radius: 5px;;
+opacity: 30%;
+padding-left: 0px;
+padding-right: 0px;;
+
+}
+
+.probesetbtn:hover{
+
+  opacity: 100%;
+  cursor: pointer;
+}
+
+.probesetbtn:active{
+  background-color: grey;
+}
+
+.form-row + .form-row {
+  margin-top: 1rem;
+}
+
+.form-row label,
+.form-row input{
+  width: 100%;
+  display: block;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: left;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.form-row input{
+  font-weight: normal;
+}
+
+.submitbutton{
+  background-color: orange;
+  color: black;
+  border-radius: 5px;
+  border-style: solid;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  height:2.5em;
+  width: 8em
+}
+
+.submitbutton:hover{
+  background-color: lightgray;
+  cursor: pointer;
+}
+
+.submitbutton:active{
+  background-color: gray;
+}
+
+.plainlabel{
+  font-weight: normal;
+  font-size: 14px;
+  text-align: left;
+  font-family: Arial, Helvetica, sans-serif;
+  display: block;
+}
+
+
+
+.modal::backdrop {
+  background: hsl(0 0% 0% / 50%);
+}
+
+.modal {
+  max-width: 20rem;
+  padding: 2rem;
+  border: 0;
+  border-radius: 0.5rem;
+  position: relative;
+  box-shadow: hsl(0 0% 0% / 10%) 0 0 0.5rem 0.25rem;
+width: 200px;
+}
+
+.modal-close-btn {
+  opacity: 100%;
+  position: absolute;
+  top: 0.25em;
+  right: 0.25em;
+  background-color: transparent;
+  border-style: none;
+}
+
+.modal-close-btn:hover {
+  opacity: 70%;
+  cursor: pointer;
+}
+
+.modal-close-btn:active {
+  opacity: 100%;
+}

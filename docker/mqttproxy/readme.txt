@@ -1,1 +1,0 @@
-docker files are in the mqttproxy project directory

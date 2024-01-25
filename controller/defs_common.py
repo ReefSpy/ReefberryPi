@@ -3,172 +3,61 @@
 #
 # common functions used throughout application
 #
-# Written by ReefSpy for the ReefBerry Pi, (c) 2019
+# Written by ReefSpy for the ReefBerry Pi, (c) 2023
 # www.youtube.com/reefspy
 ##############################################################################
 
-
-from datetime import datetime
-from colorama import Fore, Back, Style, init
-import os.path
-import configparser
 from datetime import datetime
 import logging
-
+import logging.handlers
+import os.path
+import configparser
 
 CONFIGFILENAME = "config.ini"
+SCALE_C = "C"
+SCALE_F = "F"
 
-SCALE_C = 0
-SCALE_F = 1
+def initialize_logger(logger, output_dir, output_file, loglevel_console, loglevel_logfile):
 
-OUTLET_OFF = 1
-OUTLET_AUTO = 2
-OUTLET_ON = 3
+       
+        logger.setLevel(logging.DEBUG)
 
+        # check if log dir exists, if not create it
+        if not os.path.exists(output_dir):
+            print("Logfile directory not found")
+            os.mkdir(output_dir)
+            print(
+                "Logfile directory created: " + os.getcwd() + "/" + str(output_dir))
 
-def logtoconsole_old(text, *args, **kwargs):
+        # create console handler and set level to info
+        handler = logging.StreamHandler()
+        handler.setLevel(loglevel_console)
+        formatter = logging.Formatter('%(asctime)s %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
-    init(autoreset=True)  # auto resets colors back to default after use
+        # create log file handler and set level to info
+        handler = logging.handlers.RotatingFileHandler(
+            os.path.join(output_dir, output_file), maxBytes=2000000, backupCount=5)
+        handler.setLevel(loglevel_logfile)
+        formatter = logging.Formatter(
+            '%(asctime)s <%(levelname)s> [%(threadName)s:%(module)s] %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
-    # STYLE
-    STYLE_RESET = "\033[0m"      # reset all (colors and brightness)
-    STYLE_BRIGHT = "\033[1m"      # bright
-    STYLE_DIM = "\033[2m"      # dim (looks same as normal brightness)
-    STYLE_NORMAL = "\033[22m"     # normal brightness
-
-    # FOREGROUND:
-    FG_BLACK = "\033[30m"      # black
-    FG_RED = "\033[31m"      # red
-    FG_GREEN = "\033[32m"      # green
-    FG_YELLOW = "\033[33m"      # yellow
-    FG_BLUE = "\033[34m"      # blue
-    FG_MAGENTA = "\033[35m"      # magenta
-    FG_CYAN = "\033[36m"      # cyan
-    FG_WHITE = "\033[37m"      # white
-    FG_RESET = "\033[39m"      # reset
-
-    # BACKGROUND
-    BG_BLACK = "\033[40m"      # black
-    BG_RED = "\033[41m"      # red
-    BG_GREEN = "\033[42m"      # green
-    BG_YELLOW = "\033[43m"      # yellow
-    BG_BLUE = "\033[44m"      # blue
-    BG_MAGENTA = "\033[45m"      # magenta
-    BG_CYAN = "\033[46m"      # cyan
-    BG_WHITE = "\033[47m"      # white
-    BG_RESET = "\033[49m"      # reset
-
-    style = ""
-    fore = ""
-    back = ""
-
-    for key, value in kwargs.items():
-        #print("{0} = {1}".format(key, value))
-        if key == "Fore" or key == "fore" or key == "fg" or key == "foreground" or key == "Foreground":
-            if value == "BLACK":
-                fore = FG_BLACK
-            elif value == "RED":
-                fore = FG_RED
-            elif value == "GREEN":
-                fore = FG_GREEN
-            elif value == "YELLOW":
-                fore = FG_YELLOW
-            elif value == "BLUE":
-                fore = FG_BLUE
-            elif value == "MAGENTA":
-                fore = FG_MAGENTA
-            elif value == "CYAN":
-                fore = FG_CYAN
-            elif value == "WHITE":
-                fore = FG_WHITE
-            elif value == "RESET":
-                fore = FG_RESET
-            else:
-                fore = ""
-
-        if key == "Back" or key == "back" or key == "bg" or key == "background" or key == "Background":
-            if value == "BLACK":
-                back = BG_BLACK
-            elif value == "RED":
-                back = BG_RED
-            elif value == "GREEN":
-                back = BG_GREEN
-            elif value == "YELLOW":
-                back = BG_YELLOW
-            elif value == "BLUE":
-                back = BG_BLUE
-            elif value == "MAGENTA":
-                back = BG_MAGENTA
-            elif value == "CYAN":
-                back = BG_CYAN
-            elif value == "WHITE":
-                back = BG_WHITE
-            elif value == "RESET":
-                back = BG_RESET
-            else:
-                back = ""
-
-        if key == "Style" or key == "style":
-            if value == "BRIGHT":
-                style = STYLE_BRIGHT
-            elif value == "DIM":
-                style = STYLE_DIM
-            elif value == "NORMAL":
-                style = STYLE_NORMAL
-            elif value == "RESET":
-                style = STYLE_RESET
-            else:
-                style = ""
-
-    t = datetime.now()
-    s = t.strftime('%Y-%m-%d %H:%M:%S,%f')
-    s = s[:-3]
-
-    print(fore + back + style + s + " " + text)
-    #print(fore + back + style + str(datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")) + " " + text)
-
-
-def logtoconsole(text, *args, **kwargs):
-    t = datetime.now()
-    s = t.strftime('%Y-%m-%d %H:%M:%S,%f')
-    s = s[:-3]
-    print(s + " " + text)
-
-
-def logprobedata(log_prefix, data):
-    # create time stamp
-    formatted_date = datetime.strptime(
-        str(datetime.now()), "%Y-%m-%d %H:%M:%S.%f")
-    formatted_date = str(formatted_date.strftime("%Y-%m-%d %H:%M:%S"))
-    # write data to file
-    log_file_name = log_prefix + datetime.now().strftime("%Y-%m-%d") + ".txt"
-    log_dir = readINIfile("logs", "log_dir", "logs")
-    #fh = open(str(config['logs']['log_dir']) + "/" + log_file_name, "a")
-    fh = open(str(log_dir) + "/" + log_file_name, "a")
-    fh.write(str(formatted_date) + "," + str(data) + "\n")
-    fh.close()
-
+        # create debug file handler and set level to debug
+        # handler = logging.FileHandler(os.path.join(output_dir, "all.log"),handler.setLevel(logging.DEBUG)
+        # formatter = logging.Formatter('%(asctime)s <%(levelname)s> [%(threadName)s:%(module)s] %(message)s')
+        # handler.setFormatter(formatter)
+        # logger.addHandler(handler)
 
 def convertCtoF(temp_c):
     temp_f = float(temp_c) * 9.0 / 5.0 + 32.0
     return "{:.1f}".format(temp_f)
 
-
-def convertFtoC(degreesF):
-    val = (float(degreesF)-32) * (5/9)
-    return val
-
-
-def checkifconfigexists():
-    if os.path.isfile(CONFIGFILENAME):
-        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
-              CONFIGFILENAME + " exists, reading file")
-    else:
-        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " +
-              CONFIGFILENAME + " does not exists, creating file")
-        f = open(CONFIGFILENAME, "w+")
-        f.close()
-
+def convertFtoC(temp_f):
+    temp_c = (float(temp_f) - 32) * 5/9
+    return "{:.1f}".format(temp_c)
 
 def readINIfile(section, key, default, *args, **kwargs):
     # try to read the value from the config file
@@ -262,30 +151,3 @@ def writeINIfile(section, key, value, *args, **kwargs):
             lck.release()
             #logtoconsole("Write Lock Released", fg = "WHITE", bg="BLUE", style="BRIGHT")
         return False
-
-
-def removesectionfromINIfile(section, *args, **kwargs):
-
-    useThreadLock = False
-
-    # to prevent multiple threads from woking on the file at the same time, we will check
-    # the thread lock
-    for keyarg, val in kwargs.items():
-        if keyarg == "lock":
-            lck = val
-            lck.acquire()
-            useThreadLock = True
-            #logtoconsole("Write Lock Aquired", fg = "WHITE", bg="BLUE", style="BRIGHT")
-
-    p = configparser.SafeConfigParser()
-    with open(CONFIGFILENAME, "r") as f:
-        p.readfp(f)
-
-    p.remove_section(section)
-
-    with open(CONFIGFILENAME, "w") as f:
-        p.write(f)
-
-    if useThreadLock == True:
-        lck.release()
-        #logtoconsole("Write Lock Released", fg = "WHITE", bg="BLUE", style="BRIGHT")
