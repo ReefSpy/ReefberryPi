@@ -288,6 +288,7 @@ class App extends Component {
     clearInterval(this.interval);
     clearInterval(this.interval2);
     clearInterval(this.interval3);
+    clearInterval(this.interval4);
   }
 
   ///////
@@ -340,15 +341,15 @@ class App extends Component {
         </div>
         <div class="maingridcontainer">
           <div class="maincol1">
-            {this.state.ProbeArray.map((probe) => (
-              <div class="col1items" key={probe.probeid}>
-                <ProbeWidget data={probe}></ProbeWidget>
+            {this.state.ProbeArray.map((probe, index) => (
+              <div class="col1items" >
+                <ProbeWidget data={probe} key={probe.probeid} index={index}></ProbeWidget>
               </div>
             ))}
 
             {this.state.DHTArray.map((probe) => (
-              <div class="col1items" key={probe.probeid}>
-                <ProbeWidget data={probe}></ProbeWidget>
+              <div class="col1items" >
+                <ProbeWidget data={probe} key={probe.probeid}></ProbeWidget>
               </div>
             ))}
           </div>
