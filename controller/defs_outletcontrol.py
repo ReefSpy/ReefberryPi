@@ -283,9 +283,11 @@ def handle_outlet_light(AppPrefs, outlet, button_state, pin):
         GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
         #return "OFF"
-    AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin) + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
-                    " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
+    # AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin) + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
+    #                 " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
     
+    AppPrefs.outletDict[outlet].outletstatus = status
+
     AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                           "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                           " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
