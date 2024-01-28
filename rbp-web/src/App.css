@@ -8,6 +8,7 @@
   flex-wrap: wrap;
   grid-template-columns: auto auto;
   justify-content: center;
+  background-color: steelblue;
 }
 
 .maincol1 {
@@ -45,8 +46,8 @@
 }
 
 .preficon {
-  height: 36px;
-  width: 36px;
+  height: 28px;
+  width: 28px;
   vertical-align: middle;
 }
 
