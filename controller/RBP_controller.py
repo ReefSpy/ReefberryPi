@@ -540,7 +540,17 @@ def put_outlet_buttonstate(outletid, buttonstate):
 
         defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
        
-        return "OK"
+        response = {}
+        response = jsonify({"msg": 'Set outlet button state',
+                            "appuid": AppPrefs.appuid,
+                            "outletid": outletid,
+                            "buttonstate": buttonstate
+                            })
+
+        response.status_code = 200      
+
+        return response
+
     
     except Exception as e:
             AppPrefs.logger.error("put_outlet_buttonstate: " +  str(e))
@@ -1018,6 +1028,163 @@ def set_global_prefs():
         response = jsonify({"msg": str(e)})
         response.status_code = 500 
         return response
+
+#####################################################################
+# get_current_probs_stats/
+# get the stats for the specified probe
+# things like last value, probe name, etc....
+#####################################################################     
+
+@app.route('/get_current_probe_stats/<probeid>' , methods=["GET"])
+@cross_origin()
+
+def get_current_probe_stats(probeid):
+    global logger
+
+    try:
+        global AppPrefs
+
+        response = {}
+
+        if probeid.startswith("ds"):
+            response = jsonify({"msg": 'Current probe stats',
+                                "appuid": AppPrefs.appuid,
+                                "probename": AppPrefs.tempProbeDict[probeid].name,
+                                "probeid": AppPrefs.tempProbeDict[probeid].probeid,
+                                "lastValue": AppPrefs.tempProbeDict[probeid].lastTemperature,
+                                "sensortype": "temperature",
+                                "probetype": "ds18b20",
+                                })
+
+            response.status_code = 200   
+
+        elif probeid.startswith("DHT"):
+            response = jsonify({"msg": 'Current probe stats',
+                                "appuid": AppPrefs.appuid,
+                                "sensortype": AppPrefs.dhtDict[probeid].sensortype , 
+                                "probename": AppPrefs.dhtDict[probeid].name,
+                                "probeid": AppPrefs.dhtDict[probeid].probeid, 
+                                "probetype": "DHT", 
+                                "lastValue": AppPrefs.dhtDict[probeid].lastValue})
+            
+
+            response.status_code = 200 
+
+        return response
+    
+    except Exception as e:
+        AppPrefs.logger.error("get_current_probe_stats: " +  str(e))
+        # response = jsonify({"msg": str(e)})
+        response = jsonify(AppPrefs.tempProbeDict[probeid])
+        response.status_code = 500 
+        return response
+    
+#####################################################################
+# get_current_outlet_stats/
+# get the stats for the specified outlet
+# things like last button state, status, etc....
+#####################################################################     
+
+@app.route('/get_current_outlet_stats/<outletid>' , methods=["GET"])
+@cross_origin()
+
+def get_current_outlet_stats(outletid):
+    global logger
+
+    try:
+        global AppPrefs
+
+        response = {}
+
+        # convert temperature values to F if using Fahrenheit
+        if AppPrefs.temperaturescale == "F":
+            heater_on_x = defs_common.convertCtoF(AppPrefs.outletDict[outletid].heater_on)
+            heater_off_x = defs_common.convertCtoF(AppPrefs.outletDict[outletid].heater_off)
+        else:
+            heater_on_x = AppPrefs.outletDict[outletid].heater_on
+            heater_off_x = AppPrefs.outletDict[outletid].heater_off
+
+        response = jsonify({"msg": 'Current outlet stats',
+                            "appuid": AppPrefs.appuid,                   
+                            "outletid": AppPrefs.outletDict[outletid].outletid , 
+                            "outletname": AppPrefs.outletDict[outletid].outletname, 
+                            "control_type": AppPrefs.outletDict[outletid].control_type, 
+                            "outletstatus": AppPrefs.outletDict[outletid].outletstatus,
+                            "button_state": AppPrefs.outletDict[outletid].button_state,
+                            "heater_on": heater_on_x,
+                            "heater_off": heater_off_x,
+                            "heater_probe": AppPrefs.outletDict[outletid].heater_probe,
+                            "light_on": AppPrefs.outletDict[outletid].light_on,
+                            "light_off": AppPrefs.outletDict[outletid].light_off,
+                            "always_state": AppPrefs.outletDict[outletid].always_state,
+                            "return_enable_feed_a": (AppPrefs.outletDict[outletid].return_enable_feed_a).lower() == "true",
+                            "return_enable_feed_b": (AppPrefs.outletDict[outletid].return_enable_feed_b).lower() == "true",
+                            "return_enable_feed_c": (AppPrefs.outletDict[outletid].return_enable_feed_c).lower() == "true",
+                            "return_enable_feed_d": (AppPrefs.outletDict[outletid].return_enable_feed_d).lower() == "true",
+                            "return_feed_delay_a": AppPrefs.outletDict[outletid].return_feed_delay_a,
+                            "return_feed_delay_b": AppPrefs.outletDict[outletid].return_feed_delay_b,
+                            "return_feed_delay_c": AppPrefs.outletDict[outletid].return_feed_delay_c,
+                            "return_feed_delay_d": AppPrefs.outletDict[outletid].return_feed_delay_d,
+
+                            "skimmer_enable_feed_a": (AppPrefs.outletDict[outletid].skimmer_enable_feed_a).lower() == "true",
+                            "skimmer_enable_feed_b": (AppPrefs.outletDict[outletid].skimmer_enable_feed_b).lower() == "true",
+                            "skimmer_enable_feed_c": (AppPrefs.outletDict[outletid].skimmer_enable_feed_c).lower() == "true",
+                            "skimmer_enable_feed_d": (AppPrefs.outletDict[outletid].skimmer_enable_feed_d).lower() == "true",
+                            "skimmer_feed_delay_a": AppPrefs.outletDict[outletid].skimmer_feed_delay_a,
+                            "skimmer_feed_delay_b": AppPrefs.outletDict[outletid].skimmer_feed_delay_b,
+                            "skimmer_feed_delay_c": AppPrefs.outletDict[outletid].skimmer_feed_delay_c,
+                            "skimmer_feed_delay_d": AppPrefs.outletDict[outletid].skimmer_feed_delay_d,
+                            })
+
+        response.status_code = 200      
+
+        return response
+    
+    except Exception as e:
+        AppPrefs.logger.error("get_current_outlet_stats: " +  str(e))
+        # response = jsonify({"msg": str(e)})
+        response =- jsonify(AppPrefs.outletDict[outletid])
+        response.status_code = 500 
+        return response
+
+#####################################################################
+# get_probe_list
+# return list of connected probes 
+#####################################################################
+@app.route('/get_probe_list/', methods = ['GET'])
+@cross_origin()
+def get_probe_list():
+    
+    try:
+        global AppPrefs
+        
+        probedict = {}
+        
+        # loop through each section
+        for probe in AppPrefs.tempProbeDict:
+            probedict[probe]={"probetype": "ds18b20" , 
+                              "probeid": AppPrefs.tempProbeDict[probe].probeid, 
+                              "probename": AppPrefs.tempProbeDict[probe].name,
+                              "sensortype": "temperature", 
+                              "lastValue": AppPrefs.tempProbeDict[probe].lastTemperature}
+        print(probedict)
+        if AppPrefs.dht_enable == "true":
+            probedict["DHT-T"]={"sensortype": AppPrefs.dhtDict["DHT-T"].sensortype , 
+                                "probename": AppPrefs.dhtDict["DHT-T"].name,
+                                "probeid": AppPrefs.dhtDict["DHT-T"].probeid, 
+                                "probetype": "DHT", 
+                                "lastValue": AppPrefs.dhtDict["DHT-T"].lastValue}
+            probedict["DHT-H"]={"sensortype": AppPrefs.dhtDict["DHT-H"].sensortype , 
+                                "probename": AppPrefs.dhtDict["DHT-H"].name,
+                                "probeid": AppPrefs.dhtDict["DHT-H"].probeid, 
+                                "probetype": "DHT", 
+                                "lastValue": AppPrefs.dhtDict["DHT-H"].lastValue}
+            
+
+        return probedict    
+    
+    except Exception as e:
+        AppPrefs.logger.error("get_probe_list: " +  str(e))
 
 ############################################################
 
