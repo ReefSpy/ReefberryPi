@@ -9,18 +9,17 @@ export class ProbeWidget extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      LastTemp: "--",
-      ProbeName: "Unknown",
+      ProbeName: "",
       apiResponse: null,
       ChartData: null,
       isProbePrefsModalOpen: false,
       setProbePrefsModalOpen: false,
       probeprefsFormData: null,
       setProbePrefsFormData: null,
+      LastValue: "--"
     };
   }
 
-  ///////
   handleOpenProbePrefsModal = () => {
     this.setState({ setProbePrefsModalOpen: true });
     this.setState({ isProbePrefsModalOpen: true });
@@ -44,7 +43,6 @@ export class ProbeWidget extends Component {
     this.apiCall(updateApiURL, );
 
   };
-  //////
 
   // generic API call structure
   apiCall(endpoint, callback) {
@@ -62,13 +60,13 @@ export class ProbeWidget extends Component {
         return response.json();
       })
       .then((data) => {
-        this.setState({ ChartData: data });
         callback(data);
       })
       .catch((error) => {
         console.error("Error:", error);
       });
   }
+
 
   componentDidMount() {
     let unit_type = "unknown";
@@ -82,28 +80,44 @@ export class ProbeWidget extends Component {
     let apiURL = process.env.REACT_APP_API_GET_CHART_DATA_24HR 
       .concat(this.props.data.probeid)
       .concat("/")
-      .concat(unit_type);
+      .concat(unit_type); 
     this.apiCall(apiURL, this.GetChartData);
 
-    // outlet list
+    // chart data
     this.interval = setInterval(() => {
       this.apiCall(apiURL, this.GetChartData);
     }, 600000);
+
+   // update stats
+   let ApiGetStats = process.env.REACT_APP_API_GET_CURRENT_PROBE_STATS
+   .concat(this.props.data.probeid)
+   this.apiCall(ApiGetStats, this.SetProbeData)
+
+   this.interval2 = setInterval(() => {
+    this.apiCall(ApiGetStats, this.SetProbeData);
+  }, 2000);
   }
 
   componentWillUnmount() {
     clearInterval(this.interval);
+    clearInterval(this.interval2);
   }
 
-  GetChartData(chartdata) {
-    console.log(chartdata);
+  GetChartData = (chartdata) => {
+    this.setState({ ChartData: chartdata });
+  }
+
+  SetProbeData = (data) => {
+   this.setState({LastValue: data.lastValue})
+   this.setState({ProbeName: data.probename})
+
   }
 
   render() {
     return (
       <div class="probecontainer">
-        <div class="item probename">{this.props.data.probename}</div>
-        <div class="item probevalue">{this.props.data.lastValue} </div>
+        <div class="item probename">{this.state.ProbeName}</div>
+        <div class="item probevalue">{this.state.LastValue} </div>
         <div class="item chartdata">
           <div>
             <HighchartsWrapper
@@ -129,7 +143,7 @@ export class ProbeWidget extends Component {
         isOpen={this.state.isProbePrefsModalOpen}
         onSubmit={this.handleProbePrefsFormSubmit}
         onClose={this.handleCloseProbePrefsModal}
-        ProbeName={this.props.data.probename}
+        ProbeName={this.state.ProbeName}
         ProbeID={this.props.data.probeid}
         SensorType={this.props.data.sensortype}
         Model={this.props.data.probetype}

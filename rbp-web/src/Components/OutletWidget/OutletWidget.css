@@ -1,9 +1,16 @@
 .outletcontainer {
   grid-template-columns: 20px 280px;
-  grid-template-rows: 55px;
+  grid-template-rows: 60px;
   display: grid;
   justify-content: center;
-  margin: 6px;
+  /* margin: 4px; */
+  background-color: lightgray;
+  border-style: none;
+  border-color: black;
+  border-width: 1px;
+  border-radius: 4px;
+  padding-top: 0px;
+  padding-right: 4px;
 }
 
 .outletitem {
