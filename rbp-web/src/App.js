@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { ProbeWidget } from "./Components/ProbeWidget/ProbeWidget";
 import { OutletWidget } from "./Components/OutletWidget/OutletWidget";
+import { FeedWidget } from "./Components/FeedWidget/FeedWidget";
 
 // there is a bug in react-beautiful-dnd where it wont work with strict mode
 // in React 18.  Solution is repplace with fork @hello-pangea-dnd to fix it
@@ -161,6 +162,8 @@ class App extends Component {
       this.setState({ col1items });
     }
     this.setState({ ProbeArray: col1items });
+
+
     return col1items;
   }
 
@@ -241,7 +244,7 @@ class App extends Component {
     return;
   }
 
-    // API call structure
+  // API call structure
   apiCallPut = (endpoint, newdata) => {
     fetch(endpoint, {
       method: "PUT",
@@ -254,6 +257,49 @@ class App extends Component {
   };
 
   //   //////
+
+  getWidget = (item) => {
+    if (item.widgetType === "probe") {
+      return (
+        <ProbeWidget
+          data={item}
+          ProbeID={item.probeid}
+          key={item.probeid}
+        ></ProbeWidget>
+      );
+    } else if (item.widgetType === "outlet") {
+      return (
+        <OutletWidget
+          data={item}
+          OutletID={item.outletid}
+          key={item.outletid}
+          probearray={this.state.ProbeArray}
+        ></OutletWidget>
+      );
+    } else if (item.widgetType === "feed") {
+      <FeedWidget></FeedWidget>
+    } else {
+      return null;
+    }
+  };
+
+  //   {
+  //     item.widgetType === "probe" ? (
+  //       <ProbeWidget
+  //         data={item}
+  //         ProbeID={item.probeid}
+  //         key={item.probeid}
+  //       ></ProbeWidget>
+  //     ) : (
+  //       <OutletWidget
+  //         data={item}
+  //         OutletID={item.outletid}
+  //         key={item.outletid}
+  //         probearray={this.state.ProbeArray}
+  //       ></OutletWidget>
+  //     );
+  //   }
+  // };
 
   // Normally you would want to split things out into separate components.
   // But in this example everything is just done in one place for simplicity
@@ -301,7 +347,8 @@ class App extends Component {
                             provided.draggableProps.style
                           )}
                         >
-                          {item.widgetType === "probe" ? (
+                          {this.getWidget(item)}
+                          {/* {item.widgetType === "probe" ? (
                             <ProbeWidget
                               data={item}
                               ProbeID={item.probeid}
@@ -314,7 +361,7 @@ class App extends Component {
                               key={item.outletid}
                               probearray={this.state.ProbeArray}
                             ></OutletWidget>
-                          )}
+                          )} */}
                         </div>
                       )}
                     </Draggable>
@@ -346,7 +393,8 @@ class App extends Component {
                             provided.draggableProps.style
                           )}
                         >
-                          {item.widgetType === "probe" ? (
+                          {this.getWidget(item)}
+                          {/* {item.widgetType === "probe" ? (
                             <ProbeWidget
                               data={item}
                               ProbeID={item.probeid}
@@ -359,7 +407,7 @@ class App extends Component {
                               key={item.outletid}
                               probearray={this.state.ProbeArray}
                             ></OutletWidget>
-                          )}
+                          )} */}
                         </div>
                       )}
                     </Draggable>

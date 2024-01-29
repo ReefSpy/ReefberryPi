@@ -1,0 +1,16 @@
+.feedcontainer {
+    grid-template-columns: 120px 180px;
+    grid-template-rows: 24px 60px 22px;
+  
+    display: grid;
+    justify-content: center;
+    /* margin: 4px; */
+    background-color: lightgray;
+    border-style: none;
+    border-color: black;
+    border-width: 1px;
+    border-radius: 4px;
+    padding-top: 4px;
+    padding-right: 4px;
+  
+  }
