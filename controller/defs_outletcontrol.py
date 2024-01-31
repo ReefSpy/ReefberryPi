@@ -297,6 +297,7 @@ def handle_outlet_light(AppPrefs, outlet, button_state, pin):
 
 def handle_outlet_returnpump(AppPrefs, outlet, button_state, pin):
     #global feed_PreviousMode
+    
     if AppPrefs.feed_PreviousMode == "A":
         AppPrefs.feed_ExtraTimeAdded = AppPrefs.outletDict[
             outlet].return_feed_delay_a
@@ -324,44 +325,44 @@ def handle_outlet_returnpump(AppPrefs, outlet, button_state, pin):
         if AppPrefs.feed_CurrentMode == "A":
             return_enable_feed_a = AppPrefs.outletDict[outlet].return_enable_feed_a
             AppPrefs.feed_PreviousMode = "A"
-            if return_enable_feed_a == "True":
+            if return_enable_feed_a == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif return_enable_feed_a == "False":
+            elif return_enable_feed_a == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
         elif AppPrefs.feed_CurrentMode == "B":
             return_enable_feed_b = AppPrefs.outletDict[outlet].return_enable_feed_b
             AppPrefs.feed_PreviousMode = "B"
-            if return_enable_feed_b == "True":
+            if return_enable_feed_b == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif return_enable_feed_b == "False":
+            elif return_enable_feed_b == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
         elif AppPrefs.feed_CurrentMode == "C":
             return_enable_feed_c = AppPrefs.outletDict[outlet].return_enable_feed_c
             AppPrefs.feed_PreviousMode = "C"
-            if return_enable_feed_c == "True":
+            if return_enable_feed_c == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif return_enable_feed_c == "False":
+            elif return_enable_feed_c == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
         elif AppPrefs.feed_CurrentMode == "D":
             return_enable_feed_d = AppPrefs.outletDict[outlet].return_enable_feed_d
             AppPrefs.feed_PreviousMode = "D"
-            if return_enable_feed_d == "True":
+            if return_enable_feed_d == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif return_enable_feed_d == "False":
+            elif return_enable_feed_d == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
