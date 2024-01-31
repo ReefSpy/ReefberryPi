@@ -115,10 +115,10 @@ export class ProbeWidget extends Component {
 
   render() {
     return (
-      <div class="probecontainer">
-        <div class="item probename">{this.state.ProbeName}</div>
-        <div class="item probevalue">{this.state.LastValue} </div>
-        <div class="item chartdata">
+      <div className="probecontainer">
+        <div className="item probename">{this.state.ProbeName}</div>
+        <div className="item probevalue">{this.state.LastValue} </div>
+        <div className="item chartdata">
           <div>
             <HighchartsWrapper
               probename={this.props.data.probename}
@@ -127,8 +127,8 @@ export class ProbeWidget extends Component {
             />
           </div>
         </div>
-        <div class="probeseticon">
-          <button class="probesetbtn">
+        <div className="probeseticon">
+          <button className="probesetbtn">
             <img
               src={cogicon}
               alt="settings"

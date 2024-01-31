@@ -63,17 +63,20 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      //  items: getItems(10),
-      //   col2items: getItems(5, 10),
       col2items: [],
       col1items: [],
       ProbeArray: [],
       DragDisabled: false,
       globalPrefs: null,
+      col1rawitems: [],
     };
     this.setProbeData = this.setProbeData.bind(this);
     this.setOutletData = this.setOutletData.bind(this);
     this.setGlobalPrefs = this.setGlobalPrefs.bind(this);
+    this.initCol1Items = this.initCol1Items.bind(this);
+    this.addToCol1 = this.addToCol1.bind(this);
+
+   
   }
 
   // generic API call structure
@@ -147,9 +150,32 @@ class App extends Component {
       });
     }
   };
-  setProbeData(probedata) {
-    console.log(probedata);
 
+ 
+ addToCol1(items){
+  let rawitems = [];
+  let i = 0;
+  for (let item in items){
+         items[item]["id"] = `item-${String(i++)}`;
+         items[item]["widgetType"] = `probe`;
+         rawitems.push(items[item]);
+  }
+  // lets add the feedwidget to this set
+  let feeditem = {widgetType: 'feed', id: `item-${String(i++)}` }
+  rawitems.push(feeditem)
+  this.setState({ col1items: rawitems });
+ }
+
+initCol1Items() {
+  // first get probes
+  console.log(process.env.REACT_APP_API_GET_PROBE_LIST);
+  this.apiCall(process.env.REACT_APP_API_GET_PROBE_LIST, this.addToCol1);
+
+  return ;
+
+}
+
+  setProbeData(probedata) {
     let col1items = [];
     let i = 0;
     for (let probe in probedata) {
@@ -168,8 +194,6 @@ class App extends Component {
   }
 
   setOutletData(outletdata) {
-    console.log(outletdata);
-
     let col2items = [];
     let i = 0;
     for (let outlet in outletdata) {
@@ -181,16 +205,13 @@ class App extends Component {
     if (col2items.length > 0) {
       this.setState({ col2items });
     }
-
     return col2items;
   }
 
   async componentDidMount() {
     this.apiCall(process.env.REACT_APP_API_GET_PROBE_LIST, this.setProbeData);
-    console.log(process.env.REACT_APP_API_GET_PROBE_LIST);
 
     this.apiCall(process.env.REACT_APP_API_GET_OUTLET_LIST, this.setOutletData);
-    console.log(process.env.REACT_APP_API_GET_OUTLET_LIST);
 
     // global prefs
     this.apiCall(
@@ -203,6 +224,8 @@ class App extends Component {
         this.setGlobalPrefs
       );
     }, 3500);
+
+    this.initCol1Items();
   }
 
   componentWillUnmount() {
@@ -211,7 +234,6 @@ class App extends Component {
 
   //   ///////
   handleOpenGlobalPrefsModal = () => {
-    console.log("global prefs button click");
     this.setState({ setGlobalPrefsModalOpen: true });
     this.setState({ isGlobalPrefsModalOpen: true });
   };
@@ -236,7 +258,6 @@ class App extends Component {
   };
 
   setGlobalPrefs(data) {
-    console.log(data);
     this.setState({ globalPrefs: data });
     this.setState({ globalTempScale: data.tempscale });
     this.setState({ globalEnableDHT: data.dht_enable });
@@ -277,41 +298,26 @@ class App extends Component {
         ></OutletWidget>
       );
     } else if (item.widgetType === "feed") {
-      <FeedWidget></FeedWidget>
+      return(
+      <FeedWidget feedmode={this.state.globalPrefs.feed_CurrentMode}></FeedWidget>
+      )
     } else {
       return null;
     }
   };
 
-  //   {
-  //     item.widgetType === "probe" ? (
-  //       <ProbeWidget
-  //         data={item}
-  //         ProbeID={item.probeid}
-  //         key={item.probeid}
-  //       ></ProbeWidget>
-  //     ) : (
-  //       <OutletWidget
-  //         data={item}
-  //         OutletID={item.outletid}
-  //         key={item.outletid}
-  //         probearray={this.state.ProbeArray}
-  //       ></OutletWidget>
-  //     );
-  //   }
-  // };
 
   // Normally you would want to split things out into separate components.
   // But in this example everything is just done in one place for simplicity
   render() {
     return (
       <div className="App">
-        <div class="appheader">
+        <div className="appheader">
           <img className="appicon" src={appicon} alt="logo" />
 
           <span>Reefberry Pi</span>
 
-          <div class="header-right">
+          <div className="header-right">
             <button className="preficonbtn">
               <img
                 className="preficon"

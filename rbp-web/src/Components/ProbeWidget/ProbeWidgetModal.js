@@ -85,8 +85,8 @@ const ProbeWidgetModal = ({
             type="text"
             id="probename"
             name="probename"
-            Value={ProbeName}
-            autocomplete="off"
+            value={ProbeName}
+            autoComplete="off"
             onChange={handleInputChange}
             required
             placeholder="Unnamed"

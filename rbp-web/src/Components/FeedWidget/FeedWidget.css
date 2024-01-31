@@ -1,16 +1,103 @@
 .feedcontainer {
-    grid-template-columns: 120px 180px;
-    grid-template-rows: 24px 60px 22px;
-  
-    display: grid;
-    justify-content: center;
-    /* margin: 4px; */
-    background-color: lightgray;
-    border-style: none;
-    border-color: black;
-    border-width: 1px;
-    border-radius: 4px;
-    padding-top: 4px;
-    padding-right: 4px;
-  
-  }
+  grid-template-rows: 20px 28px;
+  display: grid;
+
+  justify-content: left;
+  /* margin: 4px; */
+  background-color: lightgray;
+  border-style: none;
+  border-color: black;
+  border-width: 1px;
+  border-radius: 4px;
+  padding-top: 4px;
+  padding-right: 4px;
+  padding-left: 12px;
+  padding-bottom: 8px;
+}
+
+.btncontainer {
+  display: grid;
+  grid-template-columns: 45px 45px 45px 45px 120px;
+}
+
+.feedmodelbl {
+  grid-row-start: 1;
+  grid-row-end: 2;
+  grid-column-start: 1;
+  grid-column-end: 4;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  font-size: 14px;
+  text-align: left;
+}
+
+.feedmodebtn {
+  grid-row-start: 2;
+  grid-row-end: 3;
+  border-radius: 17px;
+  border-style: solid;
+  border-width: 1px;
+  width: 34px;
+  height: 28px;
+  color: black;
+  font-weight: bold;
+  border-color: #85868c;
+  background-color: #efefef;
+}
+
+.feedmodebtnon {
+  grid-row-start: 2;
+  grid-row-end: 3;
+  border-radius: 17px;
+  border-style: solid;
+  border-width: 1px;
+  width: 34px;
+  height: 28px;
+  color: black;
+  font-weight: bold;
+  border-color: #85868c;
+  background-color: #99e34f;
+}
+
+.feedmodebtn:hover {
+  background-color: #99e34f;
+  cursor: pointer;
+  color: white;
+}
+
+.feedmodebtnon:hover {
+  background-color: #70a63b;
+  cursor: pointer;
+  color: white;
+}
+
+.feedmodebtn:active {
+  background-color: darkgray;
+}
+.feedmodebtnon:active {
+  background-color: darkgray;
+}
+
+.feedcancelbtn {
+  grid-row-start: 2;
+  grid-row-end: 3;
+  border-radius: 10px;
+  border-style: solid;
+  border-width: 1px;
+  width: 100px;
+  height: 28px;
+  color: black;
+  font-weight: bold;
+  background-color: orange;
+  border-color: #85868c;
+}
+
+.feedcancelbtn:hover {
+  background-color: darkgoldenrod;
+  cursor: pointer;
+  color: white;
+}
+
+.feedcancelbtn:active {
+  background-color: darkgray;
+}

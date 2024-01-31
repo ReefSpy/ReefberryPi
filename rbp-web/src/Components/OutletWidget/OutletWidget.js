@@ -59,30 +59,7 @@ export class OutletWidget extends Component {
     console.log(retData);
   }
 
-  // handleOutletButtonClick(outletid, buttonval) {
-  //   console.log("I'm handling the button click " + outletid + " " + buttonval);
-  //   var outletListArrayClone = this.state.OutletArray.slice(0);
-  //   for (var outletClone in outletListArrayClone) {
-  //     if (outletListArrayClone[outletClone]["outletid"] === outletid) {
-  //       console.log("Found a match");
-  //       // console.log(outletdata[outlet].outletid);
-  //       // console.log(outletListArrayClone[outletClone]["outletid"]);
-  //       outletListArrayClone[outletClone]["button_state"] = buttonval;
-  //       outletListArrayClone[outletClone]["ischanged"] = true;
-  //     }
-  //   }
-  //   //console.log(this.state.OutletArray)
-  //   this.setState({ OutletArray: outletListArrayClone });
-  //   console.log(this.state.OutletArray);
 
-  //   let apiURL = process.env.REACT_APP_API_PUT_OUTLET_BUTTONSTATE.concat(
-  //     outletid
-  //   )
-  //     .concat("/")
-  //     .concat(buttonval);
-  //   //console.log(apiURL)
-  //   this.apiCall(apiURL);
-  // }
 
   componentDidMount() {
     this.setState({ buttonstateidx: this.props.data.button_state });
@@ -95,7 +72,7 @@ export class OutletWidget extends Component {
 
     this.interval2 = setInterval(() => {
       this.apiCall(ApiGetStats, this.SetOutletData);
-    }, 2000);
+    }, 3000);
   }
 
   componentWillUnmount() {
@@ -115,7 +92,7 @@ export class OutletWidget extends Component {
 
   handleOutletPrefsFormSubmit = (data) => {
     this.handleCloseOutletPrefsModal();
-    console.log(data);
+
   };
 
   SetOutletData = (data) => {
@@ -150,9 +127,9 @@ export class OutletWidget extends Component {
 
   render() {
     return (
-      <div class="outletcontainer">
-        <div class="outletitem outletname">{this.state.OutletName}</div>
-        <div class="outletitem multitoggle">
+      <div className="outletcontainer">
+        <div className="outletitem outletname">{this.state.OutletName}</div>
+        <div className="outletitem multitoggle">
           <MultiToggle
             options={groupOptions}
             label={this.state.OutletStatus}
@@ -161,8 +138,8 @@ export class OutletWidget extends Component {
             className={"outletSlider"}
           />
         </div>
-        <div class="outletitem outletseticon">
-          <button class="outletsetbtn">
+        <div className="outletitem outletseticon">
+          <button className="outletsetbtn">
             <img
               src={cogicon}
               alt="settings"
