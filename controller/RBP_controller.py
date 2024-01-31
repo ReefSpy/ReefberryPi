@@ -161,7 +161,9 @@ def apploop():
             AppPrefs.feed_ModeTotaltime = "0"
 
         if AppPrefs.feed_CurrentMode != "CANCEL":
+            AppPrefs.logger.info("Feed Mode " + AppPrefs.feed_CurrentMode + " enabled")
             AppPrefs.feedTimeLeft = (int(AppPrefs.feed_ModeTotaltime)*1000) - (int(round(time.time()*1000)) - AppPrefs.feed_SamplingTimeSeed)
+            
             if AppPrefs.feedTimeLeft <=0:
                 # print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
                 #         " Feed Mode: " + self.AppPrefs.feed_CurrentMode + " COMPLETE" + Style.RESET_ALL)
@@ -277,9 +279,25 @@ def reloadprefs():
 @cross_origin()
 def set_feedmode(value):
     global AppPrefs
+    AppPrefs.logger.info("Set feed mode: " + value)
     AppPrefs.feed_CurrentMode = value
     AppPrefs.feed_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
-    return f"AppPrefs.feed_CurrentMode set to {value}"
+    AppPrefs.feed_PreviousMode = "CANCEL"
+
+    response = jsonify({"msg": f'Set Feed Mode {value}',
+                                "appuid": AppPrefs.appuid,
+                                "feed_SamplingTimeSeed": AppPrefs.feed_SamplingTimeSeed
+                              })
+            
+
+    response.status_code = 200 
+
+
+
+    return response
+
+
+     
 
 #####################################################################
 # set_outlet_light
@@ -949,7 +967,8 @@ def get_global_prefs():
         response = jsonify({"msg": 'Global preferences delivered',
                             "appuid": AppPrefs.appuid,
                             "tempscale": AppPrefs.temperaturescale,
-                            "dht_enable": AppPrefs.dht_enable
+                            "dht_enable": AppPrefs.dht_enable,
+                            "feed_CurrentMode": AppPrefs.feed_CurrentMode,
                             })
 
         response.status_code = 200      
