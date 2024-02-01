@@ -434,11 +434,11 @@ def handle_outlet_skimmer(AppPrefs, outlet, button_state, pin):
             #skimmer_enable_feed_a = defs_common.readINIfile(outlet, "skimmer_enable_feed_a", "False")
             skimmer_enable_feed_a = AppPrefs.outletDict[outlet].skimmer_enable_feed_a
             AppPrefs.feed_PreviousMode = "A"
-            if skimmer_enable_feed_a == "True":
+            if skimmer_enable_feed_a == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif skimmer_enable_feed_a == "False":
+            elif skimmer_enable_feed_a == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
@@ -446,11 +446,11 @@ def handle_outlet_skimmer(AppPrefs, outlet, button_state, pin):
             #skimmer_enable_feed_b = defs_common.readINIfile(outlet, "skimmer_enable_feed_b", "False")
             skimmer_enable_feed_b = AppPrefs.outletDict[outlet].skimmer_enable_feed_b
             AppPrefs.feed_PreviousMode = "B"
-            if skimmer_enable_feed_b == "True":
+            if skimmer_enable_feed_b == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif skimmer_enable_feed_b == "False":
+            elif skimmer_enable_feed_b == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
@@ -458,11 +458,11 @@ def handle_outlet_skimmer(AppPrefs, outlet, button_state, pin):
             #skimmer_enable_feed_c = defs_common.readINIfile(outlet, "skimmer_enable_feed_c", "False")
             skimmer_enable_feed_c = AppPrefs.outletDict[outlet].skimmer_enable_feed_c
             AppPrefs.feed_PreviousMode = "C"
-            if skimmer_enable_feed_c == "True":
+            if skimmer_enable_feed_c == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif skimmer_enable_feed_c == "False":
+            elif skimmer_enable_feed_c == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
@@ -470,11 +470,11 @@ def handle_outlet_skimmer(AppPrefs, outlet, button_state, pin):
             #skimmer_enable_feed_d = defs_common.readINIfile(outlet, "skimmer_enable_feed_d", "False")
             skimmer_enable_feed_d = AppPrefs.outletDict[outlet].skimmer_enable_feed_d
             AppPrefs.feed_PreviousMode = "D"
-            if skimmer_enable_feed_d == "True":
+            if skimmer_enable_feed_d == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif skimmer_enable_feed_d == "False":
+            elif skimmer_enable_feed_d == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"

@@ -9,7 +9,7 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 import RPi.GPIO as GPIO
 import GPIO_config
 import dht11
-from datetime import datetime
+from datetime import datetime, timedelta
 import ds18b20
 import time
 import defs_outletcontrol
@@ -19,11 +19,18 @@ from sqlalchemy import MetaData
 from sqlalchemy import Table, Column, Integer, String
 from sqlalchemy import select
 from sqlalchemy import update
+from flask_jwt_extended import create_access_token,get_jwt,get_jwt_identity, \
+                               unset_jwt_cookies, jwt_required, JWTManager
 
 app = Flask(__name__)
 cors = CORS(app)
 
-app.config['CORS_HEADERS'] = 'Content-Type'
+app.config['CORS_HEADERS'] = 'Content-Type, Authorization'
+
+app.config["JWT_SECRET_KEY"] = "supersecret-reefberrypi-key"
+# app.config["JWT_ACCESS_TOKEN_EXPIRES"] = datetime.timedelta(hours=1)
+
+jwt = JWTManager(app)
 
 logger = logging.getLogger()
 LOG_FILEDIR = "logs"
@@ -969,6 +976,10 @@ def get_global_prefs():
                             "tempscale": AppPrefs.temperaturescale,
                             "dht_enable": AppPrefs.dht_enable,
                             "feed_CurrentMode": AppPrefs.feed_CurrentMode,
+                            "feed_a_time": AppPrefs.feed_a_time,
+                            "feed_b_time": AppPrefs.feed_b_time,
+                            "feed_c_time": AppPrefs.feed_c_time,
+                            "feed_d_time": AppPrefs.feed_d_time,
                             })
 
         response.status_code = 200      
@@ -1204,6 +1215,23 @@ def get_probe_list():
     
     except Exception as e:
         AppPrefs.logger.error("get_probe_list: " +  str(e))
+
+#####################################################################
+# get_token
+# return login token
+#####################################################################
+@app.route('/get_token', methods = ['POST'])
+@cross_origin()
+def get_token():
+    username = request.json.get("username", None)
+    password = request.json.get("password", None)
+    if username != "pi" or password != "reefberry":
+        return {"msg": "Wrong username or password"}, 401
+
+    access_token = create_access_token(identity=username)
+    response = {"token":access_token}
+
+    return response
 
 ############################################################
 
