@@ -12,7 +12,14 @@ const GlobalPrefsModal = ({
   globalPrefs,
 }) => {
   const [isModalOpen, setModalOpen] = useState(isOpen);
-  const [formState, setFormState] = useState({enableDHT: globalPrefs.dht_enable, tempScale: globalPrefs.tempscale});
+  const [formState, setFormState] = useState({
+    enableDHT: globalPrefs.dht_enable,
+    tempScale: globalPrefs.tempscale,
+    feedA: globalPrefs.feed_a_time,
+    feedB: globalPrefs.feed_b_time,
+    feedC: globalPrefs.feed_c_time,
+    feedD: globalPrefs.feed_d_time,
+  });
 
   const modalRef = useRef(null);
 
@@ -45,21 +52,22 @@ const GlobalPrefsModal = ({
     }
   };
 
-
   const handleInputChange = (event) => {
+   
     const { name, value } = event.target;
     setFormState((prevFormData) => ({
-        ...prevFormData,
-        [name]: value
-    }))
-  };
+      ...prevFormData,
+      [name]: value,
+    }));
 
+  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
     onSubmit(formState);
-
   };
+
+
 
   return (
     <dialog ref={modalRef} onKeyDown={handleKeyDown} className="modal">
@@ -78,7 +86,7 @@ const GlobalPrefsModal = ({
         <div className="form-row">
           <label htmlFor="tempScale">Temperature Scale</label>
         </div>
-        <div onChange={(event) => handleInputChange(event)} >
+        <div onChange={(event) => handleInputChange(event)}>
           <input
             type="radio"
             id="tempScale"
@@ -99,14 +107,17 @@ const GlobalPrefsModal = ({
           <label htmlFor="tempscale">C</label>
         </div>
 
-        <div className="form-row"> <label htmlFor="enableDHT">Enable DHT Sensor</label></div>
+        <div className="form-row">
+          {" "}
+          <label htmlFor="enableDHT">Enable DHT Sensor</label>
+        </div>
         <div onChange={(event) => handleInputChange(event)}>
           <input
             type="radio"
             id="enableDHT"
             name="enableDHT"
             value="true"
-             checked={formState.enableDHT === "true" ? true : null}
+            checked={formState.enableDHT === "true" ? true : null}
           />
 
           <label htmlFor="enableDHT">ON</label>
@@ -116,18 +127,76 @@ const GlobalPrefsModal = ({
             id="enableDHT"
             name="enableDHT"
             value="false"
-             checked={formState.enableDHT === "false" ? true : null}
+            checked={formState.enableDHT === "false" ? true : null}
           />
           <label htmlFor="enableDHT">OFF</label>
         </div>
 
-        <div className="submit_row" >
+        <div class="feedgridcontainer">
+          <div className="feedtimerlabel feedcol1">Feed Timer</div>
+          <div className="feedmoderow feedcol1 feedrowA" grid-row-start="2">
+            A
+          </div>
+          <div className="feedmoderow feedcol1 feedrowB" grid-row-start="3">
+            B
+          </div>
+          <div className="feedmoderow feedcol1 feedrowC" grid-row-start="4">
+            C
+          </div>
+          <div className="feedmoderow feedcol1 feedrowD" grid-row-start="5">
+            D
+          </div>
+          <div className="feedtimerlabel feedcol3" grid-row-start="1">
+            Timer Delay (seconds)
+          </div>
+          <div className="feedmoderow feedcol3 feedrowA" grid-row-start="2">
+            <input
+              type="number"
+              name="feedA"
+              value= {formState.feedA}
+              min="0"
+              max="3600"
+              onChange={(event) => handleInputChange(event)}
+            />
+          </div>
+          <div className="feedmoderow feedcol3 feedrowB" grid-row-start="3">
+            <input
+              type="number"
+              name="feedB"
+              value={formState.feedB}
+              min="0"
+              max="3600"
+              onChange={(event) => handleInputChange(event)}
+            />
+          </div>
+          <div className="feedmoderow feedcol3 feedrowC" grid-row-start="4">
+            <input
+              type="number"
+              name="feedC"
+              value={formState.feedC}
+              min="0"
+              max="3600"
+              onChange={(event) => handleInputChange(event)}
+            />
+          </div>
+          <div className="feedmoderow feedcol3 feedrowD" grid-row-start="5">
+            <input
+              type="number"
+              name="feedD"
+              value={formState.feedD}
+              min="0"
+              max="3600"
+              onChange={(event) => handleInputChange(event)}
+            />
+          </div>
+        </div>
+
+        <div className="submit_row">
           <button type="submit" className="submitbutton">
             Submit
           </button>
         </div>
       </form>
-
     </dialog>
   );
 };

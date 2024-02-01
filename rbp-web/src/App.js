@@ -245,13 +245,15 @@ initCol1Items() {
 
   handleGlobalPrefsFormSubmit = (data) => {
     let apiURL = process.env.REACT_APP_API_SET_GLOBAL_PREFS;
+    console.log(data)
     let payload = {
+      
       tempscale: data.tempScale,
       dht_enable: data.enableDHT,
-      feed_a_time: "0",
-      feed_b_time: "0",
-      feed_c_time: "0",
-      feed_d_time: "0",
+      feed_a_time: data.feedA,
+      feed_b_time: data.feedB,
+      feed_c_time: data.feedC,
+      feed_d_time: data.feedD,
     };
     this.apiCallPut(apiURL, payload);
     this.handleCloseGlobalPrefsModal();
