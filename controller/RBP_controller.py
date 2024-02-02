@@ -1225,7 +1225,7 @@ def get_probe_list():
 def get_token():
     username = request.json.get("username", None)
     password = request.json.get("password", None)
-    if username != "pi" or password != "reefberry":
+    if username.lower() != "pi" or password != "reefberry":
         return {"msg": "Wrong username or password"}, 401
 
     access_token = create_access_token(identity=username)
