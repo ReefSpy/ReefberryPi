@@ -1,0 +1,137 @@
+/* @font-face {
+    font-family: 'Poppins';
+    src: url('../../assets/fonts/Poppins-Medium.woff');
+  } */
+
+.login-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: steelblue;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  height: 100vh;
+}
+
+.login-sheet {
+  font-family: Arial, Helvetica, sans-serif;
+
+  background-color: #d0d0d0;
+  /* padding: 20px; */
+  border-radius: 10px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  /* bring your own prefixes */
+  transform: translate(-50%, -50%);
+  /* box-shadow: 5px 5px 50px grey; */
+}
+
+.login-sheet-fail {
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #d0d0d0;
+  border-radius: 10px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: shake 0.2s ease-in-out 0s 2;
+}
+
+.login-logo {
+  /* padding-right: 30px;
+    padding-left: 30px;
+    padding-top: 0px; */
+  /* background-color: #ffffff; */
+  border-radius: 10px 10px 10px 10px;
+  vertical-align: middle;
+  min-width: 140px;
+  padding-left: 20px;
+}
+
+.login-fields {
+  padding-right: 30px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  margin-left: 20px;
+}
+
+.field-style {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-size: 0.75rem;
+}
+
+.fail-style {
+  font-weight: bold;
+  padding-top: 5px;
+  font-size: 0.75rem;
+  color: darkred;
+  height: 20px;
+}
+
+.button-style {
+  display: inline-block;
+  border-radius: 10px;
+  border-style: solid;
+  border-width: 1px;
+  background-color: orange;
+  color: black;
+  padding-left: 50px;
+  padding-right: 50px;
+  margin-top: 10px;
+  border: 1px solid transparent;
+  font-weight: bold;
+  height: 28px;
+  border-color: #85868c;
+}
+
+.button-style:hover {
+  background-color: darkgoldenrod;
+  cursor: pointer;
+  color: white;
+}
+
+.button-style:active {
+  background-color: gray;
+}
+
+.h3 {
+  color: black;
+  /* font-size: calc(1.3rem + 0.6vw); */
+  font-size: 1rem;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.h1 {
+  color: black;
+  /*  font-size: calc(1.375rem + 1.5vw); */
+  font-size: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+@keyframes shake {
+  0% {
+    margin-left: 0rem;
+  }
+  25% {
+    margin-left: 0.5rem;
+  }
+  75% {
+    margin-left: -0.5rem;
+  }
+  100% {
+    margin-left: 0rem;
+  }
+}
+
+.loginsheetfail {
+  animation: shake 0.2s ease-in-out 0s 2;
+  box-shadow: 0 0 0.6rem #ff0000;
+}

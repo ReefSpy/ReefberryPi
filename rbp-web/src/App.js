@@ -11,8 +11,11 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 // import { createRoot } from "react-dom/client";
 import appicon from "./Images/reefberry-pi-logo.svg";
 import preficon from "./Images/cog-white.svg";
+import logouticon from "./Images/logout-white.svg"
 import GlobalPrefsModal from "./Components/GlobalPrefs/GlobalPrefsModal";
 import "./App.css";
+//import useToken from "./useToken";
+import Login from "./Components/Login/Login";
 
 // a little function to help us with reordering the result
 const reorder = (list, startIndex, endIndex) => {
@@ -75,8 +78,6 @@ class App extends Component {
     this.setGlobalPrefs = this.setGlobalPrefs.bind(this);
     this.initCol1Items = this.initCol1Items.bind(this);
     this.addToCol1 = this.addToCol1.bind(this);
-
-   
   }
 
   // generic API call structure
@@ -151,29 +152,27 @@ class App extends Component {
     }
   };
 
- 
- addToCol1(items){
-  let rawitems = [];
-  let i = 0;
-  for (let item in items){
-         items[item]["id"] = `item-${String(i++)}`;
-         items[item]["widgetType"] = `probe`;
-         rawitems.push(items[item]);
+  addToCol1(items) {
+    let rawitems = [];
+    let i = 0;
+    for (let item in items) {
+      items[item]["id"] = `item-${String(i++)}`;
+      items[item]["widgetType"] = `probe`;
+      rawitems.push(items[item]);
+    }
+    // lets add the feedwidget to this set
+    let feeditem = { widgetType: "feed", id: `item-${String(i++)}` };
+    rawitems.push(feeditem);
+    this.setState({ col1items: rawitems });
   }
-  // lets add the feedwidget to this set
-  let feeditem = {widgetType: 'feed', id: `item-${String(i++)}` }
-  rawitems.push(feeditem)
-  this.setState({ col1items: rawitems });
- }
 
-initCol1Items() {
-  // first get probes
-  console.log(process.env.REACT_APP_API_GET_PROBE_LIST);
-  this.apiCall(process.env.REACT_APP_API_GET_PROBE_LIST, this.addToCol1);
+  initCol1Items() {
+    // first get probes
+    console.log(process.env.REACT_APP_API_GET_PROBE_LIST);
+    this.apiCall(process.env.REACT_APP_API_GET_PROBE_LIST, this.addToCol1);
 
-  return ;
-
-}
+    return;
+  }
 
   setProbeData(probedata) {
     let col1items = [];
@@ -188,7 +187,6 @@ initCol1Items() {
       this.setState({ col1items });
     }
     this.setState({ ProbeArray: col1items });
-
 
     return col1items;
   }
@@ -245,9 +243,8 @@ initCol1Items() {
 
   handleGlobalPrefsFormSubmit = (data) => {
     let apiURL = process.env.REACT_APP_API_SET_GLOBAL_PREFS;
-    console.log(data)
+    console.log(data);
     let payload = {
-      
       tempscale: data.tempScale,
       dht_enable: data.enableDHT,
       feed_a_time: data.feedA,
@@ -300,18 +297,40 @@ initCol1Items() {
         ></OutletWidget>
       );
     } else if (item.widgetType === "feed") {
-      return(
-      <FeedWidget feedmode={this.state.globalPrefs.feed_CurrentMode}></FeedWidget>
-      )
+      return (
+        <FeedWidget
+          feedmode={this.state.globalPrefs.feed_CurrentMode}
+        ></FeedWidget>
+      );
     } else {
       return null;
     }
   };
 
+  getToken = () => {
+    const tokenString = sessionStorage.getItem("token");
+    if (tokenString !== undefined) {
+      const userToken = JSON.parse(tokenString);
+      return userToken?.token;
+    }
+  };
 
+  setToken(userToken) {
+    console.log("settoken")
+    if (userToken !== undefined){
+    sessionStorage.setItem('token', JSON.stringify(userToken));}
+    
+  }
+
+  logout(){
+    sessionStorage.clear()
+  }
   // Normally you would want to split things out into separate components.
   // But in this example everything is just done in one place for simplicity
   render() {
+    if (!this.getToken()) {
+      return <Login setToken={this.setToken}/>;
+    }
     return (
       <div className="App">
         <div className="appheader">
@@ -320,14 +339,20 @@ initCol1Items() {
           <span>Reefberry Pi</span>
 
           <div className="header-right">
-            <button className="preficonbtn">
+            <button className="headericonbtn">
               <img
-                className="preficon"
+                className="headericon"
                 src={preficon}
                 alt="preferences"
                 onClick={this.handleOpenGlobalPrefsModal}
               ></img>
             </button>
+            <button className = "headericonbtn"><img
+                className="headericon"
+                src={logouticon}
+                alt="logout"
+                onClick={this.logout}
+              ></img></button>
           </div>
         </div>
         <div className="maingridcontainer">
@@ -356,20 +381,6 @@ initCol1Items() {
                           )}
                         >
                           {this.getWidget(item)}
-                          {/* {item.widgetType === "probe" ? (
-                            <ProbeWidget
-                              data={item}
-                              ProbeID={item.probeid}
-                              key={item.probeid}
-                            ></ProbeWidget>
-                          ) : (
-                            <OutletWidget
-                              data={item}
-                              OutletID={item.outletid}
-                              key={item.outletid}
-                              probearray={this.state.ProbeArray}
-                            ></OutletWidget>
-                          )} */}
                         </div>
                       )}
                     </Draggable>
@@ -402,20 +413,6 @@ initCol1Items() {
                           )}
                         >
                           {this.getWidget(item)}
-                          {/* {item.widgetType === "probe" ? (
-                            <ProbeWidget
-                              data={item}
-                              ProbeID={item.probeid}
-                              key={item.probeid}
-                            ></ProbeWidget>
-                          ) : (
-                            <OutletWidget
-                              data={item}
-                              OutletID={item.outletid}
-                              key={item.outletid}
-                              probearray={this.state.ProbeArray}
-                            ></OutletWidget>
-                          )} */}
                         </div>
                       )}
                     </Draggable>
@@ -441,382 +438,3 @@ initCol1Items() {
 }
 
 export default App;
-// Put the things into the DOM!
-// const container = document.getElementById("root");
-// const root = createRoot(container);
-// root.render(<App />);
-
-// class App extends Component {
-//   constructor(props) {
-//     super(props);
-//     this.state = {
-//       apiResponse: null,
-//       ProbeArray: [],
-//       OutletArray: [],
-//       DHTArray: [],
-//       AppUID: "",
-//       globalPrefs: null,
-//     };
-
-//     this.setProbeData = this.setProbeData.bind(this);
-//     this.setOutletData = this.setOutletData.bind(this);
-//     this.createOutletSet = this.createOutletSet.bind(this);
-//     this.handleOutletButtonClick = this.handleOutletButtonClick.bind(this);
-//     this.handleCurrentOutletState = this.handleCurrentOutletState.bind(this);
-//     this.setDHTData = this.setDHTData.bind(this);
-//     this.setGlobalPrefs = this.setGlobalPrefs.bind(this);
-//   }
-
-//   async componentDidMount() {
-//     document.title = "Reefberry Pi";
-//     // probe list
-//     console.log(process.env.REACT_APP_API_GET_TEMPPROBE_LIST);
-//     this.apiCall(
-//       process.env.REACT_APP_API_GET_TEMPPROBE_LIST,
-//       this.setProbeData
-//     );
-//     this.interval = setInterval(() => {
-//       this.apiCall(
-//         process.env.REACT_APP_API_GET_TEMPPROBE_LIST,
-//         this.setProbeData
-//       );
-//     }, 2000);
-//     // outlet list
-//     this.apiCall(
-//       process.env.REACT_APP_API_GET_OUTLET_LIST,
-//       this.createOutletSet
-//     );
-//     this.interval2 = setInterval(() => {
-//       this.apiCall(
-//         process.env.REACT_APP_API_GET_OUTLET_LIST,
-//         this.handleCurrentOutletState
-//       );
-//     }, 2000);
-//     // dht sensor list
-//     this.apiCall(process.env.REACT_APP_API_GET_DHT_SENSOR, this.setDHTData);
-//     this.interval3 = setInterval(() => {
-//       this.apiCall(process.env.REACT_APP_API_GET_DHT_SENSOR, this.setDHTData);
-//     }, 2000);
-//     // global prefs
-//     this.apiCall(
-//       process.env.REACT_APP_API_GET_GLOBAL_PREFS,
-//       this.setGlobalPrefs
-//     );
-//     this.interval4 = setInterval(() => {
-//       this.apiCall(
-//         process.env.REACT_APP_API_GET_GLOBAL_PREFS,
-//         this.setGlobalPrefs
-//       );
-//     }, 3500);
-//   }
-
-//   // generic API call structure
-//   apiCall(endpoint, callback) {
-//     fetch(endpoint)
-//       .then((response) => {
-//         if (!response.ok) {
-//           if (response.status === 404) {
-//             throw new Error("Data not found");
-//           } else if (response.status === 500) {
-//             throw new Error("Server error");
-//           } else {
-//             throw new Error("Network response was not ok");
-//           }
-//         }
-//         return response.json();
-//       })
-//       .then((data) => {
-//         // this.setState({ apiResponse: data });
-//         callback(data);
-//       })
-//       .catch((error) => {
-//         console.error("Error:", error);
-//       });
-//   }
-
-//   // API call structure
-//   apiCallPut = (endpoint, newdata) => {
-//     fetch(endpoint, {
-//       method: "PUT",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify(newdata),
-//     })
-//       .then((response) => response.json())
-//       .then((data) => console.log(data))
-//       .catch((error) => console.log(error));
-//   };
-
-//   setDHTData(probedata) {
-//     console.log(probedata);
-//     let DHTArray = [];
-
-//     if (probedata.dht_enable === "false") {
-//       return DHTArray;
-//     }
-
-//     for (let probe in probedata) {
-//       DHTArray.push(probedata[probe]);
-//     }
-//     if (DHTArray.length > 0) {
-//       this.setState({ DHTArray });
-//     }
-//     // console.log(ProbeArray);
-//     return DHTArray;
-//   }
-
-//   setGlobalPrefs(data) {
-//     console.log(data);
-//     this.setState({ globalPrefs: data });
-//     this.setState({ globalTempScale: data.tempscale });
-//     this.setState({ globalEnableDHT: data.dht_enable });
-
-//     return;
-//   }
-
-//   setProbeData(probedata) {
-//     console.log(probedata);
-
-//     let ProbeArray = [];
-//     for (let probe in probedata) {
-//       // let probename = probedata[probe]["probename"];
-//       // let lastTemp = probedata[probe]["lastTemperature"];
-//       // console.log(probedata[probe]);
-//       // console.log(probename + " = " + lastTemp);
-//       ProbeArray.push(probedata[probe]);
-//     }
-//     if (ProbeArray.length > 0) {
-//       this.setState({ ProbeArray });
-//     }
-
-//     // console.log(ProbeArray);
-
-//     return ProbeArray;
-//   }
-//   createOutletSet(outletdata) {
-//     console.log("Create Outlet Set");
-//     console.log(outletdata);
-
-//     let OutletArray = [];
-//     for (let outlet in outletdata) {
-//       OutletArray.push(outletdata[outlet]);
-//     }
-//     if (OutletArray.length > 0) {
-//       this.setState({ OutletArray });
-//     }
-
-//     console.log(OutletArray);
-
-//     return OutletArray;
-//   }
-//   handleCurrentOutletState(outletdata) {
-//     var outletListArrayClone = this.state.OutletArray.slice(0);
-//     console.log(outletdata);
-
-//     for (var outlet in outletdata) {
-//       for (var outletClone in outletListArrayClone) {
-//         if (
-//           outletListArrayClone[outletClone]["outletid"] ===
-//           outletdata[outlet].outletid
-//         ) {
-//           outletListArrayClone[outletClone]["always_state"] =
-//             outletdata[outlet].always_state;
-//           outletListArrayClone[outletClone]["button_state"] =
-//             outletdata[outlet].button_state;
-//           outletListArrayClone[outletClone]["control_type"] =
-//             outletdata[outlet].control_type;
-//           outletListArrayClone[outletClone]["heater_off"] =
-//             outletdata[outlet].heater_off;
-//           outletListArrayClone[outletClone]["heater_on"] =
-//             outletdata[outlet].heater_on;
-//           outletListArrayClone[outletClone]["heater_probe"] =
-//             outletdata[outlet].heater_probe;
-//           outletListArrayClone[outletClone]["light_off"] =
-//             outletdata[outlet].light_off;
-//           outletListArrayClone[outletClone]["light_on"] =
-//             outletdata[outlet].light_on;
-//           outletListArrayClone[outletClone]["outletid"] =
-//             outletdata[outlet].outletid;
-//           outletListArrayClone[outletClone]["outletname"] =
-//             outletdata[outlet].outletname;
-//           outletListArrayClone[outletClone]["outletstatus"] =
-//             outletdata[outlet].outletstatus;
-//           outletListArrayClone[outletClone]["return_enable_feed_a"] =
-//             outletdata[outlet].return_enable_feed_a;
-//           outletListArrayClone[outletClone]["return_enable_feed_b"] =
-//             outletdata[outlet].return_enable_feed_b;
-//           outletListArrayClone[outletClone]["return_enable_feed_c"] =
-//             outletdata[outlet].return_enable_feed_c;
-//           outletListArrayClone[outletClone]["return_enable_feed_d"] =
-//             outletdata[outlet].return_enable_feed_d;
-//           outletListArrayClone[outletClone]["return_feed_delay_a"] =
-//             outletdata[outlet].return_feed_delay_a;
-//           outletListArrayClone[outletClone]["return_feed_delay_b"] =
-//             outletdata[outlet].return_feed_delay_b;
-//           outletListArrayClone[outletClone]["return_feed_delay_c"] =
-//             outletdata[outlet].return_feed_delay_c;
-//           outletListArrayClone[outletClone]["return_feed_delay_d"] =
-//             outletdata[outlet].return_feed_delay_d;
-//           outletListArrayClone[outletClone]["skimmer_enable_feed_a"] =
-//             outletdata[outlet].skimmer_enable_feed_a;
-//           outletListArrayClone[outletClone]["skimmer_enable_feed_b"] =
-//             outletdata[outlet].skimmer_enable_feed_b;
-//           outletListArrayClone[outletClone]["skimmer_enable_feed_c"] =
-//             outletdata[outlet].skimmer_enable_feed_c;
-//           outletListArrayClone[outletClone]["skimmer_enable_feed_d"] =
-//             outletdata[outlet].skimmer_enable_feed_d;
-//           outletListArrayClone[outletClone]["skimmer_feed_delay_a"] =
-//             outletdata[outlet].skimmer_feed_delay_a;
-//           outletListArrayClone[outletClone]["skimmer_feed_delay_b"] =
-//             outletdata[outlet].skimmer_feed_delay_b;
-//           outletListArrayClone[outletClone]["skimmer_feed_delay_c"] =
-//             outletdata[outlet].skimmer_feed_delay_c;
-//           outletListArrayClone[outletClone]["skimmer_feed_delay_d"] =
-//             outletdata[outlet].skimmer_feed_delay_d;
-
-//         }
-//       }
-//       this.setState({ OutletArray: outletListArrayClone });
-//     }
-//   }
-
-//   setOutletData(outletdata) {
-//     console.log(outletdata);
-
-//     let OutletArray = [];
-//     for (let outlet in outletdata) {
-//       OutletArray.push(outletdata[outlet]);
-//     }
-//     if (OutletArray.length > 0) {
-//       this.setState({ OutletArray });
-//     }
-
-//     console.log(OutletArray);
-
-//     return OutletArray;
-//   }
-
-//   handleOutletButtonClick(outletid, buttonval) {
-//     console.log("I'm handling the button click " + outletid + " " + buttonval);
-//     var outletListArrayClone = this.state.OutletArray.slice(0);
-//     for (var outletClone in outletListArrayClone) {
-//       if (outletListArrayClone[outletClone]["outletid"] === outletid) {
-//         console.log("Found a match");
-//         // console.log(outletdata[outlet].outletid);
-//         // console.log(outletListArrayClone[outletClone]["outletid"]);
-//         outletListArrayClone[outletClone]["button_state"] = buttonval;
-//         outletListArrayClone[outletClone]["ischanged"] = true;
-//       }
-//     }
-//     //console.log(this.state.OutletArray)
-//     this.setState({ OutletArray: outletListArrayClone });
-//     console.log(this.state.OutletArray);
-
-//     let apiURL = process.env.REACT_APP_API_PUT_OUTLET_BUTTONSTATE.concat(
-//       outletid
-//     )
-//       .concat("/")
-//       .concat(buttonval);
-//     //console.log(apiURL)
-//     this.apiCall(apiURL);
-//   }
-
-//   buttonClickCallback() {
-//     console.log();
-//   }
-
-//   componentWillUnmount() {
-//     clearInterval(this.interval);
-//     clearInterval(this.interval2);
-//     clearInterval(this.interval3);
-//     clearInterval(this.interval4);
-//   }
-
-//   ///////
-//   handleOpenGlobalPrefsModal = () => {
-//     console.log("global prefs button click");
-//     this.setState({ setGlobalPrefsModalOpen: true });
-//     this.setState({ isGlobalPrefsModalOpen: true });
-//   };
-
-//   handleCloseGlobalPrefsModal = () => {
-//     this.setState({ setGlobalPrefsModalOpen: false });
-//     this.setState({ isGlobalPrefsModalOpen: false });
-//   };
-
-//   handleGlobalPrefsFormSubmit = (data) => {
-//     let apiURL = process.env.REACT_APP_API_SET_GLOBAL_PREFS;
-//     let payload = {
-//       tempscale: data.tempScale,
-//       dht_enable: data.enableDHT,
-//       feed_a_time: "0",
-//       feed_b_time: "0",
-//       feed_c_time: "0",
-//       feed_d_time: "0"
-//     };
-//     this.apiCallPut(apiURL, payload);
-//     this.handleCloseGlobalPrefsModal()
-//   };
-
-//   //////
-
-//   render() {
-//     return (
-//       <div className="App">
-//         <div class="appheader">
-//           <img className="appicon" src={appicon} alt="logo" />
-
-//           <span>Reefberry Pi</span>
-
-//           <div class="header-right">
-//             <button className="preficonbtn">
-//               <img
-//                 className="preficon"
-//                 src={preficon}
-//                 alt="preferences"
-//                 onClick={this.handleOpenGlobalPrefsModal}
-//               ></img>
-//             </button>
-//           </div>
-//         </div>
-//         <div class="maingridcontainer">
-//           <div class="maincol1">
-//             {this.state.ProbeArray.map((probe, index) => (
-//               <div class="col1items" >
-//                 <ProbeWidget data={probe} key={probe.probeid} index={index}></ProbeWidget>
-//               </div>
-//             ))}
-
-//             {this.state.DHTArray.map((probe) => (
-//               <div class="col1items" >
-//                 <ProbeWidget data={probe} key={probe.probeid}></ProbeWidget>
-//               </div>
-//             ))}
-//           </div>
-//           <div class="maincol2">
-//             {this.state.OutletArray.map((outlet) => (
-//               <div class="col2items">
-//                 <OutletWidget
-//                   data={outlet}
-//                   onButtonStateChange={this.handleOutletButtonClick}
-//                   probearray={this.state.ProbeArray}
-//                   key={outlet.outletid}
-//                 ></OutletWidget>
-//               </div>
-//             ))}
-//           </div>
-//         </div>
-
-//         {this.state.globalPrefs && this.state.isGlobalPrefsModalOpen ? (
-//           <GlobalPrefsModal
-//             isOpen={this.state.isGlobalPrefsModalOpen}
-//             onSubmit={this.handleGlobalPrefsFormSubmit}
-//             onClose={this.handleCloseGlobalPrefsModal}
-//             globalTempScale={this.state.globalTempScale}
-//             globalPrefs={this.state.globalPrefs}
-//           />
-//         ) : null}
-//       </div>
-//     );
-//   }
-// }
-// export default App;
