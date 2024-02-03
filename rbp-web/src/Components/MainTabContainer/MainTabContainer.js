@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import Dashboard from "../Dashboard/Dashboard";
 import Analytics from "../Analytics/Analytics";
+import About from "../About/About"
 import "./MainTabContainer.css";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
@@ -24,16 +25,16 @@ class MainTabContainer extends Component {
     const tabPanels = [];
 
     const tabTypes = [
-      { name: "Dashboard", desc: <Dashboard />, img: dashicon},
+      { name: "Dashboard", desc: <Dashboard feedmode={this.props.feedmode}/>, img: dashicon},
       { name: "Analytics", desc: <Analytics />, img: charticon },
       { name: "Journal", desc: "Journal", img: notepadicon},
-      { name: "About", desc: "About Reefberry Pi", img: infoicon}
+      { name: "About", desc: <About />, img: infoicon}
      
     ];
 
 
     return (
-      <div>
+      <div display="block">
         <div>
           {tabTypes.forEach(({ name, desc, img }) => {
             tabs.push(

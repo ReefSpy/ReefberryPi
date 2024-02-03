@@ -9,7 +9,10 @@
 .rbp-tab-list {
   margin: 0;
   padding: 0;
-  padding-top: 10px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+
+
 }
 
 .rbp-tab {

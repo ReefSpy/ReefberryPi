@@ -358,10 +358,10 @@ class App extends Component {
         </div>
 
         <div>
-<MainTabContainer></MainTabContainer>
+<MainTabContainer  feedmode={this.state.globalPrefs?.feed_CurrentMode}></MainTabContainer>
         </div>
 
-        <div className="maingridcontainer">
+        {/* <div className="maingridcontainer">
           <DragDropContext onDragEnd={this.onDragEnd}>
             <Droppable droppableId="droppable">
               {(provided, snapshot) => (
@@ -428,7 +428,7 @@ class App extends Component {
               )}
             </Droppable>
           </DragDropContext>
-        </div>
+        </div> */}
         {this.state.globalPrefs && this.state.isGlobalPrefsModalOpen ? (
           <GlobalPrefsModal
             isOpen={this.state.isGlobalPrefsModalOpen}
