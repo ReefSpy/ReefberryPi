@@ -523,16 +523,147 @@ def get_chartdata_24hr(probeid, unit):
             for record in table.records:
                 results.append((record.get_time(), record.get_value()))
 
-        for result in results:
-            format_string = '%Y-%m-%d %H:%M:%S'
-            date_string = result[0].strftime(format_string)
-            #print(date_string)
+        # for result in results:
+        #     format_string = '%Y-%m-%d %H:%M:%S'
+        #     date_string = result[0].strftime(format_string)
+        #     #print(date_string)
     
         return results
 
     except Exception as e:
         AppPrefs.logger.error("get_chartdata_24hr: " +  str(e))
 
+#####################################################################
+# get_chartdata_1hr
+# return array of chart data with date/time and values
+# must specify ProbeID, and scale (temperature_c,
+# temperature_f, or humidity)
+#####################################################################
+@app.route('/get_chartdata_1hr/<probeid>/<unit>', methods = ['GET'])
+@cross_origin()
+def get_chartdata_1hr(probeid, unit):
+
+    try:
+        global AppPrefs
+        if unit == "temperature":
+            if AppPrefs.temperaturescale =="F":
+                unit = "temperature_f"
+            else:
+                unit = "temperature_c"
+
+        bucket = "reefberrypi_probe_1hr"
+
+        query_api = Influx_client.query_api()
+
+        query = f'from(bucket: "reefberrypi_probe_1hr") \
+        |> range(start: -1h) \
+        |> filter(fn: (r) => r["_measurement"] == "{unit}") \
+        |> filter(fn: (r) => r["_field"] == "value") \
+        |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
+        |> filter(fn: (r) => r["probeid"] == "{probeid}") \
+        |> aggregateWindow(every: 30s, fn: mean, createEmpty: false) \
+        |> yield(name: "mean")'
+
+
+        result = query_api.query(org=AppPrefs.influxdb_org, query=query)
+
+        results = []
+        for table in result:
+            for record in table.records:
+                results.append((record.get_time(), record.get_value()))
+    
+        return results
+
+    except Exception as e:
+        AppPrefs.logger.error("get_chartdata_1hr: " +  str(e))
+
+#####################################################################
+# get_chartdata_1wk
+# return array of chart data with date/time and values
+# must specify ProbeID, and scale (temperature_c,
+# temperature_f, or humidity)
+#####################################################################
+@app.route('/get_chartdata_1wk/<probeid>/<unit>', methods = ['GET'])
+@cross_origin()
+def get_chartdata_1wk(probeid, unit):
+
+    try:
+        global AppPrefs
+        if unit == "temperature":
+            if AppPrefs.temperaturescale =="F":
+                unit = "temperature_f"
+            else:
+                unit = "temperature_c"
+
+        bucket = "reefberrypi_probe_1wk"
+
+        query_api = Influx_client.query_api()
+
+        query = f'from(bucket: "reefberrypi_probe_1wk") \
+        |> range(start: -7d) \
+        |> filter(fn: (r) => r["_measurement"] == "{unit}") \
+        |> filter(fn: (r) => r["_field"] == "value") \
+        |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
+        |> filter(fn: (r) => r["probeid"] == "{probeid}") \
+        |> aggregateWindow(every: 10m, fn: mean, createEmpty: false) \
+        |> yield(name: "mean")'
+
+
+        result = query_api.query(org=AppPrefs.influxdb_org, query=query)
+
+        results = []
+        for table in result:
+            for record in table.records:
+                results.append((record.get_time(), record.get_value()))
+    
+        return results
+
+    except Exception as e:
+        AppPrefs.logger.error("get_chartdata_1wk: " +  str(e))
+
+#####################################################################
+# get_chartdata_1mo
+# return array of chart data with date/time and values
+# must specify ProbeID, and scale (temperature_c,
+# temperature_f, or humidity)
+#####################################################################
+@app.route('/get_chartdata_1mo/<probeid>/<unit>', methods = ['GET'])
+@cross_origin()
+def get_chartdata_1mo(probeid, unit):
+
+    try:
+        global AppPrefs
+        if unit == "temperature":
+            if AppPrefs.temperaturescale =="F":
+                unit = "temperature_f"
+            else:
+                unit = "temperature_c"
+
+        bucket = "reefberrypi_probe_1wk"
+
+        query_api = Influx_client.query_api()
+
+        query = f'from(bucket: "reefberrypi_probe_1mo") \
+        |> range(start: -30d) \
+        |> filter(fn: (r) => r["_measurement"] == "{unit}") \
+        |> filter(fn: (r) => r["_field"] == "value") \
+        |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
+        |> filter(fn: (r) => r["probeid"] == "{probeid}") \
+        |> aggregateWindow(every: 1h, fn: mean, createEmpty: false) \
+        |> yield(name: "mean")'
+
+
+        result = query_api.query(org=AppPrefs.influxdb_org, query=query)
+
+        results = []
+        for table in result:
+            for record in table.records:
+                results.append((record.get_time(), record.get_value()))
+    
+        return results
+
+    except Exception as e:
+        AppPrefs.logger.error("get_chartdata_1mo: " +  str(e))
 #####################################################################
 # put_outlet_buttonstate
 # change the value of button state
