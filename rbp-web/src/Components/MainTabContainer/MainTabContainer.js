@@ -26,7 +26,7 @@ class MainTabContainer extends Component {
 
     const tabTypes = [
       { name: "Dashboard", desc: <Dashboard feedmode={this.props.feedmode}/>, img: dashicon},
-      { name: "Analytics", desc: <Analytics />, img: charticon },
+      { name: "Analytics", desc: <Analytics probearray={this.props.probearray}/>, img: charticon },
       { name: "Journal", desc: "Journal", img: notepadicon},
       { name: "About", desc: <About />, img: infoicon}
      

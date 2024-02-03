@@ -358,7 +358,7 @@ class App extends Component {
         </div>
 
         <div>
-<MainTabContainer  feedmode={this.state.globalPrefs?.feed_CurrentMode}></MainTabContainer>
+<MainTabContainer  feedmode={this.state.globalPrefs?.feed_CurrentMode} probearray={this.state.ProbeArray}></MainTabContainer>
         </div>
 
         {/* <div className="maingridcontainer">
