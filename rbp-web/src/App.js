@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { ProbeWidget } from "./Components/ProbeWidget/ProbeWidget";
 import { OutletWidget } from "./Components/OutletWidget/OutletWidget";
 import { FeedWidget } from "./Components/FeedWidget/FeedWidget";
+import MainTabContainer from "./Components/MainTabContainer/MainTabContainer";
 
 // there is a bug in react-beautiful-dnd where it wont work with strict mode
 // in React 18.  Solution is repplace with fork @hello-pangea-dnd to fix it
@@ -355,6 +356,11 @@ class App extends Component {
               ></img></button>
           </div>
         </div>
+
+        <div>
+<MainTabContainer></MainTabContainer>
+        </div>
+
         <div className="maingridcontainer">
           <DragDropContext onDragEnd={this.onDragEnd}>
             <Droppable droppableId="droppable">

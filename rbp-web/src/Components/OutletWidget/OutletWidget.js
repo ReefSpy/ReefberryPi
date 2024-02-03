@@ -157,7 +157,7 @@ export class OutletWidget extends Component {
             onClose={this.handleCloseOutletPrefsModal}
             OutletName={this.state.OutletName}
             OutletID={this.props.data.outletid}
-            ControlType={this.props.data.control_type}
+            ControlType={this.state.OutletData.control_type}
             data={this.state.OutletData}
             probearray={this.props.probearray}
           />
