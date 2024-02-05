@@ -91,12 +91,14 @@ this.setState({ probearray2: probeArray2 });
     ) {
       unit_type = "temperature";
     }
-    this.setState({ unitType2: unit_type });
+    // this.setState({ unitType2: unit_type });
     this.setState({
-      probeid2: this.state.probearray2[event.target.selectedIndex].probeid,
-      probename2: this.state.probearray2[event.target.selectedIndex].probename
+      selectedprobeid2: this.state.probearray2[event.target.selectedIndex].probeid,
+      selectedprobename2: this.state.probearray2[event.target.selectedIndex].probename,
+      selectedunitType2: unit_type,
+      selectedChart2: event.target.selectedIndex
     });
-    this.setState({ selectedChart2: event.target.selectedIndex });
+    // this.setState({ selectedChart2: event.target.selectedIndex });
   }
 
   handleOptionChange = (changeEvent) => {
@@ -111,6 +113,13 @@ this.setState({ probearray2: probeArray2 });
     this.setState({ ChartData: [] });
     this.setState({ ChartData2: [] });
     
+    this.setState({
+      probeid2: this.state.selectedprobeid2,
+      probename2: this.state.selectedprobename2,
+      unitType2: this.state.selectedunitType2,
+  
+    });
+
     let baseurl = null;
     if (this.state.selectedTime === "1hr") {
       baseurl = process.env.REACT_APP_API_GET_CHART_DATA_1HR;
@@ -132,14 +141,16 @@ this.setState ({chartTitle: charttitle})
       .concat("/")
       .concat(this.state.unitType);
     console.log(apiURL);
-    this.apiCall(apiURL, this.formatChartData);
+    this.apiCall(apiURL, this.formatChartData)
 
-    let apiURL2 = baseurl
-    .concat(this.state.probeid2)
-    .concat("/")
-    .concat(this.state.unitType2);
-  console.log(apiURL2);
-  this.apiCall(apiURL2, this.formatChartData2);
+  let apiURL2 = baseurl
+  .concat(this.state.selectedprobeid2)
+  .concat("/")
+  .concat(this.state.selectedunitType2);
+console.log(apiURL2);
+this.apiCall(apiURL2, this.formatChartData2);
+
+    
   }
 
   // generic API call structure
