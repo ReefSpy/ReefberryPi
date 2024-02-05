@@ -20,10 +20,10 @@ const HighchartsWrapper = (props) => {
       zoomType: "x",
     },
     title: {
-      text: "",
+      text: props.chartTitle,
     },
     legend: {
-      enabled: false,
+      enabled: true,
     },
     credits: {
       enabled: false,
@@ -37,11 +37,12 @@ const HighchartsWrapper = (props) => {
        // format: "{value:%H:%M:%S}",
       },
     },
-    yAxis: { title: { enabled: false } },
+    yAxis: [{ title: { enabled: true, text: props.unitType  } },{title: { enabled: true, text: props.unitType2,   },opposite: true} ],
     tooltip: {
       shared: true,
+      valueDecimals:2,
     },
-    series: [{ name: props.probename, data: props.chartdata, color: "orange" }],
+    series: [{ name: props.probename, data: props.chartdata, color: "orange", yAxis: 0  },{ name: props.probename2, data: props.chartdata2, color: "steelblue", yAxis: 1  }],
 
     plotOptions: {
       series: {

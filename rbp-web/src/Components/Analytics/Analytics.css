@@ -1,4 +1,41 @@
-.chartcontainer{
-    padding: 1em;
+.chartcontainer {
+  padding: 1em;
+}
 
+.select-container {
+  display: flex;
+  grid-template-columns: auto auto auto auto auto;
+  margin: 10px;
+}
+
+.getbtn {
+  margin-left: 20px;
+  border-radius: 10px;
+  border-style: solid;
+  border-width: 2px;
+  width: 100px;
+  height: auto;
+  color: black;
+  font-weight: bold;
+  background-color: orange;
+  border-color: #85868c;
+}
+
+.getbtn:hover {
+  background-color: darkgoldenrod;
+  cursor: pointer;
+  color: white;
+}
+
+.getbtn:active {
+  background-color: darkgray;
+}
+
+.form-check-input{
+    margin-left: 14px;
+
+}
+
+.form-check-label{
+    font-weight: bold;
 }

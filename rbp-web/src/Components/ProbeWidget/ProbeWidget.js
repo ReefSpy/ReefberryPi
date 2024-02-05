@@ -40,9 +40,13 @@ export class ProbeWidget extends Component {
       .concat(data.probeid)
       .concat("/")
       .concat(data.probename);
-    this.apiCall(updateApiURL, );
+    this.apiCall(updateApiURL, this.setNameCallback );
 
   };
+
+  setNameCallback(){
+    return
+  }
 
   // generic API call structure
   apiCall(endpoint, callback) {

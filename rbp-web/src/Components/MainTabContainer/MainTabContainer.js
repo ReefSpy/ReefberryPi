@@ -5,8 +5,8 @@ import About from "../About/About"
 import "./MainTabContainer.css";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
-import dashicon from "../../Images/dashboard.svg"
-import charticon from "../../Images/meter.svg"
+import dashicon from "../../Images/meter.svg"
+import charticon from "../../Images/chart.svg"
 import infoicon from "../../Images/info.svg"
 import notepadicon from "../../Images/notepad.svg"
 
@@ -44,13 +44,13 @@ class MainTabContainer extends Component {
               </Tab>
             );
             tabPanels.push(
-              <TabPanel className="rbp-tab-panel" key={name}>
+              <TabPanel className="rbp-tab-panel" key={name} forceRender = {true}>
                 {desc}
               </TabPanel>
             );
           })}
 
-          <div>
+          <div >
             <Tabs
               selectedIndex={this.state.selectedIndex}
               onSelect={(selectedIndex) => this.setState({ selectedIndex })}

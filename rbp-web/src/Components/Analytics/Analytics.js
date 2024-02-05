@@ -9,10 +9,12 @@ class Analytics extends Component {
     this.state = {
       selectedChart: 1,
       tempCharts: [{ chartname: "probe1" }, { chartname: "probe2" }],
+      selectedTime: "1dy",
+      chartTitle: null,
     };
 
     this.handleChartSelectorChange = this.handleChartSelectorChange.bind(this);
-    this.handleTimeSelectorChange = this.handleTimeSelectorChange.bind(this);
+    this.handleChartSelectorChange2 = this.handleChartSelectorChange2.bind(this);
     this.handleFetchButtonRequest = this.handleFetchButtonRequest.bind(this);
   }
 
@@ -29,7 +31,23 @@ class Analytics extends Component {
     this.setState({ ChartData: chartdata });
   };
 
-  componentDidMount() {}
+  // for a second series of data
+  // need to convert timestamp to milliseconds to show up properly in HighCharts
+  formatChartData2 = (chartdata) => {
+    for (let datapoint in chartdata) {
+      let newDate = new Date(chartdata[datapoint][0]).getTime();
+      chartdata[datapoint][0] = newDate;
+    }
+    this.setState({ ChartData2: chartdata });
+  };
+
+  componentDidMount() {
+// put a value at start of array for second dataset for no value if only want a single series graph
+let probeArray2 = [...this.props.probearray]
+probeArray2.unshift({probeid: undefined})
+this.setState({ probearray2: probeArray2 });
+
+  }
 
   handleChartSelectorChange(event) {
     console.log(event.target.value);
@@ -51,16 +69,48 @@ class Analytics extends Component {
     this.setState({ unitType: unit_type });
     this.setState({
       probeid: this.props.probearray[event.target.selectedIndex].probeid,
+      probename: this.props.probearray[event.target.selectedIndex].probename
     });
     this.setState({ selectedChart: event.target.selectedIndex });
   }
-  handleTimeSelectorChange(event) {
+
+  handleChartSelectorChange2(event) {
     console.log(event.target.value);
     console.log(event.target.selectedIndex);
-    this.setState({ selectedTime: event.target.value });
+    console.log(this.state.probearray2[event.target.selectedIndex].probeid);
+
+    let unit_type = "unknown";
+    if (
+      this.state.probearray2[event.target.selectedIndex].sensortype ===
+      "humidity"
+    ) {
+      unit_type = "humidity";
+    } else if (
+      this.state.probearray2[event.target.selectedIndex].sensortype ===
+      "temperature"
+    ) {
+      unit_type = "temperature";
+    }
+    this.setState({ unitType2: unit_type });
+    this.setState({
+      probeid2: this.state.probearray2[event.target.selectedIndex].probeid,
+      probename2: this.state.probearray2[event.target.selectedIndex].probename
+    });
+    this.setState({ selectedChart2: event.target.selectedIndex });
   }
 
+  handleOptionChange = (changeEvent) => {
+    this.setState({
+      selectedTime: changeEvent.target.value,
+      
+    });
+  };
+
   handleFetchButtonRequest() {
+
+    this.setState({ ChartData: [] });
+    this.setState({ ChartData2: [] });
+    
     let baseurl = null;
     if (this.state.selectedTime === "1hr") {
       baseurl = process.env.REACT_APP_API_GET_CHART_DATA_1HR;
@@ -74,12 +124,22 @@ class Analytics extends Component {
       baseurl = process.env.REACT_APP_API_GET_CHART_DATA_3MO;
     }
 
+let charttitle = this.state.probename + " - " + this.state.selectedTime
+this.setState ({chartTitle: charttitle})
+
     let apiURL = baseurl
       .concat(this.state.probeid)
       .concat("/")
       .concat(this.state.unitType);
-      console.log(apiURL)
+    console.log(apiURL);
     this.apiCall(apiURL, this.formatChartData);
+
+    let apiURL2 = baseurl
+    .concat(this.state.probeid2)
+    .concat("/")
+    .concat(this.state.unitType2);
+  console.log(apiURL2);
+  this.apiCall(apiURL2, this.formatChartData2);
   }
 
   // generic API call structure
@@ -107,6 +167,7 @@ class Analytics extends Component {
   render() {
     return (
       <div className="chartcontainer">
+          <div className="select-container">
         <select
           className="chartselector"
           id="chartselector"
@@ -122,38 +183,74 @@ class Analytics extends Component {
             </option>
           ))}
         </select>
-
         <select
-          className="timeselector"
-          id="timeselector"
-          name="timeselector"
+          className="chartselector"
+          id="chartselector2"
+          name="chartselector2"
           required
-          onChange={this.handleTimeSelectorChange}
-          selectedIndex={this.state.selectedTime}
+          onChange={this.handleChartSelectorChange2}
+          // value={this.state.selectedChart}
+          selectedIndex={this.state.selectedChart2}
         >
-          {/* <option key={0} value={"1hr"}>
-            1 hour
-          </option> */}
-          <option key={1} value={"1dy"}>
-            24 hour
-          </option>
-          <option key={2} value={"1wk"}>
-            1 week
-          </option>
-          <option key={3} value={"1mo"}>
-            1 month
-          </option>
-          {/* <option key={4} value={"3mo"}>
-            3 month
-          </option> */}
+          {this.state.probearray2?.map((chart, index) => (
+            <option key={index} value={chart.probename}>
+              {chart.probename}
+            </option>
+          ))}
         </select>
 
-        <button onClick={this.handleFetchButtonRequest}>Get Data</button>
+        <div>
+          <label className="form-check-label">
+            <input
+              type="radio"
+              name="react-tips"
+              value="1dy"
+              checked={this.state.selectedTime === "1dy"}
+              onChange={this.handleOptionChange}
+              className="form-check-input"
+            />
+            24 hour
+          </label>
+        </div>
+        <div>
+          <label className="form-check-label">
+            <input
+              type="radio"
+              name="react-tips"
+              value="1wk"
+              checked={this.state.selectedTime === "1wk"}
+              onChange={this.handleOptionChange}
+              className="form-check-input"
+            />
+            1 week
+          </label>
+        </div>
 
+        <div>
+          <label className="form-check-label">
+            <input
+              type="radio"
+              name="react-tips"
+              value="1mo"
+              checked={this.state.selectedTime === "1mo"}
+              onChange={this.handleOptionChange}
+              className="form-check-input"
+            />
+            1 month
+          </label>
+        </div>
+
+        <button onClick={this.handleFetchButtonRequest} className="getbtn">Get Data</button>
+        </div>
         <HighchartsWrapper
-          //  probename={this.props.data.probename}
+          probename={this.state.probename}
+          probename2={this.state.probename2}
           chartdata={this.state.ChartData}
+          chartdata2={this.state.ChartData2}
+          unitType={this.state.unitType}
+          unitType2={this.state.unitType2}
           oneToOne={true}
+          chartTitle = {this.state.chartTitle}
         />
       </div>
     );

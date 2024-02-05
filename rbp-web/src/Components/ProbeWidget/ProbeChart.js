@@ -48,7 +48,8 @@ const HighchartsWrapper = props => {
     xAxis: { visible: false, type: "datetime" },
     yAxis: { title: { enabled: false } },
     tooltip: {
-      shared: true
+      shared: true,
+      valueDecimals: 2,
     },
     series: [{ name: props.probename, data: props.chartdata, color: "orange" }],
     

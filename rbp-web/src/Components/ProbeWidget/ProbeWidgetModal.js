@@ -5,6 +5,7 @@ import closeCircle from "./close-circle.svg";
 const initialProbePrefsModalData = {
   probename: "",
   probeid: "",
+
 };
 
 const ProbeWidgetModal = ({
@@ -41,6 +42,11 @@ const ProbeWidgetModal = ({
   useEffect(() => {
     setModalOpen(isOpen);
   }, [isOpen]);
+
+  useEffect(() => {
+    setFormState({probename: ProbeName});
+  }, [ProbeName]);
+  
 
   useEffect(() => {
     const modalElement = modalRef.current;
@@ -85,7 +91,7 @@ const ProbeWidgetModal = ({
             type="text"
             id="probename"
             name="probename"
-            value={ProbeName}
+            value={formState.probename}
             autoComplete="off"
             onChange={handleInputChange}
             required
