@@ -51,7 +51,7 @@ export class OutletWidget extends Component {
     )
       .concat("/")
       .concat(val);
-    //console.log(apiURL)
+    console.log(apiURL)
     this.apiCall(apiURL, this.handleOutletButtonClick);
   }
 

@@ -47,6 +47,8 @@ let probeArray2 = [...this.props.probearray]
 probeArray2.unshift({probeid: undefined})
 this.setState({ probearray2: probeArray2 });
 
+
+
   }
 
   handleChartSelectorChange(event) {
@@ -120,6 +122,8 @@ this.setState({ probearray2: probeArray2 });
   
     });
 
+    
+
     let baseurl = null;
     if (this.state.selectedTime === "1hr") {
       baseurl = process.env.REACT_APP_API_GET_CHART_DATA_1HR;
@@ -133,8 +137,12 @@ this.setState({ probearray2: probeArray2 });
       baseurl = process.env.REACT_APP_API_GET_CHART_DATA_3MO;
     }
 
-let charttitle = this.state.probename + " - " + this.state.selectedTime
-this.setState ({chartTitle: charttitle})
+    if (this.state.selectedprobeid2 === undefined){
+let charttitle = this.state.probename + " - " + this.state.selectedTime;
+this.setState ({chartTitle: charttitle});
+    } else{let charttitle = this.state.probename + " vs. " + this.state.selectedprobename2 + " - " + this.state.selectedTime;
+    this.setState ({chartTitle: charttitle});}
+
 
     let apiURL = baseurl
       .concat(this.state.probeid)
