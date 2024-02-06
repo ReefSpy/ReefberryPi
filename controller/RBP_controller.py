@@ -52,6 +52,7 @@ AppPrefs = cls_Preferences.AppPrefs(logger, threadlock)
 Influx_client = defs_Influx.InitInfluxDB(AppPrefs, logger)
 Influx_write_api = Influx_client.write_api(write_options=SYNCHRONOUS)
 
+AppPrefs.Influx_write_api = Influx_write_api
 
 # initialize MySQL database
 # mySQLDB = defs_mysql.initMySQL(AppPrefs, logger)
@@ -614,7 +615,7 @@ def get_chartdata_1wk(probeid, unit):
         |> filter(fn: (r) => r["_field"] == "value") \
         |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
         |> filter(fn: (r) => r["probeid"] == "{probeid}") \
-        |> aggregateWindow(every: 10m, fn: mean, createEmpty: false) \
+        |> aggregateWindow(every: 15m, fn: mean, createEmpty: false) \
         |> yield(name: "mean")'
 
 
@@ -1325,7 +1326,7 @@ def get_current_outlet_stats(outletid):
     except Exception as e:
         AppPrefs.logger.error("get_current_outlet_stats: " +  str(e))
         # response = jsonify({"msg": str(e)})
-        response =- jsonify(AppPrefs.outletDict[outletid])
+        response = jsonify(AppPrefs.outletDict[outletid])
         response.status_code = 500 
         return response
 
@@ -1384,6 +1385,45 @@ def get_token():
     response = {"token":access_token}
 
     return response
+
+#####################################################################
+# get_outletchartdata
+# return array of chart data with date/time and values
+# must specify outletID, and time frame (24hr, 1wk, 1mo, etc...)
+#####################################################################
+@app.route('/get_outletchartdata/<outletid>/<timeframe>', methods = ['GET'])
+@cross_origin()
+def get_outletchartdata(outletid, timeframe):
+
+    try:
+        global AppPrefs
+
+        
+        bucket = "reefberrypi_outlet_3mo"
+
+        query_api = Influx_client.query_api()
+
+        query = f'from(bucket: "reefberrypi_outlet_3mo") \
+        |> range(start: -{timeframe}) \
+        |> filter(fn: (r) => r["_measurement"] == "outlet_state") \
+        |> filter(fn: (r) => r["_field"] == "value") \
+        |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
+        |> filter(fn: (r) => r["outletid"] == "{outletid}") \
+        |> yield(name: "last")'
+
+
+        result = query_api.query(org=AppPrefs.influxdb_org, query=query)
+
+        results = []
+        for table in result:
+            for record in table.records:
+                results.append((record.get_time(), record.get_value()))
+    
+        return results
+
+    except Exception as e:
+        AppPrefs.logger.error("get_outletchartdata: " +  str(e))
+        return (str(e))
 
 ############################################################
 

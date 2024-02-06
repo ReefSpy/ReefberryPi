@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, time
 import defs_common
 import RPi.GPIO as GPIO
 import time
+import defs_Influx
 
 PIN_ON = False
 PIN_OFF = True
@@ -19,29 +20,35 @@ def get_on_or_off(pin):
 
 def handle_on_off(AppPrefs, outlet, pin, targetstate):
 
-    #currentOutletState = GPIO.input(pin)
-    currentOutletState = PIN_ON
+    currentOutletState = GPIO.input(pin)
+    #currentOutletState = PIN_ON
 
     # log any change
-    if AppPrefs.outletDict[outlet].enable_log == "True":
+    if AppPrefs.outletDict[outlet].enable_log.lower() == "true":
         if currentOutletState != targetstate:
             #defs_common.logtoconsole("I need to log this! " + outlet, fg="YELLOW", bg="BLUE", style="BRIGHT")
             # lets record 1 or 0 in the log
             if currentOutletState == PIN_ON:
-                val = 1
+                curval = 1
             else:
-                val = 0
+                curval = 0
             #defs_common.logprobedata(outlet + "_", val)
             # lets record 1 or 0 in the log
             if targetstate == PIN_ON:
-                val = 1
+                tarval = 1
             else:
-                val = 0
+                tarval = 0
             # defs_common.logprobedata(outlet + "_", val)
             # defs_common.logtoconsole("***Logged*** Outlet Change " + "[" + outlet + "] " + str(
             #     controller.AppPrefs.outletDict[outlet].outletname) + " = " + str(val), fg="CYAN", style="BRIGHT")
             # controller.logger.info("***Logged*** Outlet Change " + "[" + outlet + "] " + str(
             #     controller.AppPrefs.outletDict[outlet].outletname) + " = " + str(val))
+            AppPrefs.Influx_write_api.write(defs_Influx.INFLUXDB_OUTLET_BUCKET_3MO, AppPrefs.influxdb_org, [{"measurement": "outlet_state", "tags": {
+                    "appuid": AppPrefs.appuid, "outletid": outlet}, "fields": {"value": curval}, "time": datetime.utcnow()}])
+            AppPrefs.Influx_write_api.write(defs_Influx.INFLUXDB_OUTLET_BUCKET_3MO, AppPrefs.influxdb_org, [{"measurement": "outlet_state", "tags": {
+                     "appuid": AppPrefs.appuid, "outletid": outlet}, "fields": {"value": tarval}, "time": datetime.utcnow()}])
+            AppPrefs.logger.info("***Logged*** Outlet Change " + "[" + outlet + "] " + str(
+                 AppPrefs.outletDict[outlet].outletname) + " = " + str(tarval) + str(curval))
 
     if targetstate == PIN_ON:
         GPIO.output(pin, False)
