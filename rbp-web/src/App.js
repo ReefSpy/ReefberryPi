@@ -203,6 +203,7 @@ class App extends Component {
 
     if (col2items.length > 0) {
       this.setState({ col2items });
+      this.setState({ OutletArray: col2items });
     }
     return col2items;
   }
@@ -358,7 +359,7 @@ class App extends Component {
         </div>
 
         <div>
-<MainTabContainer  feedmode={this.state.globalPrefs?.feed_CurrentMode} probearray={this.state.ProbeArray}></MainTabContainer>
+<MainTabContainer  feedmode={this.state.globalPrefs?.feed_CurrentMode} probearray={this.state.ProbeArray} outletarray={this.state.OutletArray}></MainTabContainer>
         </div>
 
         {/* <div className="maingridcontainer">
