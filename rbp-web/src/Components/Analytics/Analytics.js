@@ -51,8 +51,29 @@ class Analytics extends Component {
     // probeArray2.push({ probeid: "int_outlet_1", probename: "outlet 1" });
     //probeArray2.push(this.props.outletarray)
     this.setState({ probearray2: probeArray2 });
-    
 
+    let dropdownlist2 = [];
+    dropdownlist2.push({ id: undefined, name: undefined });
+    for (let probe in this.props.probearray) {
+      dropdownlist2.push({
+        id: this.props.probearray[probe].probeid,
+        name: this.props.probearray[probe].probename,
+        displayname: "Probe: " + this.props.probearray[probe].probename,
+        unit: this.props.probearray[probe].sensortype,
+        widgettype: this.props.probearray[probe].widgetType,
+      });
+    }
+
+    for (let outlet in this.props.outletarray) {
+      dropdownlist2.push({
+        id: this.props.outletarray[outlet].outletid,
+        name: this.props.outletarray[outlet].outletname,
+        displayname: "Outlet: " + this.props.outletarray[outlet].outletname,
+        unit: "on-off",
+        widgettype: this.props.outletarray[outlet].widgetType,
+      });
+    }
+    this.setState({ dropdownlist2: dropdownlist2 });
   }
 
   handleChartSelectorChange(event) {
@@ -83,28 +104,35 @@ class Analytics extends Component {
   handleChartSelectorChange2(event) {
     console.log(event.target.value);
     console.log(event.target.selectedIndex);
-    console.log(this.state.probearray2[event.target.selectedIndex].probeid);
+    console.log(this.state.dropdownlist2[event.target.selectedIndex].id);
 
-    let unit_type = "unknown";
-    if (
-      this.state.probearray2[event.target.selectedIndex].sensortype ===
-      "humidity"
-    ) {
-      unit_type = "humidity";
-    } else if (
-      this.state.probearray2[event.target.selectedIndex].sensortype ===
-      "temperature"
-    ) {
-      unit_type = "temperature";
-    }
+    // let unit_type = "unknown";
+    // if (
+    //   this.state.dropdownlist2[event.target.selectedIndex].unit ===
+    //   "humidity"
+    // ) {
+    //   unit_type = "humidity";
+    // } else if (
+    //   this.state.dropdownlist2[event.target.selectedIndex].unit ===
+    //   "temperature"
+    // ) {
+    //   unit_type = "temperature";
+    // } else if (
+    //   this.state.dropdownlist2[event.target.selectedIndex].unit ===
+    //   "on-off"
+    // ) {
+    //   unit_type = "on-off";
+    // }
     // this.setState({ unitType2: unit_type });
     this.setState({
-      selectedprobeid2:
-        this.state.probearray2[event.target.selectedIndex].probeid,
+      selectedprobeid2: this.state.dropdownlist2[event.target.selectedIndex].id,
       selectedprobename2:
-        this.state.probearray2[event.target.selectedIndex].probename,
-      selectedunitType2: unit_type,
+        this.state.dropdownlist2[event.target.selectedIndex].name,
+      selectedunitType2:
+        this.state.dropdownlist2[event.target.selectedIndex].unit,
       selectedChart2: event.target.selectedIndex,
+      selectedwidgettype2:
+        this.state.dropdownlist2[event.target.selectedIndex].widgettype,
     });
     // this.setState({ selectedChart2: event.target.selectedIndex });
   }
@@ -158,20 +186,31 @@ class Analytics extends Component {
     console.log(apiURL);
     this.apiCall(apiURL, this.formatChartData);
 
-    let apiURL2 = baseurl
-      .concat(this.state.selectedprobeid2)
-      .concat("/")
-      .concat(this.state.selectedunitType2);
-    console.log(apiURL2);
-    this.apiCall(apiURL2, this.formatChartData2);
+    let outlettime = "";
+    if (this.state.selectedTime === "1dy") {
+      outlettime = "24h";
+    } else if (this.state.selectedTime === "1wk") {
+      outlettime = "7d";
+    } else if (this.state.selectedTime === "1mo") {
+      outlettime = "30d";
+    }
 
-    // let outletbaseurl = process.env.REACT_APP_API_GET_OUTLET_CHART_DATA
-    // let apiURL2 = outletbaseurl
-    //   .concat("int_outlet_1")
-    //   .concat("/")
-    //   .concat("24h");
-    // console.log(apiURL2);
-    // this.apiCall(apiURL2, this.formatChartData2);
+    if (this.state.selectedwidgettype2 === "probe") {
+      let apiURL2 = baseurl
+        .concat(this.state.selectedprobeid2)
+        .concat("/")
+        .concat(this.state.selectedunitType2);
+      console.log(apiURL2);
+      this.apiCall(apiURL2, this.formatChartData2);
+    } else if (this.state.selectedwidgettype2 === "outlet") {
+      let outletbaseurl = process.env.REACT_APP_API_GET_OUTLET_CHART_DATA;
+      let apiURL2 = outletbaseurl
+        .concat(this.state.selectedprobeid2)
+        .concat("/")
+        .concat(outlettime);
+      console.log(apiURL2);
+      this.apiCall(apiURL2, this.formatChartData2);
+    }
   }
 
   // generic API call structure
@@ -224,9 +263,14 @@ class Analytics extends Component {
             // value={this.state.selectedChart}
             selectedIndex={this.state.selectedChart2}
           >
-            {this.state.probearray2?.map((chart, index) => (
+            {/* {this.state.probearray2?.map((chart, index) => (
               <option key={index} value={chart?.probename}>
                 {chart?.probename}
+              </option>
+            ))} */}
+            {this.state.dropdownlist2?.map((chart, index) => (
+              <option key={index} value={chart?.id}>
+                {chart?.displayname}
               </option>
             ))}
           </select>
