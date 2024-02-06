@@ -80,6 +80,9 @@ def apploop():
     global AppPrefs
     
     while True:
+        logger.debug ("******************************************************")
+        logger.debug ("Start Loop")
+        logger.debug ("******************************************************")
         ###################################################################
         # read temp probe list
         ###################################################################
@@ -205,6 +208,7 @@ def apploop():
                 # logger.info("[" + AppPrefs.outletDict.get(outlet).outletid + "] " + \
                 #             AppPrefs.outletDict.get(outlet).outletname + " = " + \
                 #             AppPrefs.outletDict.get(outlet).button_state  )
+             
                 
                 pin = GPIO_config.int_outletpins.get(AppPrefs.outletDict.get(outlet).outletid)
 
@@ -229,13 +233,18 @@ def apploop():
             
         except Exception as e:
             logger.error("Error reading outlet data! " + str(e))
-        
+            
         
        
         ##########################################################################################
         # pause to slow down the loop
         ##########################################################################################
+        logger.debug ("******************************************************")
+        logger.debug ("End Loop")
+        logger.debug ("******************************************************")
         time.sleep(.5)
+
+
 
 
 #apploop()
@@ -694,7 +703,9 @@ def put_outlet_buttonstate(outletid, buttonstate):
             result = conn.execute(stmt)
             conn.commit()
 
-        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+        #defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+        AppPrefs.outletDict[outletid].button_state = buttonstate
+        AppPrefs.outletDict[outletid].outletstatus = buttonstate
        
         response = {}
         response = jsonify({"msg": 'Set outlet button state',
@@ -743,10 +754,20 @@ def set_probe_name(probeid, probename):
         defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
         defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
        
-        return "OK"
+        response = {}
+        response = jsonify({"msg": 'Updated probe name',
+                            "probeid": probeid,
+                            "probename": probename,
+                            })
+
+        response.status_code = 200      
+        return response
     
     except Exception as e:
-            AppPrefs.logger.error("set_probe_name: " +  str(e))
+        AppPrefs.logger.error("set_probe_name: " +  str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500 
+        return response
 
 #####################################################################
 # set_outlet_params_light/<outletid>

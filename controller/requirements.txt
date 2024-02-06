@@ -7,4 +7,5 @@ flask
 requests
 flask-cors
 flask_jwt_extended
+cryptography
 
