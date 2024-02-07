@@ -25,7 +25,15 @@ class Analytics extends Component {
       let newDate = new Date(chartdata[datapoint][0]).getTime();
       chartdata[datapoint][0] = newDate;
     }
+    // if outlet is on, extend the lione to end of graph by adding an extra "ON" point
+    if (this.state.selectedwidgettype1 === "outlet"){
+      console.log(chartdata.slice(-1)[0][1])
+      if (chartdata.slice(-1)[0][1] === 1){
+      chartdata.push([new Date().getTime(), 1] );
+    }
+    }
     this.setState({ ChartData: chartdata });
+
   };
 
   // for a second series of data
@@ -34,6 +42,13 @@ class Analytics extends Component {
     for (let datapoint in chartdata) {
       let newDate = new Date(chartdata[datapoint][0]).getTime();
       chartdata[datapoint][0] = newDate;
+    }
+     // if outlet is on, extend the lione to end of graph by adding an extra "ON" point
+     if (this.state.selectedwidgettype2 === "outlet"){
+      console.log(chartdata.slice(-1)[0][1])
+      if (chartdata.slice(-1)[0][1] === 1){
+      chartdata.push([new Date().getTime(), 1] );
+    }
     }
     this.setState({ ChartData2: chartdata });
   };

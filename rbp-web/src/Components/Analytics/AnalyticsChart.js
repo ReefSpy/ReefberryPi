@@ -10,7 +10,8 @@ const HighchartsWrapper = (props) => {
   // options for test chart
   let options = {
     chart: {
-      type: "spline",
+       type: "spline",
+      //type: "area",
       //   height: 400,
       //   width: 720,
       borderColor: "#85868c",
@@ -47,6 +48,7 @@ const HighchartsWrapper = (props) => {
     plotOptions: {
       series: {
         animation: false,
+
       },
     },
     time: {
