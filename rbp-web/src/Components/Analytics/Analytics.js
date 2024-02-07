@@ -7,7 +7,7 @@ class Analytics extends Component {
     super(props);
 
     this.state = {
-      selectedChart: 1,
+      selectedChart1: 0,
       tempCharts: [{ chartname: "probe1" }, { chartname: "probe2" }],
       selectedTime: "1dy",
       chartTitle: null,
@@ -20,12 +20,8 @@ class Analytics extends Component {
   }
 
   // need to convert timestamp to milliseconds to show up properly in HighCharts
-  formatChartData = (chartdata) => {
+  formatChartData1 = (chartdata) => {
     for (let datapoint in chartdata) {
-      // console.log(chartdata[datapoint])
-      // console.log(chartdata[datapoint][0])
-      // console.log(Date(chartdata[datapoint][0]))
-
       let newDate = new Date(chartdata[datapoint][0]).getTime();
       chartdata[datapoint][0] = newDate;
     }
@@ -48,13 +44,21 @@ class Analytics extends Component {
     // put a value at start of array for second dataset for no value if only want a single series graph
     let probeArray2 = [...this.props.probearray];
     probeArray2.unshift({ probeid: undefined });
-    // probeArray2.push({ probeid: "int_outlet_1", probename: "outlet 1" });
-    //probeArray2.push(this.props.outletarray)
     this.setState({ probearray2: probeArray2 });
 
+   
+// build the second lists
+    let dropdownlist1 = [];
     let dropdownlist2 = [];
     dropdownlist2.push({ id: undefined, name: undefined });
     for (let probe in this.props.probearray) {
+      dropdownlist1.push({
+        id: this.props.probearray[probe].probeid,
+        name: this.props.probearray[probe].probename,
+        displayname: "Probe: " + this.props.probearray[probe].probename,
+        unit: this.props.probearray[probe].sensortype,
+        widgettype: this.props.probearray[probe].widgetType,
+      });
       dropdownlist2.push({
         id: this.props.probearray[probe].probeid,
         name: this.props.probearray[probe].probename,
@@ -65,6 +69,13 @@ class Analytics extends Component {
     }
 
     for (let outlet in this.props.outletarray) {
+      dropdownlist1.push({
+        id: this.props.outletarray[outlet].outletid,
+        name: this.props.outletarray[outlet].outletname,
+        displayname: "Outlet: " + this.props.outletarray[outlet].outletname,
+        unit: "on-off",
+        widgettype: this.props.outletarray[outlet].widgetType,
+      });
       dropdownlist2.push({
         id: this.props.outletarray[outlet].outletid,
         name: this.props.outletarray[outlet].outletname,
@@ -73,32 +84,25 @@ class Analytics extends Component {
         widgettype: this.props.outletarray[outlet].widgetType,
       });
     }
+    this.setState({ dropdownlist1: dropdownlist1 });
     this.setState({ dropdownlist2: dropdownlist2 });
   }
 
   handleChartSelectorChange(event) {
     console.log(event.target.value);
     console.log(event.target.selectedIndex);
-    console.log(this.props.probearray[event.target.selectedIndex].probeid);
+    console.log(this.state.dropdownlist1[event.target.selectedIndex].id);
 
-    let unit_type = "unknown";
-    if (
-      this.props.probearray[event.target.selectedIndex].sensortype ===
-      "humidity"
-    ) {
-      unit_type = "humidity";
-    } else if (
-      this.props.probearray[event.target.selectedIndex].sensortype ===
-      "temperature"
-    ) {
-      unit_type = "temperature";
-    }
-    this.setState({ unitType: unit_type });
     this.setState({
-      probeid: this.props.probearray[event.target.selectedIndex].probeid,
-      probename: this.props.probearray[event.target.selectedIndex].probename,
+      selectedprobeid1: this.state.dropdownlist1[event.target.selectedIndex].id,
+      selectedprobename1:
+        this.state.dropdownlist1[event.target.selectedIndex].name,
+      selectedunitType1:
+        this.state.dropdownlist1[event.target.selectedIndex].unit,
+      selectedChart1: event.target.selectedIndex,
+      selectedwidgettype1:
+        this.state.dropdownlist1[event.target.selectedIndex].widgettype,
     });
-    this.setState({ selectedChart: event.target.selectedIndex });
   }
 
   handleChartSelectorChange2(event) {
@@ -106,24 +110,6 @@ class Analytics extends Component {
     console.log(event.target.selectedIndex);
     console.log(this.state.dropdownlist2[event.target.selectedIndex].id);
 
-    // let unit_type = "unknown";
-    // if (
-    //   this.state.dropdownlist2[event.target.selectedIndex].unit ===
-    //   "humidity"
-    // ) {
-    //   unit_type = "humidity";
-    // } else if (
-    //   this.state.dropdownlist2[event.target.selectedIndex].unit ===
-    //   "temperature"
-    // ) {
-    //   unit_type = "temperature";
-    // } else if (
-    //   this.state.dropdownlist2[event.target.selectedIndex].unit ===
-    //   "on-off"
-    // ) {
-    //   unit_type = "on-off";
-    // }
-    // this.setState({ unitType2: unit_type });
     this.setState({
       selectedprobeid2: this.state.dropdownlist2[event.target.selectedIndex].id,
       selectedprobename2:
@@ -134,7 +120,6 @@ class Analytics extends Component {
       selectedwidgettype2:
         this.state.dropdownlist2[event.target.selectedIndex].widgettype,
     });
-    // this.setState({ selectedChart2: event.target.selectedIndex });
   }
 
   handleOptionChange = (changeEvent) => {
@@ -148,8 +133,11 @@ class Analytics extends Component {
     this.setState({ ChartData2: [] });
 
     this.setState({
+      probeid1: this.state.selectedprobeid1,
       probeid2: this.state.selectedprobeid2,
+      probename1: this.state.selectedprobename1,
       probename2: this.state.selectedprobename2,
+      unitType1: this.state.selectedunitType1,
       unitType2: this.state.selectedunitType2,
     });
 
@@ -167,11 +155,11 @@ class Analytics extends Component {
     }
 
     if (this.state.selectedprobeid2 === undefined) {
-      let charttitle = this.state.probename + " - " + this.state.selectedTime;
+      let charttitle = this.state.selectedprobename1 + " - " + this.state.selectedTime;
       this.setState({ chartTitle: charttitle });
     } else {
       let charttitle =
-        this.state.probename +
+        this.state.selectedprobename1 +
         " vs. " +
         this.state.selectedprobename2 +
         " - " +
@@ -179,12 +167,12 @@ class Analytics extends Component {
       this.setState({ chartTitle: charttitle });
     }
 
-    let apiURL = baseurl
-      .concat(this.state.probeid)
-      .concat("/")
-      .concat(this.state.unitType);
-    console.log(apiURL);
-    this.apiCall(apiURL, this.formatChartData);
+    // let apiURL = baseurl
+    //   .concat(this.state.probeid)
+    //   .concat("/")
+    //   .concat(this.state.unitType);
+    // console.log(apiURL);
+    // this.apiCall(apiURL, this.formatChartData);
 
     let outlettime = "";
     if (this.state.selectedTime === "1dy") {
@@ -193,6 +181,23 @@ class Analytics extends Component {
       outlettime = "7d";
     } else if (this.state.selectedTime === "1mo") {
       outlettime = "30d";
+    }
+
+    if (this.state.selectedwidgettype1 === "probe") {
+      let apiURL1 = baseurl
+        .concat(this.state.selectedprobeid1)
+        .concat("/")
+        .concat(this.state.selectedunitType1);
+      console.log(apiURL1);
+      this.apiCall(apiURL1, this.formatChartData1);
+    } else if (this.state.selectedwidgettype1 === "outlet") {
+      let outletbaseurl = process.env.REACT_APP_API_GET_OUTLET_CHART_DATA;
+      let apiURL1 = outletbaseurl
+        .concat(this.state.selectedprobeid1)
+        .concat("/")
+        .concat(outlettime);
+      console.log(apiURL1);
+      this.apiCall(apiURL1, this.formatChartData1);
     }
 
     if (this.state.selectedwidgettype2 === "probe") {
@@ -245,12 +250,16 @@ class Analytics extends Component {
             name="chartselector"
             required
             onChange={this.handleChartSelectorChange}
-            // value={this.state.selectedChart}
             selectedIndex={this.state.selectedChart}
           >
-            {this.props.probearray.map((chart, index) => (
+            {/* {this.props.probearray.map((chart, index) => (
               <option key={index} value={chart.probename}>
                 {chart.probename}
+              </option>
+            ))} */}
+             {this.state.dropdownlist1?.map((chart, index) => (
+              <option key={index} value={chart?.id}>
+                {chart?.displayname}
               </option>
             ))}
           </select>
@@ -260,14 +269,8 @@ class Analytics extends Component {
             name="chartselector2"
             required
             onChange={this.handleChartSelectorChange2}
-            // value={this.state.selectedChart}
             selectedIndex={this.state.selectedChart2}
           >
-            {/* {this.state.probearray2?.map((chart, index) => (
-              <option key={index} value={chart?.probename}>
-                {chart?.probename}
-              </option>
-            ))} */}
             {this.state.dropdownlist2?.map((chart, index) => (
               <option key={index} value={chart?.id}>
                 {chart?.displayname}
@@ -321,11 +324,11 @@ class Analytics extends Component {
           </button>
         </div>
         <HighchartsWrapper
-          probename={this.state.probename}
+          probename={this.state.probename1}
           probename2={this.state.probename2}
           chartdata={this.state.ChartData}
           chartdata2={this.state.ChartData2}
-          unitType={this.state.unitType}
+          unitType={this.state.unitType1}
           unitType2={this.state.unitType2}
           oneToOne={true}
           chartTitle={this.state.chartTitle}
