@@ -48,7 +48,7 @@ def handle_on_off(AppPrefs, outlet, pin, targetstate):
             AppPrefs.Influx_write_api.write(defs_Influx.INFLUXDB_OUTLET_BUCKET_3MO, AppPrefs.influxdb_org, [{"measurement": "outlet_state", "tags": {
                      "appuid": AppPrefs.appuid, "outletid": outlet}, "fields": {"value": tarval}, "time": datetime.utcnow()}])
             AppPrefs.logger.info("***Logged*** Outlet Change " + "[" + outlet + "] " + str(
-                 AppPrefs.outletDict[outlet].outletname) + " = " + str(tarval) + str(curval))
+                 AppPrefs.outletDict[outlet].outletname) + " | Target: " + str(tarval) + " Previous: " + str(curval))
 
     if targetstate == PIN_ON:
         GPIO.output(pin, False)
@@ -262,32 +262,32 @@ def handle_outlet_light(AppPrefs, outlet, button_state, pin):
         # on time before off time
         if datetime.time(on_time) < datetime.time(off_time):
             if now_time >= datetime.time(on_time) and now_time <= datetime.time(off_time):
-                GPIO.output(pin, False) #turn on light
+               # GPIO.output(pin, False) #turn on light
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 status = "ON" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
                     " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
                 #return status
             else:
-                GPIO.output(pin, True) #turn off light
+               # GPIO.output(pin, True) #turn off light
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 status = "OFF" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
                     " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
                 #return status
         else:  # on time after off time
             if now_time <= datetime.time(on_time) and now_time >= datetime.time(off_time):
-                GPIO.output(pin, True) #turn off light
+               # GPIO.output(pin, True) #turn off light
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 status = "OFF" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
                     " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
                 #return status
             else:
-                GPIO.output(pin, False) #turn on light
+              #  GPIO.output(pin, False) #turn on light
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 status = "ON" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
                     " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
                 #return status
     else:
-        GPIO.output(pin, True)
+       # GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
         #return "OFF"
     # AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin) + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
