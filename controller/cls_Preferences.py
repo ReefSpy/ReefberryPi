@@ -107,6 +107,15 @@ class AppPrefs():
         self.feed_d_time = ""
         self.dht_enable = ""
 
+        self.dv_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+        # self.dv_SamplingInterval = int(defs_common.readINIfile('mcp3008', 'dv_samplinginterval', "1000", lock=controller.threadlock, logger=controller.logger)) # milliseconds
+        # self.dv_LogInterval = int(defs_common.readINIfile('mcp3008', 'dv_loginterval', "300000", lock=controller.threadlock, logger=controller.logger)) # milliseconds
+        self.dv_SamplingInterval = 1000 # milliseconds
+        self.dv_LogInterval = 300000 # milliseconds
+
+
+
+
     def initDictionaries(self):
         self.outletDict = {}
         self.mcp3008Dict = {}
