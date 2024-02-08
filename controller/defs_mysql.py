@@ -341,6 +341,84 @@ def readOutletPrefs_ex(sqlengine, appPrefs, logger):
     #return appPrefs
 
 
+def readMCP3008Prefs_ex(sqlengine, appPrefs, logger):
+    try:
+        logger.info("Reading MCP3008 prefs from database...")
+        appPrefs.mcp3008Dict.clear()
+
+        # build table object from table in DB
+        metadata_obj = MetaData()
+        mcp3008_table = Table("mcp3008", metadata_obj, autoload_with=sqlengine)
+
+        conn = sqlengine.connect()
+        # we support 8 outlets on the internal bus of the Pi
+        channels = ["0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7"]
+        ##########################
+        # get all channels at once
+        ##########################
+
+        for ch in channels:
+            channel = cls_Preferences.analogChannelClass()
+            stmt = select(mcp3008_table).where(mcp3008_table.c.appuid == appPrefs.appuid).where(mcp3008_table.c.chid == ch)
+            results = conn.execute(stmt)
+            conn.commit()
+            
+            if results.rowcount == 0:
+                logger.warn ("Analog Channel: [" + ch  + "] not found! Creating entry.")
+                
+                channel.ch_num = ch
+                channel.ch_name = "Unnamed"
+                channel.ch_enabled = "true"
+                channel.ch_type = "RAW"
+                channel.ch_ph_low = "100"
+                channel.ch_ph_med = "200"
+                channel.ch_ph_high = "300"
+                channel.ch_dvlist = []
+                channel.ch_numsamples = "10"
+                channel.ch_sigma = "6"
+                channel.LastLogTime = 0
+
+                stmt = insert(mcp3008_table).values(appuid = appPrefs.appuid, 
+                                                    chid = ch,
+                                                    name = "Unnamed",
+                                                    enabled = channel.ch_enabled,
+                                                    type = channel.ch_type,
+                                                    ph_low = channel.ch_ph_low,
+                                                    ph_med = channel.ch_ph_med,
+                                                    ph_high = channel.ch_ph_high,
+                                                    numsamples = channel.ch_numsamples,
+                                                    sigma = channel.ch_sigma)
+                                                    
+            else:
+ 
+                for row in results:
+                    channel.ch_num = ch
+                    channel.ch_name = row.name
+                    channel.ch_enabled = row.enabled
+                    channel.ch_type = row.type
+                    channel.ch_ph_low = row.ph_low
+                    channel.ch_ph_med = row.ph_med
+                    channel.ch_ph_high = row.ph_high
+                    channel.ch_dvlist = []
+                    channel.ch_numsamples = row.numsamples
+                    channel.ch_sigma = row.sigma
+                    channel.LastLogTime = 0
+
+            conn.execute(stmt)
+            conn.commit()
+
+            appPrefs.mcp3008Dict[ch] = channel
+            
+                
+    except Exception as e:
+        logger.error("Error reading analog probes. " + str(e) )
 
 
     
