@@ -100,18 +100,15 @@ def apploop():
         # channels (0-7)
         ##########################################################################################
         # only read the data at every ph_SamplingInterval (ie: 500ms or 1000ms)
-        logger.debug(int(round(time.time()*1000)) - AppPrefs.dv_SamplingTimeSeed)
-        logger.debug(AppPrefs.dv_SamplingInterval)
         if (int(round(time.time()*1000)) - AppPrefs.dv_SamplingTimeSeed) > AppPrefs.dv_SamplingInterval:
             #for x in range (0,8):
             for ch in AppPrefs.mcp3008Dict:
                 if AppPrefs.mcp3008Dict[ch].ch_enabled.lower() == "true":
-                    #defs_common.logtoconsole(str(self.mcp3008Dict[ch].ch_num) + " " + str(self.mcp3008Dict[ch].ch_name) + " " + str(self.mcp3008Dict[ch].ch_enabled) + " " + str(len(self.mcp3008Dict[ch].ch_dvlist)))
+                    logger.debug("mcp3008 ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " " + str(AppPrefs.mcp3008Dict[ch].ch_name) + " = " + str(AppPrefs.mcp3008Dict[ch].lastValue))
                     dv = mcp3008.readadc(int(AppPrefs.mcp3008Dict[ch].ch_num), GPIO_config.SPICLK, GPIO_config.SPIMOSI,
                                             GPIO_config.SPIMISO, GPIO_config.SPICS)
-          
+                    logger.debug("CH" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " = " + str(dv))
                     AppPrefs.mcp3008Dict[ch].ch_dvlist.append(dv)
-                    #self.logger.info(str(self.mcp3008Dict[ch].ch_num) + " " + str(self.mcp3008Dict[ch].ch_name) + " " + str(self.mcp3008Dict[ch].ch_dvlist))
                 # once we hit our desired sample size of ph_numsamples (ie: 120)
                 # then calculate the average value
                 if len(AppPrefs.mcp3008Dict[ch].ch_dvlist) >= int(AppPrefs.mcp3008Dict[ch].ch_numsamples):
@@ -138,11 +135,9 @@ def apploop():
                     except:
                         dv_AvgCountsFiltered = 1  # need to revisit this error handling. Exception thrown when all
                                                     # values were 1023
-                        print("Error collecting data")  
+                        print("Error collecting data! " + "mcp3008 ch" + str(AppPrefs.mcp3008Dict[ch].ch_num))  
 
-                    #self.mcp3008Dict[ch].ch_dvlist.clear()  ## delete  this line
-
-                    if AppPrefs.mcp3008Dict[ch].ch_type == "pH":
+                    if AppPrefs.mcp3008Dict[ch].ch_type == "ph":
                         # bug, somtimes value is coming back high, like really high, like 22.0.  this is an impossible
                         # value since max ph is 14.  need to figure this out later, but for now, lets log this val to aid in
                         # debugging
@@ -158,26 +153,22 @@ def apploop():
 
                         if dv_AvgCountsFiltered > 14:
                             logger.error("Invalid PH value: " + str(dv_AvgCountsFiltered) + " " + str(orgval) + " " + str(dv_dvlistfiltered))
-                            #defs_common.logtoconsole("Invalid PH value: " + str(dv_AvgCountsFiltered) + " " + str(orgval) + " " + str(dv_dvlistfiltered), fg="RED", style = "BRIGHT")
-
+                           
                     # if enough time has passed (ph_LogInterval) then log the data to file
                     # otherwise just print it to console
                     timestamp = datetime.now()
                     if (int(round(time.time()*1000)) - AppPrefs.mcp3008Dict[ch].LastLogTime) > AppPrefs.dv_LogInterval:
                         # sometimes a high value, like 22.4 gets recorded, i need to fix this, but for now don't log that
 ##                            if ph_AvgFiltered < 14.0:  
-                        #RBP_commons.logprobedata(config['logs']['ph_log_prefix'], "{:.2f}".format(ph_AvgFiltered))
                #         defs_common.logprobedata("mcp3008_ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + "_", "{:.2f}".format(dv_AvgCountsFiltered))
                         logger.info("mcp3008_ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " = " + str("{:.2f}".format(dv_AvgCountsFiltered)))
-                        # print(timestamp.strftime(Fore.CYAN + Style.BRIGHT + "%Y-%m-%d %H:%M:%S") + " ***Logged*** dv = "
-                        #         + "{:.2f}".format(dv_AvgCountsFiltered) + Style.RESET_ALL)
+                        Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "ph", "tags": {
+                                        "appuid": AppPrefs.appuid, "probeid": "mcp3008_ch" + str(AppPrefs.mcp3008Dict[ch].ch_num)}, "fields": {"value": float("{:.2f}".format(dv_AvgCountsFiltered))}, "time": datetime.utcnow()}])
                         AppPrefs.mcp3008Dict[ch].LastLogTime = int(round(time.time()*1000))
                     else:
                         print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " dv = "
                                 + "{:.2f}".format(dv_AvgCountsFiltered))
 
-                    
-         #           broadcastProbeStatus("mcp3008", "mcp3008_ch" + str(self.AppPrefs.mcp3008Dict[ch].ch_num), str(dv_AvgCountsFiltered), str(self.AppPrefs.mcp3008Dict[ch].ch_name))
                     AppPrefs.mcp3008Dict[ch].lastValue = str(dv_AvgCountsFiltered)
                     # clear the list so we can populate it with new data for the next data set
                     AppPrefs.mcp3008Dict[ch].ch_dvlist.clear()

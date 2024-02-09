@@ -377,9 +377,9 @@ def readMCP3008Prefs_ex(sqlengine, appPrefs, logger):
                 channel.ch_name = "Unnamed"
                 channel.ch_enabled = "true"
                 channel.ch_type = "RAW"
-                channel.ch_ph_low = "100"
-                channel.ch_ph_med = "200"
-                channel.ch_ph_high = "300"
+                channel.ch_ph_low = "900"
+                channel.ch_ph_med = "700"
+                channel.ch_ph_high = "600"
                 channel.ch_dvlist = []
                 channel.ch_numsamples = "10"
                 channel.ch_sigma = "6"

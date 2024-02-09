@@ -111,7 +111,7 @@ class AppPrefs():
         # self.dv_SamplingInterval = int(defs_common.readINIfile('mcp3008', 'dv_samplinginterval', "1000", lock=controller.threadlock, logger=controller.logger)) # milliseconds
         # self.dv_LogInterval = int(defs_common.readINIfile('mcp3008', 'dv_loginterval', "300000", lock=controller.threadlock, logger=controller.logger)) # milliseconds
         self.dv_SamplingInterval = 1000 # milliseconds
-        self.dv_LogInterval = 300000 # milliseconds
+        self.dv_LogInterval = 60000 # milliseconds
 
 
 
