@@ -4,7 +4,6 @@ import "./ProbeWidget.css";
 import cogicon from "./cog.svg";
 import ProbeWidgetModal from "./ProbeWidgetModal";
 
-
 export class ProbeWidget extends Component {
   constructor(props) {
     super(props);
@@ -16,7 +15,7 @@ export class ProbeWidget extends Component {
       setProbePrefsModalOpen: false,
       probeprefsFormData: null,
       setProbePrefsFormData: null,
-      LastValue: "--"
+      LastValue: "--",
     };
   }
 
@@ -28,24 +27,23 @@ export class ProbeWidget extends Component {
   handleCloseProbePrefsModal = () => {
     this.setState({ setProbePrefsModalOpen: false });
     this.setState({ isProbePrefsModalOpen: false });
-
   };
 
   handleProbePrefsFormSubmit = (data) => {
     this.setState({ setProbePrefsFormData: data });
     this.handleCloseProbePrefsModal();
-    console.log(data)
+    console.log(data);
 
-    let updateApiURL = process.env.REACT_APP_API_SET_PROBE_NAME 
-      .concat(data.probeid)
+    let updateApiURL = process.env.REACT_APP_API_SET_PROBE_NAME.concat(
+      data.probeid
+    )
       .concat("/")
       .concat(data.probename);
-    this.apiCall(updateApiURL, this.setNameCallback );
-
+    this.apiCall(updateApiURL, this.setNameCallback);
   };
 
-  setNameCallback(){
-    return
+  setNameCallback() {
+    return;
   }
 
   // generic API call structure
@@ -71,20 +69,22 @@ export class ProbeWidget extends Component {
       });
   }
 
-
   componentDidMount() {
     let unit_type = "unknown";
     if (this.props.data.sensortype === "humidity") {
       unit_type = "humidity";
     } else if (this.props.data.sensortype === "temperature") {
       unit_type = "temperature";
+    } else if (this.props.data.sensortype === "ph") {
+      unit_type = "ph";
     }
 
     //console.log(this.props.probename)
-    let apiURL = process.env.REACT_APP_API_GET_CHART_DATA_24HR 
-      .concat(this.props.data.probeid)
+    let apiURL = process.env.REACT_APP_API_GET_CHART_DATA_24HR.concat(
+      this.props.data.probeid
+    )
       .concat("/")
-      .concat(unit_type); 
+      .concat(unit_type);
     this.apiCall(apiURL, this.GetChartData);
 
     // chart data
@@ -92,14 +92,15 @@ export class ProbeWidget extends Component {
       this.apiCall(apiURL, this.GetChartData);
     }, 600000);
 
-   // update stats
-   let ApiGetStats = process.env.REACT_APP_API_GET_CURRENT_PROBE_STATS
-   .concat(this.props.data.probeid)
-   this.apiCall(ApiGetStats, this.SetProbeData)
-
-   this.interval2 = setInterval(() => {
+    // update stats
+    let ApiGetStats = process.env.REACT_APP_API_GET_CURRENT_PROBE_STATS.concat(
+      this.props.data.probeid
+    );
     this.apiCall(ApiGetStats, this.SetProbeData);
-  }, 2000);
+
+    this.interval2 = setInterval(() => {
+      this.apiCall(ApiGetStats, this.SetProbeData);
+    }, 2000);
   }
 
   componentWillUnmount() {
@@ -109,13 +110,12 @@ export class ProbeWidget extends Component {
 
   GetChartData = (chartdata) => {
     this.setState({ ChartData: chartdata });
-  }
+  };
 
   SetProbeData = (data) => {
-   this.setState({LastValue: data.lastValue})
-   this.setState({ProbeName: data.probename})
-
-  }
+    this.setState({ LastValue: data.lastValue });
+    this.setState({ ProbeName: data.probename });
+  };
 
   render() {
     return (
@@ -142,15 +142,15 @@ export class ProbeWidget extends Component {
             />
           </button>
         </div>
-       
+
         <ProbeWidgetModal
-        isOpen={this.state.isProbePrefsModalOpen}
-        onSubmit={this.handleProbePrefsFormSubmit}
-        onClose={this.handleCloseProbePrefsModal}
-        ProbeName={this.state.ProbeName}
-        ProbeID={this.props.data.probeid}
-        SensorType={this.props.data.sensortype}
-        Model={this.props.data.probetype}
+          isOpen={this.state.isProbePrefsModalOpen}
+          onSubmit={this.handleProbePrefsFormSubmit}
+          onClose={this.handleCloseProbePrefsModal}
+          ProbeName={this.state.ProbeName}
+          ProbeID={this.props.data.probeid}
+          SensorType={this.props.data.sensortype}
+          Model={this.props.data.probetype}
         />
       </div>
     );
