@@ -1344,6 +1344,15 @@ def get_current_probe_stats(probeid):
                                 "probeid": AppPrefs.dhtDict[probeid].probeid, 
                                 "probetype": "DHT", 
                                 "lastValue": AppPrefs.dhtDict[probeid].lastValue})
+
+        elif probeid.startswith("mcp3008"):
+            response = jsonify({"msg": 'Current probe stats',
+                                "appuid": AppPrefs.appuid,
+                                "sensortype": AppPrefs.mcp3008Dict[probeid[-1]].ch_type , 
+                                "probename": AppPrefs.mcp3008Dict[probeid[-1]].ch_name,
+                                "probeid": probeid, 
+                                "probetype": "analog", 
+                                "lastValue": AppPrefs.mcp3008Dict[probeid[-1]].lastValue})
             
 
             response.status_code = 200 
@@ -1457,7 +1466,15 @@ def get_probe_list():
                                 "probeid": AppPrefs.dhtDict["DHT-H"].probeid, 
                                 "probetype": "DHT", 
                                 "lastValue": AppPrefs.dhtDict["DHT-H"].lastValue}
-            
+        for ch in AppPrefs.mcp3008Dict:
+            if AppPrefs.mcp3008Dict[ch].ch_enabled.lower() == "true":
+                logger.info(ch)
+                probedict["mcp3008_ch" + str(ch)] = {"sensortype": AppPrefs.mcp3008Dict[ch].ch_type , 
+                                                    "probename": AppPrefs.mcp3008Dict[ch].ch_name,
+                                                     "probeid": "mcp3008_ch" + str(ch), 
+                                                     "probetype": "analog", 
+                                                     "lastValue": AppPrefs.mcp3008Dict[ch].lastValue}
+
 
         return probedict    
     

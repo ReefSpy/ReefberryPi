@@ -29,6 +29,7 @@ class analogChannelClass():
     ch_dvlist = []
     ch_numsamples = ""
     ch_sigma = ""
+    ch_probeid=""
     LastLogTime = ""
     lastValue = ""
 

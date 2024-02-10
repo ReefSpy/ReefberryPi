@@ -5,6 +5,7 @@ from sqlalchemy import MetaData
 from sqlalchemy import Table
 from sqlalchemy import select
 from sqlalchemy import insert
+from sqlalchemy import and_
 
 
 # # directly talking to mysql
@@ -349,6 +350,7 @@ def readMCP3008Prefs_ex(sqlengine, appPrefs, logger):
         # build table object from table in DB
         metadata_obj = MetaData()
         mcp3008_table = Table("mcp3008", metadata_obj, autoload_with=sqlengine)
+        probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
 
         conn = sqlengine.connect()
         # we support 8 outlets on the internal bus of the Pi
@@ -367,6 +369,17 @@ def readMCP3008Prefs_ex(sqlengine, appPrefs, logger):
         for ch in channels:
             channel = cls_Preferences.analogChannelClass()
             stmt = select(mcp3008_table).where(mcp3008_table.c.appuid == appPrefs.appuid).where(mcp3008_table.c.chid == ch)
+            # stmt = select([probe_table]).\
+            #        select_from(probe_table.join(mcp3008_table, and_(
+            #        probe_table.c.probeid == mcp3008_table.c.probeid,
+            #        probe_table.c.appuid == mcp3008_table.c.appuid
+            #        ))).\
+            #        where(and_(
+            #        probe_table.c.probeid == mcp3008_table.c.probeid,
+            #        probe_table.c.appuid == mcp3008_table.c.appuid
+            # ))
+            logger.info(stmt)
+            
             results = conn.execute(stmt)
             conn.commit()
             
@@ -374,20 +387,20 @@ def readMCP3008Prefs_ex(sqlengine, appPrefs, logger):
                 logger.warn ("Analog Channel: [" + ch  + "] not found! Creating entry.")
                 
                 channel.ch_num = ch
-                channel.ch_name = "Unnamed"
-                channel.ch_enabled = "true"
-                channel.ch_type = "RAW"
+                channel.ch_enabled = "false"
+                channel.ch_probeid = "mcp3008_ch" + str(ch)
+                channel.ch_type = "raw"
                 channel.ch_ph_low = "900"
                 channel.ch_ph_med = "700"
                 channel.ch_ph_high = "600"
                 channel.ch_dvlist = []
                 channel.ch_numsamples = "10"
-                channel.ch_sigma = "6"
+                channel.ch_sigma = "1"
                 channel.LastLogTime = 0
 
                 stmt = insert(mcp3008_table).values(appuid = appPrefs.appuid, 
                                                     chid = ch,
-                                                    name = "Unnamed",
+                                                    probeid = channel.ch_probeid,
                                                     enabled = channel.ch_enabled,
                                                     type = channel.ch_type,
                                                     ph_low = channel.ch_ph_low,
@@ -399,7 +412,9 @@ def readMCP3008Prefs_ex(sqlengine, appPrefs, logger):
             else:
  
                 for row in results:
+                    logger.info(row)
                     channel.ch_num = ch
+                    channel.ch_probeid = row.probeid
                     channel.ch_name = row.name
                     channel.ch_enabled = row.enabled
                     channel.ch_type = row.type
