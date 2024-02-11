@@ -8,21 +8,7 @@ from sqlalchemy import insert
 from sqlalchemy import and_
 
 
-# # directly talking to mysql
-# def initMySQL(app_prefs, logger):
-#     try:
-#         mySQLdb = mysql.connector.connect(
-#             host=app_prefs.mysql_host,
-#             user=app_prefs.mysql_user,
-#             password=app_prefs.mysql_password,
-#             database=app_prefs.mysql_database
-#         )
 
-#         logger.info("Succesfully connected to MySQL database.")
-#         return mySQLdb
-#     except Exception as e:
-#         logger.error("Can not connect to MySQL database! " + str(e))
-#         exit()
 
 # using sql alchemy
 def initMySQL_ex(app_prefs, logger):
@@ -36,34 +22,6 @@ def initMySQL_ex(app_prefs, logger):
         logger.error("Can not connect to MySQL database! " + str(e))
         exit()
 
-# def readTempProbes(mysqldb, appPrefs, logger):
-#     logger.info("Reading temperature probe data from database...")
-    
-#     appPrefs.tempProbeDict.clear()
-    
-#     mycursor = mysqldb.cursor()
-#     sql = "SELECT probeid, name, appuid FROM " + mysqldb.database + \
-#         ".ds18b20 WHERE appuid = '" + appPrefs.appuid + "'"
-#     #logger.info(sql)
-#     mycursor.execute(sql)
-#     # this will extract row headers
-#     row_headers = [x[0] for x in mycursor.description]
-#     myresult = mycursor.fetchall()
-#     json_data = []
-#     mycursor.close()
-#     mysqldb.commit()
-#     for result in myresult:
-#         json_data.append(dict(zip(row_headers, result)))
-
-#     logger.info(json_data)
-
-#     for k in json_data:
-#         probe = cls_Preferences.tempProbeClass()
-#         probe.probeid = k["probeid"]
-#         probe.name = k["name"]
-#         appPrefs.tempProbeDict[probe.probeid] = probe
-#         logger.info("read temperature probe from db: probeid = " +
-#                     probe.probeid + ", probename = " + probe.name)
 
 def readTempProbes_ex(sqlengine, appPrefs, logger):
     logger.info("Reading temperature probe data from database...")
@@ -124,36 +82,6 @@ def readDHTSensor_ex (sqlengine, appPrefs, logger):
                     dhtsensor.name + ", SensorType = " + dhtsensor.sensortype)
 
 
-
-    
-    
-
-
-# def readGlobalPrefs(mysqldb, appPrefs, logger):
-#     logger.info("Reading global prefs from database...")
-
-#     mycursor = mysqldb.cursor()
-
-#     sql = "SELECT tempscale FROM " + mysqldb.database + \
-#         ".global WHERE appuid = '" + appPrefs.appuid + "'"
-#     logger.info(sql)
-#     mycursor.execute(sql)
-#     myresult = mycursor.fetchone()
-#     #print(myresult)
-
-#     if myresult is not None:
-#         appPrefs.temperaturescale = myresult[0]
-#     else:
-#         #print("error")
-#         appPrefs.temperaturescale = "C"
-#         sql = "INSERT into " + mysqldb.database + \
-#                 ".global (appuid, tempscale) values ('" + appPrefs.appuid + "'," + "'" + "C" + "')"
-#         #print(sql)
-#         mycursor.execute(sql)
-#         mysqldb.commit()
-        
-#     logger.info("Using temperature scale: " + appPrefs.temperaturescale)
-    
 def readGlobalPrefs_ex(sqlengine, appPrefs, logger):    
     logger.info("Reading global prefs from database...")
     # build table object from table in DB
@@ -349,6 +277,7 @@ def readMCP3008Prefs_ex(sqlengine, appPrefs, logger):
 
         # build table object from table in DB
         metadata_obj = MetaData()
+
         mcp3008_table = Table("mcp3008", metadata_obj, autoload_with=sqlengine)
         probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
 
@@ -362,75 +291,75 @@ def readMCP3008Prefs_ex(sqlengine, appPrefs, logger):
                 "5",
                 "6",
                 "7"]
-        ##########################
-        # get all channels at once
-        ##########################
-
+        ##########################################################
+        # populate the mcp3008 table if a channel is missing
+        ##########################################################
         for ch in channels:
-            channel = cls_Preferences.analogChannelClass()
+            newchannel = cls_Preferences.analogChannelClass()
             stmt = select(mcp3008_table).where(mcp3008_table.c.appuid == appPrefs.appuid).where(mcp3008_table.c.chid == ch)
-            # stmt = select([probe_table]).\
-            #        select_from(probe_table.join(mcp3008_table, and_(
-            #        probe_table.c.probeid == mcp3008_table.c.probeid,
-            #        probe_table.c.appuid == mcp3008_table.c.appuid
-            #        ))).\
-            #        where(and_(
-            #        probe_table.c.probeid == mcp3008_table.c.probeid,
-            #        probe_table.c.appuid == mcp3008_table.c.appuid
-            # ))
-            logger.info(stmt)
-            
             results = conn.execute(stmt)
             conn.commit()
             
             if results.rowcount == 0:
                 logger.warn ("Analog Channel: [" + ch  + "] not found! Creating entry.")
                 
-                channel.ch_num = ch
-                channel.ch_enabled = "false"
-                channel.ch_probeid = "mcp3008_ch" + str(ch)
-                channel.ch_type = "raw"
-                channel.ch_ph_low = "900"
-                channel.ch_ph_med = "700"
-                channel.ch_ph_high = "600"
-                channel.ch_dvlist = []
-                channel.ch_numsamples = "10"
-                channel.ch_sigma = "1"
-                channel.LastLogTime = 0
+                newchannel.ch_num = ch
+                newchannel.ch_probeid = "mcp3008_ch" + str(ch)
+                newchannel.ch_ph_low = "900"
+                newchannel.ch_ph_med = "700"
+                newchannel.ch_ph_high = "600"
+                newchannel.ch_dvlist = []
+                newchannel.ch_numsamples = "10"
+                newchannel.ch_sigma = "1"
+                newchannel.LastLogTime = 0
 
                 stmt = insert(mcp3008_table).values(appuid = appPrefs.appuid, 
                                                     chid = ch,
-                                                    probeid = channel.ch_probeid,
-                                                    enabled = channel.ch_enabled,
-                                                    type = channel.ch_type,
-                                                    ph_low = channel.ch_ph_low,
-                                                    ph_med = channel.ch_ph_med,
-                                                    ph_high = channel.ch_ph_high,
-                                                    numsamples = channel.ch_numsamples,
-                                                    sigma = channel.ch_sigma)
-                                                    
-            else:
- 
-                for row in results:
-                    logger.info(row)
-                    channel.ch_num = ch
-                    channel.ch_probeid = row.probeid
-                    channel.ch_name = row.name
-                    channel.ch_enabled = row.enabled
-                    channel.ch_type = row.type
-                    channel.ch_ph_low = row.ph_low
-                    channel.ch_ph_med = row.ph_med
-                    channel.ch_ph_high = row.ph_high
-                    channel.ch_dvlist = []
-                    channel.ch_numsamples = row.numsamples
-                    channel.ch_sigma = row.sigma
-                    channel.LastLogTime = 0
+                                                    probeid = newchannel.ch_probeid,
+                                                    ph_low = newchannel.ch_ph_low,
+                                                    ph_med = newchannel.ch_ph_med,
+                                                    ph_high = newchannel.ch_ph_high,
+                                                    numsamples = newchannel.ch_numsamples,
+                                                    sigma = newchannel.ch_sigma)
+                conn.execute(stmt)
+                conn.commit()
 
-            conn.execute(stmt)
-            conn.commit()
+        for ch in channels:
+            channel = cls_Preferences.analogChannelClass()
 
-            appPrefs.mcp3008Dict[ch] = channel
+            stmt = select(probe_table.c.probeid, 
+                        probe_table.c.appuid,
+                        probe_table.c.name,
+                        probe_table.c.sensortype,
+                        probe_table.c.probetype,
+                        mcp3008_table.c.chid,
+                        mcp3008_table.c.ph_low,
+                        mcp3008_table.c.ph_med,
+                        mcp3008_table.c.ph_high,
+                        mcp3008_table.c.numsamples,
+                        mcp3008_table.c.sigma,
+                        ).select_from(probe_table.outerjoin(mcp3008_table, probe_table.c.probeid == mcp3008_table.c.probeid)) \
+                        .where(probe_table.c.probeid == mcp3008_table.c.probeid, probe_table.c.appuid == mcp3008_table.c.appuid, mcp3008_table.c.chid == ch)
             
+            
+            results = conn.execute(stmt)
+            conn.commit()
+            
+            for row in results:
+                #logger.info(row)
+                channel.ch_num = ch
+                channel.ch_probeid = row.probeid
+                channel.ch_name = row.name
+                channel.ch_type = row.sensortype
+                channel.ch_ph_low = row.ph_low
+                channel.ch_ph_med = row.ph_med
+                channel.ch_ph_high = row.ph_high
+                channel.ch_dvlist = []
+                channel.ch_numsamples = row.numsamples
+                channel.ch_sigma = row.sigma
+                channel.LastLogTime = 0
+
+                appPrefs.mcp3008Dict[ch] = channel
                 
     except Exception as e:
         logger.error("Error reading analog probes. " + str(e) )

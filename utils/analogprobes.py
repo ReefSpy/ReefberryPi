@@ -12,27 +12,36 @@ engine = create_engine("mysql+pymysql://root:raspberry@192.168.4.217:3306/reefbe
 metadata = MetaData()
 
 # Define the tables
-probes = Table('probes', metadata, autoload_with=engine)
-mcp3008 = Table('mcp3008', metadata, autoload_with=engine)
+probe_table = Table('probes', metadata, autoload_with=engine)
+mcp3008_table = Table('mcp3008', metadata, autoload_with=engine)
+
+channels = ["0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7"]
 
 # Create the query
-
-stmt = select(probes.c.probeid, 
-              probes.c.appuid,
-              probes.c.name,
-              probes.c.sensortype,
-              probes.c.probetype,
-              mcp3008.c.chid,
-              mcp3008.c.enabled,
-              mcp3008.c.type,
-              mcp3008.c.ph_low,
-              mcp3008.c.ph_med,
-              mcp3008.c.ph_high,
-              mcp3008.c.numsamples,
-              mcp3008.c.sigma,
-
-              ).select_from(probes.outerjoin(mcp3008,probes.c.probeid == mcp3008.c.probeid)) \
-                  .where(probes.c.probeid == mcp3008.c.probeid, probes.c.appuid == mcp3008.c.appuid)
+#for ch in channels:
+ch = 1
+stmt = select(probe_table.c.probeid, 
+                        probe_table.c.appuid,
+                        probe_table.c.name,
+                        probe_table.c.sensortype,
+                        probe_table.c.probetype,
+                        mcp3008_table.c.chid,
+                        mcp3008_table.c.enabled,
+                        mcp3008_table.c.type,
+                        mcp3008_table.c.ph_low,
+                        mcp3008_table.c.ph_med,
+                        mcp3008_table.c.ph_high,
+                        mcp3008_table.c.numsamples,
+                        mcp3008_table.c.sigma,
+                        ).select_from(probe_table.outerjoin(mcp3008_table, probe_table.c.probeid == mcp3008_table.c.probeid)) \
+                        .where(probe_table.c.probeid == mcp3008_table.c.probeid, probe_table.c.appuid == mcp3008_table.c.appuid, mcp3008_table.c.chid == ch)
 
 
 # query = select([probes]).\

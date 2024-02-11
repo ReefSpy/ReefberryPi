@@ -103,12 +103,12 @@ def apploop():
         if (int(round(time.time()*1000)) - AppPrefs.dv_SamplingTimeSeed) > AppPrefs.dv_SamplingInterval:
             #for x in range (0,8):
             for ch in AppPrefs.mcp3008Dict:
-                if AppPrefs.mcp3008Dict[ch].ch_enabled.lower() == "true":
-                    logger.debug("mcp3008 ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " " + str(AppPrefs.mcp3008Dict[ch].ch_name) + " = " + str(AppPrefs.mcp3008Dict[ch].lastValue))
-                    dv = mcp3008.readadc(int(AppPrefs.mcp3008Dict[ch].ch_num), GPIO_config.SPICLK, GPIO_config.SPIMOSI,
-                                            GPIO_config.SPIMISO, GPIO_config.SPICS)
-                    logger.debug("CH" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " = " + str(dv))
-                    AppPrefs.mcp3008Dict[ch].ch_dvlist.append(dv)
+                #if AppPrefs.mcp3008Dict[ch].ch_enabled.lower() == "true":
+                logger.debug("mcp3008 ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " " + str(AppPrefs.mcp3008Dict[ch].ch_name) + " = " + str(AppPrefs.mcp3008Dict[ch].lastValue))
+                dv = mcp3008.readadc(int(AppPrefs.mcp3008Dict[ch].ch_num), GPIO_config.SPICLK, GPIO_config.SPIMOSI,
+                                        GPIO_config.SPIMISO, GPIO_config.SPICS)
+                logger.debug("CH" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " = " + str(dv))
+                AppPrefs.mcp3008Dict[ch].ch_dvlist.append(dv)
                 # once we hit our desired sample size of ph_numsamples (ie: 120)
                 # then calculate the average value
                 if len(AppPrefs.mcp3008Dict[ch].ch_dvlist) >= int(AppPrefs.mcp3008Dict[ch].ch_numsamples):
@@ -849,6 +849,7 @@ def set_probe_name(probeid, probename):
 
         defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
         defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
+        defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, logger)
        
         response = {}
         response = jsonify({"msg": 'Updated probe name',
@@ -1345,6 +1346,8 @@ def get_current_probe_stats(probeid):
                                 "probetype": "DHT", 
                                 "lastValue": AppPrefs.dhtDict[probeid].lastValue})
 
+            response.status_code = 200 
+
         elif probeid.startswith("mcp3008"):
             response = jsonify({"msg": 'Current probe stats',
                                 "appuid": AppPrefs.appuid,
@@ -1467,13 +1470,12 @@ def get_probe_list():
                                 "probetype": "DHT", 
                                 "lastValue": AppPrefs.dhtDict["DHT-H"].lastValue}
         for ch in AppPrefs.mcp3008Dict:
-            if AppPrefs.mcp3008Dict[ch].ch_enabled.lower() == "true":
-                logger.info(ch)
-                probedict["mcp3008_ch" + str(ch)] = {"sensortype": AppPrefs.mcp3008Dict[ch].ch_type , 
-                                                    "probename": AppPrefs.mcp3008Dict[ch].ch_name,
-                                                     "probeid": "mcp3008_ch" + str(ch), 
-                                                     "probetype": "analog", 
-                                                     "lastValue": AppPrefs.mcp3008Dict[ch].lastValue}
+            #logger.info(ch)
+            probedict["mcp3008_ch" + str(ch)] = {"sensortype": AppPrefs.mcp3008Dict[ch].ch_type , 
+                                                "probename": AppPrefs.mcp3008Dict[ch].ch_name,
+                                                    "probeid": "mcp3008_ch" + str(ch), 
+                                                    "probetype": "analog", 
+                                                    "lastValue": AppPrefs.mcp3008Dict[ch].lastValue}
 
 
         return probedict    
