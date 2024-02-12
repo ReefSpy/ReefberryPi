@@ -28,7 +28,7 @@ class PrefPaneContainer extends Component {
       { name: "Heater", desc: <PrefPaneHeater data={this.props.data} probearray={this.props.probearray}/>} ,
       { name: "Skimmer", desc: <PrefPaneSkimmer data={this.props.data}/> },
       { name: "Return", desc: <PrefPaneReturn data={this.props.data}/> },
-      { name: "PH", desc: <PrefPanePh data={this.props.data}/> },
+      { name: "PH", desc: <PrefPanePh data={this.props.data} probearray={this.props.probearray}/> },
     ];
 
 

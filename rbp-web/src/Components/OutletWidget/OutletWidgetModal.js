@@ -178,7 +178,23 @@ const OutletWidgetModal = ({
     }
     // PH
     else if (formState.controlType === "PH") {
+      let apiURL =
+        process.env.REACT_APP_API_SET_OUTLET_PARAMS_PH.concat(OutletID);
+
+      let payload = {
+        outletname: event.target.outletname.value,
+        outletid: OutletID,
+        control_type: formState.controlType,
+        ph_low: event.target.ph_low.value,
+        ph_high: event.target.ph_high.value,
+        ph_onwhen: event.target.onWhen.value,
+        ph_probe: probearray[event.target.phProbe.selectedIndex].probeid,
+
+      }
+      console.log(payload)
+      apiCall(apiURL, payload);
     }
+    
 
   };
 

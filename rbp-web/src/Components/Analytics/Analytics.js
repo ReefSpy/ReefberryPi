@@ -26,14 +26,13 @@ class Analytics extends Component {
       chartdata[datapoint][0] = newDate;
     }
     // if outlet is on, extend the lione to end of graph by adding an extra "ON" point
-    if (this.state.selectedwidgettype1 === "outlet"){
-      console.log(chartdata.slice(-1)[0][1])
-      if (chartdata.slice(-1)[0][1] === 1){
-      chartdata.push([new Date().getTime(), 1] );
-    }
+    if (this.state.selectedwidgettype1 === "outlet") {
+      console.log(chartdata.slice(-1)[0][1]);
+      if (chartdata.slice(-1)[0][1] === 1) {
+        chartdata.push([new Date().getTime(), 1]);
+      }
     }
     this.setState({ ChartData: chartdata });
-
   };
 
   // for a second series of data
@@ -43,12 +42,12 @@ class Analytics extends Component {
       let newDate = new Date(chartdata[datapoint][0]).getTime();
       chartdata[datapoint][0] = newDate;
     }
-     // if outlet is on, extend the lione to end of graph by adding an extra "ON" point
-     if (this.state.selectedwidgettype2 === "outlet"){
-      console.log(chartdata.slice(-1)[0][1])
-      if (chartdata.slice(-1)[0][1] === 1){
-      chartdata.push([new Date().getTime(), 1] );
-    }
+    // if outlet is on, extend the lione to end of graph by adding an extra "ON" point
+    if (this.state.selectedwidgettype2 === "outlet") {
+      console.log(chartdata.slice(-1)[0][1]);
+      if (chartdata.slice(-1)[0][1] === 1) {
+        chartdata.push([new Date().getTime(), 1]);
+      }
     }
     this.setState({ ChartData2: chartdata });
   };
@@ -61,8 +60,7 @@ class Analytics extends Component {
     probeArray2.unshift({ probeid: undefined });
     this.setState({ probearray2: probeArray2 });
 
-   
-// build the second lists
+    // build the second lists
     let dropdownlist1 = [];
     let dropdownlist2 = [];
     dropdownlist2.push({ id: undefined, name: undefined });
@@ -170,7 +168,8 @@ class Analytics extends Component {
     }
 
     if (this.state.selectedprobeid2 === undefined) {
-      let charttitle = this.state.selectedprobename1 + " - " + this.state.selectedTime;
+      let charttitle =
+        this.state.selectedprobename1 + " - " + this.state.selectedTime;
       this.setState({ chartTitle: charttitle });
     } else {
       let charttitle =
@@ -272,7 +271,7 @@ class Analytics extends Component {
                 {chart.probename}
               </option>
             ))} */}
-             {this.state.dropdownlist1?.map((chart, index) => (
+            {this.state.dropdownlist1?.map((chart, index) => (
               <option key={index} value={chart?.id}>
                 {chart?.displayname}
               </option>
