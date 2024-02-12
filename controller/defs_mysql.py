@@ -178,7 +178,7 @@ def readOutletPrefs_ex(sqlengine, appPrefs, logger):
                 outlet.skimmer_feed_delay_c = "0"
                 outlet.skimmer_enable_feed_d = "False"
                 outlet.skimmer_feed_delay_d = "0"
-                outlet.ph_probe = "mcp3008_ch1"
+                outlet.ph_probe = "mcp3008_ch0"
                 outlet.ph_high = "8.0"
                 outlet.ph_low = "7.9"
                 outlet.ph_onwhen = "HIGH"

@@ -324,8 +324,9 @@ def apploop():
                 # control type LIGHT
                 elif AppPrefs.outletDict.get(outlet).control_type == "Light":
                     defs_outletcontrol.handle_outlet_light(AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
-                # elif AppPrefs.outletDict.get(outlet).controltype == "PH":
-                #     return defs_outletcontrolsim.handle_outlet_ph(self, outlet, button_state, pin)
+                # control type PH
+                elif AppPrefs.outletDict.get(outlet).control_type == "PH":
+                    defs_outletcontrol.handle_outlet_ph(AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
             
         except Exception as e:
             logger.error("Error reading outlet data! " + str(e))
@@ -1042,6 +1043,70 @@ def set_outlet_params_heater(outletid):
         response.status_code = 500 
         return response
 
+#####################################################################
+# set_outlet_params_ph/<outletid>
+# set the paramters for outlet of type: PH
+# must specify outletid and deliver payload in json
+#####################################################################     
+
+@app.route('/set_outlet_params_ph/<outletid>' , methods=["PUT", "POST"])
+@cross_origin()
+def set_outlet_params_ph(outletid):
+    global logger
+
+    try:
+        global AppPrefs
+
+        response = {}
+        payload = request.get_json()
+        ph_low = payload["ph_low"]
+        ph_high = payload["ph_high"]
+        ph_probe = payload["ph_probe"]
+        ph_onwhen = payload["ph_onwhen"]
+        outletname = payload["outletname"]
+        control_type = payload["control_type"]
+
+
+
+        response = jsonify({"msg": 'Updated outlet data for type: PH',
+                            "outletid": outletid,
+                            "outletname": outletname,
+                            "control_type": control_type,
+                            "ph_low": ph_low,
+                            "ph_high": ph_high,
+                            "ph_onwhen": ph_onwhen,
+                            "ph_probe": ph_probe,
+                            })
+
+        response.status_code = 200      
+
+        # build table object from table in DB
+        metadata_obj = MetaData()
+        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+        
+       
+
+        stmt = (
+            update(outlet_table)
+            .where(outlet_table.c.outletid == outletid)
+            .where(outlet_table.c.appuid == AppPrefs.appuid)
+            .values(outletname=outletname, ph_low=ph_low, ph_high=ph_high, ph_onwhen=ph_onwhen, ph_probe=ph_probe, control_type=control_type )
+            )
+
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+
+        return response
+    
+    except Exception as e:
+        AppPrefs.logger.error("set_outlet_params_ph: " +  str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500 
+        return response
+
 
 #####################################################################
 # set_outlet_params_return/<outletid>
@@ -1424,6 +1489,11 @@ def get_current_outlet_stats(outletid):
                             "skimmer_feed_delay_b": AppPrefs.outletDict[outletid].skimmer_feed_delay_b,
                             "skimmer_feed_delay_c": AppPrefs.outletDict[outletid].skimmer_feed_delay_c,
                             "skimmer_feed_delay_d": AppPrefs.outletDict[outletid].skimmer_feed_delay_d,
+
+                            "ph_probe": AppPrefs.outletDict[outletid].ph_probe,
+                            "ph_low": AppPrefs.outletDict[outletid].ph_low,
+                            "ph_high": AppPrefs.outletDict[outletid].ph_high,
+                            "ph_onwhen": AppPrefs.outletDict[outletid].ph_onwhen,
                             })
 
         response.status_code = 200      
@@ -1457,7 +1527,7 @@ def get_probe_list():
                               "probename": AppPrefs.tempProbeDict[probe].name,
                               "sensortype": "temperature", 
                               "lastValue": AppPrefs.tempProbeDict[probe].lastTemperature}
-        print(probedict)
+        
         if AppPrefs.dht_enable == "true":
             probedict["DHT-T"]={"sensortype": AppPrefs.dhtDict["DHT-T"].sensortype , 
                                 "probename": AppPrefs.dhtDict["DHT-T"].name,
@@ -1477,7 +1547,7 @@ def get_probe_list():
                                                     "probetype": "analog", 
                                                     "lastValue": AppPrefs.mcp3008Dict[ch].lastValue}
 
-
+        logger.debug(probedict)
         return probedict    
     
     except Exception as e:

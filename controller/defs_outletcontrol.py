@@ -187,56 +187,67 @@ def handle_outlet_heater(AppPrefs, outlet, button_state, pin):
    
 
 
-# def handle_outlet_ph(controller, outlet, button_state, pin):
+def handle_outlet_ph(AppPrefs, outlet, button_state, pin):
 
-#     if button_state == "OFF":
-#         handle_on_off(controller, outlet, pin, PIN_OFF)
-#         return "OFF"
-#     elif button_state == "ON":
-#         handle_on_off(controller, outlet, pin, PIN_ON)
-#         return "ON"
-#     elif button_state == "AUTO":
-#         probe = controller.AppPrefs.outletDict[outlet].ph_probe
-#         ph_high = controller.AppPrefs.outletDict[outlet].ph_high
-#         ph_low = controller.AppPrefs.outletDict[outlet].ph_low
-#         ph_onwhen = controller.AppPrefs.outletDict[outlet].ph_onwhen
+    if button_state == "OFF":
+        handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+        #return "OFF"
+    elif button_state == "ON":
+        handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+        #return "ON"
+    elif button_state == "AUTO":
+        probe = AppPrefs.outletDict[outlet].ph_probe
+        ph_high = AppPrefs.outletDict[outlet].ph_high
+        ph_low = AppPrefs.outletDict[outlet].ph_low
+        ph_onwhen = AppPrefs.outletDict[outlet].ph_onwhen
 
-#         # print(probe)
-#         # print(probe[-1:])
-#         for p in controller.AppPrefs.mcp3008Dict:
-#            # print(controller.AppPrefs.mcp3008Dict[p].ch_num)
-#             if str(controller.AppPrefs.mcp3008Dict[p].ch_num) == str(controller.AppPrefs.outletDict[outlet].ph_probe[-1:]):
-#                # print("I found the probe: " +  str(controller.AppPrefs.mcp3008Dict[p].ch_num))
-#                # print("last ph " + str(controller.AppPrefs.mcp3008Dict[p].lastValue) + " PH High " + ph_high + " PH Low " + ph_low + " On when " + ph_onwhen)
-#                 if controller.AppPrefs.mcp3008Dict[p].lastValue == "":
-#                     controller.AppPrefs.mcp3008Dict[p].lastValue = 0
-#                 if ph_onwhen == "HIGH":
-#                     if float(controller.AppPrefs.mcp3008Dict[p].lastValue) >= float(ph_high):
-#                         handle_on_off(controller, outlet, pin, PIN_ON)
-#                         return "ON (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
-#                     elif float(controller.AppPrefs.mcp3008Dict[p].lastValue) <= float(ph_low):
-#                         handle_on_off(controller, outlet, pin, PIN_OFF)
-#                         return "OFF (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
-#                     else:
-#                         state = get_on_or_off(pin)
-#                         return state + " (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+        # print(probe)
+        # print(probe[-1:])
+        for p in AppPrefs.mcp3008Dict:
+           # print(controller.AppPrefs.mcp3008Dict[p].ch_num)
+            if str(AppPrefs.mcp3008Dict[p].ch_num) == str(AppPrefs.outletDict[outlet].ph_probe[-1:]):
+               # print("I found the probe: " +  str(controller.AppPrefs.mcp3008Dict[p].ch_num))
+               # print("last ph " + str(controller.AppPrefs.mcp3008Dict[p].lastValue) + " PH High " + ph_high + " PH Low " + ph_low + " On when " + ph_onwhen)
+                if AppPrefs.mcp3008Dict[p].lastValue == "":
+                    AppPrefs.mcp3008Dict[p].lastValue = 0
+                if ph_onwhen == "HIGH":
+                    if float(AppPrefs.mcp3008Dict[p].lastValue) >= float(ph_high):
+                        handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+                        #return "ON (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                    elif float(AppPrefs.mcp3008Dict[p].lastValue) <= float(ph_low):
+                        handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+                        #return "OFF (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                    else:
+                        state = get_on_or_off(pin)
+                        #return state + " (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                    
+                elif ph_onwhen == "LOW":
+                    if float(AppPrefs.mcp3008Dict[p].lastValue) >= float(ph_high):
+                        handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+                        #return "OFF (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                    elif float(AppPrefs.mcp3008Dict[p].lastValue) <= float(ph_low):
+                        handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+                        #return "ON (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                    else:
+                        state = get_on_or_off(pin)
+                        #return state + " (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                
+                AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin) + " (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
+                                          "Type: " + AppPrefs.outletDict[outlet].control_type + \
+                                          " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
+                                          " | Mode: AUTO | " + get_on_or_off(pin) + \
+                                          " | Range: (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")" + \
+                                          " | Current: " + AppPrefs.mcp3008Dict[p].lastValue + \
+                                          " | On When: " + ph_onwhen + \
+                                          " | Status: " + get_on_or_off(pin))
+                
+                break
 
-#                 elif ph_onwhen == "LOW":
-#                     if float(controller.AppPrefs.mcp3008Dict[p].lastValue) >= float(ph_high):
-#                         handle_on_off(controller, outlet, pin, PIN_OFF)
-#                         return "OFF (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
-#                     elif float(controller.AppPrefs.mcp3008Dict[p].lastValue) <= float(ph_low):
-#                         handle_on_off(controller, outlet, pin, PIN_ON)
-#                         return "ON (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
-#                     else:
-#                         state = get_on_or_off(pin)
-#                         return state + " (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
-#                 break
-
-#     else:
-#         #GPIO.output(pin, True)
-#         handle_on_off(controller, outlet, pin, PIN_OFF)
-#         return "OFF"
+    else:
+        #GPIO.output(pin, True)
+        handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+        return "OFF"
 
 
 def handle_outlet_light(AppPrefs, outlet, button_state, pin):
