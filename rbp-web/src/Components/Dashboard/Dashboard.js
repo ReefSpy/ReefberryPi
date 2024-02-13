@@ -203,9 +203,9 @@ class Dashboard extends Component {
       col1items.push(probedata[probe]);
     }
 
-    if (col1items.length > 0) {
-      this.setState({ col1items });
-    }
+    // if (col1items.length > 0) {
+    //   this.setState({ col1items });
+    // }
     this.setState({ ProbeArray: col1items });
 
     return col1items;
