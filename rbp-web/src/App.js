@@ -203,6 +203,7 @@ class App extends Component {
             feedmode={this.state.globalPrefs?.feed_CurrentMode}
             probearray={this.state.ProbeArray}
             outletarray={this.state.OutletArray}
+            globalPrefs={this.state.globalPrefs}
           ></MainTabContainer>
         </div>
 

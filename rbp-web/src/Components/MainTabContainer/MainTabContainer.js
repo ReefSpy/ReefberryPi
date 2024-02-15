@@ -25,7 +25,7 @@ class MainTabContainer extends Component {
     const tabPanels = [];
 
     const tabTypes = [
-      { name: "Dashboard", desc: <Dashboard feedmode={this.props.feedmode}/>, img: dashicon},
+      { name: "Dashboard", desc: <Dashboard feedmode={this.props.feedmode} globalPrefs={this.props.globalPrefs}/>, img: dashicon},
       { name: "Analytics", desc: <Analytics probearray={this.props.probearray} outletarray={this.props.outletarray}/>, img: charticon },
       { name: "Journal", desc: "Journal coming soon", img: notepadicon},
       { name: "About", desc: <About />, img: infoicon}
