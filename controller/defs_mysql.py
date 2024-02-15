@@ -94,6 +94,30 @@ def readGlobalPrefs_ex(sqlengine, appPrefs, logger):
     results = conn.execute(stmt)
     conn.commit()
  
+    if results.rowcount == 0:
+        logger.warn ("Global Prefs not found! Creating entry.")
+        appPrefs.temperaturescale = "C"
+        appPrefs.feed_a_time = "60"
+        appPrefs.feed_b_time = "60"
+        appPrefs.feed_c_time = "60"
+        appPrefs.feed_d_time = "60"
+        appPrefs.dht_enable = "false"
+
+        stmt = insert(global_table).values(appuid = appPrefs.appuid, 
+                                                    tempscale = appPrefs.temperaturescale,
+                                                    feed_a_time = appPrefs.feed_a_time,
+                                                    feed_b_time = appPrefs.feed_b_time,
+                                                    feed_c_time = appPrefs.feed_c_time,
+                                                    feed_d_time = appPrefs.feed_d_time,
+                                                    dht_enable = appPrefs.dht_enable
+                                                    )
+        results = conn.execute(stmt)
+        conn.commit()
+
+    stmt = select(global_table).where(global_table.c.appuid == appPrefs.appuid)
+    results = conn.execute(stmt)
+    conn.commit()
+
     for row in results:
         appPrefs.temperaturescale = row.tempscale
         appPrefs.appuid = row.appuid
