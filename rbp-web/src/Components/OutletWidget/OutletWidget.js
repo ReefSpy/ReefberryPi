@@ -26,7 +26,9 @@ const groupOptions = [
 export class OutletWidget extends Component {
   constructor(props) {
     super(props);
-    this.state = { buttonstateidx: undefined };
+    this.state = { buttonstateidx: undefined,
+                    shouldBtnChange: false };
+    
   }
 
   onToggleSelect = (value) => {
@@ -96,10 +98,24 @@ export class OutletWidget extends Component {
   };
 
   SetOutletData = (data) => {
+    // to prevent button state from changing prematurely, 
+    // ensure you get two consecutive statuses that are the same
+    if (this.state.shouldBtnChange === true){
+      this.setState({ buttonstateidx: data.button_state });
+      this.setState({ shouldBtnChange: false });
+      }
+    
+    if (data.button_state !== this.state.buttonstateidx){
+      this.setState({ shouldBtnChange: true });
+    }else{
+      this.setState({ shouldBtnChange: false });
+    }
+
+
     this.setState({ OutletName: data.outletname });
     this.setState({ OutletStatus: data.outletstatus });
     this.setState({ OutletData: data });
-    this.setState({ buttonstateidx: data.button_state });
+  //  this.setState({ buttonstateidx: data.button_state });
   };
 
   // generic API call structure
