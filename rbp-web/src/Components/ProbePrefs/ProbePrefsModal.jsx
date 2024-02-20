@@ -56,6 +56,15 @@ const ProbePrefsModal = ({
     onSubmit(formState);
   };
 
+  const handleInputChange = (event) => {
+   
+    const { name, value } = event.target;
+    setFormState((prevFormData) => ({
+      ...prevFormData,
+      [name]: value,
+    }));
+
+  };
 
 
   const handleInputChange0 = (event) => {
@@ -100,6 +109,32 @@ const ProbePrefsModal = ({
       {children}
 
       <form onSubmit={handleSubmit} ref={modalRef}>
+       
+      <div className="form-row">
+          <label htmlFor="enableDHT">Enable DHT Sensor</label>
+        </div>
+        <div onChange={(event) => handleInputChange(event)}>
+          <input
+            type="radio"
+            id="enableDHT"
+            name="enableDHT"
+            value="true"
+            checked={formState.enableDHT === "true" ? true : null}
+          />
+
+          <label htmlFor="enableDHT">ON</label>
+
+          <input
+            type="radio"
+            id="enableDHT"
+            name="enableDHT"
+            value="false"
+            checked={formState.enableDHT === "false" ? true : null}
+          />
+          <label htmlFor="enableDHT">OFF</label>
+        </div>
+       <br></br>
+       
         <div className="form-row">
           <label>Analog to Digital Probes</label>
           
