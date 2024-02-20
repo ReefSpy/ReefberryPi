@@ -3,7 +3,9 @@ import MainTabContainer from "./Components/MainTabContainer/MainTabContainer";
 import appicon from "./Images/reefberry-pi-logo.svg";
 import preficon from "./Images/cog-white.svg";
 import logouticon from "./Images/logout-white.svg";
+import probeIcon from "./Images/probe-white.svg";
 import GlobalPrefsModal from "./Components/GlobalPrefs/GlobalPrefsModal";
+import ProbePrefsModal from "./Components/ProbePrefs/ProbePrefsModal";
 import "./App.css";
 //import useToken from "./useToken";
 import Login from "./Components/Login/Login";
@@ -103,6 +105,16 @@ class App extends Component {
   }
 
   //   ///////
+  handleOpenProbePrefsModal = () => {
+    this.setState({ setProbePrefsModalOpen: true });
+    this.setState({ isProbePrefsModalOpen: true });
+  };
+
+  handleCloseProbePrefsModal = () => {
+    this.setState({ setProbePrefsModalOpen: false });
+    this.setState({ isProbePrefsModalOpen: false });
+  };
+
   handleOpenGlobalPrefsModal = () => {
     this.setState({ setGlobalPrefsModalOpen: true });
     this.setState({ isGlobalPrefsModalOpen: true });
@@ -182,8 +194,17 @@ class App extends Component {
             <button className="headericonbtn">
               <img
                 className="headericon"
+                src={probeIcon}
+                alt="Probes"
+                onClick={this.handleOpenProbePrefsModal}
+              ></img>
+            </button>
+
+            <button className="headericonbtn">
+              <img
+                className="headericon"
                 src={preficon}
-                alt="preferences"
+                alt="Preferences"
                 onClick={this.handleOpenGlobalPrefsModal}
               ></img>
             </button>
@@ -191,7 +212,7 @@ class App extends Component {
               <img
                 className="headericon"
                 src={logouticon}
-                alt="logout"
+                alt="Logout"
                 onClick={this.logout}
               ></img>
             </button>
@@ -213,6 +234,15 @@ class App extends Component {
             onSubmit={this.handleGlobalPrefsFormSubmit}
             onClose={this.handleCloseGlobalPrefsModal}
             globalTempScale={this.state.globalTempScale}
+            globalPrefs={this.state.globalPrefs}
+          />
+        ) : null}
+
+        {this.state.isProbePrefsModalOpen ? (
+          <ProbePrefsModal
+            isOpen={this.state.isProbePrefsModalOpen}
+            onSubmit={this.handleProbePrefsFormSubmit}
+            onClose={this.handleCloseProbePrefsModal}
             globalPrefs={this.state.globalPrefs}
           />
         ) : null}
