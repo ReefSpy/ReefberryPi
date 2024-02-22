@@ -140,7 +140,7 @@ class Dashboard extends Component {
         ></OutletWidget>
       );
     } else if (item.widgetType === "feed") {
-      return <FeedWidget feedmode={this.props.feedmode}></FeedWidget>;
+      return <FeedWidget feedmode={this.props.feedmode} globalPrefs={this.props.globalPrefs}></FeedWidget>;
     } else {
       return null;
     }

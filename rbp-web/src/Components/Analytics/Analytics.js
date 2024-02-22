@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import "./Analytics.css";
 import HighchartsWrapper from "./AnalyticsChart";
+import probeIcon from "./probe.svg";
+import outletIcon from "./outlet.svg";
 
 class Analytics extends Component {
   constructor(props) {
@@ -21,11 +23,15 @@ class Analytics extends Component {
 
   // need to convert timestamp to milliseconds to show up properly in HighCharts
   formatChartData1 = (chartdata) => {
+    let valueArray1 = [];
+    let ValueTotal1 = 0;
     for (let datapoint in chartdata) {
       let newDate = new Date(chartdata[datapoint][0]).getTime();
       chartdata[datapoint][0] = newDate;
+      valueArray1.push(chartdata[datapoint][1]);
+      ValueTotal1 = ValueTotal1 + chartdata[datapoint][1];
     }
-    // if outlet is on, extend the lione to end of graph by adding an extra "ON" point
+    // if outlet is on, extend the line to end of graph by adding an extra "ON" point
     if (this.state.selectedwidgettype1 === "outlet") {
       console.log(chartdata.slice(-1)[0][1]);
       if (chartdata.slice(-1)[0][1] === 1) {
@@ -33,14 +39,35 @@ class Analytics extends Component {
       }
     }
     this.setState({ ChartData: chartdata });
+    if (this.state.selectedwidgettype1 === "probe") {
+      this.setState({
+        ProbeIcn1: "probe",
+        ProbeMax1: Math.max(...valueArray1).toFixed(2),
+        ProbeMin1: Math.min(...valueArray1).toFixed(2),
+        ProbeAvg1: (ValueTotal1 / valueArray1.length).toFixed(2),
+        
+      });
+    } else {
+      this.setState({
+        ProbeIcn1: "outlet",
+        ProbeMax1: "--",
+        ProbeMin1: "--",
+        ProbeAvg1: "--",
+        
+      });
+    }
   };
 
   // for a second series of data
   // need to convert timestamp to milliseconds to show up properly in HighCharts
   formatChartData2 = (chartdata) => {
+    let valueArray2 = [];
+    let ValueTotal2 = 0;
     for (let datapoint in chartdata) {
       let newDate = new Date(chartdata[datapoint][0]).getTime();
       chartdata[datapoint][0] = newDate;
+      valueArray2.push(chartdata[datapoint][1]);
+      ValueTotal2 = ValueTotal2 + chartdata[datapoint][1];
     }
     // if outlet is on, extend the lione to end of graph by adding an extra "ON" point
     if (this.state.selectedwidgettype2 === "outlet") {
@@ -50,6 +77,23 @@ class Analytics extends Component {
       }
     }
     this.setState({ ChartData2: chartdata });
+    if (this.state.selectedwidgettype2 === "probe") {
+      this.setState({
+        ProbeIcn2: "probe",
+        ProbeMax2: Math.max(...valueArray2).toFixed(2),
+        ProbeMin2: Math.min(...valueArray2).toFixed(2),
+        ProbeAvg2: (ValueTotal2 / valueArray2.length).toFixed(2),
+        
+      });
+    } else {
+      this.setState({
+        ProbeIcn2: "outlet",
+        ProbeMax2: "--",
+        ProbeMin2: "--",
+        ProbeAvg2: "--",
+        
+      });
+    }
   };
 
   componentDidMount() {}
@@ -152,6 +196,14 @@ class Analytics extends Component {
       probename2: this.state.selectedprobename2,
       unitType1: this.state.selectedunitType1,
       unitType2: this.state.selectedunitType2,
+      ProbeMax1: "--",
+      ProbeMin1: "--",
+      ProbeAvg1: "--",
+      ProbeMax2: "--",
+      ProbeMin2: "--",
+      ProbeAvg2: "--",
+      ProbeIcn1: null,
+      ProbeIcn2: null,
     });
 
     let baseurl = null;
@@ -347,6 +399,46 @@ class Analytics extends Component {
           oneToOne={true}
           chartTitle={this.state.chartTitle}
         />
+        <br></br>
+        <div className="result-container">
+          <label className="result-title">Type</label>
+          <label className="result-title">Name</label>
+          <label className="result-title">High</label>
+          <label className="result-title">Low</label>
+          <label className="result-title">Mean</label>
+
+          {this.state.ProbeIcn1 === "probe" ? <div className="result-row1">
+            <img src={probeIcon} alt="Probe" className="result-icon"></img>
+          </div> : <div></div>}
+          {this.state.ProbeIcn1 === "outlet" ? <div className="result-row1">
+            <img src={outletIcon} alt="Outlet" className="result-icon"></img>
+          </div> : <div></div>}
+          {this.state.ProbeIcn1 === null ? <div className="result-row1">
+            --</div> : <div></div>}
+          {/* <div className="result-row1">
+            <img src={probeIcon} alt="Probe" className="result-icon"></img>
+          </div> */}
+          <label className="result-row1">{this.state.probename1}</label>
+          <label className="result-row1">{this.state.ProbeMax1}</label>
+          <label className="result-row1">{this.state.ProbeMin1}</label>
+          <label className="result-row1">{this.state.ProbeAvg1}</label>
+          
+          {this.state.ProbeIcn2 === "probe" ? <div className="result-row2">
+            <img src={probeIcon} alt="Probe" className="result-icon"></img>
+          </div> : <div></div>}
+          {this.state.ProbeIcn2 === "outlet" ? <div className="result-row2">
+            <img src={outletIcon} alt="Outlet" className="result-icon"></img>
+          </div> : <div></div>}
+          {this.state.ProbeIcn2 === null ? <div className="result-row2">
+            --</div> : <div></div>}
+          {/* <div className="result-row2">
+            <img src={probeIcon} alt="P>robe" className="result-icon"></img>
+          </div> */}
+          <label className="result-row2">{this.state.probename2}</label>
+          <label className="result-row2">{this.state.ProbeMax2}</label>
+          <label className="result-row2">{this.state.ProbeMin2}</label>
+          <label className="result-row2">{this.state.ProbeAvg2}</label>
+        </div>
       </div>
     );
   }

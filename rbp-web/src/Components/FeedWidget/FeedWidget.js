@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import "./FeedWidget.css";
+import CountdownTimer  from "./CountDownTimer";
 
 export class FeedWidget extends Component {
   constructor(props) {
@@ -58,6 +59,16 @@ export class FeedWidget extends Component {
   clickFeedMode = (mode) => {
     this.setState({ feedmode: mode });
     this.setState({ shouldFeedChange: false });
+    if(mode === "A"){
+      this.setState({feedtimer: this.props.globalPrefs.feed_a_time})
+    } else if (mode === "B"){
+      this.setState({feedtimer: this.props.globalPrefs.feed_b_time})
+    }else if (mode === "C"){
+      this.setState({feedtimer: this.props.globalPrefs.feed_c_time})
+    } else if (mode === "D"){
+      this.setState({feedtimer: this.props.globalPrefs.feed_d_time})
+    } else { this.setState({feedtimer: "0"})}
+    
     let apiURL = process.env.REACT_APP_API_SET_FEEDMODE.concat(mode);
     this.apiCall(apiURL ,() => this.setFeedState(mode));
   };
@@ -70,7 +81,10 @@ return
   render() {
     return (
       <div className="feedcontainer">
-        <span className="feedmodelbl">Feed Mode</span>
+        <div className="feedmodelbl">Feed Mode</div>
+       {this.state.feedmode !== "CANCEL" ? (<div className="feedtimer"><CountdownTimer time = {this.state.feedtimer} /></div>) : null }
+        
+    
         <div className="btncontainer">
           <button
             className={
@@ -110,6 +124,7 @@ return
           >
             Cancel
           </button>
+       
         </div>
       </div>
     );
