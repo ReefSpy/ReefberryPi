@@ -536,6 +536,8 @@ def get_outlet_list():
                                   "skimmer_feed_delay_c": AppPrefs.outletDict[outlet].skimmer_feed_delay_c,
                                   "skimmer_feed_delay_d": AppPrefs.outletDict[outlet].skimmer_feed_delay_d,
 
+                                  "enabled": AppPrefs.outletDict[outlet].enabled,
+
                                   }
 
         if len(outletdict) < 8:
@@ -897,6 +899,331 @@ def set_probe_name(probeid, probename):
         response.status_code = 500
         return response
 
+#####################################################################
+# set_probe_enable_state
+# set the enable state of the probe
+# must specify ProbeID and true or false
+#####################################################################
+
+
+@app.route('/set_probe_enable_state/<probeid>/<enable>', methods=['PUT'])
+@cross_origin()
+def set_probe_enable_state(probeid, enable):
+    global logger
+
+    try:
+        global AppPrefs
+        # build table object from table in DB
+        metadata_obj = MetaData()
+        probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
+
+        stmt = (
+            update(probe_table)
+            .where(probe_table.c.probeid == probeid)
+            .where(probe_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=enable)
+        )
+
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
+        defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
+        defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, logger)
+
+        response = {}
+        response = jsonify({"msg": 'Updated probe enabled state',
+                            "probeid": probeid,
+                            "enabled": enable,
+                            })
+
+        response.status_code = 200
+        return response
+
+    except Exception as e:
+        AppPrefs.logger.error("set_probe_enable_state: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+
+#####################################################################
+# set_mcp3008_enable_state
+# set the enable state of the probe
+# must specify ProbeID and true or false
+#####################################################################
+
+
+@app.route('/set_mcp3008_enable_state', methods=['POST'])
+@cross_origin()
+def set_mcp3008_enable_state():
+    try:
+        global logger
+
+        ch0_enable = str(request.json.get(
+            "adc_enable_channel_0", None)).lower()
+        ch1_enable = str(request.json.get(
+            "adc_enable_channel_1", None)).lower()
+        ch2_enable = str(request.json.get(
+            "adc_enable_channel_2", None)).lower()
+        ch3_enable = str(request.json.get(
+            "adc_enable_channel_3", None)).lower()
+        ch4_enable = str(request.json.get(
+            "adc_enable_channel_4", None)).lower()
+        ch5_enable = str(request.json.get(
+            "adc_enable_channel_5", None)).lower()
+        ch6_enable = str(request.json.get(
+            "adc_enable_channel_6", None)).lower()
+        ch7_enable = str(request.json.get(
+            "adc_enable_channel_7", None)).lower()
+
+        global AppPrefs
+        # build table object from table in DB
+        metadata_obj = MetaData()
+        probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
+
+        # channel 0
+        stmt = (
+            update(probe_table)
+            .where(probe_table.c.probeid == "mcp3008_ch0")
+            .where(probe_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=ch0_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # channel 1
+        stmt = (
+            update(probe_table)
+            .where(probe_table.c.probeid == "mcp3008_ch1")
+            .where(probe_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=ch1_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # channel 2
+        stmt = (
+            update(probe_table)
+            .where(probe_table.c.probeid == "mcp3008_ch2")
+            .where(probe_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=ch2_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # channel 3
+        stmt = (
+            update(probe_table)
+            .where(probe_table.c.probeid == "mcp3008_ch3")
+            .where(probe_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=ch3_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # channel 4
+        stmt = (
+            update(probe_table)
+            .where(probe_table.c.probeid == "mcp3008_ch4")
+            .where(probe_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=ch4_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # channel 5
+        stmt = (
+            update(probe_table)
+            .where(probe_table.c.probeid == "mcp3008_ch5")
+            .where(probe_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=ch5_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # channel 6
+        stmt = (
+            update(probe_table)
+            .where(probe_table.c.probeid == "mcp3008_ch6")
+            .where(probe_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=ch6_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # channel 7
+        stmt = (
+            update(probe_table)
+            .where(probe_table.c.probeid == "mcp3008_ch7")
+            .where(probe_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=ch7_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
+        # defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
+        defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, logger)
+
+        response = {}
+        response = jsonify({"msg": 'Updated mcp3008 enabled state',
+                            })
+
+        response.status_code = 200
+        return response
+
+    except Exception as e:
+        AppPrefs.logger.error("set_mcp3008_enable_state: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+
+#####################################################################
+# set_outlet_enable_state
+# set the enable state of the outlet
+# must specify ProbeID and true or false
+#####################################################################
+@app.route('/set_outlet_enable_state', methods=['POST'])
+@cross_origin()
+def set_outlet_enable_state():
+    try:
+        global logger
+
+        int_outlet_1_enable = str(request.json.get(
+            "enable_int_outlet_1", None)).lower()
+        int_outlet_2_enable = str(request.json.get(
+            "enable_int_outlet_2", None)).lower()
+        int_outlet_3_enable = str(request.json.get(
+            "enable_int_outlet_3", None)).lower()
+        int_outlet_4_enable = str(request.json.get(
+            "enable_int_outlet_4", None)).lower()
+        int_outlet_5_enable = str(request.json.get(
+            "enable_int_outlet_5", None)).lower()
+        int_outlet_6_enable = str(request.json.get(
+            "enable_int_outlet_6", None)).lower()
+        int_outlet_7_enable = str(request.json.get(
+            "enable_int_outlet_7", None)).lower()
+        int_outlet_8_enable = str(request.json.get(
+            "enable_int_outlet_8", None)).lower()
+
+
+        global AppPrefs
+        # build table object from table in DB
+        metadata_obj = MetaData()
+        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+
+        # outlet 1
+        stmt = (
+            update(outlet_table)
+            .where(outlet_table.c.outletid == "int_outlet_1")
+            .where(outlet_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=int_outlet_1_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # outlet 2
+        stmt = (
+            update(outlet_table)
+            .where(outlet_table.c.outletid == "int_outlet_2")
+            .where(outlet_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=int_outlet_2_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # outlet 3
+        stmt = (
+            update(outlet_table)
+            .where(outlet_table.c.outletid == "int_outlet_3")
+            .where(outlet_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=int_outlet_3_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # outlet 4
+        stmt = (
+            update(outlet_table)
+            .where(outlet_table.c.outletid == "int_outlet_4")
+            .where(outlet_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=int_outlet_4_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # outlet 5
+        stmt = (
+            update(outlet_table)
+            .where(outlet_table.c.outletid == "int_outlet_5")
+            .where(outlet_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=int_outlet_5_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # outlet 6
+        stmt = (
+            update(outlet_table)
+            .where(outlet_table.c.outletid == "int_outlet_6")
+            .where(outlet_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=int_outlet_6_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # outlet 7
+        stmt = (
+            update(outlet_table)
+            .where(outlet_table.c.outletid == "int_outlet_7")
+            .where(outlet_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=int_outlet_7_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # outlet 8
+        stmt = (
+            update(outlet_table)
+            .where(outlet_table.c.outletid == "int_outlet_8")
+            .where(outlet_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=int_outlet_8_enable)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+
+        response = {}
+        response = jsonify({"msg": 'Updated outlet enabled state',
+                            })
+
+        response.status_code = 200
+        return response
+
+    except Exception as e:
+        AppPrefs.logger.error("set_outlet_enable_state: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+    
 #####################################################################
 # set_outlet_params_light/<outletid>
 # set the paramters for outlet of type: Light
@@ -1455,7 +1782,7 @@ def get_current_probe_stats(probeid):
     except Exception as e:
         AppPrefs.logger.error("get_current_probe_stats: " + str(e))
         # response = jsonify({"msg": str(e)})
-        response = jsonify(AppPrefs.tempProbeDict[probeid])
+        response = jsonify(probeid)
         response.status_code = 500
         return response
 
@@ -1581,6 +1908,94 @@ def get_probe_list():
 
     except Exception as e:
         AppPrefs.logger.error("get_probe_list: " + str(e))
+
+#####################################################################
+# get_mcp3008_enable_state
+# return list of mcp3008 probes and their enabled state
+#####################################################################
+@app.route('/get_mcp3008_enable_state/', methods=['GET'])
+@cross_origin()
+def get_mcp3008_enable_state():
+
+    try:
+        global AppPrefs
+
+        probedict = {}
+        response = {}
+
+        # build table object from table in DB
+        metadata_obj = MetaData()
+
+        probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
+
+        conn = sqlengine.connect()
+
+        stmt = select(probe_table).where(probe_table.c.appuid == AppPrefs.appuid).where(
+            probe_table.c.probetype == "analog")
+
+        results = conn.execute(stmt)
+        conn.commit()
+
+        # loop through each row
+        for row in results:
+            probedict[row.probeid] = {"sensortype": row.sensortype,
+                                      "probename": row.name,
+                                      "probeid": row.probeid,
+                                                 "probetype": row.probetype,
+                                                 "enabled": row.enabled,
+                                                 "sensortype": row.sensortype}
+
+        logger.debug(probedict)
+
+        return probedict
+
+    except Exception as e:
+        AppPrefs.logger.error("get_mcp3008_enable_state: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+
+#####################################################################
+# get_outlet_enable_state
+# return list of outlets with their enabled state
+#####################################################################
+@app.route('/get_outlet_enable_state/', methods=['GET'])
+@cross_origin()
+def get_outlet_enable_state():
+
+    try:
+        global AppPrefs
+
+        outletdict = {}
+        response = {}
+
+        # build table object from table in DB
+        metadata_obj = MetaData()
+
+        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+
+        conn = sqlengine.connect()
+
+        stmt = select(outlet_table).where(outlet_table.c.appuid == AppPrefs.appuid)
+
+        results = conn.execute(stmt)
+        conn.commit()
+
+        # loop through each row
+        for row in results:
+            outletdict[row.outletid] = {"outletname": row.outletname,
+                                      "outletid": row.outletid,
+                                      "enabled": row.enabled,}
+
+        logger.debug(outletdict)
+
+        return outletdict
+
+    except Exception as e:
+        AppPrefs.logger.error("get_outlet_enable_state: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
 
 #####################################################################
 # get_token

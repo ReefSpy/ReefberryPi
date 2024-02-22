@@ -206,6 +206,7 @@ def readOutletPrefs_ex(sqlengine, appPrefs, logger):
                 outlet.ph_high = "8.0"
                 outlet.ph_low = "7.9"
                 outlet.ph_onwhen = "HIGH"
+                outlet.enabled = "true"
 
                 stmt = insert(outlets_table).values(appuid = appPrefs.appuid, 
                                                     outletid = intoutlet,
@@ -238,7 +239,8 @@ def readOutletPrefs_ex(sqlengine, appPrefs, logger):
                                                     ph_probe = outlet.ph_probe,
                                                     ph_high = outlet.ph_high,
                                                     ph_low = outlet.ph_low,
-                                                    ph_onwhen = outlet.ph_onwhen)
+                                                    ph_onwhen = outlet.ph_onwhen,
+                                                    enabled = outlet.enabled)
             else:
  
                 for row in results:
@@ -275,12 +277,15 @@ def readOutletPrefs_ex(sqlengine, appPrefs, logger):
                     outlet.ph_low = row.ph_low
                     outlet.ph_onwhen = row.ph_onwhen
                     outlet.outletstatus = "Loading..."
+                    outlet.enabled = row.enabled
                
                 
 
             conn.execute(stmt)
             conn.commit()
-
+            
+            if row.enabled.lower() == "true":
+                logger.info(row)
             appPrefs.outletDict[intoutlet] = outlet
             #print(intoutlet)
             #for row in results:
@@ -356,6 +361,7 @@ def readMCP3008Prefs_ex(sqlengine, appPrefs, logger):
                         probe_table.c.name,
                         probe_table.c.sensortype,
                         probe_table.c.probetype,
+                        probe_table.c.enabled,
                         mcp3008_table.c.chid,
                         mcp3008_table.c.ph_low,
                         mcp3008_table.c.ph_med,
@@ -363,7 +369,7 @@ def readMCP3008Prefs_ex(sqlengine, appPrefs, logger):
                         mcp3008_table.c.numsamples,
                         mcp3008_table.c.sigma,
                         ).select_from(probe_table.outerjoin(mcp3008_table, probe_table.c.probeid == mcp3008_table.c.probeid)) \
-                        .where(probe_table.c.probeid == mcp3008_table.c.probeid, probe_table.c.appuid == mcp3008_table.c.appuid, mcp3008_table.c.chid == ch)
+                        .where(probe_table.c.probeid == mcp3008_table.c.probeid, probe_table.c.appuid == mcp3008_table.c.appuid, mcp3008_table.c.chid == ch, probe_table.c.enabled == "true")
             
             
             results = conn.execute(stmt)
@@ -379,6 +385,7 @@ def readMCP3008Prefs_ex(sqlengine, appPrefs, logger):
                 channel.ch_ph_med = row.ph_med
                 channel.ch_ph_high = row.ph_high
                 channel.ch_dvlist = []
+                channel.ch_enabled = row.enabled
                 channel.ch_numsamples = row.numsamples
                 channel.ch_sigma = row.sigma
                 channel.LastLogTime = 0
