@@ -4,8 +4,10 @@ import appicon from "./Images/reefberry-pi-logo.svg";
 import preficon from "./Images/cog-white.svg";
 import logouticon from "./Images/logout-white.svg";
 import probeIcon from "./Images/probe-white.svg";
+import outletIcon from "./Images/outlet-white.svg"
 import GlobalPrefsModal from "./Components/GlobalPrefs/GlobalPrefsModal";
 import ProbePrefsModal from "./Components/ProbePrefs/ProbePrefsModal";
+import OutletPrefsModal from "./Components/OutletPrefs/OutletPrefsModal";
 import "./App.css";
 //import useToken from "./useToken";
 import Login from "./Components/Login/Login";
@@ -115,6 +117,16 @@ class App extends Component {
     this.setState({ isProbePrefsModalOpen: false });
   };
 
+  handleOpenOutletPrefsModal = () => {
+    this.setState({ setOutletPrefsModalOpen: true });
+    this.setState({ isOutletPrefsModalOpen: true });
+  };
+
+  handleCloseOutletPrefsModal = () => {
+    this.setState({ setOutletPrefsModalOpen: false });
+    this.setState({ isOutletPrefsModalOpen: false });
+  };
+
   handleOpenGlobalPrefsModal = () => {
     this.setState({ setGlobalPrefsModalOpen: true });
     this.setState({ isGlobalPrefsModalOpen: true });
@@ -138,6 +150,16 @@ class App extends Component {
     };
     this.apiCallPut(apiURL, payload);
     this.handleCloseGlobalPrefsModal();
+  };
+
+  handleProbePrefsFormSubmit = (data) => {
+    this.handleCloseProbePrefsModal();
+    
+  };
+
+  handleOutletPrefsFormSubmit = (data) => {
+    this.handleCloseOutletPrefsModal();
+    
   };
 
   setGlobalPrefs(data) {
@@ -191,6 +213,15 @@ class App extends Component {
           <span>Reefberry Pi</span>
 
           <div className="header-right">
+          <button className="headericonbtn">
+              <img
+                className="headericon"
+                src={outletIcon}
+                alt="Outlets"
+                onClick={this.handleOpenOutletPrefsModal}
+              ></img>
+            </button>
+
             <button className="headericonbtn">
               <img
                 className="headericon"
@@ -244,6 +275,14 @@ class App extends Component {
             onSubmit={this.handleProbePrefsFormSubmit}
             onClose={this.handleCloseProbePrefsModal}
             globalPrefs={this.state.globalPrefs}
+          />
+        ) : null}
+
+{this.state.isOutletPrefsModalOpen ? (
+          <OutletPrefsModal
+            isOpen={this.state.isOutletPrefsModalOpen}
+            onSubmit={this.handleOutletPrefsFormSubmit}
+            onClose={this.handleCloseOutletPrefsModal}
           />
         ) : null}
       </div>

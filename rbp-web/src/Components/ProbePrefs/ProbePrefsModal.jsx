@@ -7,18 +7,18 @@ const ProbePrefsModal = ({
   hasCloseBtn = true,
   onClose,
   children,
-  onSubmit,
+   onSubmit,
 }) => {
     const [isModalOpen, setModalOpen] = useState(isOpen);
     const [formState, setFormState] = useState({});
-    const [adc_enable_channel_0, set_adc_enable_channel_0] = useState(true);
-    const [adc_enable_channel_1, set_adc_enable_channel_1] = useState(true);
-    const [adc_enable_channel_2, set_adc_enable_channel_2] = useState(false);
-    const [adc_enable_channel_3, set_adc_enable_channel_3] = useState(false);
-    const [adc_enable_channel_4, set_adc_enable_channel_4] = useState(false);
-    const [adc_enable_channel_5, set_adc_enable_channel_5] = useState(false);
-    const [adc_enable_channel_6, set_adc_enable_channel_6] = useState(false);
-    const [adc_enable_channel_7, set_adc_enable_channel_7] = useState(false);
+    const [adc_enable_channel_0, set_adc_enable_channel_0] = useState();
+    const [adc_enable_channel_1, set_adc_enable_channel_1] = useState();
+    const [adc_enable_channel_2, set_adc_enable_channel_2] = useState();
+    const [adc_enable_channel_3, set_adc_enable_channel_3] = useState();
+    const [adc_enable_channel_4, set_adc_enable_channel_4] = useState();
+    const [adc_enable_channel_5, set_adc_enable_channel_5] = useState();
+    const [adc_enable_channel_6, set_adc_enable_channel_6] = useState();
+    const [adc_enable_channel_7, set_adc_enable_channel_7] = useState();
 
   const modalRef = useRef(null);
 
@@ -34,6 +34,48 @@ const ProbePrefsModal = ({
       handleCloseModal();
     }
   };
+
+  useEffect(()=>{
+    fetch(process.env.REACT_APP_API_GET_MCP3008_ENABLE_STATE)
+    .then((response) => {
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Data not found");
+        } else if (response.status === 500) {
+          throw new Error("Server error");
+        } else {
+          throw new Error("Network response was not ok");
+        }
+      }
+      return response.json();
+    })
+    .then((data) => {
+      console.log(data);
+      for (let channel in data){
+        console.log(data[channel])
+        if (data[channel].probeid === "mcp3008_ch0"){
+          set_adc_enable_channel_0(data[channel].enabled  === "true" ? true : false)
+        }else if (data[channel].probeid === "mcp3008_ch1"){
+          set_adc_enable_channel_1(data[channel].enabled  === "true" ? true : false)
+        }else if (data[channel].probeid === "mcp3008_ch2"){
+          set_adc_enable_channel_2(data[channel].enabled  === "true" ? true : false)
+        }else if (data[channel].probeid === "mcp3008_ch3"){
+          set_adc_enable_channel_3(data[channel].enabled === "true" ? true : false)
+        }else if (data[channel].probeid === "mcp3008_ch4"){
+          set_adc_enable_channel_4(data[channel].enabled  === "true" ? true : false)
+        }else if (data[channel].probeid === "mcp3008_ch5"){
+          set_adc_enable_channel_5(data[channel].enabled  === "true" ? true : false)
+        }else if (data[channel].probeid === "mcp3008_ch6"){
+          set_adc_enable_channel_6(data[channel].enabled  === "true" ? true : false)
+        }else if (data[channel].probeid === "mcp3008_ch7"){
+          set_adc_enable_channel_7(data[channel].enabled  === "true" ? true : false)
+        }
+      }
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
+  }, [])
 
   useEffect(() => {
     setModalOpen(isOpen);
@@ -53,8 +95,49 @@ const ProbePrefsModal = ({
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    onSubmit(formState);
+    submitForm({adc_enable_channel_0,
+      adc_enable_channel_1,
+      adc_enable_channel_2,
+      adc_enable_channel_3,
+      adc_enable_channel_4,
+      adc_enable_channel_5,
+      adc_enable_channel_6,
+      adc_enable_channel_7})
+   
+      onSubmit(formState);
   };
+
+   function submitForm(probestates) {
+
+   console.log( JSON.stringify(probestates))
+
+    return fetch(process.env.REACT_APP_API_SET_MCP3008_ENABLE_STATE, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(probestates),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Data not found");
+          } else if (response.status === 500) {
+            throw new Error("Server error");
+          } else {
+            throw new Error("Network response was not ok");
+          }
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+        return data;
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
 
   const handleInputChange = (event) => {
    
@@ -110,7 +193,7 @@ const ProbePrefsModal = ({
 
       <form onSubmit={handleSubmit} ref={modalRef}>
        
-      <div className="form-row">
+      {/* <div className="form-row">
           <label htmlFor="enableDHT">Enable DHT Sensor</label>
         </div>
         <div onChange={(event) => handleInputChange(event)}>
@@ -138,7 +221,7 @@ const ProbePrefsModal = ({
         <div className="form-row">
           <label>Analog to Digital Probes</label>
           
-        </div>
+        </div> */}
 
         <div class="adcgridcontainer">
           <div class="adctitlelabel adccol1">MCP3008 ADC</div>

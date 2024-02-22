@@ -13,7 +13,8 @@ async function loginUser(credentials) {
   // })
   //   .then(data => data.json()  )
 
-  return fetch("http://xpi01.local:5000/get_token", {
+  // return fetch("http://xpi01.local:5000/get_token", {
+  return fetch(process.env.REACT_APP_API_GET_TOKEN, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

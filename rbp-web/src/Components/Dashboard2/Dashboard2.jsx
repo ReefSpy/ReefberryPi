@@ -136,7 +136,7 @@ class Dashboard2 extends React.Component {
           let idnum = String(i++);
           data[probe]["id"] = `item-${idnum}`;
           data[probe]["widgetType"] = `probe`;
-          data[probe]["content"] = "Probe Widget"
+          data[probe]["content"] = "Probe Widget";
 
           items[`item-${idnum}`] = data[probe];
           collist1.push(`item-${idnum}`);
@@ -168,11 +168,16 @@ class Dashboard2 extends React.Component {
           let idnum = String(i++);
           data[outlet]["id"] = `item-${idnum}`;
           data[outlet]["widgetType"] = `outlet`;
-          data[outlet]["content"] = "Outlet Widget"
+          data[outlet]["content"] = "Outlet Widget";
 
           items[`item-${idnum}`] = data[outlet];
-          collist2.push(`item-${idnum}`);
-          outletitems.push(data[outlet]);
+
+
+          if (data[outlet]["enabled"] === "true") {
+            collist2.push(`item-${idnum}`);
+            outletitems.push(data[outlet]);
+          }
+   
         }
       })
       .then(() => {
@@ -258,7 +263,16 @@ class Dashboard2 extends React.Component {
               (widgetId) => this.state.widgets[widgetId]
             );
 
-            return <Column key={column.id} column={column} widgets={widgets} globalPrefs={this.props.globalPrefs} feedmode={this.props.feedmode} probearray={this.state.ProbeArray} />;
+            return (
+              <Column
+                key={column.id}
+                column={column}
+                widgets={widgets}
+                globalPrefs={this.props.globalPrefs}
+                feedmode={this.props.feedmode}
+                probearray={this.state.ProbeArray}
+              />
+            );
           })}
         </DragDropContext>
       </div>
