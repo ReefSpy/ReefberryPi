@@ -150,6 +150,7 @@ class App extends Component {
     };
     this.apiCallPut(apiURL, payload);
     this.handleCloseGlobalPrefsModal();
+ 
   };
 
   handleProbePrefsFormSubmit = (data) => {
@@ -179,6 +180,7 @@ class App extends Component {
     })
       .then((response) => response.json())
       .then((data) => console.log(data))
+      .then ( window.location.reload(false))
       .catch((error) => console.log(error));
   };
 

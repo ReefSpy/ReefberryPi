@@ -149,6 +149,8 @@ const OutletPrefsModal = ({
       })
       .then((data) => {
         console.log(data);
+        alert("Settings saved.  Window will refresh to reflect changes")
+        window.location.reload(false);
         return data;
       })
       .catch((error) => {
