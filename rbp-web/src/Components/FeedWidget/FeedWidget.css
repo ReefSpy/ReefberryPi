@@ -1,6 +1,6 @@
 .feedcontainer {
   grid-template-columns: auto auto;
-  grid-template-rows: 20px 28px;
+  grid-template-rows: 20px 33px;
   display: grid;
 
   justify-content: left;
@@ -10,10 +10,10 @@
   border-color: black;
   border-width: 1px;
   border-radius: 4px;
-  padding-top: 4px;
+  padding-top: 0px;
   padding-right: 4px;
   padding-left: 12px;
-  padding-bottom: 8px;
+  padding-bottom: 0px;
 }
 
 .btncontainer {
@@ -32,6 +32,7 @@
   font-weight: bold;
   font-size: 14px;
   text-align: left;
+  margin-top: 3px;
 }
 
 .feedtimer{
@@ -44,6 +45,7 @@
   font-size: 14px;
   text-align: right;
   margin-right: 10px;
+  margin-top: 3px;
 }
 
 .feedmodebtn {
@@ -53,11 +55,12 @@
   border-style: solid;
   border-width: 1px;
   width: 34px;
-  height: 28px;
+  height: 24px;
   color: black;
   font-weight: bold;
   border-color: #85868c;
   background-color: #efefef;
+  margin-bottom: 2px;
 }
 
 .feedmodebtnon {
@@ -67,7 +70,7 @@
   border-style: solid;
   border-width: 1px;
   width: 34px;
-  height: 28px;
+  height: 24px;
   color: black;
   font-weight: bold;
   border-color: #85868c;
@@ -100,7 +103,7 @@
   border-style: solid;
   border-width: 1px;
   width: 110px;
-  height: 28px;
+  height: 24px;
   color: black;
   font-weight: bold;
   background-color: orange;

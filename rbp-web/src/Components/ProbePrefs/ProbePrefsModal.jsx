@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import "./ProbePrefsModal.css";
 import closeCircle from "./close-circle.svg";
+import ClipLoader from "react-spinners/ClipLoader";
 
 const ProbePrefsModal = ({
   isOpen,
@@ -132,6 +133,8 @@ const ProbePrefsModal = ({
       })
       .then((data) => {
         console.log(data);
+        alert("Settings saved.  Window will refresh to reflect changes")
+        window.location.reload(false);
         return data;
       })
       .catch((error) => {
@@ -190,7 +193,7 @@ const ProbePrefsModal = ({
         </button>
       )}
       {children}
-
+      {!adc_enable_channel_0 == "" ?
       <form onSubmit={handleSubmit} ref={modalRef}>
        
       {/* <div className="form-row">
@@ -336,7 +339,13 @@ const ProbePrefsModal = ({
             Submit
           </button>
         </div>
-      </form>
+      </form> : <ClipLoader
+          color="#000000"
+          loading={true}
+          size={28}
+          aria-label="Loading Spinner"
+          data-testid="loader"
+        />}
     </dialog>
   );
 };

@@ -3,6 +3,7 @@ import HighchartsWrapper from "./ProbeChart";
 import "./ProbeWidget.css";
 import cogicon from "./cog.svg";
 import ProbeWidgetModal from "./ProbeWidgetModal";
+import ClipLoader from "react-spinners/ClipLoader";
 
 export class ProbeWidget extends Component {
   constructor(props) {
@@ -15,7 +16,7 @@ export class ProbeWidget extends Component {
       setProbePrefsModalOpen: false,
       probeprefsFormData: null,
       setProbePrefsFormData: null,
-      LastValue: "--",
+      LastValue: "",
     };
   }
 
@@ -121,7 +122,13 @@ export class ProbeWidget extends Component {
     return (
       <div className="probecontainer">
         <div className="item probename">{this.state.ProbeName}</div>
-        <div className="item probevalue">{this.state.LastValue} </div>
+        <div className="item probevalue">{!this.state.LastValue == "" ? this.state.LastValue : <ClipLoader
+        color= "#000000"
+        loading= {true}
+        size={28}
+        aria-label="Loading Spinner"
+        data-testid="loader"
+      />} </div>
         <div className="item chartdata">
           <div>
             <HighchartsWrapper

@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import "./OutletPrefsModal.css";
 import closeCircle from "./close-circle.svg";
+import ClipLoader from "react-spinners/ClipLoader";
 
 const OutletPrefsModal = ({
   isOpen,
@@ -149,6 +150,8 @@ const OutletPrefsModal = ({
       })
       .then((data) => {
         console.log(data);
+        alert("Settings saved.  Window will refresh to reflect changes");
+        window.location.reload(false);
         return data;
       })
       .catch((error) => {
@@ -156,13 +159,13 @@ const OutletPrefsModal = ({
       });
   }
 
-//   const handleInputChange = (event) => {
-//     const { name, value } = event.target;
-//     setFormState((prevFormData) => ({
-//       ...prevFormData,
-//       [name]: value,
-//     }));
-//   };
+  //   const handleInputChange = (event) => {
+  //     const { name, value } = event.target;
+  //     setFormState((prevFormData) => ({
+  //       ...prevFormData,
+  //       [name]: value,
+  //     }));
+  //   };
 
   const handleInputChange1 = (event) => {
     set_enable_int_outlet_1(event.target.checked);
@@ -204,167 +207,176 @@ const OutletPrefsModal = ({
         </button>
       )}
       {children}
+      {!enable_int_outlet_1 == "" ? (
+        <form onSubmit={handleSubmit} ref={modalRef}>
+          <div class="outletgridcontainer">
+            <div class="outlettitlelabel outletcol1">Outlet Number</div>
+            <div
+              class="outletchannelrow outletcol1 outletchannel1"
+              grid-row-start="2"
+            >
+              Outlet 1
+            </div>
+            <div
+              class="outletchannelrow outletcol1 outletchannel2"
+              grid-row-start="3"
+            >
+              Outlet 2
+            </div>
+            <div
+              class="outletchannelrow outletcol1 outletchannel3"
+              grid-row-start="4"
+            >
+              Outlet 3
+            </div>
+            <div
+              class="outletchannelrow outletcol1 outletchannel4"
+              grid-row-start="5"
+            >
+              Outlet 4
+            </div>
+            <div
+              class="outletchannelrow outletcol1 outletchannel5"
+              grid-row-start="6"
+            >
+              Outlet 5
+            </div>
+            <div
+              class="outletchannelrow outletcol1 outletchannel6"
+              grid-row-start="7"
+            >
+              Outlet 6
+            </div>
+            <div
+              class="outletchannelrow outletcol1 outletchannel7"
+              grid-row-start="8"
+            >
+              Outlet 7
+            </div>
+            <div
+              class="outletchannelrow outletcol1 outletchannel8"
+              grid-row-start="9"
+            >
+              Outlet 8
+            </div>
 
-      <form onSubmit={handleSubmit} ref={modalRef}>
-        <div class="outletgridcontainer">
-          <div class="outlettitlelabel outletcol1">Outlet Number</div>
-          <div
-            class="outletchannelrow outletcol1 outletchannel1"
-            grid-row-start="2"
-          >
-            Outlet 1
-          </div>
-          <div
-            class="outletchannelrow outletcol1 outletchannel2"
-            grid-row-start="3"
-          >
-            Outlet 2
-          </div>
-          <div
-            class="outletchannelrow outletcol1 outletchannel3"
-            grid-row-start="4"
-          >
-            Outlet 3
-          </div>
-          <div
-            class="outletchannelrow outletcol1 outletchannel4"
-            grid-row-start="5"
-          >
-            Outlet 4
-          </div>
-          <div
-            class="outletchannelrow outletcol1 outletchannel5"
-            grid-row-start="6"
-          >
-            Outlet 5
-          </div>
-          <div
-            class="outletchannelrow outletcol1 outletchannel6"
-            grid-row-start="7"
-          >
-            Outlet 6
-          </div>
-          <div
-            class="outletchannelrow outletcol1 outletchannel7"
-            grid-row-start="8"
-          >
-            Outlet 7
-          </div>
-          <div
-            class="outletchannelrow outletcol1 outletchannel8"
-            grid-row-start="9"
-          >
-            Outlet 8
+            <div class="outlettitlelabel outletcol2">Enable</div>
+
+            <div
+              class="outletchannelrow outletcol2 outletchannel1"
+              grid-row-start="2"
+            >
+              <input
+                type="checkbox"
+                onChange={(event) => handleInputChange1(event)}
+                id="enable_int_outlet_1"
+                name="enable_int_outlet_1"
+                checked={enable_int_outlet_1 === true ? true : false}
+              />
+            </div>
+            <div
+              class="outletchannelrow outletcol2 outletchannel2"
+              grid-row-start="3"
+            >
+              <input
+                type="checkbox"
+                onChange={(event) => handleInputChange2(event)}
+                id="enable_int_outlet_2"
+                name="enable_int_outlet_2"
+                checked={enable_int_outlet_2 === true ? true : false}
+              />
+            </div>
+            <div
+              class="outletchannelrow outletcol2 outletchannel3"
+              grid-row-start="4"
+            >
+              <input
+                type="checkbox"
+                onChange={(event) => handleInputChange3(event)}
+                id="enable_int_outlet_3"
+                name="enable_int_outlet_3"
+                checked={enable_int_outlet_3 === true ? true : false}
+              />
+            </div>
+            <div
+              class="outletchannelrow outletcol2 outletchannel4"
+              grid-row-start="5"
+            >
+              <input
+                type="checkbox"
+                onChange={(event) => handleInputChange4(event)}
+                id="enable_int_outlet_4"
+                name="enable_int_outlet_4"
+                checked={enable_int_outlet_4 === true ? true : false}
+              />
+            </div>
+            <div
+              class="outletchannelrow outletcol2 outletchannel5"
+              grid-row-start="6"
+            >
+              <input
+                type="checkbox"
+                onChange={(event) => handleInputChange5(event)}
+                id="enable_int_outlet_5"
+                name="enable_int_outlet_5"
+                checked={enable_int_outlet_5 === true ? true : false}
+              />
+            </div>
+
+            <div
+              class="outletchannelrow outletcol2 outletchannel6"
+              grid-row-start="7"
+            >
+              <input
+                type="checkbox"
+                onChange={(event) => handleInputChange6(event)}
+                id="enable_int_outlet_6"
+                name="enable_int_outlet_6"
+                checked={enable_int_outlet_6 === true ? true : false}
+              />
+            </div>
+
+            <div
+              class="outletchannelrow outletcol2 outletchannel7"
+              grid-row-start="8"
+            >
+              <input
+                type="checkbox"
+                onChange={(event) => handleInputChange7(event)}
+                id="enable_int_outlet_7"
+                name="enable_int_outlet_7"
+                checked={enable_int_outlet_7 === true ? true : false}
+              />
+            </div>
+            <div
+              class="outletchannelrow outletcol2 outletchannel8"
+              grid-row-start="9"
+            >
+              <input
+                type="checkbox"
+                onChange={(event) => handleInputChange8(event)}
+                id="enable_int_outlet_8"
+                name="enable_int_outlet_8"
+                checked={enable_int_outlet_8 === true ? true : false}
+              />
+            </div>
           </div>
 
-          <div class="outlettitlelabel outletcol2">Enable</div>
-
-          <div
-            class="outletchannelrow outletcol2 outletchannel1"
-            grid-row-start="2"
-          >
-            <input
-              type="checkbox"
-              onChange={(event) => handleInputChange1(event)}
-              id="enable_int_outlet_1"
-              name="enable_int_outlet_1"
-              checked={enable_int_outlet_1 === true ? true : false}
-            />
+          <div className="submit_row">
+            <button type="submit" className="submitbutton">
+              Submit
+            </button>
           </div>
-          <div
-            class="outletchannelrow outletcol2 outletchannel2"
-            grid-row-start="3"
-          >
-            <input
-              type="checkbox"
-              onChange={(event) => handleInputChange2(event)}
-              id="enable_int_outlet_2"
-              name="enable_int_outlet_2"
-              checked={enable_int_outlet_2 === true ? true : false}
-            />
-          </div>
-          <div
-            class="outletchannelrow outletcol2 outletchannel3"
-            grid-row-start="4"
-          >
-            <input
-              type="checkbox"
-              onChange={(event) => handleInputChange3(event)}
-              id="enable_int_outlet_3"
-              name="enable_int_outlet_3"
-              checked={enable_int_outlet_3 === true ? true : false}
-            />
-          </div>
-          <div
-            class="outletchannelrow outletcol2 outletchannel4"
-            grid-row-start="5"
-          >
-            <input
-              type="checkbox"
-              onChange={(event) => handleInputChange4(event)}
-              id="enable_int_outlet_4"
-              name="enable_int_outlet_4"
-              checked={enable_int_outlet_4 === true ? true : false}
-            />
-          </div>
-          <div
-            class="outletchannelrow outletcol2 outletchannel5"
-            grid-row-start="6"
-          >
-            <input
-              type="checkbox"
-              onChange={(event) => handleInputChange5(event)}
-              id="enable_int_outlet_5"
-              name="enable_int_outlet_5"
-              checked={enable_int_outlet_5 === true ? true : false}
-            />
-          </div>
-
-          <div
-            class="outletchannelrow outletcol2 outletchannel6"
-            grid-row-start="7"
-          >
-            <input
-              type="checkbox"
-              onChange={(event) => handleInputChange6(event)}
-              id="enable_int_outlet_6"
-              name="enable_int_outlet_6"
-              checked={enable_int_outlet_6 === true ? true : false}
-            />
-          </div>
-
-          <div
-            class="outletchannelrow outletcol2 outletchannel7"
-            grid-row-start="8"
-          >
-            <input
-              type="checkbox"
-              onChange={(event) => handleInputChange7(event)}
-              id="enable_int_outlet_7"
-              name="enable_int_outlet_7"
-              checked={enable_int_outlet_7 === true ? true : false}
-            />
-          </div>
-          <div
-            class="outletchannelrow outletcol2 outletchannel8"
-            grid-row-start="9"
-          >
-            <input
-              type="checkbox"
-              onChange={(event) => handleInputChange8(event)}
-              id="enable_int_outlet_8"
-              name="enable_int_outlet_8"
-              checked={enable_int_outlet_8 === true ? true : false}
-            />
-          </div>
-        </div>
-
-        <div className="submit_row">
-          <button type="submit" className="submitbutton">
-            Submit
-          </button>
-        </div>
-      </form>
+        </form>
+      ) : (
+        <ClipLoader
+          color="#000000"
+          loading={true}
+          size={28}
+          aria-label="Loading Spinner"
+          data-testid="loader"
+        />
+      )}
     </dialog>
   );
 };
