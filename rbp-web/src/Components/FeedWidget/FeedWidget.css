@@ -32,6 +32,7 @@
   font-weight: bold;
   font-size: 14px;
   text-align: left;
+  margin-top: 3px;
 }
 
 .feedtimer{
@@ -44,6 +45,7 @@
   font-size: 14px;
   text-align: right;
   margin-right: 10px;
+  margin-top: 3px;
 }
 
 .feedmodebtn {
@@ -58,6 +60,7 @@
   font-weight: bold;
   border-color: #85868c;
   background-color: #efefef;
+  margin-bottom: 2px;
 }
 
 .feedmodebtnon {
