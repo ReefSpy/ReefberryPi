@@ -1,6 +1,6 @@
 .outletcontainer {
   grid-template-columns: 20px 280px;
-  grid-template-rows: 60px;
+  grid-template-rows: 53px;
   display: grid;
   justify-content: center;
   /* margin: 4px; */
@@ -24,7 +24,7 @@
   grid-column-start: 1;
   grid-column-end: span 2;
 
-  height: 56px;
+  height: 53px;
   line-height: 24px;
   font-size: 14px;
   text-align: left;
@@ -42,7 +42,7 @@
   grid-column-end: span 2;
   grid-row-start: 1;
 
-  height: 60px;
+  height: 53px;
   line-height: 16px;
   font-size: 16px;
   text-align: left;

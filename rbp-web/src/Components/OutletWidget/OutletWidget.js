@@ -4,6 +4,7 @@ import "./togglestyle.css";
 import "./OutletWidget.css";
 import cogicon from "./cog.svg";
 import OutletWidgetModal from "./OutletWidgetModal";
+import ClipLoader from "react-spinners/ClipLoader";
 
 const groupOptions = [
   {
@@ -144,11 +145,23 @@ export class OutletWidget extends Component {
   render() {
     return (
       <div className="outletcontainer">
-        <div className="outletitem outletname">{this.state.OutletName}</div>
+        <div className="outletitem outletname">{!this.state.OutletName == "" ? this.state.OutletName : <ClipLoader
+        color= "#000000"
+        loading= {true}
+        size={8}
+        aria-label="Loading Spinner"
+        data-testid="loader"
+      />}</div>
         <div className="outletitem multitoggle">
           <MultiToggle
             options={groupOptions}
-            label={this.state.OutletStatus}
+            label={!this.state.OutletStatus == "" ? this.state.OutletStatus : <ClipLoader
+            color= "#000000"
+            loading= {true}
+            size={8}
+            aria-label="Loading Spinner"
+            data-testid="loader"
+          /> }
             onSelectOption={this.onToggleSelect}
             selectedOption={this.state.buttonstateidx}
             className={"outletSlider"}
