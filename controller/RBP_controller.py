@@ -138,12 +138,12 @@ def apploop():
                         dv_AvgCountsFiltered = int(
                             sum(dv_dvlistfiltered)/len(dv_dvlistfiltered))
                         # delete this line
-                        print("{:.2f}".format(dv_AvgCountsFiltered))
+                        logger.debug("{:.2f}".format(dv_AvgCountsFiltered))
                     except:
                         # need to revisit this error handling. Exception thrown when all
                         dv_AvgCountsFiltered = 1
                         # values were 1023
-                        print("Error collecting data! " + "mcp3008 ch" +
+                        logger.error("Error collecting data! " + "mcp3008 ch" +
                               str(AppPrefs.mcp3008Dict[ch].ch_num))
 
                     if AppPrefs.mcp3008Dict[ch].ch_type == "ph":
@@ -163,7 +163,7 @@ def apploop():
                             "{:.2f}".format(dv_AvgCountsFiltered))
 
                         if dv_AvgCountsFiltered > 14:
-                            logger.error("Invalid PH value: " + str(dv_AvgCountsFiltered) +
+                            logger.error("Invalid PH value: " + str(AppPrefs.mcp3008Dict[ch].ch_probeid) + " " +  str(dv_AvgCountsFiltered) +
                                          " " + str(orgval) + " " + str(dv_dvlistfiltered))
 
                     # if enough time has passed (ph_LogInterval) then log the data to file
@@ -173,14 +173,14 @@ def apploop():
                         # sometimes a high value, like 22.4 gets recorded, i need to fix this, but for now don't log that
                         # if ph_AvgFiltered < 14.0:
                        #         defs_common.logprobedata("mcp3008_ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + "_", "{:.2f}".format(dv_AvgCountsFiltered))
-                        logger.info("mcp3008_ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " = " + str(
+                        logger.debug("mcp3008_ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " = " + str(
                             "{:.2f}".format(dv_AvgCountsFiltered)))
                         Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "ph", "tags": {
                             "appuid": AppPrefs.appuid, "probeid": "mcp3008_ch" + str(AppPrefs.mcp3008Dict[ch].ch_num)}, "fields": {"value": float("{:.2f}".format(dv_AvgCountsFiltered))}, "time": datetime.utcnow()}])
                         AppPrefs.mcp3008Dict[ch].LastLogTime = int(
                             round(time.time()*1000))
                     else:
-                        print(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " dv = "
+                        logger.debug (timestamp.strftime("%Y-%m-%d %H:%M:%S") + " dv = "
                               + "{:.2f}".format(dv_AvgCountsFiltered))
 
                     AppPrefs.mcp3008Dict[ch].lastValue = str(
