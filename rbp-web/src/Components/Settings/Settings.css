@@ -4,10 +4,11 @@
     justify-content: center;
     background-color: white;
     border-radius: 10px;
-    margin-right: 60px ;
-    margin-left: 60px;
+    margin-right: auto ;
+    margin-left: auto;
     margin-top: 20px;
     margin-bottom: 20px;
+    width: 300px;
 }
 .btnicon{
     height: 24px;

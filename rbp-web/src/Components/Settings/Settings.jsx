@@ -7,6 +7,7 @@ import analogicon from "../../Images/analog.svg"
 import globalicon from "../../Images/global.svg"
 import OutletPrefsModal from "../OutletPrefs/OutletPrefsModal";
 import ProbePrefsModal from "../ProbePrefs/ProbePrefsModal";
+import TempPrefsModal from "../TempPrefs/TempPrefsModal";
 
 
 
@@ -64,6 +65,21 @@ class Settings extends Component {
     this.setState({ isProbePrefsModalOpen: false });
   };
 
+  handleTempPrefsFormSubmit = (data) => {
+    this.handleCloseTempPrefsModal();
+    
+  };
+
+  handleOpenTempPrefsModal = () => {
+    this.setState({ setTempPrefsModalOpen: true });
+    this.setState({ isTempPrefsModalOpen: true });
+  };
+
+  handleCloseTempPrefsModal = () => {
+    this.setState({ setTempPrefsModalOpen: false });
+    this.setState({ isTempPrefsModalOpen: false });
+  };
+
   render() {
     
 
@@ -74,7 +90,7 @@ class Settings extends Component {
         
         <div className="settingscontainer">
         <h1>Application Settings</h1>
-        <button className="settingsbtn"><img src={probeicon} alt="Temperature" className="btnicon"></img>Temperature Probes</button>
+        <button className="settingsbtn" onClick={this.handleOpenTempPrefsModal}><img src={probeicon} alt="Temperature" className="btnicon"></img>Temperature Probes</button>
         <button className="settingsbtn" onClick={this.handleOpenOutletPrefsModal}><img src={outleticon} alt="Outlets" className="btnicon"></img>Outlets</button>
         <button className="settingsbtn"><img src={usericon} alt="Users" className="btnicon"></img>Users</button>
         <button className="settingsbtn"><img src={globalicon} alt="Global" className="btnicon"></img> Global</button>
@@ -95,6 +111,14 @@ class Settings extends Component {
             isOpen={this.state.isOutletPrefsModalOpen}
             onSubmit={this.handleOutletPrefsFormSubmit}
             onClose={this.handleCloseOutletPrefsModal}
+          />
+        ) : null}
+
+{this.state.isTempPrefsModalOpen ? (
+          <TempPrefsModal
+            isOpen={this.state.isTempPrefsModalOpen}
+            onSubmit={this.handleTempPrefsFormSubmit}
+            onClose={this.handleCloseTempPrefsModal}
           />
         ) : null}
 
