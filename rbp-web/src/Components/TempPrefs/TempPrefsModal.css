@@ -1,0 +1,101 @@
+.tempmodal {
+    max-width: 25rem;
+    padding: 2rem;
+    border: 0;
+    border-radius: 0.5rem;
+    position: relative;
+    box-shadow: hsl(0 0% 0% / 10%) 0 0 0.5rem 0.25rem;
+  width: auto;
+  }
+
+.probescontainer{
+    display: grid;
+    grid-template-columns: 7rem 10rem auto autop;
+    grid-template-rows: auto auto auto auto auto;
+
+}
+
+.detectedlabel{
+    grid-column-start: 1;
+    grid-row-start: 1;
+
+}
+
+.connectedProbes{
+    grid-column-start: 1;
+    grid-row-start: 2;
+    grid-row-end: 6;
+}
+
+.probe1btn{
+    grid-column-start: 2;
+    grid-row-start: 2;
+}
+
+.probe2btn{
+    grid-column-start: 2;
+    grid-row-start: 3;
+}
+
+.probe3btn{
+    grid-column-start: 2;
+    grid-row-start: 4;
+}
+
+.probe4btn{
+    grid-column-start: 2;
+    grid-row-start: 5;
+}
+
+.probe1lbl{
+    grid-column-start: 3;
+    grid-row-start: 2;
+}
+
+.probe2lbl{
+    grid-column-start: 3;
+    grid-row-start: 3;
+}
+
+.probe3lbl{
+    grid-column-start: 3;
+    grid-row-start: 4;
+}
+
+.probe4lbl{
+    grid-column-start: 3;
+    grid-row-start: 5;
+}
+
+.righticon{
+    height: 18px;
+    width: 18px;
+    vertical-align: middle;
+    margin-left: 1rem;
+}
+
+.delicon{
+    height: 18px;
+    width: 18px;
+    vertical-align: middle;
+}
+
+.del1btn{
+    grid-column-start: 4;
+    grid-row-start: 2;
+}
+
+.del2btn{
+    grid-column-start: 4;
+    grid-row-start: 3;
+}
+
+.del3btn{
+    grid-column-start: 4;
+    grid-row-start: 4;
+}
+
+.del4btn{
+    grid-column-start: 4;
+    grid-row-start: 5;
+}
