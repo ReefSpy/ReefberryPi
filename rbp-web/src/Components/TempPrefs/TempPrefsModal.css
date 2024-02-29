@@ -1,5 +1,5 @@
 .tempmodal {
-    max-width: 25rem;
+    max-width: 30rem;
     padding: 2rem;
     border: 0;
     border-radius: 0.5rem;
@@ -10,13 +10,18 @@
 
 .probescontainer{
     display: grid;
-    grid-template-columns: 7rem 10rem auto autop;
+    grid-template-columns: 8rem 11rem 7rem auto;
     grid-template-rows: auto auto auto auto auto;
 
 }
 
 .detectedlabel{
     grid-column-start: 1;
+    grid-row-start: 1;
+}
+
+.detectedlabel2{
+    grid-column-start: 3;
     grid-row-start: 1;
 
 }
@@ -30,54 +35,78 @@
 .probe1btn{
     grid-column-start: 2;
     grid-row-start: 2;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    margin-right: 1em;
+    margin-left: 1em;
+    
+
 }
 
 .probe2btn{
     grid-column-start: 2;
     grid-row-start: 3;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    margin-right: 1em;
+    margin-left: 1em;
 }
 
 .probe3btn{
     grid-column-start: 2;
     grid-row-start: 4;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    margin-right: 1em;
+    margin-left: 1em;
 }
 
 .probe4btn{
     grid-column-start: 2;
     grid-row-start: 5;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    margin-right: 1em;
+    margin-left: 1em;
 }
 
 .probe1lbl{
     grid-column-start: 3;
     grid-row-start: 2;
+    place-self: center;
 }
 
 .probe2lbl{
     grid-column-start: 3;
     grid-row-start: 3;
+    place-self: center;
 }
 
 .probe3lbl{
     grid-column-start: 3;
     grid-row-start: 4;
+    place-self: center;
 }
 
 .probe4lbl{
     grid-column-start: 3;
     grid-row-start: 5;
+    place-self: center;
 }
 
 .righticon{
     height: 18px;
     width: 18px;
     vertical-align: middle;
-    margin-left: 1rem;
+    margin-left: .5rem;
 }
 
 .delicon{
     height: 18px;
     width: 18px;
     vertical-align: middle;
+   
+    
 }
 
 .del1btn{
@@ -99,3 +128,17 @@
     grid-column-start: 4;
     grid-row-start: 5;
 }
+
+.delbtn{
+    margin: 1em;
+    border: none;
+    background-color: white;
+}
+
+.delbtn:hover{
+   opacity: 70%;
+}
+
+.delbtn:active{
+    opacity: 100%;
+ }

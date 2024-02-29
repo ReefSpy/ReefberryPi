@@ -1,17 +1,17 @@
 import React, { useRef, useEffect, useState } from "react";
 import "./TempPrefsModal.css";
 import closeCircle from "./close-circle.svg";
-import rightArrow from "./right-arrow.svg"
-import deleteIcon from "./delete.svg"
+import rightArrow from "./right-arrow.svg";
+import deleteIcon from "./delete.svg";
 
 const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
   const [isModalOpen, setModalOpen] = useState(isOpen);
   const [selectedConnectedProbe, setSelectedConnectedProbe] = useState();
   const [connectedProbesList, setConnectedProbesList] = useState([]);
-  const [probeID1, setProbeID1] = useState("Unassigned");
-  const [probeID2, setProbeID2] = useState("Unassigned");
-  const [probeID3, setProbeID3] = useState("Unassigned");
-  const [probeID4, setProbeID4] = useState("Unassigned");
+  const [probeID1, setProbeID1] = useState();
+  const [probeID2, setProbeID2] = useState();
+  const [probeID3, setProbeID3] = useState();
+  const [probeID4, setProbeID4] = useState();
 
   const modalRef = useRef(null);
 
@@ -46,6 +46,50 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
 
   let handleConnectedProbesChange = (event) => {
     setSelectedConnectedProbe(event.target.value);
+  };
+
+  let handleProbeID1Click = () => {
+    if (selectedConnectedProbe !== undefined) {
+      setProbeID1(selectedConnectedProbe);
+      // const index = connectedProbesList.indexOf(selectedConnectedProbe);
+      // const x = connectedProbesList.splice(index, 1);
+      // console.log(index)
+      // console.log (index)
+    }
+  };
+
+  let handleProbeID2Click = () => {
+    if (selectedConnectedProbe !== undefined) {
+      setProbeID2(selectedConnectedProbe);
+    }
+  };
+
+  let handleProbeID3Click = () => {
+    if (selectedConnectedProbe !== undefined) {
+      setProbeID3(selectedConnectedProbe);
+    }
+  };
+
+  let handleProbeID4Click = () => {
+    if (selectedConnectedProbe !== undefined) {
+      setProbeID4(selectedConnectedProbe);
+    }
+  };
+
+  let deleteProbeID1Click = () => {
+    setProbeID1("");
+  };
+
+  let deleteProbeID2Click = () => {
+    setProbeID2("");
+  };
+
+  let deleteProbeID3Click = () => {
+    setProbeID3("");
+  };
+
+  let deleteProbeID4Click = () => {
+    setProbeID4("");
   };
 
   useEffect(() => {
@@ -83,7 +127,12 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
       )}
       {children}
       <div className="probescontainer">
-        <label htmlFor="connectedprobes" classname = "detectedlabel">Detected Probes</label>
+        <label htmlFor="connectedprobes" className="detectedlabel">
+          Detected Probes
+        </label>
+        <label htmlFor="connectedprobes2" className="detectedlabel2">
+          Probes
+        </label>
         <select
           className="connectedProbes"
           id="connectedProbes"
@@ -92,7 +141,6 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
           onChange={handleConnectedProbesChange}
           value={selectedConnectedProbe}
           size="6"
-          
         >
           {connectedProbesList.map((tempProbe, index) => (
             <option key={index} value={tempProbe}>
@@ -101,22 +149,46 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
           ))}
         </select>
 
-        <button className="probe1btn">Assign Probe 1 <img src={rightArrow} alt="arrow" className="righticon"></img></button>
-        <button className="probe2btn">Assign Probe 2 <img src={rightArrow} alt="arrow" className="righticon"></img></button>
-        <button className="probe3btn">Assign Probe 3 <img src={rightArrow} alt="arrow" className="righticon"></img></button>
-        <button className="probe4btn">Assign Probe 4 <img src={rightArrow} alt="arrow" className="righticon"></img></button>
+        <button className="probe1btn" onClick={handleProbeID1Click}>
+          Assign Probe 1{" "}
+          <img src={rightArrow} alt="arrow" className="righticon"></img>
+        </button>
+        <button className="probe2btn" onClick={handleProbeID2Click}>
+          Assign Probe 2{" "}
+          <img src={rightArrow} alt="arrow" className="righticon"></img>
+        </button>
+        <button className="probe3btn" onClick={handleProbeID3Click}>
+          Assign Probe 3{" "}
+          <img src={rightArrow} alt="arrow" className="righticon"></img>
+        </button>
+        <button className="probe4btn" onClick={handleProbeID4Click}>
+          Assign Probe 4{" "}
+          <img src={rightArrow} alt="arrow" className="righticon"></img>
+        </button>
 
-        <label className="probe1lbl">{probeID1}</label>
-        <label className="probe2lbl">{probeID2}</label>
-        <label className="probe3lbl">{probeID3}</label>
-        <label className="probe4lbl">{probeID4}</label>
+        <label className="probe1lbl">{probeID1 ? probeID1 : "Undefined"}</label>
+        <label className="probe2lbl">{probeID2 ? probeID2 : "Undefined"}</label>
+        <label className="probe3lbl">{probeID3 ? probeID3 : "Undefined"}</label>
+        <label className="probe4lbl">{probeID4 ? probeID4 : "Undefined"}</label>
 
-        <button className="del1btn"><img src={deleteIcon} alt="delete" className="delicon"></img></button>
-        <button className="del2btn"><img src={deleteIcon} alt="delete" className="delicon"></img></button>
-        <button className="del3btn"><img src={deleteIcon} alt="delete" className="delicon"></img></button>
-        <button className="del4btn"><img src={deleteIcon} alt="delete" className="delicon"></img></button>
-
+        <button className="del1btn delbtn" onClick={deleteProbeID1Click}>
+          <img src={deleteIcon} alt="delete" className="delicon"></img>
+        </button>
+        <button className="del2btn delbtn" onClick={deleteProbeID2Click}>
+          <img src={deleteIcon} alt="delete" className="delicon"></img>
+        </button>
+        <button className="del3btn delbtn" onClick={deleteProbeID3Click}>
+          <img src={deleteIcon} alt="delete" className="delicon"></img>
+        </button>
+        <button className="del4btn delbtn" onClick={deleteProbeID4Click}>
+          <img src={deleteIcon} alt="delete" className="delicon"></img>
+        </button>
       </div>
+      <div className="submit_row">
+            <button type="submit" className="submitbutton">
+              Submit
+            </button>
+          </div>
     </dialog>
   );
 };
