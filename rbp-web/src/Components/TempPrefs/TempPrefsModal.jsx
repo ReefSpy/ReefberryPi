@@ -98,7 +98,7 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
     console.log(probeList);
 
     console.log(JSON.stringify(probeList));
-
+    if (window.confirm("Are you sure you want to save changes?")){
     return fetch(process.env.REACT_APP_API_SET_CONNECTED_TEMP_PROBE, {
       method: "POST",
       headers: {
@@ -127,6 +127,7 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
       .catch((error) => {
         console.error("Error:", error);
       });
+    }
   };
 
   useEffect(() => {
