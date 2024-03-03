@@ -120,8 +120,9 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
       })
       .then((data) => {
         console.log(data);
-        alert("Settings saved successfully");
-        // window.location.reload(false);
+        alert("Settings saved successfully.  Window will refresh to reflect changes");
+        setModalOpen(false);
+        window.location.reload(false);
         return data;
       })
       .catch((error) => {
