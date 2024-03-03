@@ -216,7 +216,7 @@ class App extends Component {
           <span>Reefberry Pi</span>
 
           <div className="header-right">
-          <button className="headericonbtn">
+          {/* <button className="headericonbtn">
               <img
                 className="headericon"
                 src={outletIcon}
@@ -232,7 +232,7 @@ class App extends Component {
                 alt="Probes"
                 onClick={this.handleOpenProbePrefsModal}
               ></img>
-            </button>
+            </button> */}
 
             <button className="headericonbtn">
               <img

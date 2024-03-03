@@ -1,0 +1,35 @@
+.settingscontainer{
+    grid-template-columns: auto;
+    display: grid;
+    justify-content: center;
+    background-color: white;
+    border-radius: 10px;
+    margin-right: auto ;
+    margin-left: auto;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 300px;
+}
+.btnicon{
+    height: 24px;
+    width: 24px;
+    vertical-align: middle;
+    padding-right: 10px;
+}
+.settingsbtn{
+
+    border-radius: 8px;
+    color: black;
+    border-style: solid;
+    border-radius: 10px;
+    font-weight: bold;
+    line-height: 32px;
+    margin: 6px;
+    text-align: left;
+    padding-right: 10px;
+}
+
+.settingsbtn:hover{
+    background-color: orange;
+
+}
