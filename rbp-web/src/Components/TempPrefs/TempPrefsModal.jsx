@@ -3,6 +3,7 @@ import "./TempPrefsModal.css";
 import closeCircle from "./close-circle.svg";
 import rightArrow from "./right-arrow.svg";
 import deleteIcon from "./delete.svg";
+import ClipLoader from "react-spinners/ClipLoader";
 
 const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
   const [isModalOpen, setModalOpen] = useState(isOpen);
@@ -92,6 +93,42 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
     setProbeID4("");
   };
 
+  let handleSubmitClick = () => {
+    let probeList = { probeID1, probeID2, probeID3, probeID4 };
+    console.log(probeList);
+
+    console.log(JSON.stringify(probeList));
+
+    return fetch(process.env.REACT_APP_API_SET_CONNECTED_TEMP_PROBE, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(probeList),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Data not found");
+          } else if (response.status === 500) {
+            throw new Error("Server error");
+          } else {
+            throw new Error("Network response was not ok");
+          }
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+        alert("Settings saved successfully");
+        // window.location.reload(false);
+        return data;
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  };
+
   useEffect(() => {
     fetch(process.env.REACT_APP_API_GET_CONNECTED_TEMP_PROBES)
       .then((response) => {
@@ -118,6 +155,47 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
       });
   }, []);
 
+  useEffect(() => {
+    fetch(process.env.REACT_APP_API_GET_ASSIGNED_TEMP_PROBES)
+      .then((response) => {
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Data not found");
+          } else if (response.status === 500) {
+            throw new Error("Server error");
+          } else {
+            throw new Error("Network response was not ok");
+          }
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+        for (let probe in data) {
+          console.log(data[probe]);
+          if (data[probe].temp_probe_1 && data[probe].temp_probe_1 !== "none") {
+            console.log(data[probe].temp_probe_1);
+            setProbeID1(data[probe].temp_probe_1);
+          }
+          if (data[probe].temp_probe_2 && data[probe].temp_probe_2 !== "none") {
+            console.log(data[probe].temp_probe_2);
+            setProbeID2(data[probe].temp_probe_2);
+          }
+          if (data[probe].temp_probe_3 && data[probe].temp_probe_3 !== "none") {
+            console.log(data[probe].temp_probe_3);
+            setProbeID3(data[probe].temp_probe_3);
+          }
+          if (data[probe].temp_probe_4 && data[probe].temp_probe_4 !== "none") {
+            console.log(data[probe].temp_probe_4);
+            setProbeID4(data[probe].temp_probe_4);
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }, []);
+
   return (
     <dialog ref={modalRef} onKeyDown={handleKeyDown} className="tempmodal">
       {hasCloseBtn && (
@@ -131,7 +209,7 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
           Detected Probes
         </label>
         <label htmlFor="connectedprobes2" className="detectedlabel2">
-          Probes
+          Assigned Probes
         </label>
         <select
           className="connectedProbes"
@@ -185,10 +263,14 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
         </button>
       </div>
       <div className="submit_row">
-            <button type="submit" className="submitbutton">
-              Submit
-            </button>
-          </div>
+        <button
+          type="submit"
+          className="submitbutton"
+          onClick={handleSubmitClick}
+        >
+          Submit
+        </button>
+      </div>
     </dialog>
   );
 };

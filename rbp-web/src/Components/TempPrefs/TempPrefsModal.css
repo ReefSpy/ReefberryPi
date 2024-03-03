@@ -18,11 +18,13 @@
 .detectedlabel{
     grid-column-start: 1;
     grid-row-start: 1;
+    font-weight: bold;
 }
 
 .detectedlabel2{
     grid-column-start: 3;
     grid-row-start: 1;
+    font-weight: bold;
 
 }
 
