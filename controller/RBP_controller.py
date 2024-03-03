@@ -237,7 +237,7 @@ def apploop():
                                 tProbe).lastTemperature = ""
                                 
         except Exception as e:
-            logger.error("Error reding ds18b20 temperature! " + str(e))
+            logger.error("Error reading ds18b20 temperature! " + str(e))
 
         ###################################################################
         # dht11 temp and humidity data
