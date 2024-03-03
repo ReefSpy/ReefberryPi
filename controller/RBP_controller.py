@@ -6,6 +6,7 @@ import cls_Preferences
 import mcp3008
 import threading
 import defs_mysql
+import api_flask
 from influxdb_client.client.write_api import SYNCHRONOUS
 import RPi.GPIO as GPIO
 import GPIO_config
@@ -200,33 +201,44 @@ def apploop():
         ###################################################################
         try:
             for tProbe in AppPrefs.tempProbeDict:
-                dstempC = float(ds18b20.read_temp(
-                    AppPrefs.tempProbeDict.get(tProbe).probeid.split("_")[1], "C"))
-                # dstempC = float(ds18b20.read_temp("111", "C"))
+                try:
+                    # dstempC = float(ds18b20.read_temp(
+                    #     AppPrefs.tempProbeDict.get(tProbe).probeid.split("_")[1], "C"))
 
-                # logger.info(str(dstempC) + " C")
-                # print("ds18b20 " + str(dstempC) + " C")
-                Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_c", "tags": {
-                    "appuid": AppPrefs.appuid, "probeid": AppPrefs.tempProbeDict.get(tProbe).probeid}, "fields": {"value": dstempC}, "time": datetime.utcnow()}])
+                    dstempC = float(ds18b20.read_temp(
+                        AppPrefs.tempProbeDict.get(tProbe).serialnum, "C"))
+            
+                    # dstempC = float(ds18b20.read_temp("111", "C"))
 
-                dstempF = float(defs_common.convertCtoF(dstempC))
-                # print("ds18b20 " + str(dstempF) + " F")
-                Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_f", "tags": {
-                    "appuid": AppPrefs.appuid, "probeid": AppPrefs.tempProbeDict.get(tProbe).probeid}, "fields": {"value": dstempF}, "time": datetime.utcnow()}])
+                    # logger.info(str(dstempC) + " C")
+                    # print("ds18b20 " + str(dstempC) + " C")
+                    Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_c", "tags": {
+                        "appuid": AppPrefs.appuid, "probeid": AppPrefs.tempProbeDict.get(tProbe).probeid}, "fields": {"value": dstempC}, "time": datetime.utcnow()}])
 
-                # print("ds18b20 Temp = " + str(dstempC) + "C / " + str(dstempF) + "F")
-                logger.debug(AppPrefs.tempProbeDict.get(tProbe).probeid + " Temp = " + str(dstempC) +
-                             "C / " + str(dstempF) + "F")
+                    dstempF = float(defs_common.convertCtoF(dstempC))
+                    # print("ds18b20 " + str(dstempF) + " F")
+                    Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_f", "tags": {
+                        "appuid": AppPrefs.appuid, "probeid": AppPrefs.tempProbeDict.get(tProbe).probeid}, "fields": {"value": dstempF}, "time": datetime.utcnow()}])
 
-                if AppPrefs.temperaturescale == "F":
+                    # print("ds18b20 Temp = " + str(dstempC) + "C / " + str(dstempF) + "F")
+                    logger.debug(AppPrefs.tempProbeDict.get(tProbe).probeid + " Temp = " + str(dstempC) +
+                                "C / " + str(dstempF) + "F")
+
+                    if AppPrefs.temperaturescale == "F":
+                        AppPrefs.tempProbeDict.get(
+                            tProbe).lastTemperature = str(dstempF)
+                    else:
+                        AppPrefs.tempProbeDict.get(
+                            tProbe).lastTemperature = str(dstempC)
+
+                except Exception as e:
+                    logger.error("Unable to read ds18b20 temperature! " + str(e))
                     AppPrefs.tempProbeDict.get(
-                        tProbe).lastTemperature = str(dstempF)
-                else:
-                    AppPrefs.tempProbeDict.get(
-                        tProbe).lastTemperature = str(dstempC)
-
+                                tProbe).lastTemperature = ""
+                                
         except Exception as e:
-            logger.error("Unable to read ds18b20 temperature! " + str(e))
+            logger.error("Error reding ds18b20 temperature! " + str(e))
+
         ###################################################################
         # dht11 temp and humidity data
         ###################################################################
@@ -1743,7 +1755,7 @@ def get_current_probe_stats(probeid):
 
         response = {}
 
-        if probeid.startswith("ds"):
+        if probeid.startswith("temp_probe_"):
             response = jsonify({"msg": 'Current probe stats',
                                 "appuid": AppPrefs.appuid,
                                 "probename": AppPrefs.tempProbeDict[probeid].name,
@@ -1955,6 +1967,70 @@ def get_mcp3008_enable_state():
         response.status_code = 500
         return response
 
+#####################################################################
+# get_connected_temp_probes
+# return list of ds18b20 temperature probes that are connected to the 
+# system and showing up in '/sys/bus/w1/devices/'
+#####################################################################
+@app.route('/get_connected_temp_probes/', methods=['GET'])
+@cross_origin()
+def get_connected_temp_probes():
+
+    try:
+        global AppPrefs
+        probelist = api_flask.api_get_connected_temp_probes()
+        return probelist
+
+    except Exception as e:
+        AppPrefs.logger.error("get_connected_temp_probes: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+    
+#####################################################################
+# get_assigned_temp_probes
+# return list of ds18b20 temperature probes that that have been 
+# assigned to Probe IDs
+#####################################################################
+@app.route('/get_assigned_temp_probes/', methods=['GET'])
+@cross_origin()
+def get_assigned_temp_probes():
+
+    try:
+        global AppPrefs
+        probelist = api_flask.api_get_assigned_temp_probes(AppPrefs, sqlengine)
+        return probelist
+
+    except Exception as e:
+        AppPrefs.logger.error("get_assigned_temp_probes: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+
+#####################################################################
+# set_connected_temp_probes
+# assign the selected ds18b20 probes to Probe ID 1,2,3,4 
+#####################################################################
+@app.route('/set_connected_temp_probes', methods=['POST'])
+@cross_origin()
+def set_connected_temp_probes():
+    try:
+        global AppPrefs
+
+        api_flask.api_set_connected_temp_probes(AppPrefs, sqlengine, request)
+
+        response = {}
+        response = jsonify({"msg": 'Updated temperature probes',
+                            })
+        response.status_code = 200
+        return response
+
+    except Exception as e:
+        AppPrefs.logger.error("set_connected_temp_probes: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+    
 #####################################################################
 # get_outlet_enable_state
 # return list of outlets with their enabled state

@@ -1,0 +1,121 @@
+import glob
+from sqlalchemy import MetaData
+from sqlalchemy import Table, Column, Integer, String
+from sqlalchemy import select
+from sqlalchemy import update
+import defs_mysql
+
+#####################################################################
+# api_get_connected_temp_probes
+# return list of ds18b20 temperature probes that are connected to the
+# system and showing up in '/sys/bus/w1/devices/'
+#####################################################################
+def api_get_connected_temp_probes():
+    base_dir = '/sys/bus/w1/devices/'
+    device_folder = glob.glob(base_dir + '28*')
+
+    probelist = []
+
+    for d in device_folder:
+        probeid = d.split("/")[-1]
+        probelist.append(probeid)
+
+    return probelist
+
+#####################################################################
+# api_set_connected_temp_probes
+# assign the selected ds18b20 probes to Probe ID 1,2,3,4
+#####################################################################
+def api_set_connected_temp_probes(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+
+    ProbeID1 = str(request.json.get(
+        "probeID1", "")).lower()
+    ProbeID2 = str(request.json.get(
+        "probeID2", "")).lower()
+    ProbeID3 = str(request.json.get(
+        "probeID3", "")).lower()
+    ProbeID4 = str(request.json.get(
+        "probeID4", "")).lower()
+
+    probearray = []
+    # if ProbeID1 != "":
+    #     probearray.append({"temp_probe_1": ProbeID1})
+    # if ProbeID2 != "":
+    #     probearray.append({"temp_probe_2": ProbeID2})
+    # if ProbeID3 != "":
+    #     probearray.append({"temp_probe_3": ProbeID3})
+    # if ProbeID4 != "":
+    #     probearray.append({"temp_probe_4": ProbeID4})
+
+    probearray.append({"temp_probe_1": ProbeID1})
+    probearray.append({"temp_probe_2": ProbeID2})
+    probearray.append({"temp_probe_3": ProbeID3})
+    probearray.append({"temp_probe_4": ProbeID4})
+    
+    AppPrefs.logger.info(probearray)
+
+    metadata_obj = MetaData()
+    ds18b20_table = Table("ds18b20", metadata_obj, autoload_with=sqlengine)
+    probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
+
+    for probe in probearray:
+        # AppPrefs.logger.info(probe)
+        keys = probe.keys()
+        key = list(keys)[0] # convert to list to avoid the dreaded not-subscriptable error
+        # AppPrefs.logger.info(key)
+        # AppPrefs.logger.info(probe[key])
+    
+        if (probe[key]) != "":
+            enabled = "true"
+        else:
+            enabled = "false"
+
+        stmt = (
+            update(ds18b20_table)
+            .where(ds18b20_table.c.probeid == key)
+            .where(ds18b20_table.c.appuid == AppPrefs.appuid)
+            .values(serialnum=probe[key])
+    )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        stmt = (
+            update(probe_table)
+            .where(probe_table.c.probeid == key)
+            .where(probe_table.c.appuid == AppPrefs.appuid)
+            .values(enabled=enabled)
+    )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+    defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, AppPrefs.logger)
+
+    return
+
+#####################################################################
+# api_get_assigned_temp_probes
+# return list of ds18b20 temperature probes that that have been 
+# assigned to Probe IDs
+#####################################################################
+def api_get_assigned_temp_probes(AppPrefs, sqlengine):
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    ds18b20_table = Table("ds18b20", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    stmt = select(ds18b20_table).where(ds18b20_table.c.appuid == AppPrefs.appuid)
+    row_headers = conn.execute(stmt).keys()
+    AppPrefs.logger.info(row_headers)
+    myresult = conn.execute(stmt)
+    conn.commit()
+
+    json_data = []
+
+    for row in myresult:    
+        json_data.append({row.probeid : row.serialnum})
+
+    return json_data
