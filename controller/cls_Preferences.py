@@ -39,6 +39,7 @@ class tempProbeClass():
     probeid = ""
     lastTemperature = ""
     lastLogTime = ""
+    serialnum = ""
 
 # class dhtSensorClass():
 #     temperature_name = ""

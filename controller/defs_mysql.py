@@ -23,7 +23,7 @@ def initMySQL_ex(app_prefs, logger):
         exit()
 
 
-def readTempProbes_ex(sqlengine, appPrefs, logger):
+def readTempProbes_ex_orig(sqlengine, appPrefs, logger):
     logger.info("Reading temperature probe data from database...")
     
     appPrefs.tempProbeDict.clear()
@@ -53,6 +53,50 @@ def readTempProbes_ex(sqlengine, appPrefs, logger):
             appPrefs.tempProbeDict[probe.probeid] = probe
             logger.info("read temperature probe from db: probeid = " +
                         probe.probeid + ", probename = " + probe.name)
+
+def readTempProbes_ex(sqlengine, appPrefs, logger):
+    logger.info("Reading temperature probe data from database...")
+    
+    appPrefs.tempProbeDict.clear()
+    ########
+    # build table object from table in DB
+    metadata = MetaData()
+    probe_table = Table('probes', metadata, autoload_with=sqlengine)
+    ds18b20_table = Table('ds18b20', metadata, autoload_with=sqlengine)
+    
+
+    conn = sqlengine.connect()
+
+    stmt = select(probe_table.c.probeid, 
+                        probe_table.c.appuid,
+                        probe_table.c.name,
+                        probe_table.c.sensortype,
+                        probe_table.c.probetype,
+                        probe_table.c.enabled,
+                        ds18b20_table.c.serialnum,
+                        ).select_from(probe_table.outerjoin(ds18b20_table, probe_table.c.probeid == ds18b20_table.c.probeid)) \
+                        .where(probe_table.c.probeid == ds18b20_table.c.probeid, probe_table.c.appuid == ds18b20_table.c.appuid, probe_table.c.enabled == "true")
+
+
+    results = conn.execute(stmt).fetchall()
+
+    row_headers = conn.execute(stmt).keys()
+    json_data = []
+
+    for result in results:
+        json_data.append(dict(zip(row_headers, result)))
+
+    print(json_data)
+
+    for k in json_data:
+        probe = cls_Preferences.tempProbeClass()
+        probe.probeid = k["probeid"]
+        probe.name = k["name"]
+        probe.serialnum = k["serialnum"]
+        appPrefs.tempProbeDict[probe.probeid] = probe
+        appPrefs.logger.info("read temperature probe from db: probeid = " +
+                    probe.probeid + ", probename = " + probe.name + ", serialnum = " + probe.serialnum)
+
 
 
 def readDHTSensor_ex (sqlengine, appPrefs, logger):
