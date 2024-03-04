@@ -126,7 +126,8 @@ class Settings extends Component {
             <br></br>
             Open source aquarium controller running on Raspberry Pi.
             <br />
-            https://github.com/ReefSpy/ReefberryPi
+
+            <a href="https://github.com/ReefSpy/ReefberryPi" target="_blank" >https://github.com/ReefSpy/ReefberryPi </a>
             <br></br>
             <br></br>
             Controller Firmware: version 0.0.1

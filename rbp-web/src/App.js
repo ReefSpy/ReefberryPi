@@ -256,6 +256,7 @@ class App extends Component {
                 src={this.state.DragDisabled === false ? lockOpenIcon : lockClosedIcon}
                 alt="Widget Lock"
                 onClick={this.handleWidgetLock}
+                title="Lock/Unlock Widgets"
               ></img>
             </button>
             <button className="headericonbtn">
@@ -264,6 +265,7 @@ class App extends Component {
                 src={logouticon}
                 alt="Logout"
                 onClick={this.logout}
+                title="Logout"
               ></img>
             </button>
           </div>
