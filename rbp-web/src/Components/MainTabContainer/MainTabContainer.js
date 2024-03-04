@@ -32,16 +32,16 @@ class MainTabContainer extends Component {
 
     const tabTypes = [
       // { name: "Dashboard", desc: <Dashboard feedmode={this.props.feedmode} globalPrefs={this.props.globalPrefs}/>, img: dashicon},
-      { name: "Dashboard", desc: <Dashboard2 feedmode={this.props.feedmode} globalPrefs={this.props.globalPrefs}/>, img: dashicon},
+      { name: "Dashboard", desc: <Dashboard2 feedmode={this.props.feedmode} globalPrefs={this.props.globalPrefs} dragDisabled={this.props.dragDisabled}/>, img: dashicon},
       { name: "Analytics", desc: <Analytics probearray={this.props.probearray} outletarray={this.props.outletarray}/>, img: charticon },
-      { name: "Testing", desc: "Testing Parameters coming soon", img: testtubeicon},
-      { name: "Alarms", desc: "Alarms", img: alarmicon},
-      { name: "Journal", desc: "Journal coming soon", img: notepadicon},
-      { name: "Settings", desc: <Settings/>, img: cogicon},
-      { name: "About", desc: <About />, img: infoicon}
+      // { name: "Testing", desc: "Testing Parameters coming soon", img: testtubeicon},
+      // { name: "Alarms", desc: "Alarms", img: alarmicon},
+      // { name: "Journal", desc: "Journal coming soon", img: notepadicon},
+      { name: "Settings", desc: <Settings openGlobalPrefs={this.props.openGlobalPrefs}/>, img: cogicon},
+      // { name: "About", desc: <About />, img: infoicon}
      
     ];
-
+  
 
     return (
       <div display="block">

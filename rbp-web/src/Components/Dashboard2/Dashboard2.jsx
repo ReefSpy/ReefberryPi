@@ -271,6 +271,7 @@ class Dashboard2 extends React.Component {
                 globalPrefs={this.props.globalPrefs}
                 feedmode={this.props.feedmode}
                 probearray={this.state.ProbeArray}
+                dragDisabled={this.props.dragDisabled}
               />
             );
           })}

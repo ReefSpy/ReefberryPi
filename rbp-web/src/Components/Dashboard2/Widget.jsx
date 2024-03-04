@@ -61,7 +61,7 @@ export default class Widget extends React.Component {
   };
   render() {
     return (
-      <Draggable draggableId={this.props.widget.id} index={this.props.index}>
+      <Draggable draggableId={this.props.widget.id} index={this.props.index}  isDragDisabled={this.props.dragDisabled}>
         {(provided, snapshot) => (
           <div className = "widget"
             {...provided.draggableProps}

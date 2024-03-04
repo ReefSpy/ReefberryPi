@@ -49,7 +49,7 @@ export default class Column extends React.Component {
             > 
               {this.props.widgets.map((widget, index) => (  
                 
-               (widget ? <Widget key={widget.id} widget={widget} index={index} probearray={this.props.probearray} globalPrefs={this.props.globalPrefs} feedmode={this.props.feedmode} /> : null)
+               (widget ? <Widget key={widget.id} widget={widget} index={index} probearray={this.props.probearray} globalPrefs={this.props.globalPrefs} feedmode={this.props.feedmode}  dragDisabled={this.props.dragDisabled} /> : null)
               ))}
               {provided.placeholder}
             </div>
