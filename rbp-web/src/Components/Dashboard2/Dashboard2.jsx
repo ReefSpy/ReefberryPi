@@ -247,6 +247,11 @@ class Dashboard2 extends React.Component {
     this.setState({ columns: columns });
   }
 
+async reloadDashboard() {
+  this.initColumns();
+  this.initWidgets();
+}
+
   async componentDidMount() {
     this.initColumns();
     this.initWidgets();

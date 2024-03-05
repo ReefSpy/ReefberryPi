@@ -1,10 +1,10 @@
 import React, { Component } from "react";
 import MainTabContainer from "./Components/MainTabContainer/MainTabContainer";
 import appicon from "./Images/reefberry-pi-logo.svg";
-import preficon from "./Images/cog-white.svg";
+// import preficon from "./Images/cog-white.svg";
 import logouticon from "./Images/logout-white.svg";
-import probeIcon from "./Images/probe-white.svg";
-import outletIcon from "./Images/outlet-white.svg"
+// import probeIcon from "./Images/probe-white.svg";
+// import outletIcon from "./Images/outlet-white.svg"
 import lockOpenIcon from "./Images/lock-circle-open-round.svg"
 import lockClosedIcon from "./Images/lock-circle-close-round.svg"
 import GlobalPrefsModal from "./Components/GlobalPrefs/GlobalPrefsModal";
