@@ -25,19 +25,30 @@ class MainTabContainer extends Component {
       selectedIndex: 0,
     };
   }
+  
+  handleRefreshRequest = () => {
 
+    console.log("refresh request at setting container")
+     this.setState({RefreshDashboard: true})
+  }
+
+  onRefreshFinished = () => {
+    console.log("refresh complete")
+   this.setState({RefreshDashboard: false})
+
+  }
   render() {
     const tabs = [];
     const tabPanels = [];
 
     const tabTypes = [
       // { name: "Dashboard", desc: <Dashboard feedmode={this.props.feedmode} globalPrefs={this.props.globalPrefs}/>, img: dashicon},
-      { name: "Dashboard", desc: <Dashboard2 feedmode={this.props.feedmode} globalPrefs={this.props.globalPrefs} dragDisabled={this.props.dragDisabled}/>, img: dashicon},
+      { name: "Dashboard", desc: <Dashboard2 feedmode={this.props.feedmode} globalPrefs={this.props.globalPrefs} dragDisabled={this.props.dragDisabled} ShouldRefreshDashboard = {this.state.RefreshDashboard} RefreshCompleted ={this.onRefreshFinished} />, img: dashicon},
       { name: "Analytics", desc: <Analytics probearray={this.props.probearray} outletarray={this.props.outletarray}/>, img: charticon },
       // { name: "Testing", desc: "Testing Parameters coming soon", img: testtubeicon},
       // { name: "Alarms", desc: "Alarms", img: alarmicon},
       // { name: "Journal", desc: "Journal coming soon", img: notepadicon},
-      { name: "Settings", desc: <Settings openGlobalPrefs={this.props.openGlobalPrefs}/>, img: cogicon},
+      { name: "Settings", desc: <Settings openGlobalPrefs={this.props.openGlobalPrefs} onRefreshRequest={this.handleRefreshRequest}/>, img: cogicon},
       // { name: "About", desc: <About />, img: infoicon}
      
     ];

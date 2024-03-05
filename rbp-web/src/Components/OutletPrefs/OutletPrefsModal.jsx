@@ -9,6 +9,7 @@ const OutletPrefsModal = ({
   onClose,
   children,
   onSubmit,
+  onRefreshRequest,
 }) => {
   const [isModalOpen, setModalOpen] = useState(isOpen);
   const [formState, setFormState] = useState({});
@@ -150,8 +151,9 @@ const OutletPrefsModal = ({
       })
       .then((data) => {
         console.log(data);
-        alert("Settings saved.  Window will refresh to reflect changes");
-        window.location.reload(false);
+        alert("Settings saved successfully.");
+        onRefreshRequest();
+       // window.location.reload(false);
         return data;
       })
       .catch((error) => {

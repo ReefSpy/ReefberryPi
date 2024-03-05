@@ -5,7 +5,7 @@ import rightArrow from "./right-arrow.svg";
 import deleteIcon from "./delete.svg";
 import ClipLoader from "react-spinners/ClipLoader";
 
-const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
+const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children, onRefreshRequest }) => {
   const [isModalOpen, setModalOpen] = useState(isOpen);
   const [selectedConnectedProbe, setSelectedConnectedProbe] = useState();
   const [connectedProbesList, setConnectedProbesList] = useState([]);
@@ -120,9 +120,11 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children }) => {
       })
       .then((data) => {
         console.log(data);
-        alert("Settings saved successfully.  Window will refresh to reflect changes");
+        alert("Settings saved successfully.");
         setModalOpen(false);
-        window.location.reload(false);
+        onClose();
+        onRefreshRequest();
+        //window.location.reload(false);
         return data;
       })
       .catch((error) => {

@@ -142,6 +142,7 @@ class Settings extends Component {
               onSubmit={this.handleProbePrefsFormSubmit}
               onClose={this.handleCloseProbePrefsModal}
               globalPrefs={this.state.globalPrefs}
+              onRefreshRequest={this.props.onRefreshRequest}
             />
           ) : null}
 
@@ -150,6 +151,7 @@ class Settings extends Component {
               isOpen={this.state.isOutletPrefsModalOpen}
               onSubmit={this.handleOutletPrefsFormSubmit}
               onClose={this.handleCloseOutletPrefsModal}
+              onRefreshRequest={this.props.onRefreshRequest}
             />
           ) : null}
 
@@ -158,6 +160,7 @@ class Settings extends Component {
               isOpen={this.state.isTempPrefsModalOpen}
               onSubmit={this.handleTempPrefsFormSubmit}
               onClose={this.handleCloseTempPrefsModal}
+              onRefreshRequest={this.props.onRefreshRequest}
             />
           ) : null}
         </div>
