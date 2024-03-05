@@ -5,8 +5,8 @@ import preficon from "./Images/cog-white.svg";
 import logouticon from "./Images/logout-white.svg";
 import probeIcon from "./Images/probe-white.svg";
 import outletIcon from "./Images/outlet-white.svg"
-import lockOpenIcon from "./Images/lock-open-white.svg"
-import lockClosedIcon from "./Images/lock-closed-white.svg"
+import lockOpenIcon from "./Images/lock-circle-open-round.svg"
+import lockClosedIcon from "./Images/lock-circle-close-round.svg"
 import GlobalPrefsModal from "./Components/GlobalPrefs/GlobalPrefsModal";
 import ProbePrefsModal from "./Components/ProbePrefs/ProbePrefsModal";
 import OutletPrefsModal from "./Components/OutletPrefs/OutletPrefsModal";
