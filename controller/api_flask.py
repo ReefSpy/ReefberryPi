@@ -3,7 +3,10 @@ from sqlalchemy import MetaData
 from sqlalchemy import Table, Column, Integer, String
 from sqlalchemy import select
 from sqlalchemy import update
+from sqlalchemy import delete
+from sqlalchemy import insert
 import defs_mysql
+
 
 #####################################################################
 # api_get_connected_temp_probes
@@ -39,20 +42,12 @@ def api_set_connected_temp_probes(AppPrefs, sqlengine, request):
         "probeID4", "")).lower()
 
     probearray = []
-    # if ProbeID1 != "":
-    #     probearray.append({"temp_probe_1": ProbeID1})
-    # if ProbeID2 != "":
-    #     probearray.append({"temp_probe_2": ProbeID2})
-    # if ProbeID3 != "":
-    #     probearray.append({"temp_probe_3": ProbeID3})
-    # if ProbeID4 != "":
-    #     probearray.append({"temp_probe_4": ProbeID4})
 
     probearray.append({"temp_probe_1": ProbeID1})
     probearray.append({"temp_probe_2": ProbeID2})
     probearray.append({"temp_probe_3": ProbeID3})
     probearray.append({"temp_probe_4": ProbeID4})
-    
+
     AppPrefs.logger.info(probearray)
 
     metadata_obj = MetaData()
@@ -62,10 +57,9 @@ def api_set_connected_temp_probes(AppPrefs, sqlengine, request):
     for probe in probearray:
         # AppPrefs.logger.info(probe)
         keys = probe.keys()
-        key = list(keys)[0] # convert to list to avoid the dreaded not-subscriptable error
-        # AppPrefs.logger.info(key)
-        # AppPrefs.logger.info(probe[key])
-    
+        # convert to list to avoid the dreaded not-subscriptable error
+        key = list(keys)[0]
+
         if (probe[key]) != "":
             enabled = "true"
         else:
@@ -76,7 +70,7 @@ def api_set_connected_temp_probes(AppPrefs, sqlengine, request):
             .where(ds18b20_table.c.probeid == key)
             .where(ds18b20_table.c.appuid == AppPrefs.appuid)
             .values(serialnum=probe[key])
-    )
+        )
         with sqlengine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
@@ -86,7 +80,7 @@ def api_set_connected_temp_probes(AppPrefs, sqlengine, request):
             .where(probe_table.c.probeid == key)
             .where(probe_table.c.appuid == AppPrefs.appuid)
             .values(enabled=enabled)
-    )
+        )
         with sqlengine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
@@ -97,7 +91,7 @@ def api_set_connected_temp_probes(AppPrefs, sqlengine, request):
 
 #####################################################################
 # api_get_assigned_temp_probes
-# return list of ds18b20 temperature probes that that have been 
+# return list of ds18b20 temperature probes that that have been
 # assigned to Probe IDs
 #####################################################################
 def api_get_assigned_temp_probes(AppPrefs, sqlengine):
@@ -107,7 +101,8 @@ def api_get_assigned_temp_probes(AppPrefs, sqlengine):
 
     conn = sqlengine.connect()
 
-    stmt = select(ds18b20_table).where(ds18b20_table.c.appuid == AppPrefs.appuid)
+    stmt = select(ds18b20_table).where(
+        ds18b20_table.c.appuid == AppPrefs.appuid)
     row_headers = conn.execute(stmt).keys()
     AppPrefs.logger.info(row_headers)
     myresult = conn.execute(stmt)
@@ -115,7 +110,99 @@ def api_get_assigned_temp_probes(AppPrefs, sqlengine):
 
     json_data = []
 
-    for row in myresult:    
-        json_data.append({row.probeid : row.serialnum})
+    for row in myresult:
+        json_data.append({row.probeid: row.serialnum})
 
     return json_data
+
+#####################################################################
+# api_set_column_widget_order
+# save the widget order to the column tables
+#####################################################################
+def api_set_column_widget_order(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+
+    ColumnItems1 = str(request.json.get(
+        "column1", ""))
+    ColumnItems2 = str(request.json.get(
+        "column2", ""))
+    ColumnItems3 = str(request.json.get(
+        "column3", ""))
+
+    metadata_obj = MetaData()
+
+    col1_table = Table("dashcol1", metadata_obj, autoload_with=sqlengine)
+    col2_table = Table("dashcol2", metadata_obj, autoload_with=sqlengine)
+    col3_table = Table("dashcol3", metadata_obj, autoload_with=sqlengine)
+
+    ColumnItems1 = ColumnItems1.replace("[", "")
+    ColumnItems1 = ColumnItems1.replace("]", "")
+    ColumnItems1 = ColumnItems1.replace("'", "")
+    ColumnItems1 = ColumnItems1.replace(" ", "")
+
+    ColumnItems2 = ColumnItems2.replace("[", "")
+    ColumnItems2 = ColumnItems2.replace("]", "")
+    ColumnItems2 = ColumnItems2.replace("'", "")
+    ColumnItems2 = ColumnItems2.replace(" ", "")
+
+    ColumnItems3 = ColumnItems3.replace("[", "")
+    ColumnItems3 = ColumnItems3.replace("]", "")
+    ColumnItems3 = ColumnItems3.replace("'", "")
+    ColumnItems3 = ColumnItems3.replace(" ", "")
+
+    items1List = ColumnItems1.split(",")
+    items2List = ColumnItems2.split(",")
+    items3List = ColumnItems3.split(",")
+
+    if items1List[0] != "":
+        AppPrefs.logger.info(items1List)
+        stmt = (
+            delete(col1_table)
+            .where(col1_table.c.appuid == AppPrefs.appuid)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        for widget in items1List:
+            stmt = (insert(col1_table).values(
+                appuid=AppPrefs.appuid, widgetid=widget))
+            with sqlengine.connect() as conn:
+                result = conn.execute(stmt)
+                conn.commit()
+
+    if items2List[0] != "":
+        AppPrefs.logger.info(items2List)
+        stmt = (
+            delete(col2_table)
+            .where(col2_table.c.appuid == AppPrefs.appuid)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        for widget in items2List:
+            stmt = (insert(col2_table).values(
+                appuid=AppPrefs.appuid, widgetid=widget))
+            with sqlengine.connect() as conn:
+                result = conn.execute(stmt)
+                conn.commit()
+
+    if items3List[0] != "":
+        AppPrefs.logger.info(items3List)
+        stmt = (
+            delete(col3_table)
+            .where(col3_table.c.appuid == AppPrefs.appuid)
+        )
+        with sqlengine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        for widget in items3List:
+            stmt = (insert(col3_table).values(
+                appuid=AppPrefs.appuid, widgetid=widget))
+            with sqlengine.connect() as conn:
+                result = conn.execute(stmt)
+                conn.commit()
+
+    return
