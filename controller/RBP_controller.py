@@ -2030,6 +2030,30 @@ def set_connected_temp_probes():
         response = jsonify({"msg": str(e)})
         response.status_code = 500
         return response
+
+#####################################################################
+# set_column_widget_order
+# save the widget order to the column tables
+#####################################################################
+@app.route('/set_column_widget_order', methods=['POST'])
+@cross_origin()
+def set_column_widget_order():
+    try:
+        global AppPrefs
+
+        api_flask.api_set_column_widget_order(AppPrefs, sqlengine, request)
+
+        response = {}
+        response = jsonify({"msg": 'Saved Column Order',
+                            })
+        response.status_code = 200
+        return response
+
+    except Exception as e:
+        AppPrefs.logger.error("set_column_widget_order: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
     
 #####################################################################
 # get_outlet_enable_state
