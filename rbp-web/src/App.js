@@ -5,8 +5,8 @@ import appicon from "./Images/reefberry-pi-logo.svg";
 import logouticon from "./Images/logout-white.svg";
 // import probeIcon from "./Images/probe-white.svg";
 // import outletIcon from "./Images/outlet-white.svg"
-import lockOpenIcon from "./Images/lock-circle-open-round.svg"
-import lockClosedIcon from "./Images/lock-circle-close-round.svg"
+import lockOpenIcon from "./Images/lock-circle-open-round.svg";
+import lockClosedIcon from "./Images/lock-circle-close-round.svg";
 import GlobalPrefsModal from "./Components/GlobalPrefs/GlobalPrefsModal";
 import ProbePrefsModal from "./Components/ProbePrefs/ProbePrefsModal";
 import OutletPrefsModal from "./Components/OutletPrefs/OutletPrefsModal";
@@ -140,9 +140,19 @@ class App extends Component {
   };
 
   handleWidgetLock = () => {
-    console.log("Widget Lock Click")
-    if (this.state.DragDisabled === true){ this.setState({DragDisabled: false})}
-    else{this.setState({DragDisabled: true})}
+    console.log("Widget Lock Click");
+    if (this.state.DragDisabled === true) {
+      this.setState({ DragDisabled: false });
+      this.setState({ShouldSaveWidgetOrder: false})
+    } else {
+      this.setState({ DragDisabled: true });
+      this.setState({ShouldSaveWidgetOrder: true})
+    }
+  };
+
+  onWidgetSaveComplete = () => {
+    this.setState({ShouldSaveWidgetOrder: false})
+    console.log("Widget Save Complete")
   }
 
   handleGlobalPrefsFormSubmit = (data) => {
@@ -158,17 +168,14 @@ class App extends Component {
     };
     this.apiCallPut(apiURL, payload);
     this.handleCloseGlobalPrefsModal();
- 
   };
 
   handleProbePrefsFormSubmit = (data) => {
     this.handleCloseProbePrefsModal();
-    
   };
 
   handleOutletPrefsFormSubmit = (data) => {
     this.handleCloseOutletPrefsModal();
-    
   };
 
   setGlobalPrefs(data) {
@@ -188,8 +195,8 @@ class App extends Component {
     })
       .then((response) => response.json())
       .then((data) => console.log(data))
-      .then( alert("Settings saved.  Window will refresh to reflect changes"))
-      .then ( window.location.reload(false))
+      .then(alert("Settings saved.  Window will refresh to reflect changes"))
+      .then(window.location.reload(false))
       .catch((error) => console.log(error));
   };
 
@@ -224,7 +231,7 @@ class App extends Component {
           <span>Reefberry Pi</span>
 
           <div className="header-right">
-          {/* <button className="headericonbtn">
+            {/* <button className="headericonbtn">
               <img
                 className="headericon"
                 src={outletIcon}
@@ -250,10 +257,14 @@ class App extends Component {
                 onClick={this.handleOpenGlobalPrefsModal}
               ></img>
             </button> */}
-               <button className="headericonbtn">
+            <button className="headericonbtn">
               <img
                 className="headericon"
-                src={this.state.DragDisabled === false ? lockOpenIcon : lockClosedIcon}
+                src={
+                  this.state.DragDisabled === false
+                    ? lockOpenIcon
+                    : lockClosedIcon
+                }
                 alt="Widget Lock"
                 onClick={this.handleWidgetLock}
                 title="Lock/Unlock Widgets"
@@ -279,6 +290,8 @@ class App extends Component {
             globalPrefs={this.state.globalPrefs}
             openGlobalPrefs={this.handleOpenGlobalPrefsModal}
             dragDisabled={this.state.DragDisabled}
+            shouldSaveWidgetOrder={this.state.ShouldSaveWidgetOrder}
+            onWidgetSaveComplete ={this.onWidgetSaveComplete}
           ></MainTabContainer>
         </div>
 
@@ -301,7 +314,7 @@ class App extends Component {
           />
         ) : null}
 
-{this.state.isOutletPrefsModalOpen ? (
+        {this.state.isOutletPrefsModalOpen ? (
           <OutletPrefsModal
             isOpen={this.state.isOutletPrefsModalOpen}
             onSubmit={this.handleOutletPrefsFormSubmit}

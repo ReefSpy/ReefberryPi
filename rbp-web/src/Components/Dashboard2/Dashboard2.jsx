@@ -172,12 +172,10 @@ class Dashboard2 extends React.Component {
 
           items[`item-${idnum}`] = data[outlet];
 
-
           if (data[outlet]["enabled"] === "true") {
             collist2.push(`item-${idnum}`);
             outletitems.push(data[outlet]);
           }
-   
         }
       })
       .then(() => {
@@ -247,23 +245,120 @@ class Dashboard2 extends React.Component {
     this.setState({ columns: columns });
   }
 
-componentDidUpdate(prevProps, prevState){
+  componentDidUpdate(prevProps, prevState) {
+    if (this.props.ShouldRefreshDashboard === true) {
+      // console.log("from the dashboard");
+      // console.log(this.props.ShouldRefreshDashboard);
+      this.reloadDashboard();
+      this.props.RefreshCompleted();
+    }
 
-  if (this.props.ShouldRefreshDashboard === true){
-    console.log("from the dashboard")
-    console.log(this.props.ShouldRefreshDashboard)
-    this.reloadDashboard()
-     this.props.RefreshCompleted()
+    if (this.props.shouldSaveWidgetOrder === true) {
+      console.log(this.state.columns);
+      // for (const column in this.state.columns) {
+      //   this.saveColumnOrder1(this.state.columns[column]["widgetIds"]);
+      // }
+      this.saveColumnOrder1(this.state.columns["column-1"]["widgetIds"]);
+      this.saveColumnOrder2(this.state.columns["column-2"]["widgetIds"]);
+      this.saveColumnOrder3(this.state.columns["column-3"]["widgetIds"]);
+      this.props.onWidgetSaveComplete();
+    }
   }
 
-   
-}
+  saveColumnOrder1 = (widgets) => {
+    console.log(JSON.stringify(widgets));
+    return fetch(process.env.REACT_APP_API_SET_COLUMN_WIDGET_ORDER, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({column1: widgets}),
 
+    })
+      .then((response) => {
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Data not found");
+          } else if (response.status === 500) {
+            throw new Error("Server error");
+          } else {
+            throw new Error("Network response was not ok");
+          }
+        }
+        return response.json();
+      })
+      .then((data) => {
+        return data;
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  };
 
-async reloadDashboard() {
-  this.initColumns();
-  this.initWidgets();
-}
+  saveColumnOrder2 = (widgets) => {
+    console.log(JSON.stringify(widgets));
+    return fetch(process.env.REACT_APP_API_SET_COLUMN_WIDGET_ORDER, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({column2: widgets}),
+
+    })
+      .then((response) => {
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Data not found");
+          } else if (response.status === 500) {
+            throw new Error("Server error");
+          } else {
+            throw new Error("Network response was not ok");
+          }
+        }
+        return response.json();
+      })
+      .then((data) => {
+        return data;
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  };
+
+  saveColumnOrder3 = (widgets) => {
+    console.log(JSON.stringify(widgets));
+    return fetch(process.env.REACT_APP_API_SET_COLUMN_WIDGET_ORDER, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({column3: widgets}),
+
+    })
+      .then((response) => {
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Data not found");
+          } else if (response.status === 500) {
+            throw new Error("Server error");
+          } else {
+            throw new Error("Network response was not ok");
+          }
+        }
+        return response.json();
+      })
+      .then((data) => {
+        return data;
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  };
+
+  async reloadDashboard() {
+    this.initColumns();
+    this.initWidgets();
+  }
 
   async componentDidMount() {
     this.initColumns();
