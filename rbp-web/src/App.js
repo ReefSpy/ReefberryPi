@@ -1,10 +1,12 @@
 import React, { Component } from "react";
 import MainTabContainer from "./Components/MainTabContainer/MainTabContainer";
 import appicon from "./Images/reefberry-pi-logo.svg";
-import preficon from "./Images/cog-white.svg";
+// import preficon from "./Images/cog-white.svg";
 import logouticon from "./Images/logout-white.svg";
-import probeIcon from "./Images/probe-white.svg";
-import outletIcon from "./Images/outlet-white.svg"
+// import probeIcon from "./Images/probe-white.svg";
+// import outletIcon from "./Images/outlet-white.svg"
+import lockOpenIcon from "./Images/lock-circle-open-round.svg"
+import lockClosedIcon from "./Images/lock-circle-close-round.svg"
 import GlobalPrefsModal from "./Components/GlobalPrefs/GlobalPrefsModal";
 import ProbePrefsModal from "./Components/ProbePrefs/ProbePrefsModal";
 import OutletPrefsModal from "./Components/OutletPrefs/OutletPrefsModal";
@@ -19,7 +21,7 @@ class App extends Component {
       col2items: [],
       col1items: [],
       ProbeArray: [],
-      DragDisabled: false,
+      DragDisabled: true,
       globalPrefs: null,
       col1rawitems: [],
     };
@@ -137,6 +139,12 @@ class App extends Component {
     this.setState({ isGlobalPrefsModalOpen: false });
   };
 
+  handleWidgetLock = () => {
+    console.log("Widget Lock Click")
+    if (this.state.DragDisabled === true){ this.setState({DragDisabled: false})}
+    else{this.setState({DragDisabled: true})}
+  }
+
   handleGlobalPrefsFormSubmit = (data) => {
     let apiURL = process.env.REACT_APP_API_SET_GLOBAL_PREFS;
     console.log(data);
@@ -234,12 +242,21 @@ class App extends Component {
               ></img>
             </button> */}
 
-            <button className="headericonbtn">
+            {/* <button className="headericonbtn">
               <img
                 className="headericon"
                 src={preficon}
                 alt="Preferences"
                 onClick={this.handleOpenGlobalPrefsModal}
+              ></img>
+            </button> */}
+               <button className="headericonbtn">
+              <img
+                className="headericon"
+                src={this.state.DragDisabled === false ? lockOpenIcon : lockClosedIcon}
+                alt="Widget Lock"
+                onClick={this.handleWidgetLock}
+                title="Lock/Unlock Widgets"
               ></img>
             </button>
             <button className="headericonbtn">
@@ -248,6 +265,7 @@ class App extends Component {
                 src={logouticon}
                 alt="Logout"
                 onClick={this.logout}
+                title="Logout"
               ></img>
             </button>
           </div>
@@ -259,6 +277,8 @@ class App extends Component {
             probearray={this.state.ProbeArray}
             outletarray={this.state.OutletArray}
             globalPrefs={this.state.globalPrefs}
+            openGlobalPrefs={this.handleOpenGlobalPrefsModal}
+            dragDisabled={this.state.DragDisabled}
           ></MainTabContainer>
         </div>
 

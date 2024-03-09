@@ -247,6 +247,24 @@ class Dashboard2 extends React.Component {
     this.setState({ columns: columns });
   }
 
+componentDidUpdate(prevProps, prevState){
+
+  if (this.props.ShouldRefreshDashboard === true){
+    console.log("from the dashboard")
+    console.log(this.props.ShouldRefreshDashboard)
+    this.reloadDashboard()
+     this.props.RefreshCompleted()
+  }
+
+   
+}
+
+
+async reloadDashboard() {
+  this.initColumns();
+  this.initWidgets();
+}
+
   async componentDidMount() {
     this.initColumns();
     this.initWidgets();
@@ -271,6 +289,7 @@ class Dashboard2 extends React.Component {
                 globalPrefs={this.props.globalPrefs}
                 feedmode={this.props.feedmode}
                 probearray={this.state.ProbeArray}
+                dragDisabled={this.props.dragDisabled}
               />
             );
           })}
