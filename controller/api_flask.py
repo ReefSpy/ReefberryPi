@@ -29,6 +29,8 @@ def api_get_connected_temp_probes():
 # api_set_connected_temp_probes
 # assign the selected ds18b20 probes to Probe ID 1,2,3,4
 #####################################################################
+
+
 def api_set_connected_temp_probes(AppPrefs, sqlengine, request):
     AppPrefs.logger.info(request)
 
@@ -94,6 +96,8 @@ def api_set_connected_temp_probes(AppPrefs, sqlengine, request):
 # return list of ds18b20 temperature probes that that have been
 # assigned to Probe IDs
 #####################################################################
+
+
 def api_get_assigned_temp_probes(AppPrefs, sqlengine):
     # build table object from table in DB
     metadata_obj = MetaData()
@@ -119,6 +123,8 @@ def api_get_assigned_temp_probes(AppPrefs, sqlengine):
 # api_set_column_widget_order
 # save the widget order to the column tables
 #####################################################################
+
+
 def api_set_column_widget_order(AppPrefs, sqlengine, request):
     AppPrefs.logger.info(request)
 
@@ -154,16 +160,34 @@ def api_set_column_widget_order(AppPrefs, sqlengine, request):
     items2List = ColumnItems2.split(",")
     items3List = ColumnItems3.split(",")
 
+    # delete existing entries
+    # col1
+    stmt = (
+        delete(col1_table)
+        .where(col1_table.c.appuid == AppPrefs.appuid)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+    # col2
+    stmt = (
+        delete(col2_table)
+        .where(col2_table.c.appuid == AppPrefs.appuid)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+    # col3
+    stmt = (
+        delete(col3_table)
+        .where(col3_table.c.appuid == AppPrefs.appuid)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
     if items1List[0] != "":
         AppPrefs.logger.info(items1List)
-        stmt = (
-            delete(col1_table)
-            .where(col1_table.c.appuid == AppPrefs.appuid)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
         for widget in items1List:
             stmt = (insert(col1_table).values(
                 appuid=AppPrefs.appuid, widgetid=widget))
@@ -173,14 +197,6 @@ def api_set_column_widget_order(AppPrefs, sqlengine, request):
 
     if items2List[0] != "":
         AppPrefs.logger.info(items2List)
-        stmt = (
-            delete(col2_table)
-            .where(col2_table.c.appuid == AppPrefs.appuid)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
         for widget in items2List:
             stmt = (insert(col2_table).values(
                 appuid=AppPrefs.appuid, widgetid=widget))
@@ -190,14 +206,6 @@ def api_set_column_widget_order(AppPrefs, sqlengine, request):
 
     if items3List[0] != "":
         AppPrefs.logger.info(items3List)
-        stmt = (
-            delete(col3_table)
-            .where(col3_table.c.appuid == AppPrefs.appuid)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
         for widget in items3List:
             stmt = (insert(col3_table).values(
                 appuid=AppPrefs.appuid, widgetid=widget))
@@ -206,3 +214,60 @@ def api_set_column_widget_order(AppPrefs, sqlengine, request):
                 conn.commit()
 
     return
+
+#####################################################################
+# api_get_column_widget_order
+# get the widget order of the column tables
+#####################################################################
+
+
+def api_get_column_widget_order(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    col1table = Table("dashcol1", metadata_obj, autoload_with=sqlengine)
+    col2table = Table("dashcol2", metadata_obj, autoload_with=sqlengine)
+    col3table = Table("dashcol3", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    # get column 1 order
+    stmt = select(col1table).where(
+        col1table.c.appuid == AppPrefs.appuid)
+    row_headers = conn.execute(stmt).keys()
+    AppPrefs.logger.info(row_headers)
+    myresult = conn.execute(stmt)
+    conn.commit()
+
+    col1_data = []
+
+    for row in myresult:
+        col1_data.append(row.widgetid)
+
+    # get column 2 order
+    stmt = select(col2table).where(
+        col2table.c.appuid == AppPrefs.appuid)
+    row_headers = conn.execute(stmt).keys()
+    AppPrefs.logger.info(row_headers)
+    myresult = conn.execute(stmt)
+    conn.commit()
+
+    col2_data = []
+
+    for row in myresult:
+        col2_data.append(row.widgetid)
+
+    # get column 3 order
+    stmt = select(col3table).where(
+        col3table.c.appuid == AppPrefs.appuid)
+    row_headers = conn.execute(stmt).keys()
+    AppPrefs.logger.info(row_headers)
+    myresult = conn.execute(stmt)
+    conn.commit()
+
+    col3_data = []
+
+    for row in myresult:
+        col3_data.append(row.widgetid)
+
+    return col1_data, col2_data, col3_data

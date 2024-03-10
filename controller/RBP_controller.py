@@ -2155,6 +2155,26 @@ def get_outletchartdata(outletid, timeframe):
         AppPrefs.logger.error("get_outletchartdata: " + str(e))
         return (str(e))
 
+#####################################################################
+# get_column_widget_order
+# get widget order from th column tables
+#####################################################################
+@app.route('/get_column_widget_order/', methods=['GET'])
+@cross_origin()
+def get_column_widget_order():
+
+    try:
+        global AppPrefs
+        widgetlist1, widgetlist2, widgetlist3 = api_flask.api_get_column_widget_order(AppPrefs, sqlengine, request)
+        return {"column1": widgetlist1, "column2": widgetlist2, "column3": widgetlist3}
+
+    except Exception as e:
+        AppPrefs.logger.error("get_column_widget_order: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+
+
 ############################################################
 
 
