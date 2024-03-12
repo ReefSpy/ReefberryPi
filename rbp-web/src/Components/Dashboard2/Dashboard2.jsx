@@ -5,9 +5,9 @@ import React from "react";
 // import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { DragDropContext } from "@hello-pangea/dnd";
 
-import { FeedWidget } from "../FeedWidget/FeedWidget";
-import { ProbeWidget } from "../ProbeWidget/ProbeWidget";
-import { OutletWidget } from "../OutletWidget/OutletWidget";
+// import { FeedWidget } from "../FeedWidget/FeedWidget";
+// import { ProbeWidget } from "../ProbeWidget/ProbeWidget";
+// import { OutletWidget } from "../OutletWidget/OutletWidget";
 
 import Column from "./Column";
 import "./Dashboard2.css";
@@ -23,6 +23,10 @@ class Dashboard2 extends React.Component {
       collist1: [],
       collist2: [],
       collist3: [],
+
+      Col1SaveOrder: [],
+      Col2SaveOrder: [],
+      Col3SaveOrder: [],
 
       widgets: {},
 
@@ -49,6 +53,8 @@ class Dashboard2 extends React.Component {
         // },
       },
     };
+
+    this.reorderWidgets = this.reorderWidgets.bind(this);
   }
 
   onDragEnd = (result) => {
@@ -116,13 +122,45 @@ class Dashboard2 extends React.Component {
     this.setState(newState);
   };
 
+  async getSavedWidgetOrder() {
+    // first add probe widgets
+    fetch(process.env.REACT_APP_API_GET_COLUMN_WIDGET_ORDER)
+      .then((response) => {
+        return response.json();
+      })
+      .then((data) => {
+        // console.log(data);
+        this.setState({ Col1SaveOrder: data["column1"] });
+        this.setState({ Col2SaveOrder: data["column2"] });
+        this.setState({ Col3SaveOrder: data["column3"] });
+        // for (let column in data) {
+        //   console.log(data[column]);
+        // }
+      })
+      .then((data) => {
+        let newcol = this.state.columns;
+        newcol["column-1"].widgetIds = this.state.Col1SaveOrder;
+        newcol["column-2"].widgetIds = this.state.Col2SaveOrder;
+        newcol["column-3"].widgetIds = this.state.Col3SaveOrder;
+        // this.setState({columns: newcol}) ;
+        // console.log(newcol["column-1"].widgetIds);
+        // console.log(newcol["column-2"].widgetIds);
+        // console.log(newcol["column-3"].widgetIds);
+        // console.log(this.state.WidgetArray);
+        
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+
   async initWidgets() {
     let collist1 = [];
     let collist2 = [];
     let collist3 = [];
     let items = {};
     let probeitems = [];
-    let i = 1;
+    // let i = 1;
     let newcol = this.state.columns;
 
     // first add probe widgets
@@ -131,15 +169,20 @@ class Dashboard2 extends React.Component {
         return response.json();
       })
       .then((data) => {
-        i = 100;
+        // i = 100;
         for (let probe in data) {
-          let idnum = String(i++);
-          data[probe]["id"] = `item-${idnum}`;
+          // let idnum = String(i++);
+          // data[probe]["id"] = `item-${idnum}`;
+          data[probe]["id"] = probe;
           data[probe]["widgetType"] = `probe`;
           data[probe]["content"] = "Probe Widget";
 
-          items[`item-${idnum}`] = data[probe];
-          collist1.push(`item-${idnum}`);
+          // items[`item-${idnum}`] = data[probe];
+          items[probe] = data[probe];
+
+          //  collist1.push(`item-${idnum}`);
+          collist1.push(probe);
+
           probeitems.push(data[probe]);
         }
       })
@@ -150,6 +193,7 @@ class Dashboard2 extends React.Component {
         // console.log(newcol["column-1"])
         // console.log(collist1)
         newcol["column-1"].widgetIds = collist1;
+
         // this.setState({columns2: newcol })
       })
       .catch((error) => {
@@ -163,18 +207,24 @@ class Dashboard2 extends React.Component {
         return response.json();
       })
       .then((data) => {
-        i = 200;
+        // i = 200;
         for (let outlet in data) {
-          let idnum = String(i++);
-          data[outlet]["id"] = `item-${idnum}`;
+          // let idnum = String(i++);
+          //  data[outlet]["id"] = `item-${idnum}`;
+          data[outlet]["id"] = outlet;
+
           data[outlet]["widgetType"] = `outlet`;
           data[outlet]["content"] = "Outlet Widget";
 
-          items[`item-${idnum}`] = data[outlet];
+          //items[`item-${idnum}`] = data[outlet];
+          //items[outlet] = data[outlet];
 
           if (data[outlet]["enabled"] === "true") {
-            collist2.push(`item-${idnum}`);
+            // collist2.push(`item-${idnum}`);
+            collist2.push(outlet);
+
             outletitems.push(data[outlet]);
+            items[outlet] = data[outlet];
           }
         }
       })
@@ -184,34 +234,32 @@ class Dashboard2 extends React.Component {
 
         newcol["column-2"].widgetIds = collist2;
       })
+
       .catch((error) => {
         console.error("Error:", error);
       });
 
     // now add other widgets
     // lets add the feedwidget to this set
-    i = 300;
-    let idnum = String(i++);
+    // i = 300;
+    // let idnum = String(i++);
     let feeditem = {
       widgetType: "feed",
-      id: `item-${idnum}`,
+      // id: `item-${idnum}`,
+      id: "feed",
       content: "Feed Widget",
     };
     items[feeditem.id] = feeditem;
-    collist3.push(`item-${idnum}`);
+    // collist3.push(`item-${idnum}`);
+    collist3.push("feed");
 
     newcol["column-3"].widgetIds = collist3;
 
     this.setState({ collist3: collist3 });
     this.setState({ WidgetArray: items });
-    this.setState({ columns: newcol, widgets: items });
-    // this.setState({ widgets: items });
-
-    // let cols = this.state.columns
-    // cols["column-1"].widgetIds = collist3
-    // this.setState({columns: cols})
-    // console.log(cols)
-    // console.log(this.state.columns["column-1"].widgetIds)
+    //this.setState({ columns: newcol, widgets: items });
+     this.setState({ widgets: items });
+ 
   }
 
   initColumns() {
@@ -220,19 +268,16 @@ class Dashboard2 extends React.Component {
       "column-1": {
         id: "column-1",
         title: "Column 1",
-        //  widgetIds: ["widget-1", "widget-2", "widget-3"],
         widgetIds: [],
       },
       "column-2": {
         id: "column-2",
         title: "Column 2",
-        //  widgetIds: ["widget-5"],
         widgetIds: [],
       },
       "column-3": {
         id: "column-3",
         title: "Column 3",
-        // widgetIds: ["widget-4"],
         widgetIds: [],
       },
       // 'column-4': {
@@ -254,7 +299,7 @@ class Dashboard2 extends React.Component {
     }
 
     if (this.props.shouldSaveWidgetOrder === true) {
-      console.log(this.state.columns);
+      // console.log(this.state.columns);
       // for (const column in this.state.columns) {
       //   this.saveColumnOrder1(this.state.columns[column]["widgetIds"]);
       // }
@@ -272,8 +317,7 @@ class Dashboard2 extends React.Component {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({column1: widgets}),
-
+      body: JSON.stringify({ column1: widgets }),
     })
       .then((response) => {
         if (!response.ok) {
@@ -302,8 +346,7 @@ class Dashboard2 extends React.Component {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({column2: widgets}),
-
+      body: JSON.stringify({ column2: widgets }),
     })
       .then((response) => {
         if (!response.ok) {
@@ -332,8 +375,7 @@ class Dashboard2 extends React.Component {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({column3: widgets}),
-
+      body: JSON.stringify({ column3: widgets }),
     })
       .then((response) => {
         if (!response.ok) {
@@ -355,14 +397,35 @@ class Dashboard2 extends React.Component {
       });
   };
 
+  reorderWidgets() {
+    let columnOrder = this.state.columns;
+    columnOrder["column-1"].widgetIds = this.state.Col1SaveOrder;
+    columnOrder["column-2"].widgetIds = this.state.Col2SaveOrder;
+    columnOrder["column-3"].widgetIds = this.state.Col3SaveOrder;
+
+    for (let widget in this.state.WidgetArray) {
+      console.log(widget);
+      if (!columnOrder["column-1"].widgetIds.includes(widget)) {
+        if (!columnOrder["column-2"].widgetIds.includes(widget)) {
+          if (!columnOrder["column-3"].widgetIds.includes(widget)) {
+            columnOrder["column-1"].widgetIds.push(widget);
+          }
+        }
+      }
+    }
+    this.setState({ columns: columnOrder });
+  }
+
   async reloadDashboard() {
-    this.initColumns();
-    this.initWidgets();
+    this.getSavedWidgetOrder()
+      .then(this.initColumns())
+      .then(this.initWidgets())
   }
 
   async componentDidMount() {
-    this.initColumns();
-    this.initWidgets();
+    this.getSavedWidgetOrder()
+      .then(this.initColumns())
+      .then(this.initWidgets())
   }
 
   render() {
