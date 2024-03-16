@@ -110,6 +110,8 @@ export class ProbeWidget extends Component {
   }
 
   GetChartData = (chartdata) => {
+
+  // need to convert timestamp to milliseconds to show up properly in HighCharts
     let valueArray1 = [];
     for (let datapoint in chartdata) {
       let newDate = new Date(chartdata[datapoint][0]).getTime();
