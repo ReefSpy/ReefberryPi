@@ -8,7 +8,7 @@ import globalicon from "../../Images/global.svg";
 import OutletPrefsModal from "../OutletPrefs/OutletPrefsModal";
 import ProbePrefsModal from "../ProbePrefs/ProbePrefsModal";
 import TempPrefsModal from "../TempPrefs/TempPrefsModal";
-import appicon from "../../Images/reefberry-pi-logo-reefspy.svg";
+import appicon from "../../Images/reefberrypi-by-reefspy.svg";
 
 class Settings extends Component {
   constructor(props) {
@@ -97,9 +97,9 @@ class Settings extends Component {
               <img src={outleticon} alt="Outlets" className="btnicon"></img>
               Outlets
             </button>
-            <button className="settingsbtn">
+            {/* <button className="settingsbtn">
               <img src={usericon} alt="Users" className="btnicon"></img>Users
-            </button>
+            </button> */}
             <button className="settingsbtn" onClick={this.props.openGlobalPrefs}>
               <img src={globalicon} alt="Global" className="btnicon"></img>{" "}
               Global
@@ -133,6 +133,7 @@ class Settings extends Component {
             Controller Firmware: version 0.0.1
             <br></br>
             Web Interface: version 0.0.1
+            <br></br>
             <br></br>
           </div>
 
