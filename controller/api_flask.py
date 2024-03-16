@@ -98,7 +98,8 @@ def api_set_connected_temp_probes(AppPrefs, sqlengine, request):
 #####################################################################
 
 
-def api_get_assigned_temp_probes(AppPrefs, sqlengine):
+def api_get_assigned_temp_probes(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
     # build table object from table in DB
     metadata_obj = MetaData()
     ds18b20_table = Table("ds18b20", metadata_obj, autoload_with=sqlengine)
@@ -119,6 +120,72 @@ def api_get_assigned_temp_probes(AppPrefs, sqlengine):
 
     return json_data
 
+
+#####################################################################
+# api_get_column_widget_order
+# get the widget order of the column tables
+#####################################################################
+
+
+def api_get_column_widget_order(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+    # build table object from table in DB
+    metadata_obj = MetaData()
+
+    dashtable = Table("dashorder", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    # get column 1 order
+    stmt = select(dashtable).where(
+        dashtable.c.appuid == AppPrefs.appuid).where(dashtable.c.column == 1).order_by(dashtable.c.order)
+    row_headers = conn.execute(stmt).keys()
+    # AppPrefs.logger.info(row_headers)
+    myresult = conn.execute(stmt)
+    conn.commit()
+
+    col1_data = []
+
+    for row in myresult:
+        col1_data.append(row.widgetid)
+    
+    AppPrefs.logger.info("Getting widget order for column 1")
+    AppPrefs.logger.info(col1_data)
+
+    # get column 2 order
+    stmt = select(dashtable).where(
+        dashtable.c.appuid == AppPrefs.appuid).where(dashtable.c.column == 2).order_by(dashtable.c.order)
+    row_headers = conn.execute(stmt).keys()
+    # AppPrefs.logger.info(row_headers)
+    myresult = conn.execute(stmt)
+    conn.commit()
+
+    col2_data = []
+
+    for row in myresult:
+        col2_data.append(row.widgetid)
+    
+    AppPrefs.logger.info("Getting widget order for column 2")
+    AppPrefs.logger.info(col2_data)
+
+    # get column 3 order
+    stmt = select(dashtable).where(
+        dashtable.c.appuid == AppPrefs.appuid).where(dashtable.c.column == 3).order_by(dashtable.c.order)
+    row_headers = conn.execute(stmt).keys()
+    # AppPrefs.logger.info(row_headers)
+    myresult = conn.execute(stmt)
+    conn.commit()
+
+    col3_data = []
+
+    for row in myresult:
+        col3_data.append(row.widgetid)
+    
+    AppPrefs.logger.info("Getting widget order for column 3")
+    AppPrefs.logger.info(col3_data)
+
+    return col1_data, col2_data, col3_data
+
 #####################################################################
 # api_set_column_widget_order
 # save the widget order to the column tables
@@ -137,9 +204,7 @@ def api_set_column_widget_order(AppPrefs, sqlengine, request):
 
     metadata_obj = MetaData()
 
-    col1_table = Table("dashcol1", metadata_obj, autoload_with=sqlengine)
-    col2_table = Table("dashcol2", metadata_obj, autoload_with=sqlengine)
-    col3_table = Table("dashcol3", metadata_obj, autoload_with=sqlengine)
+    dashtable = Table("dashorder", metadata_obj, autoload_with=sqlengine)
 
     ColumnItems1 = ColumnItems1.replace("[", "")
     ColumnItems1 = ColumnItems1.replace("]", "")
@@ -160,114 +225,46 @@ def api_set_column_widget_order(AppPrefs, sqlengine, request):
     items2List = ColumnItems2.split(",")
     items3List = ColumnItems3.split(",")
 
-    # delete existing entries
-    # col1
-    stmt = (
-        delete(col1_table)
-        .where(col1_table.c.appuid == AppPrefs.appuid)
-    )
     with sqlengine.connect() as conn:
-        result = conn.execute(stmt)
-        conn.commit()
-    # col2
-    stmt = (
-        delete(col2_table)
-        .where(col2_table.c.appuid == AppPrefs.appuid)
-    )
-    with sqlengine.connect() as conn:
-        result = conn.execute(stmt)
-        conn.commit()
-    # col3
-    stmt = (
-        delete(col3_table)
-        .where(col3_table.c.appuid == AppPrefs.appuid)
-    )
-    with sqlengine.connect() as conn:
-        result = conn.execute(stmt)
-        conn.commit()
-
-    if items1List[0] != "":
-        AppPrefs.logger.info(items1List)
-        for widget in items1List:
-            stmt = (insert(col1_table).values(
-                appuid=AppPrefs.appuid, widgetid=widget))
-            with sqlengine.connect() as conn:
+        if items1List[0] != "":
+            AppPrefs.logger.info("Saving Column 1 widget order")
+            AppPrefs.logger.info(items1List)
+            i = 0
+            for widget in items1List:
+                i = i + 1
+                stmt = (update(dashtable).where(dashtable.c.appuid == AppPrefs.appuid, dashtable.c.widgetid == widget)
+                        .values(
+                    column=1, order=i))
+                
                 result = conn.execute(stmt)
-                conn.commit()
+              
 
-    if items2List[0] != "":
-        AppPrefs.logger.info(items2List)
-        for widget in items2List:
-            stmt = (insert(col2_table).values(
-                appuid=AppPrefs.appuid, widgetid=widget))
-            with sqlengine.connect() as conn:
+        if items2List[0] != "":
+            AppPrefs.logger.info("Saving Column 2 widget order")
+            AppPrefs.logger.info(items2List)
+            i = 0
+            for widget in items2List:
+                i = i + 1
+                stmt = (update(dashtable).where(dashtable.c.appuid == AppPrefs.appuid, dashtable.c.widgetid == widget)
+                        .values(
+                    column=2, order=i))
+            
                 result = conn.execute(stmt)
-                conn.commit()
+            
 
-    if items3List[0] != "":
-        AppPrefs.logger.info(items3List)
-        for widget in items3List:
-            stmt = (insert(col3_table).values(
-                appuid=AppPrefs.appuid, widgetid=widget))
-            with sqlengine.connect() as conn:
+        if items3List[0] != "":
+            AppPrefs.logger.info("Saving Column 3 widget order")
+            AppPrefs.logger.info(items3List)
+            i = 0
+            for widget in items3List:
+                i = i + 1
+                stmt = (update(dashtable).where(dashtable.c.appuid == AppPrefs.appuid, dashtable.c.widgetid == widget)
+                        .values(
+                    column=3, order=i))
+                
                 result = conn.execute(stmt)
-                conn.commit()
+                
+        
+        conn.commit()
 
     return
-
-#####################################################################
-# api_get_column_widget_order
-# get the widget order of the column tables
-#####################################################################
-
-
-def api_get_column_widget_order(AppPrefs, sqlengine, request):
-    AppPrefs.logger.info(request)
-    # build table object from table in DB
-    metadata_obj = MetaData()
-    col1table = Table("dashcol1", metadata_obj, autoload_with=sqlengine)
-    col2table = Table("dashcol2", metadata_obj, autoload_with=sqlengine)
-    col3table = Table("dashcol3", metadata_obj, autoload_with=sqlengine)
-
-    conn = sqlengine.connect()
-
-    # get column 1 order
-    stmt = select(col1table).where(
-        col1table.c.appuid == AppPrefs.appuid)
-    row_headers = conn.execute(stmt).keys()
-    AppPrefs.logger.info(row_headers)
-    myresult = conn.execute(stmt)
-    conn.commit()
-
-    col1_data = []
-
-    for row in myresult:
-        col1_data.append(row.widgetid)
-
-    # get column 2 order
-    stmt = select(col2table).where(
-        col2table.c.appuid == AppPrefs.appuid)
-    row_headers = conn.execute(stmt).keys()
-    AppPrefs.logger.info(row_headers)
-    myresult = conn.execute(stmt)
-    conn.commit()
-
-    col2_data = []
-
-    for row in myresult:
-        col2_data.append(row.widgetid)
-
-    # get column 3 order
-    stmt = select(col3table).where(
-        col3table.c.appuid == AppPrefs.appuid)
-    row_headers = conn.execute(stmt).keys()
-    AppPrefs.logger.info(row_headers)
-    myresult = conn.execute(stmt)
-    conn.commit()
-
-    col3_data = []
-
-    for row in myresult:
-        col3_data.append(row.widgetid)
-
-    return col1_data, col2_data, col3_data

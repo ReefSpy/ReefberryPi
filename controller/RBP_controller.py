@@ -1998,7 +1998,7 @@ def get_assigned_temp_probes():
 
     try:
         global AppPrefs
-        probelist = api_flask.api_get_assigned_temp_probes(AppPrefs, sqlengine)
+        probelist = api_flask.api_get_assigned_temp_probes(AppPrefs, sqlengine, request)
         return probelist
 
     except Exception as e:
