@@ -13,6 +13,7 @@ const ProbePrefsModal = ({
 }) => {
     const [isModalOpen, setModalOpen] = useState(isOpen);
     const [formState, setFormState] = useState({});
+    const [gotProbeResponse, set_set_GotProbeResponse] = useState(false);
     const [adc_enable_channel_0, set_adc_enable_channel_0] = useState();
     const [adc_enable_channel_1, set_adc_enable_channel_1] = useState();
     const [adc_enable_channel_2, set_adc_enable_channel_2] = useState();
@@ -73,6 +74,7 @@ const ProbePrefsModal = ({
           set_adc_enable_channel_7(data[channel].enabled  === "true" ? true : false)
         }
       }
+      set_set_GotProbeResponse(true)
     })
     .catch((error) => {
       console.error("Error:", error);
@@ -195,7 +197,7 @@ const ProbePrefsModal = ({
         </button>
       )}
       {children}
-      {!adc_enable_channel_0 == "" ?
+      {!gotProbeResponse == false ?
       <form onSubmit={handleSubmit} ref={modalRef}>
        
       {/* <div className="form-row">

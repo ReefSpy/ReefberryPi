@@ -13,6 +13,7 @@ const OutletPrefsModal = ({
 }) => {
   const [isModalOpen, setModalOpen] = useState(isOpen);
   const [formState, setFormState] = useState({});
+  const [gotOutletResponse, set_GotOutletResponse] = useState(false);
   const [enable_int_outlet_1, set_enable_int_outlet_1] = useState();
   const [enable_int_outlet_2, set_enable_int_outlet_2] = useState();
   const [enable_int_outlet_3, set_enable_int_outlet_3] = useState();
@@ -89,6 +90,7 @@ const OutletPrefsModal = ({
             );
           }
         }
+        set_GotOutletResponse(true)
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -209,7 +211,7 @@ const OutletPrefsModal = ({
         </button>
       )}
       {children}
-      {!enable_int_outlet_1 == "" ? (
+      {!gotOutletResponse == false ? (
         <form onSubmit={handleSubmit} ref={modalRef}>
           <div class="outletgridcontainer">
             <div class="outlettitlelabel outletcol1">Outlet Number</div>
