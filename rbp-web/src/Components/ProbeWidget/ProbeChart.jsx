@@ -58,6 +58,9 @@ const HighchartsWrapper = props => {
           animation: false
       }
   },
+  time: {
+    useUTC: false
+  },
   };
 
   return <HighchartsReact highcharts={Highcharts} options={options} />;

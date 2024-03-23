@@ -76,7 +76,8 @@ class App extends Component {
     for (let outlet in outletdata) {
       outletdata[outlet]["id"] = `item-${String(200 + i++)}`;
       outletdata[outlet]["widgetType"] = `outlet`;
-      col2items.push(outletdata[outlet]);
+      if( outletdata[outlet]["enabled"] === "true"){
+      col2items.push(outletdata[outlet]);}
     }
 
     if (col2items.length > 0) {
