@@ -203,8 +203,8 @@ def createDB(app_prefs, sqlengine):
                                 Column("id", Integer, nullable=False, autoincrement=True, primary_key=True, unique=True),
                                 Column("appuid", String(45), nullable=False, primary_key=True),
                                 Column("widgetid", String(45), unique=True),
-                                Column("column", String(45)),
-                                Column("order", String(45)),
+                                Column("column", Integer),
+                                Column("order", Integer),
                                 )
 
         app_prefs.logger.warning ("Creating table ds18b20" )
