@@ -2,25 +2,301 @@
 import cls_Preferences
 from sqlalchemy import create_engine
 from sqlalchemy import MetaData
-from sqlalchemy import Table
+from sqlalchemy import Table, Column, Integer, String
 from sqlalchemy import select
 from sqlalchemy import insert
 from sqlalchemy import and_
-
-
+from sqlalchemy_utils import database_exists, create_database
 
 
 # using sql alchemy
 def initMySQL_ex(app_prefs, logger):
     try:
+        logger.info("Attempting connection to MySQL database.")
         # create the engine
         sqlengine = create_engine("mysql+pymysql://" + app_prefs.mysql_user + ":" + app_prefs.mysql_password + "@" + app_prefs.mysql_host + ":" + app_prefs.mysql_port + "/" + app_prefs.mysql_database + "?charset=utf8mb4")
         #logger.debug("mysql+pymysql://" + app_prefs.mysql_user + ":" + app_prefs.mysql_password + "@" + app_prefs.mysql_host + ":" + app_prefs.mysql_port + "/" + app_prefs.mysql_database + "?charset=utf8mb4")
+        if not database_exists(sqlengine.url):
+            app_prefs.logger.warning("Database not found, creating database...")
+            createDB(app_prefs, sqlengine)
+       
+        logger.info("Verifying database tables...")
+        verifyDs18b20Table(app_prefs, sqlengine)
+        verifyDashOrderTable(app_prefs, sqlengine)
+        verifyProbesTable(app_prefs, sqlengine)
+
         logger.info("Succesfully connected to MySQL database.")
         return sqlengine
     except Exception as e:
         logger.error("Can not connect to MySQL database! " + str(e))
         exit()
+
+def verifyDs18b20Table(app_prefs, sqlengine):
+    app_prefs.logger.info("Verifying table: ds18b20")
+
+    metadata_obj = MetaData()
+    ds18b20_table = Table("ds18b20", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    probeids = ["temp_probe_1",
+                    "temp_probe_2",
+                    "temp_probe_3",
+                    "temp_probe_4"]
+
+    for probe in probeids:
+        stmt = select(ds18b20_table).where(ds18b20_table.c.appuid == app_prefs.appuid).where(ds18b20_table.c.probeid == probe)
+        results = conn.execute(stmt)
+        conn.commit()
+
+        if results.rowcount == 0:
+            app_prefs.logger.warn ("Probe: [" + probe  + "] not found! Creating entry.")
+
+            stmt = insert(ds18b20_table).values(appuid = app_prefs.appuid, 
+                                                    probeid = probe,)
+            
+            conn.execute(stmt)
+            conn.commit()
+
+def verifyDashOrderTable(app_prefs, sqlengine):
+    app_prefs.logger.info("Verifying table: dashorder")
+
+    metadata_obj = MetaData()
+    dash_table = Table("dashorder", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    widgetids = ["temp_probe_1",
+                    "temp_probe_2",
+                    "temp_probe_3",
+                    "temp_probe_4",
+                    "DHT-T",
+                    "DHT-H",
+                    "mcp3008_ch0",
+                    "mcp3008_ch1",
+                    "mcp3008_ch2",
+                    "mcp3008_ch3",
+                    "mcp3008_ch4",
+                    "mcp3008_ch5",
+                    "mcp3008_ch6",
+                    "mcp3008_ch7",
+                    "int_outlet_1",
+                    "int_outlet_2",
+                    "int_outlet_3",
+                    "int_outlet_4",
+                    "int_outlet_5",
+                    "int_outlet_6",
+                    "int_outlet_7",
+                    "int_outlet_8",
+                    "feed"]
+
+    for widget in widgetids:
+        stmt = select(dash_table).where(dash_table.c.appuid == app_prefs.appuid).where(dash_table.c.widgetid == widget)
+        results = conn.execute(stmt)
+        conn.commit()
+
+        if results.rowcount == 0:
+            app_prefs.logger.warn ("Probe: [" + widget  + "] not found! Creating entry.")
+
+            stmt = insert(dash_table).values(appuid = app_prefs.appuid, 
+                                                    widgetid = widget, column = "1", order = "1")
+            
+            conn.execute(stmt)
+            conn.commit()
+
+def verifyProbesTable(app_prefs, sqlengine):
+    app_prefs.logger.info("Verifying table: probes")
+
+    metadata_obj = MetaData()
+    probes_table = Table("probes", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    probeids = ["temp_probe_1",
+                    "temp_probe_2",
+                    "temp_probe_3",
+                    "temp_probe_4",
+                    "DHT-T",
+                    "DHT-H",
+                    "mcp3008_ch0",
+                    "mcp3008_ch1",
+                    "mcp3008_ch2",
+                    "mcp3008_ch3",
+                    "mcp3008_ch4",
+                    "mcp3008_ch5",
+                    "mcp3008_ch6",
+                    "mcp3008_ch7"]
+
+    tempprobes = ["temp_probe_1",
+                    "temp_probe_2",
+                    "temp_probe_3",
+                    "temp_probe_4"]
+    
+    # first, do the ds18b20 temperature probes
+    for probe in tempprobes:
+        stmt = select(probes_table).where(probes_table.c.appuid == app_prefs.appuid).where(probes_table.c.probeid == probe)
+        results = conn.execute(stmt)
+        conn.commit()
+
+        if results.rowcount == 0:
+            app_prefs.logger.warn ("Probe: [" + probe  + "] not found! Creating entry.")
+
+            stmt = insert(probes_table).values(appuid = app_prefs.appuid, 
+                                                    probeid = probe, probetype = "ds18b20", sensortype = "temperature", enabled = "false", name=probe)
+            
+            conn.execute(stmt)
+            conn.commit()
+    # next do the DHT22 Temperature and Humidity probe
+    dhtprobes = ["DHT-T",
+                    "DHT-H",]
+    
+    for probe in dhtprobes:
+        stmt = select(probes_table).where(probes_table.c.appuid == app_prefs.appuid).where(probes_table.c.probeid == probe)
+        results = conn.execute(stmt)
+        conn.commit()
+
+        if results.rowcount == 0:
+            app_prefs.logger.warn ("Probe: [" + probe  + "] not found! Creating entry.")
+            
+            if probe == "DHT-T":
+                stmt = insert(probes_table).values(appuid = app_prefs.appuid, 
+                                                        probeid = probe, probetype = "dht", sensortype = "temperature", enabled = "false", name=probe)
+            elif probe == "DHT-H":
+                 stmt = insert(probes_table).values(appuid = app_prefs.appuid, 
+                                                        probeid = probe, probetype = "dht", sensortype = "humidity", enabled = "false", name=probe)
+            conn.execute(stmt)
+            conn.commit()
+    # next do the mcp3008 analog probes
+    mcp3008probes = [
+        "mcp3008_ch0",
+        "mcp3008_ch1",
+        "mcp3008_ch2",
+        "mcp3008_ch3",
+        "mcp3008_ch4",
+        "mcp3008_ch5",
+        "mcp3008_ch6",
+        "mcp3008_ch7"]
+    
+    for probe in mcp3008probes:
+        stmt = select(probes_table).where(probes_table.c.appuid == app_prefs.appuid).where(probes_table.c.probeid == probe)
+        results = conn.execute(stmt)
+        conn.commit()
+
+        if results.rowcount == 0:
+            app_prefs.logger.warn ("Probe: [" + probe  + "] not found! Creating entry.")
+
+            stmt = insert(probes_table).values(appuid = app_prefs.appuid, 
+                                                    probeid = probe, probetype = "analog", sensortype = "ph", enabled = "false", name=probe)
+            
+            conn.execute(stmt)
+            conn.commit()
+
+def createDB(app_prefs, sqlengine):
+    try:
+        
+        create_database(sqlengine.url)
+        metadata_obj = MetaData()
+        
+        app_prefs.logger.warning("Creating table dashorder")
+        dashorder_table = Table("dashorder",
+                                metadata_obj,
+                                Column("id", Integer, nullable=False, autoincrement=True, primary_key=True, unique=True),
+                                Column("appuid", String(45), nullable=False, primary_key=True),
+                                Column("widgetid", String(45), unique=True),
+                                Column("column", String(45)),
+                                Column("order", String(45)),
+                                )
+
+        app_prefs.logger.warning ("Creating table ds18b20" )
+        ds18b20_table = Table("ds18b20",
+                            metadata_obj,
+                            Column("id", Integer, nullable=False, autoincrement=True, primary_key=True),
+                            Column("appuid", String(45), nullable=False, primary_key=True),
+                            Column("probeid", String(45), nullable=False, primary_key=True),
+                            Column("serialnum", String(45) )
+                            )
+        
+        app_prefs.logger.warning ("Creating table global" )
+        global_table = Table("global",
+                            metadata_obj,
+                            Column("appuid", String(45), nullable=False, primary_key=True),
+                            Column("tempscale", String(12), default="C", comment="C or F"),
+                            Column("feed_a_time", String(45), default="60") ,
+                            Column("feed_b_time", String(45), default="60") ,
+                            Column("feed_c_time", String(45), default="60") ,
+                            Column("feed_d_time", String(45), default="60") ,
+                            Column("dht_enable", String(45), default="False") ,
+                            )
+
+        app_prefs.logger.warning ("Creating table mcp3008" )
+        mcp3008_table = Table("mcp3008",
+                            metadata_obj,
+                            Column("id", Integer, nullable=False, autoincrement=True, primary_key=True),
+                            Column("appuid", String(45), nullable=False, primary_key=True),
+                            Column("chid", String(45), nullable=False, primary_key=True),
+                            Column("probeid", String(45), nullable=False, primary_key=True),
+                            Column("ph_low", String(45), nullable=False),
+                            Column("ph_med", String(45), nullable=False),
+                            Column("ph_high", String(45), nullable=False),
+                            Column("numsamples", String(45), nullable=False),
+                            Column("sigma", String(45), nullable=False),
+                            )
+        
+        app_prefs.logger.warning ("Creating table outlets" )
+        outlets_table = Table("outlets",
+                            metadata_obj,
+                            Column("appuid", String(45), nullable=False, primary_key=True),
+                            Column("outletid", String(45), nullable=False, primary_key=True),
+                            Column("button_state", String(45), nullable=False),
+                            Column("outletname", String(45), nullable=False),
+                            Column("control_type", String(45), nullable=False),
+                            Column("always_state", String(45), nullable=False),
+                            Column("enable_log", String(45), nullable=False),
+                            Column("heater_probe", String(45), nullable=False),
+                            Column("heater_on", String(45), nullable=False),
+                            Column("heater_off", String(45), nullable=False),
+                            Column("light_on", String(45), nullable=False),
+                            Column("light_off", String(45), nullable=False),
+                            Column("return_enable_feed_a", String(45), nullable=False),
+                            Column("return_feed_delay_a", String(45), nullable=False),
+                            Column("return_enable_feed_b", String(45), nullable=False),
+                            Column("return_feed_delay_b", String(45), nullable=False),
+                            Column("return_enable_feed_c", String(45), nullable=False),
+                            Column("return_feed_delay_c", String(45), nullable=False),
+                            Column("return_enable_feed_d", String(45), nullable=False),
+                            Column("return_feed_delay_d", String(45), nullable=False),
+                            Column("skimmer_enable_feed_a", String(45), nullable=False),
+                            Column("skimmer_feed_delay_a", String(45), nullable=False),
+                            Column("skimmer_enable_feed_b", String(45), nullable=False),
+                            Column("skimmer_feed_delay_b", String(45), nullable=False),
+                            Column("skimmer_enable_feed_c", String(45), nullable=False),
+                            Column("skimmer_feed_delay_c", String(45), nullable=False),
+                            Column("skimmer_enable_feed_d", String(45), nullable=False),
+                            Column("skimmer_feed_delay_d", String(45), nullable=False),
+                            Column("ph_probe", String(45), nullable=False),
+                            Column("ph_high", String(45), nullable=False),
+                            Column("ph_low", String(45), nullable=False),
+                            Column("ph_onwhen", String(45), nullable=False),
+                            Column("enabled", String(45), nullable=False),
+                            )
+        
+        app_prefs.logger.warning ("Creating table probes" )
+        probes_table = Table("probes",
+                            metadata_obj,
+                            Column("idprobes", Integer, nullable=False, autoincrement=True, primary_key=True),
+                            Column("probeid", String(45), nullable=False, primary_key=True),
+                            Column("name", String(45), nullable=False),
+                            Column("appuid", String(45), nullable=False),
+                            Column("probetype", String(45), nullable=False),
+                            Column("sensortype", String(45), nullable=False),
+                            Column("enabled", String(45), nullable=False),
+                            )
+
+        metadata_obj.create_all(sqlengine)
+
+    except:
+        app_prefs.logger.error("Error creating database database! " + str(e))
+        
 
 
 def readTempProbes_ex_orig(sqlengine, appPrefs, logger):
