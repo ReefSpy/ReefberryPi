@@ -47,7 +47,9 @@ free -m
 ```
 sudo apt install mariadb-server
 sudo mysql_secure_installation
+```
 Set password to ‘raspberry’
+```
 sudo mysql -u root -p
 ```
 
