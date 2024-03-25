@@ -5,6 +5,7 @@ import "./OutletWidget.css";
 import cogicon from "./cog.svg";
 import OutletWidgetModal from "./OutletWidgetModal";
 import ClipLoader from "react-spinners/ClipLoader";
+import * as Api from "../Api/Api.js";
 
 const groupOptions = [
   {
@@ -27,9 +28,7 @@ const groupOptions = [
 export class OutletWidget extends Component {
   constructor(props) {
     super(props);
-    this.state = { buttonstateidx: undefined,
-                    shouldBtnChange: false };
-    
+    this.state = { buttonstateidx: undefined, shouldBtnChange: false };
   }
 
   onToggleSelect = (value) => {
@@ -44,17 +43,14 @@ export class OutletWidget extends Component {
 
     this.setState({ buttonstateidx: val });
 
-    // console.log("I'm handling the button click " + outletid + " " + val);
     const newOutLetData = { ...this.state.OutletData };
     newOutLetData.ischanged = true;
     this.setState({ OutletData: newOutLetData });
 
-    let apiURL = process.env.REACT_APP_API_PUT_OUTLET_BUTTONSTATE.concat(
-      outletid
-    )
+    let apiURL = Api.API_PUT_OUTLET_BUTTONSTATE.concat(outletid)
       .concat("/")
       .concat(val);
-    console.log(apiURL)
+    console.log(apiURL);
     this.apiCall(apiURL, this.handleOutletButtonClick);
   }
 
@@ -62,13 +58,11 @@ export class OutletWidget extends Component {
     console.log(retData);
   }
 
-
-
   componentDidMount() {
     this.setState({ buttonstateidx: this.props.data.button_state });
 
     // update stats
-    let ApiGetStats = process.env.REACT_APP_API_GET_CURRENT_OUTLET_STATS.concat(
+    let ApiGetStats = Api.API_GET_CURRENT_OUTLET_STATS.concat(
       this.props.data.outletid
     );
     this.apiCall(ApiGetStats, this.SetOutletData);
@@ -95,28 +89,25 @@ export class OutletWidget extends Component {
 
   handleOutletPrefsFormSubmit = (data) => {
     this.handleCloseOutletPrefsModal();
-
   };
 
   SetOutletData = (data) => {
-    // to prevent button state from changing prematurely, 
+    // to prevent button state from changing prematurely,
     // ensure you get two consecutive statuses that are the same
-    if (this.state.shouldBtnChange === true){
+    if (this.state.shouldBtnChange === true) {
       this.setState({ buttonstateidx: data.button_state });
-      this.setState({ shouldBtnChange: false });
-      }
-    
-    if (data.button_state !== this.state.buttonstateidx){
-      this.setState({ shouldBtnChange: true });
-    }else{
       this.setState({ shouldBtnChange: false });
     }
 
+    if (data.button_state !== this.state.buttonstateidx) {
+      this.setState({ shouldBtnChange: true });
+    } else {
+      this.setState({ shouldBtnChange: false });
+    }
 
     this.setState({ OutletName: data.outletname });
     this.setState({ OutletStatus: data.outletstatus });
     this.setState({ OutletData: data });
-  //  this.setState({ buttonstateidx: data.button_state });
   };
 
   // generic API call structure
@@ -145,23 +136,35 @@ export class OutletWidget extends Component {
   render() {
     return (
       <div className="outletcontainer">
-        <div className="outletitem outletname">{!this.state.OutletName == "" ? this.state.OutletName : <ClipLoader
-        color= "#000000"
-        loading= {true}
-        size={8}
-        aria-label="Loading Spinner"
-        data-testid="loader"
-      />}</div>
+        <div className="outletitem outletname">
+          {!this.state.OutletName == "" ? (
+            this.state.OutletName
+          ) : (
+            <ClipLoader
+              color="#000000"
+              loading={true}
+              size={8}
+              aria-label="Loading Spinner"
+              data-testid="loader"
+            />
+          )}
+        </div>
         <div className="outletitem multitoggle">
           <MultiToggle
             options={groupOptions}
-            label={!this.state.OutletStatus == "" ? this.state.OutletStatus : <ClipLoader
-            color= "#000000"
-            loading= {true}
-            size={8}
-            aria-label="Loading Spinner"
-            data-testid="loader"
-          /> }
+            label={
+              !this.state.OutletStatus == "" ? (
+                this.state.OutletStatus
+              ) : (
+                <ClipLoader
+                  color="#000000"
+                  loading={true}
+                  size={8}
+                  aria-label="Loading Spinner"
+                  data-testid="loader"
+                />
+              )
+            }
             onSelectOption={this.onToggleSelect}
             selectedOption={this.state.buttonstateidx}
             className={"outletSlider"}

@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import "./FeedWidget.css";
 import CountdownTimer  from "./CountDownTimer";
+import * as Api from "../Api/Api.js"
 
 export class FeedWidget extends Component {
   constructor(props) {
@@ -69,7 +70,7 @@ export class FeedWidget extends Component {
       this.setState({feedtimer: this.props.globalPrefs.feed_d_time})
     } else { this.setState({feedtimer: "0"})}
     
-    let apiURL = process.env.REACT_APP_API_SET_FEEDMODE.concat(mode);
+    let apiURL = Api.API_SET_FEEDMODE.concat(mode);
     this.apiCall(apiURL ,() => this.setFeedState(mode));
   };
 

@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import "./OutletWidget.css";
 import closeCircle from "./close-circle.svg";
 import PrefPaneContainer from "./PrefPaneContainer";
+import * as Api from "../Api/Api.js"
 
 const initialOutletPrefsModalData = {
   outletname: "",
@@ -95,7 +96,7 @@ const OutletWidgetModal = ({
     if (formState.controlType === "Always") {
       // console.log(event.target.always_state.value);
       let apiURL =
-        process.env.REACT_APP_API_SET_OUTLET_PARAMS_ALWAYS.concat(OutletID);
+        Api.API_SET_OUTLET_PARAMS_ALWAYS.concat(OutletID);
       let payload = {
         outletname: event.target.outletname.value,
         control_type: formState.controlType,
@@ -107,7 +108,7 @@ const OutletWidgetModal = ({
     // light
     else if (formState.controlType === "Light") {
       let apiURL =
-        process.env.REACT_APP_API_SET_OUTLET_PARAMS_LIGHT.concat(OutletID);
+        Api.API_SET_OUTLET_PARAMS_LIGHT.concat(OutletID);
       let payload = {
         outletname: event.target.outletname.value,
         outletid: OutletID,
@@ -120,7 +121,7 @@ const OutletWidgetModal = ({
     // heater
     else if (formState.controlType === "Heater") {
       let apiURL =
-        process.env.REACT_APP_API_SET_OUTLET_PARAMS_HEATER.concat(OutletID);
+       Api.API_SET_OUTLET_PARAMS_HEATER.concat(OutletID);
 
       console.log(probearray[event.target.tempProbe.selectedIndex].probeid);
       console.log(event.target.tempProbe.selectedIndex);
@@ -137,7 +138,7 @@ const OutletWidgetModal = ({
     // skimmer
     else if (formState.controlType === "Skimmer") {
       let apiURL =
-      process.env.REACT_APP_API_SET_OUTLET_PARAMS_SKIMMER.concat(OutletID);
+      Api.API_SET_OUTLET_PARAMS_SKIMMER.concat(OutletID);
 
     let payload = {
       outletname: event.target.outletname.value,
@@ -158,7 +159,7 @@ const OutletWidgetModal = ({
     // return
     else if (formState.controlType === "Return") {
       let apiURL =
-        process.env.REACT_APP_API_SET_OUTLET_PARAMS_RETURN.concat(OutletID);
+        Api.API_SET_OUTLET_PARAMS_RETURN.concat(OutletID);
 
       let payload = {
         outletname: event.target.outletname.value,
@@ -179,7 +180,7 @@ const OutletWidgetModal = ({
     // PH
     else if (formState.controlType === "PH") {
       let apiURL =
-        process.env.REACT_APP_API_SET_OUTLET_PARAMS_PH.concat(OutletID);
+        Api.API_SET_OUTLET_PARAMS_PH.concat(OutletID);
 
       let payload = {
         outletname: event.target.outletname.value,

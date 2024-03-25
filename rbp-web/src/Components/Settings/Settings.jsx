@@ -9,6 +9,7 @@ import OutletPrefsModal from "../OutletPrefs/OutletPrefsModal";
 import ProbePrefsModal from "../ProbePrefs/ProbePrefsModal";
 import TempPrefsModal from "../TempPrefs/TempPrefsModal";
 import appicon from "../../Images/reefberrypi-by-reefspy.svg";
+import * as Api from "../Api/Api.js"
 
 class Settings extends Component {
   constructor(props) {
@@ -34,7 +35,7 @@ class Settings extends Component {
   };
 
   handleGlobalPrefsFormSubmit = (data) => {
-    let apiURL = process.env.REACT_APP_API_SET_GLOBAL_PREFS;
+    let apiURL = Api.API_SET_GLOBAL_PREFS;
     console.log(data);
     let payload = {
       tempscale: data.tempScale,
