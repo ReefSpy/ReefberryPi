@@ -155,6 +155,7 @@ class Dashboard2 extends React.Component {
   }
 
   async initWidgets() {
+    console.log("initWidgets")
     let collist1 = [];
     let collist2 = [];
     let collist3 = [];
@@ -263,6 +264,7 @@ class Dashboard2 extends React.Component {
   }
 
   initColumns() {
+    console.log("initColumns")
     // now assign widgets to columns
     let columns = {
       "column-1": {
@@ -423,9 +425,11 @@ class Dashboard2 extends React.Component {
   }
 
   async componentDidMount() {
+    console.log("Dashboard componentDidMount")
     this.getSavedWidgetOrder()
       .then(this.initColumns())
       .then(this.initWidgets())
+      .then(this.reloadDashboard()) // when compiled for prod, dash was empty until it reloaded 2nd time
   }
 
   render() {
