@@ -1,0 +1,61 @@
+.settingsmain{
+    display: inline-flex;
+    flex-wrap: wrap;
+    grid-template-columns: auto auto;
+    background-color: white;
+    border-radius: 20px;
+}
+
+.aboutcontainer{
+    grid-column-start: 2;
+    margin-top: 20px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.settingscontainer{
+    grid-column-start: 1;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+    display: grid;
+    justify-content: center;
+    background-color: white;
+    border-radius: 10px;
+    margin-right: auto ;
+    margin-left: auto;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 300px;
+}
+.btnicon{
+    height: 24px;
+    width: 24px;
+    vertical-align: middle;
+    padding-right: 10px;
+}
+.settingsbtn{
+
+    border-radius: 8px;
+    color: black;
+    border-style: solid;
+    border-radius: 10px;
+    font-weight: bold;
+    line-height: 32px;
+    margin: 6px;
+    text-align: left;
+    padding-right: 10px;
+    height: 4em;
+}
+
+.settingsbtn:hover{
+    background-color: orange;
+
+}
+
+.applogo{
+    width: 300px;
+    height: 300px;
+    background-color: white;
+    padding: 40px;
+    border-radius: 20px;
+}

@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, time
 import defs_common
 import RPi.GPIO as GPIO
 import time
+import defs_Influx
 
 PIN_ON = False
 PIN_OFF = True
@@ -19,29 +20,35 @@ def get_on_or_off(pin):
 
 def handle_on_off(AppPrefs, outlet, pin, targetstate):
 
-    #currentOutletState = GPIO.input(pin)
-    currentOutletState = PIN_ON
+    currentOutletState = GPIO.input(pin)
+    #currentOutletState = PIN_ON
 
     # log any change
-    if AppPrefs.outletDict[outlet].enable_log == "True":
+    if AppPrefs.outletDict[outlet].enable_log.lower() == "true":
         if currentOutletState != targetstate:
             #defs_common.logtoconsole("I need to log this! " + outlet, fg="YELLOW", bg="BLUE", style="BRIGHT")
             # lets record 1 or 0 in the log
             if currentOutletState == PIN_ON:
-                val = 1
+                curval = 1
             else:
-                val = 0
+                curval = 0
             #defs_common.logprobedata(outlet + "_", val)
             # lets record 1 or 0 in the log
             if targetstate == PIN_ON:
-                val = 1
+                tarval = 1
             else:
-                val = 0
+                tarval = 0
             # defs_common.logprobedata(outlet + "_", val)
             # defs_common.logtoconsole("***Logged*** Outlet Change " + "[" + outlet + "] " + str(
             #     controller.AppPrefs.outletDict[outlet].outletname) + " = " + str(val), fg="CYAN", style="BRIGHT")
             # controller.logger.info("***Logged*** Outlet Change " + "[" + outlet + "] " + str(
             #     controller.AppPrefs.outletDict[outlet].outletname) + " = " + str(val))
+            AppPrefs.Influx_write_api.write(defs_Influx.INFLUXDB_OUTLET_BUCKET_3MO, AppPrefs.influxdb_org, [{"measurement": "outlet_state", "tags": {
+                    "appuid": AppPrefs.appuid, "outletid": outlet}, "fields": {"value": curval}, "time": datetime.utcnow()}])
+            AppPrefs.Influx_write_api.write(defs_Influx.INFLUXDB_OUTLET_BUCKET_3MO, AppPrefs.influxdb_org, [{"measurement": "outlet_state", "tags": {
+                     "appuid": AppPrefs.appuid, "outletid": outlet}, "fields": {"value": tarval}, "time": datetime.utcnow()}])
+            AppPrefs.logger.info("***Logged*** Outlet Change " + "[" + outlet + "] " + str(
+                 AppPrefs.outletDict[outlet].outletname) + " | Target: " + str(tarval) + " Previous: " + str(curval))
 
     if targetstate == PIN_ON:
         GPIO.output(pin, False)
@@ -180,56 +187,67 @@ def handle_outlet_heater(AppPrefs, outlet, button_state, pin):
    
 
 
-# def handle_outlet_ph(controller, outlet, button_state, pin):
+def handle_outlet_ph(AppPrefs, outlet, button_state, pin):
 
-#     if button_state == "OFF":
-#         handle_on_off(controller, outlet, pin, PIN_OFF)
-#         return "OFF"
-#     elif button_state == "ON":
-#         handle_on_off(controller, outlet, pin, PIN_ON)
-#         return "ON"
-#     elif button_state == "AUTO":
-#         probe = controller.AppPrefs.outletDict[outlet].ph_probe
-#         ph_high = controller.AppPrefs.outletDict[outlet].ph_high
-#         ph_low = controller.AppPrefs.outletDict[outlet].ph_low
-#         ph_onwhen = controller.AppPrefs.outletDict[outlet].ph_onwhen
+    if button_state == "OFF":
+        handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+        #return "OFF"
+    elif button_state == "ON":
+        handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+        #return "ON"
+    elif button_state == "AUTO":
+        probe = AppPrefs.outletDict[outlet].ph_probe
+        ph_high = AppPrefs.outletDict[outlet].ph_high
+        ph_low = AppPrefs.outletDict[outlet].ph_low
+        ph_onwhen = AppPrefs.outletDict[outlet].ph_onwhen
 
-#         # print(probe)
-#         # print(probe[-1:])
-#         for p in controller.AppPrefs.mcp3008Dict:
-#            # print(controller.AppPrefs.mcp3008Dict[p].ch_num)
-#             if str(controller.AppPrefs.mcp3008Dict[p].ch_num) == str(controller.AppPrefs.outletDict[outlet].ph_probe[-1:]):
-#                # print("I found the probe: " +  str(controller.AppPrefs.mcp3008Dict[p].ch_num))
-#                # print("last ph " + str(controller.AppPrefs.mcp3008Dict[p].lastValue) + " PH High " + ph_high + " PH Low " + ph_low + " On when " + ph_onwhen)
-#                 if controller.AppPrefs.mcp3008Dict[p].lastValue == "":
-#                     controller.AppPrefs.mcp3008Dict[p].lastValue = 0
-#                 if ph_onwhen == "HIGH":
-#                     if float(controller.AppPrefs.mcp3008Dict[p].lastValue) >= float(ph_high):
-#                         handle_on_off(controller, outlet, pin, PIN_ON)
-#                         return "ON (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
-#                     elif float(controller.AppPrefs.mcp3008Dict[p].lastValue) <= float(ph_low):
-#                         handle_on_off(controller, outlet, pin, PIN_OFF)
-#                         return "OFF (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
-#                     else:
-#                         state = get_on_or_off(pin)
-#                         return state + " (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+        # print(probe)
+        # print(probe[-1:])
+        for p in AppPrefs.mcp3008Dict:
+           # print(controller.AppPrefs.mcp3008Dict[p].ch_num)
+            if str(AppPrefs.mcp3008Dict[p].ch_num) == str(AppPrefs.outletDict[outlet].ph_probe[-1:]):
+               # print("I found the probe: " +  str(controller.AppPrefs.mcp3008Dict[p].ch_num))
+               # print("last ph " + str(controller.AppPrefs.mcp3008Dict[p].lastValue) + " PH High " + ph_high + " PH Low " + ph_low + " On when " + ph_onwhen)
+                if AppPrefs.mcp3008Dict[p].lastValue == "":
+                    AppPrefs.mcp3008Dict[p].lastValue = 0
+                if ph_onwhen == "HIGH":
+                    if float(AppPrefs.mcp3008Dict[p].lastValue) >= float(ph_high):
+                        handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+                        #return "ON (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                    elif float(AppPrefs.mcp3008Dict[p].lastValue) <= float(ph_low):
+                        handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+                        #return "OFF (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                    else:
+                        state = get_on_or_off(pin)
+                        #return state + " (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                    
+                elif ph_onwhen == "LOW":
+                    if float(AppPrefs.mcp3008Dict[p].lastValue) >= float(ph_high):
+                        handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+                        #return "OFF (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                    elif float(AppPrefs.mcp3008Dict[p].lastValue) <= float(ph_low):
+                        handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+                        #return "ON (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                    else:
+                        state = get_on_or_off(pin)
+                        #return state + " (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                
+                AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin) + " (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
+                AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
+                                          "Type: " + AppPrefs.outletDict[outlet].control_type + \
+                                          " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
+                                          " | Mode: AUTO | " + get_on_or_off(pin) + \
+                                          " | Range: (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")" + \
+                                          " | Current: " + str(AppPrefs.mcp3008Dict[p].lastValue) + \
+                                          " | On When: " + ph_onwhen + \
+                                          " | Status: " + get_on_or_off(pin))
+                
+                break
 
-#                 elif ph_onwhen == "LOW":
-#                     if float(controller.AppPrefs.mcp3008Dict[p].lastValue) >= float(ph_high):
-#                         handle_on_off(controller, outlet, pin, PIN_OFF)
-#                         return "OFF (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
-#                     elif float(controller.AppPrefs.mcp3008Dict[p].lastValue) <= float(ph_low):
-#                         handle_on_off(controller, outlet, pin, PIN_ON)
-#                         return "ON (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
-#                     else:
-#                         state = get_on_or_off(pin)
-#                         return state + " (" + str("%.1f" % float(ph_low)) + " - " + str("%.1f" % float(ph_high)) + ")"
-#                 break
-
-#     else:
-#         #GPIO.output(pin, True)
-#         handle_on_off(controller, outlet, pin, PIN_OFF)
-#         return "OFF"
+    else:
+        #GPIO.output(pin, True)
+        handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+        return "OFF"
 
 
 def handle_outlet_light(AppPrefs, outlet, button_state, pin):
@@ -255,37 +273,39 @@ def handle_outlet_light(AppPrefs, outlet, button_state, pin):
         # on time before off time
         if datetime.time(on_time) < datetime.time(off_time):
             if now_time >= datetime.time(on_time) and now_time <= datetime.time(off_time):
-                GPIO.output(pin, False) #turn on light
+               # GPIO.output(pin, False) #turn on light
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 status = "ON" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
                     " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
                 #return status
             else:
-                GPIO.output(pin, True) #turn off light
+               # GPIO.output(pin, True) #turn off light
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 status = "OFF" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
                     " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
                 #return status
         else:  # on time after off time
             if now_time <= datetime.time(on_time) and now_time >= datetime.time(off_time):
-                GPIO.output(pin, True) #turn off light
+               # GPIO.output(pin, True) #turn off light
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 status = "OFF" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
                     " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
                 #return status
             else:
-                GPIO.output(pin, False) #turn on light
+              #  GPIO.output(pin, False) #turn on light
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 status = "ON" + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
                     " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
                 #return status
     else:
-        GPIO.output(pin, True)
+       # GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
         #return "OFF"
-    AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin) + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
-                    " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
+    # AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin) + " (" + str(datetime.strftime(on_time, '%H:%M')) + \
+    #                 " - " + str(datetime.strftime(off_time, '%H:%M')) + ")"
     
+    AppPrefs.outletDict[outlet].outletstatus = status
+
     AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                           "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                           " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
@@ -295,6 +315,7 @@ def handle_outlet_light(AppPrefs, outlet, button_state, pin):
 
 def handle_outlet_returnpump(AppPrefs, outlet, button_state, pin):
     #global feed_PreviousMode
+    
     if AppPrefs.feed_PreviousMode == "A":
         AppPrefs.feed_ExtraTimeAdded = AppPrefs.outletDict[
             outlet].return_feed_delay_a
@@ -313,56 +334,66 @@ def handle_outlet_returnpump(AppPrefs, outlet, button_state, pin):
     if button_state == "OFF":
         #GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+        AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin)
         # return "OFF"
     elif button_state == "ON":
         #GPIO.output(pin, False)
         handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+        AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin)
         # return "ON"
     elif button_state == "AUTO":
         if AppPrefs.feed_CurrentMode == "A":
             return_enable_feed_a = AppPrefs.outletDict[outlet].return_enable_feed_a
             AppPrefs.feed_PreviousMode = "A"
-            if return_enable_feed_a == "True":
+            if return_enable_feed_a == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif return_enable_feed_a == "False":
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin)) + " (Feed A)" 
+            elif return_enable_feed_a == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin))
                 # return "ON"
         elif AppPrefs.feed_CurrentMode == "B":
             return_enable_feed_b = AppPrefs.outletDict[outlet].return_enable_feed_b
             AppPrefs.feed_PreviousMode = "B"
-            if return_enable_feed_b == "True":
+            if return_enable_feed_b == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif return_enable_feed_b == "False":
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin)) + " (Feed B)" 
+            elif return_enable_feed_b == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin))
         elif AppPrefs.feed_CurrentMode == "C":
             return_enable_feed_c = AppPrefs.outletDict[outlet].return_enable_feed_c
             AppPrefs.feed_PreviousMode = "C"
-            if return_enable_feed_c == "True":
+            if return_enable_feed_c == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif return_enable_feed_c == "False":
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin)) + " (Feed C)" 
+            elif return_enable_feed_c == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin))
         elif AppPrefs.feed_CurrentMode == "D":
             return_enable_feed_d = AppPrefs.outletDict[outlet].return_enable_feed_d
             AppPrefs.feed_PreviousMode = "D"
-            if return_enable_feed_d == "True":
+            if return_enable_feed_d == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif return_enable_feed_d == "False":
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin)) + " (Feed D)" 
+            elif return_enable_feed_d == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin))
         else:
             difference = round(((int(AppPrefs.feed_ExtraTimeSeed) + (int(
                 AppPrefs.feed_ExtraTimeAdded)*1000)) - int(round(time.time())*1000))/1000)
@@ -377,6 +408,7 @@ def handle_outlet_returnpump(AppPrefs, outlet, button_state, pin):
                 AppPrefs.logger.debug("Delay Mode: " + outlet +
                       " (" + str(AppPrefs.feed_ExtraTimeAdded) + "s) " +
                       " Delay Time Remaining: " + str(round(difference)) + "s")
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin)) + " Delay: " + str(round(difference)) + "s"
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (delay)"
@@ -385,12 +417,14 @@ def handle_outlet_returnpump(AppPrefs, outlet, button_state, pin):
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin))
     else:
         #GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
         # return "OFF"
+        AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin))
 
-    AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin)
+    # AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin)
     AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                           "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                           " | Name: " + AppPrefs.outletDict[outlet].outletname +  \
@@ -421,60 +455,70 @@ def handle_outlet_skimmer(AppPrefs, outlet, button_state, pin):
     if button_state == "OFF":
         #GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+        AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin))
         # return "OFF"
     elif button_state == "ON":
         #GPIO.output(pin, False)
         handle_on_off(AppPrefs, outlet, pin, PIN_ON)
         # return "ON"
+        AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin))
     elif button_state == "AUTO":
         if AppPrefs.feed_CurrentMode == "A":
             #skimmer_enable_feed_a = defs_common.readINIfile(outlet, "skimmer_enable_feed_a", "False")
             skimmer_enable_feed_a = AppPrefs.outletDict[outlet].skimmer_enable_feed_a
             AppPrefs.feed_PreviousMode = "A"
-            if skimmer_enable_feed_a == "True":
+            if skimmer_enable_feed_a == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin)) + " (Feed A)" 
                 # return "OFF (feed)"
-            elif skimmer_enable_feed_a == "False":
+            elif skimmer_enable_feed_a == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin))
         elif AppPrefs.feed_CurrentMode == "B":
             #skimmer_enable_feed_b = defs_common.readINIfile(outlet, "skimmer_enable_feed_b", "False")
             skimmer_enable_feed_b = AppPrefs.outletDict[outlet].skimmer_enable_feed_b
             AppPrefs.feed_PreviousMode = "B"
-            if skimmer_enable_feed_b == "True":
+            if skimmer_enable_feed_b == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif skimmer_enable_feed_b == "False":
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin)) + " (Feed B)" 
+            elif skimmer_enable_feed_b == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin))
         elif AppPrefs.feed_CurrentMode == "C":
             #skimmer_enable_feed_c = defs_common.readINIfile(outlet, "skimmer_enable_feed_c", "False")
             skimmer_enable_feed_c = AppPrefs.outletDict[outlet].skimmer_enable_feed_c
             AppPrefs.feed_PreviousMode = "C"
-            if skimmer_enable_feed_c == "True":
+            if skimmer_enable_feed_c == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif skimmer_enable_feed_c == "False":
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin)) + " (Feed C)" 
+            elif skimmer_enable_feed_c == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin))
         elif AppPrefs.feed_CurrentMode == "D":
             #skimmer_enable_feed_d = defs_common.readINIfile(outlet, "skimmer_enable_feed_d", "False")
             skimmer_enable_feed_d = AppPrefs.outletDict[outlet].skimmer_enable_feed_d
             AppPrefs.feed_PreviousMode = "D"
-            if skimmer_enable_feed_d == "True":
+            if skimmer_enable_feed_d == "true":
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
                 # return "OFF (feed)"
-            elif skimmer_enable_feed_d == "False":
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin)) + " (Feed D)" 
+            elif skimmer_enable_feed_d == "false":
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin))
         else:
             difference = round(((int(AppPrefs.feed_ExtraTimeSeed) + (int(
                 AppPrefs.feed_ExtraTimeAdded)*1000)) - int(round(time.time())*1000))/1000)
@@ -491,18 +535,21 @@ def handle_outlet_skimmer(AppPrefs, outlet, button_state, pin):
                       " Delay Time Remaining: " + str(round(difference)) + "s")
                 #GPIO.output(pin, True)
                 handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin)) + " Delay: " + str(round(difference)) + "s"
                 # return "OFF (delay)"
                 # return "OFF (delay " + str(round(difference)) + "s" + ")"
             else:
                 #GPIO.output(pin, False)
                 handle_on_off(AppPrefs, outlet, pin, PIN_ON)
                 # return "ON"
+                AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin))
     else:
         #GPIO.output(pin, True)
         handle_on_off(AppPrefs, outlet, pin, PIN_OFF)
         # return "OFF"
+        AppPrefs.outletDict[outlet].outletstatus = str(get_on_or_off(pin))
     
-    AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin)
+    # AppPrefs.outletDict[outlet].outletstatus = get_on_or_off(pin)
     AppPrefs.logger.debug("[" + AppPrefs.outletDict[outlet].outletid + "] " + \
                                           "Type: " + AppPrefs.outletDict[outlet].control_type + \
                                           " | Name: " + AppPrefs.outletDict[outlet].outletname +  \

@@ -5,7 +5,7 @@ import random
 import string
 
 
-# default values to put into onfig file
+# default values to put into config file
 INFLUXDB_URL = "http://argon1.local:8086"
 INFLUXDB_TOKEN = "lZqJh3rEn6y4jDZqgQG19Vck53e2oryHLgHWd3qhoYZbwqGNJlbCkArZsG643ldFrEWPjmxWRdgnrtBnogp0jw=="
 INFLUXDB_ORG = "reefberrypi"
@@ -29,6 +29,7 @@ class analogChannelClass():
     ch_dvlist = []
     ch_numsamples = ""
     ch_sigma = ""
+    ch_probeid=""
     LastLogTime = ""
     lastValue = ""
 
@@ -38,6 +39,7 @@ class tempProbeClass():
     probeid = ""
     lastTemperature = ""
     lastLogTime = ""
+    serialnum = ""
 
 # class dhtSensorClass():
 #     temperature_name = ""
@@ -86,6 +88,7 @@ class outletPrefs():
     ph_low = ""
     ph_onwhen = ""
     outletstatus = ""
+    enabled = ""
 
 
 class AppPrefs():
@@ -106,6 +109,15 @@ class AppPrefs():
         self.feed_c_time = ""
         self.feed_d_time = ""
         self.dht_enable = ""
+
+        self.dv_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
+        # self.dv_SamplingInterval = int(defs_common.readINIfile('mcp3008', 'dv_samplinginterval', "1000", lock=controller.threadlock, logger=controller.logger)) # milliseconds
+        # self.dv_LogInterval = int(defs_common.readINIfile('mcp3008', 'dv_loginterval', "300000", lock=controller.threadlock, logger=controller.logger)) # milliseconds
+        self.dv_SamplingInterval = 1000 # milliseconds
+        self.dv_LogInterval = 60000 # milliseconds
+
+
+
 
     def initDictionaries(self):
         self.outletDict = {}

@@ -28,3 +28,73 @@ width: 200px;
   .modal-close-btn:active {
     opacity: 100%;
   }
+
+  .feedgridcontainer {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    grid-template-rows: auto auto auto auto auto;
+    justify-content: center;
+    border: black;
+    border-style: none;
+    border-width: 1px;
+    align-items: end;
+  }
+  
+  .feedtimerlabel {
+    margin-top: 20px;
+    margin-right: 10px;
+  
+    border-bottom: black;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+  
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 1;
+    grid-row-end: 2;
+
+    font-weight: bold;
+  }
+  
+  .feedmoderow {
+    margin-top: 5px;
+    border: black;
+    border-style: none;
+    border-width: 1px;
+  }
+  .feedrowA {
+    grid-row-start: 2;
+    grid-row-end: 3;
+  }
+  
+  .feedrowB {
+    grid-row-start: 3;
+    grid-row-end: 4;
+  }
+  
+  .feedrowC {
+    grid-row-start: 4;
+    grid-row-end: 5;
+  }
+  
+  .feedrowD {
+    grid-row-start: 5;
+    grid-row-end: 6;
+  }
+  
+  .feedcol1 {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  
+  .feedcol2 {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  
+  .feedcol3 {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+
+  

@@ -8,6 +8,14 @@ INFLUXDB_PROBE_BUCKET_1WK = "reefberrypi_probe_1wk"
 INFLUXDB_PROBE_BUCKET_1MO = "reefberrypi_probe_1mo"
 INFLUXDB_PROBE_BUCKET_3MO = "reefberrypi_probe_3mo"
 INFLUXDB_PROBE_BUCKET_1YR = "reefberrypi_probe_1yr"
+
+INFLUXDB_OUTLET_BUCKET_1HR = "reefberrypi_outlet_1hr"
+INFLUXDB_OUTLET_BUCKET_1DY = "reefberrypi_outlet_1dy"
+INFLUXDB_OUTLET_BUCKET_1WK = "reefberrypi_outlet_1wk"
+INFLUXDB_OUTLET_BUCKET_1MO = "reefberrypi_outlet_1mo"
+INFLUXDB_OUTLET_BUCKET_3MO = "reefberrypi_outlet_3mo"
+INFLUXDB_OUTLET_BUCKET_1YR = "reefberrypi_outlet_1yr"
+
 INFLUXDB_RET_1HR = 3600
 INFLUXDB_RET_1DY = 86400
 INFLUXDB_RET_1WK = 604800
@@ -25,7 +33,10 @@ def InitInfluxDB(app_prefs, logger):
         url=app_prefs.influxdb_host, token=app_prefs.influxdb_token, org=app_prefs.influxdb_org)
     logger.info("Connected to InfluxDB at: " + Influx_client.url)
     logger.info("InfluxDB organization: " + Influx_client.org)
-
+    
+    #######################################
+    # probe buckets
+    #######################################
     # initial 1 hour bucket
     checkIfBucketExists(
         Influx_client, app_prefs.influxdb_org, INFLUXDB_PROBE_BUCKET_1HR, INFLUXDB_RET_1HR, logger)
@@ -44,7 +55,30 @@ def InitInfluxDB(app_prefs, logger):
     # 1 year bucket
     # defs_Influx.checkIfBucketExists(Influx_client, INFLUXDB_ORG, INFLUXDB_PROBE_BUCKET_1YR, INFLUXDB_RET_1YR, logger)
 
+    ########################################
+    # outlet buckets
+    ########################################
+    # initial 1 hour bucket
+    # checkIfBucketExists(
+    #     Influx_client, app_prefs.influxdb_org, INFLUXDB_OUTLET_BUCKET_1HR, INFLUXDB_RET_1HR, logger)
+    # # 1 day bucket
+    # checkIfBucketExists(
+    #     Influx_client, app_prefs.influxdb_org, INFLUXDB_OUTLET_BUCKET_1DY, INFLUXDB_RET_1DY, logger)
+    # # 1 week bucket
+    # checkIfBucketExists(
+    #     Influx_client, app_prefs.influxdb_org, INFLUXDB_OUTLET_BUCKET_1WK, INFLUXDB_RET_1WK, logger)
+    # # 1 month bucket
+    # checkIfBucketExists(
+    #     Influx_client, app_prefs.influxdb_org, INFLUXDB_OUTLET_BUCKET_1MO, INFLUXDB_RET_1MO, logger)
+    # 3 month bucket
+    checkIfBucketExists(
+       Influx_client, app_prefs.influxdb_org, INFLUXDB_OUTLET_BUCKET_3MO, INFLUXDB_RET_3MO, logger)
+    # 1 year bucket
+    # defs_Influx.checkIfBucketExists(Influx_client, INFLUXDB_ORG, INFLUXDB_OUTLET_BUCKET_1YR, INFLUXDB_RET_1YR, logger)
+
+
     # check if Influx Tasks are present and create task if not
+    # probe tasks first
     if not checkIfInfluxTaskExists(Influx_client, "downsample_for_1dy"):
         logger.error("InfluxDB task not found!")
         createInfluxTasks(Influx_client, "downsample_for_1dy", INFLUXDB_PROBE_BUCKET_1HR,
@@ -61,7 +95,23 @@ def InitInfluxDB(app_prefs, logger):
         logger.error("InfluxDB task not found!")
         createInfluxTasks(Influx_client, "downsample_for_3mo", INFLUXDB_PROBE_BUCKET_1MO,
                                       INFLUXDB_PROBE_BUCKET_3MO, '30m', '30m', app_prefs.influxdb_org, logger)
-
+    # # outlet tasks next
+    # if not checkIfInfluxTaskExists(Influx_client, "downsample_outlet_for_1dy"):
+    #     logger.error("InfluxDB task not found!")
+    #     createInfluxTasks(Influx_client, "downsample_outlet_for_1dy", INFLUXDB_OUTLET_BUCKET_1HR,
+    #                                   INFLUXDB_OUTLET_BUCKET_1DY, '5m', '5m', app_prefs.influxdb_org, logger)
+    # if not checkIfInfluxTaskExists(Influx_client, "downsample_outlet_for_1wk"):
+    #     logger.error("InfluxDB task not found!")
+    #     createInfluxTasks(Influx_client, "downsample_outlet_for_1wk", INFLUXDB_OUTLET_BUCKET_1DY,
+    #                                   INFLUXDB_OUTLET_BUCKET_1WK, '10m', '10m', app_prefs.influxdb_org, logger)
+    # if not checkIfInfluxTaskExists(Influx_client, "downsample_outlet_for_1mo"):
+    #     logger.error("InfluxDB task not found!")
+    #     createInfluxTasks(Influx_client, "downsample_outlet_for_1mo", INFLUXDB_OUTLET_BUCKET_1WK,
+    #                                   INFLUXDB_OUTLET_BUCKET_1MO, '15m', '15m', app_prefs.influxdb_org, logger)
+    # if not checkIfInfluxTaskExists(Influx_client, "downsample_outlet_for_3mo"):
+    #     logger.error("InfluxDB task not found!")
+    #     createInfluxTasks(Influx_client, "downsample_outlet_for_3mo", INFLUXDB_OUTLET_BUCKET_1MO,
+    #                                   INFLUXDB_OUTLET_BUCKET_3MO, '30m', '30m', app_prefs.influxdb_org, logger)
 
     return Influx_client
 

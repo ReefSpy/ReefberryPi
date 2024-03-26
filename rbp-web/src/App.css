@@ -8,6 +8,7 @@
   flex-wrap: wrap;
   grid-template-columns: auto auto;
   justify-content: center;
+  background-color: steelblue;
 }
 
 .maincol1 {
@@ -28,7 +29,7 @@
   font-size: 34px;
   font-weight: bold;
   color: white;
-  margin-bottom: 5px;
+  /* margin-bottom: 5px; */
   background-color: steelblue;
   overflow: hidden;
   padding: 5px 
@@ -40,17 +41,17 @@
   width: 64px;
   vertical-align: middle;
   padding-right: 20px;
- 
+  
 
 }
 
-.preficon {
-  height: 36px;
-  width: 36px;
+.headericon {
+  height: 28px;
+  width: 28px;
   vertical-align: middle;
 }
 
-.preficonbtn {
+.headericonbtn {
   height: 36px;
   width: 36px;
   background-color: transparent;
@@ -58,14 +59,15 @@
   border-radius: 5px;
   opacity: 100%;
   vertical-align: middle;
+  margin-left: 10px;
 }
 
-.preficonbtn:hover {
+.headericonbtn:hover {
   opacity: 70%;
   cursor: pointer;
 }
 
-.preficonbtn:active {
+.headericonbtn:active {
   background-color: grey;
   opacity: 50%;
 }

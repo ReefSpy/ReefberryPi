@@ -1,9 +1,16 @@
 .outletcontainer {
   grid-template-columns: 20px 280px;
-  grid-template-rows: 55px;
+  grid-template-rows: 53px;
   display: grid;
   justify-content: center;
-  margin: 6px;
+  /* margin: 4px; */
+  background-color: lightgray;
+  border-style: none;
+  border-color: black;
+  border-width: 1px;
+  border-radius: 4px;
+  padding-top: 0px;
+  padding-right: 4px;
 }
 
 .outletitem {
@@ -17,7 +24,7 @@
   grid-column-start: 1;
   grid-column-end: span 2;
 
-  height: 56px;
+  height: 53px;
   line-height: 24px;
   font-size: 14px;
   text-align: left;
@@ -35,7 +42,7 @@
   grid-column-end: span 2;
   grid-row-start: 1;
 
-  height: 60px;
+  height: 53px;
   line-height: 16px;
   font-size: 16px;
   text-align: left;
@@ -132,7 +139,7 @@
 }
 
 body {
-  color: #333;
+  /* color: #333; */
   font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
   font-size: 14px;
   line-height: 1.4;

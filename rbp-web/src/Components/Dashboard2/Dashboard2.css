@@ -1,0 +1,36 @@
+.colcontainer{
+  display: flex;
+  flex-wrap: wrap;
+  grid-template-columns: auto auto auto auto;
+  justify-content: center;
+  background-color: steelblue;
+
+}
+
+.column{
+    /* margin: 8px;
+    border: 1px solid lightgrey; */
+    border-radius: 2px;
+
+    
+}
+
+.title{
+    padding: 8px;
+}
+
+.widgetlist{
+    padding: 8px;
+  transition: background-color 0.2s ease;
+  /* background-color: ${props => (props.isDraggingOver ? 'skyblue' : 'white')}; */
+  flex-grow: 1;
+  min-height: 100px;
+}
+
+.widget{
+    /* border: 1px solid lightgrey;
+    border-radius: 2px;
+    padding: 8px; */
+    margin-bottom: 1px;
+    /* background-color: ${props => (props.isDragging ? 'lightgreen' : 'white')}; */
+}
