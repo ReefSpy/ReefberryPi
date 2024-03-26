@@ -3,6 +3,7 @@ import "./Dashboard.css";
 import { ProbeWidget } from "../ProbeWidget/ProbeWidget";
 import { OutletWidget } from "../OutletWidget/OutletWidget";
 import { FeedWidget } from "../FeedWidget/FeedWidget";
+import * as Api from "../Api/Api.js"
 
 // there is a bug in react-beautiful-dnd where it wont work with strict mode
 // in React 18.  Solution is repplace with fork @hello-pangea-dnd to fix it
@@ -148,8 +149,8 @@ class Dashboard extends Component {
 
   initCol1Items() {
     // first get probes
-    console.log(process.env.REACT_APP_API_GET_PROBE_LIST);
-    this.apiCall(process.env.REACT_APP_API_GET_PROBE_LIST, this.addToCol1);
+    console.log(Api.API_GET_PROBE_LIST);
+    this.apiCall(Api.API_GET_PROBE_LIST, this.addToCol1);
 
     return;
   }
@@ -227,8 +228,9 @@ class Dashboard extends Component {
   }
 
   async componentDidMount() {
-    this.apiCall(process.env.REACT_APP_API_GET_PROBE_LIST, this.setProbeData);
-    this.apiCall(process.env.REACT_APP_API_GET_OUTLET_LIST, this.setOutletData);
+    this.apiCall(Api.API_GET_PROBE_LIST, this.setProbeData);
+    // this.apiCall(process.env.REACT_APP_API_GET_OUTLET_LIST, this.setOutletData);
+    this.apiCall(Api.API_GET_OUTLET_LIST, this.setOutletData);
     this.initCol1Items();
   }
 

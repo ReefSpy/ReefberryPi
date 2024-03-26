@@ -4,6 +4,7 @@ import "./ProbeWidget.css";
 import cogicon from "./cog.svg";
 import ProbeWidgetModal from "./ProbeWidgetModal";
 import ClipLoader from "react-spinners/ClipLoader";
+import * as Api from "../Api/Api.js";
 
 export class ProbeWidget extends Component {
   constructor(props) {
@@ -35,9 +36,7 @@ export class ProbeWidget extends Component {
     this.handleCloseProbePrefsModal();
     console.log(data);
 
-    let updateApiURL = process.env.REACT_APP_API_SET_PROBE_NAME.concat(
-      data.probeid
-    )
+    let updateApiURL = Api.API_SET_PROBE_NAME.concat(data.probeid)
       .concat("/")
       .concat(data.probename);
     this.apiCall(updateApiURL, this.setNameCallback);
@@ -81,7 +80,7 @@ export class ProbeWidget extends Component {
     }
 
     //console.log(this.props.probename)
-    let apiURL = process.env.REACT_APP_API_GET_CHART_DATA_24HR.concat(
+    let apiURL = Api.API_GET_CHART_DATA_24HR.concat(
       this.props.data.probeid
     )
       .concat("/")
@@ -94,7 +93,7 @@ export class ProbeWidget extends Component {
     }, 600000);
 
     // update stats
-    let ApiGetStats = process.env.REACT_APP_API_GET_CURRENT_PROBE_STATS.concat(
+    let ApiGetStats = Api.API_GET_CURRENT_PROBE_STATS.concat(
       this.props.data.probeid
     );
     this.apiCall(ApiGetStats, this.SetProbeData);
@@ -110,16 +109,13 @@ export class ProbeWidget extends Component {
   }
 
   GetChartData = (chartdata) => {
-
-  // need to convert timestamp to milliseconds to show up properly in HighCharts
+    // need to convert timestamp to milliseconds to show up properly in HighCharts
     let valueArray1 = [];
     for (let datapoint in chartdata) {
       let newDate = new Date(chartdata[datapoint][0]).getTime();
       chartdata[datapoint][0] = newDate;
       valueArray1.push(chartdata[datapoint][1]);
     }
-
-
 
     this.setState({ ChartData: chartdata });
   };
@@ -133,13 +129,19 @@ export class ProbeWidget extends Component {
     return (
       <div className="probecontainer">
         <div className="item probename">{this.state.ProbeName}</div>
-        <div className="item probevalue">{!this.state.LastValue == "" ? this.state.LastValue : <ClipLoader
-        color= "#000000"
-        loading= {true}
-        size={28}
-        aria-label="Loading Spinner"
-        data-testid="loader"
-      />} </div>
+        <div className="item probevalue">
+          {!this.state.LastValue == "" ? (
+            this.state.LastValue
+          ) : (
+            <ClipLoader
+              color="#000000"
+              loading={true}
+              size={28}
+              aria-label="Loading Spinner"
+              data-testid="loader"
+            />
+          )}{" "}
+        </div>
         <div className="item chartdata">
           <div>
             <HighchartsWrapper

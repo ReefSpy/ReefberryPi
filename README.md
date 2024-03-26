@@ -47,7 +47,9 @@ free -m
 ```
 sudo apt install mariadb-server
 sudo mysql_secure_installation
+```
 Set password to ‘raspberry’
+```
 sudo mysql -u root -p
 ```
 
@@ -68,7 +70,7 @@ sudo systemctl restart mariadb
 To grant access to all db for root user from all remote IP’s: \
 (run this command on MariaDB command line)
 ```
-GRANT ALL ON *.* to 'root'@'%' IDENTIFIED BY ‘raspberry’ WITH GRANT OPTION;
+GRANT ALL ON *.* to 'root'@'%' IDENTIFIED BY 'raspberry' WITH GRANT OPTION;
 ```
 
 ## Installation of Influx Database

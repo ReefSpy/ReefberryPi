@@ -4,7 +4,7 @@ RPi.GPIO
 sqlalchemy
 sqlalchemy-utils
 PyMySQL
-flask
+Flask
 requests
 flask-cors
 flask_jwt_extended

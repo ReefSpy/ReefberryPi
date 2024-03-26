@@ -4,6 +4,7 @@ import closeCircle from "./close-circle.svg";
 import rightArrow from "./right-arrow.svg";
 import deleteIcon from "./delete.svg";
 import ClipLoader from "react-spinners/ClipLoader";
+import * as Api from "../Api/Api.js"
 
 const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children, onRefreshRequest }) => {
   const [isModalOpen, setModalOpen] = useState(isOpen);
@@ -99,7 +100,7 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children, onRefre
 
     console.log(JSON.stringify(probeList));
     if (window.confirm("Are you sure you want to save changes?")){
-    return fetch(process.env.REACT_APP_API_SET_CONNECTED_TEMP_PROBE, {
+    return fetch(Api.API_SET_CONNECTED_TEMP_PROBE, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -134,7 +135,7 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children, onRefre
   };
 
   useEffect(() => {
-    fetch(process.env.REACT_APP_API_GET_CONNECTED_TEMP_PROBES)
+    fetch(Api.API_GET_CONNECTED_TEMP_PROBES)
       .then((response) => {
         if (!response.ok) {
           if (response.status === 404) {
@@ -160,7 +161,7 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children, onRefre
   }, []);
 
   useEffect(() => {
-    fetch(process.env.REACT_APP_API_GET_ASSIGNED_TEMP_PROBES)
+    fetch(Api.API_GET_ASSIGNED_TEMP_PROBES)
       .then((response) => {
         if (!response.ok) {
           if (response.status === 404) {

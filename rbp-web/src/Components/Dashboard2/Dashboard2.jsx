@@ -11,6 +11,7 @@ import { DragDropContext } from "@hello-pangea/dnd";
 
 import Column from "./Column";
 import "./Dashboard2.css";
+import * as Api from "../Api/Api.js"
 
 class Dashboard2 extends React.Component {
   constructor(props) {
@@ -124,7 +125,7 @@ class Dashboard2 extends React.Component {
 
   async getSavedWidgetOrder() {
     // first add probe widgets
-    fetch(process.env.REACT_APP_API_GET_COLUMN_WIDGET_ORDER)
+    fetch(Api.API_GET_COLUMN_WIDGET_ORDER)
       .then((response) => {
         return response.json();
       })
@@ -155,6 +156,7 @@ class Dashboard2 extends React.Component {
   }
 
   async initWidgets() {
+    console.log("initWidgets")
     let collist1 = [];
     let collist2 = [];
     let collist3 = [];
@@ -164,7 +166,7 @@ class Dashboard2 extends React.Component {
     let newcol = this.state.columns;
 
     // first add probe widgets
-    fetch(process.env.REACT_APP_API_GET_PROBE_LIST)
+    fetch(Api.API_GET_PROBE_LIST)
       .then((response) => {
         return response.json();
       })
@@ -202,7 +204,8 @@ class Dashboard2 extends React.Component {
 
     // now add outlet widgets
     let outletitems = [];
-    fetch(process.env.REACT_APP_API_GET_OUTLET_LIST)
+    // fetch(process.env.REACT_APP_API_GET_OUTLET_LIST)
+    fetch(Api.API_GET_OUTLET_LIST)
       .then((response) => {
         return response.json();
       })
@@ -263,6 +266,7 @@ class Dashboard2 extends React.Component {
   }
 
   initColumns() {
+    console.log("initColumns")
     // now assign widgets to columns
     let columns = {
       "column-1": {
@@ -312,7 +316,7 @@ class Dashboard2 extends React.Component {
 
   saveColumnOrder1 = (widgets) => {
     console.log(JSON.stringify(widgets));
-    return fetch(process.env.REACT_APP_API_SET_COLUMN_WIDGET_ORDER, {
+    return fetch(Api.API_SET_COLUMN_WIDGET_ORDER, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -341,7 +345,7 @@ class Dashboard2 extends React.Component {
 
   saveColumnOrder2 = (widgets) => {
     console.log(JSON.stringify(widgets));
-    return fetch(process.env.REACT_APP_API_SET_COLUMN_WIDGET_ORDER, {
+    return fetch(Api.API_SET_COLUMN_WIDGET_ORDER, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -370,7 +374,7 @@ class Dashboard2 extends React.Component {
 
   saveColumnOrder3 = (widgets) => {
     console.log(JSON.stringify(widgets));
-    return fetch(process.env.REACT_APP_API_SET_COLUMN_WIDGET_ORDER, {
+    return fetch(Api.API_SET_COLUMN_WIDGET_ORDER, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -423,9 +427,11 @@ class Dashboard2 extends React.Component {
   }
 
   async componentDidMount() {
+    console.log("Dashboard componentDidMount")
     this.getSavedWidgetOrder()
       .then(this.initColumns())
       .then(this.initWidgets())
+      .then(this.reloadDashboard()) // when compiled for prod, dash was empty until it reloaded 2nd time
   }
 
   render() {

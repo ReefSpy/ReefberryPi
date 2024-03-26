@@ -3,6 +3,7 @@ import "./Analytics.css";
 import HighchartsWrapper from "./AnalyticsChart";
 import probeIcon from "./probe.svg";
 import outletIcon from "./outlet.svg";
+import * as Api from "../Api/Api.js"
 
 class Analytics extends Component {
   constructor(props) {
@@ -208,15 +209,15 @@ class Analytics extends Component {
 
     let baseurl = null;
     if (this.state.selectedTime === "1hr") {
-      baseurl = process.env.REACT_APP_API_GET_CHART_DATA_1HR;
+      baseurl = Api.API_GET_CHART_DATA_1HR;
     } else if (this.state.selectedTime === "1dy") {
-      baseurl = process.env.REACT_APP_API_GET_CHART_DATA_24HR;
+      baseurl = Api.API_GET_CHART_DATA_24HR;
     } else if (this.state.selectedTime === "1wk") {
-      baseurl = process.env.REACT_APP_API_GET_CHART_DATA_1WK;
+      baseurl = Api.API_GET_CHART_DATA_1WK;
     } else if (this.state.selectedTime === "1mo") {
-      baseurl = process.env.REACT_APP_API_GET_CHART_DATA_1MO;
+      baseurl = Api.API_GET_CHART_DATA_1MO;
     } else if (this.state.selectedTime === "3mo") {
-      baseurl = process.env.REACT_APP_API_GET_CHART_DATA_3MO;
+      baseurl = Api.API_GET_CHART_DATA_3MO;
     }
 
     if (this.state.selectedprobeid2 === undefined) {
@@ -257,7 +258,7 @@ class Analytics extends Component {
       console.log(apiURL1);
       this.apiCall(apiURL1, this.formatChartData1);
     } else if (this.state.selectedwidgettype1 === "outlet") {
-      let outletbaseurl = process.env.REACT_APP_API_GET_OUTLET_CHART_DATA;
+      let outletbaseurl = Api.API_GET_OUTLET_CHART_DATA;
       let apiURL1 = outletbaseurl
         .concat(this.state.selectedprobeid1)
         .concat("/")
@@ -274,7 +275,7 @@ class Analytics extends Component {
       console.log(apiURL2);
       this.apiCall(apiURL2, this.formatChartData2);
     } else if (this.state.selectedwidgettype2 === "outlet") {
-      let outletbaseurl = process.env.REACT_APP_API_GET_OUTLET_CHART_DATA;
+      let outletbaseurl = Api.API_GET_OUTLET_CHART_DATA;
       let apiURL2 = outletbaseurl
         .concat(this.state.selectedprobeid2)
         .concat("/")

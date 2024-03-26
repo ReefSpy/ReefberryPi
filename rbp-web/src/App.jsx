@@ -13,6 +13,7 @@ import OutletPrefsModal from "./Components/OutletPrefs/OutletPrefsModal";
 import "./App.css";
 //import useToken from "./useToken";
 import Login from "./Components/Login/Login";
+import * as Api from "./Components/Api/Api.js"
 
 class App extends Component {
   constructor(props) {
@@ -88,18 +89,19 @@ class App extends Component {
   }
 
   async componentDidMount() {
-    this.apiCall(process.env.REACT_APP_API_GET_PROBE_LIST, this.setProbeData);
+    this.apiCall(Api.API_GET_PROBE_LIST, this.setProbeData);
 
-    this.apiCall(process.env.REACT_APP_API_GET_OUTLET_LIST, this.setOutletData);
+    // this.apiCall(process.env.REACT_APP_API_GET_OUTLET_LIST, this.setOutletData);
+    this.apiCall(Api.API_GET_OUTLET_LIST, this.setOutletData);
 
     // global prefs
     this.apiCall(
-      process.env.REACT_APP_API_GET_GLOBAL_PREFS,
+      Api.API_GET_GLOBAL_PREFS,
       this.setGlobalPrefs
     );
     this.interval = setInterval(() => {
       this.apiCall(
-        process.env.REACT_APP_API_GET_GLOBAL_PREFS,
+        Api.API_GET_GLOBAL_PREFS,
         this.setGlobalPrefs
       );
     }, 3500);
@@ -157,7 +159,7 @@ class App extends Component {
   }
 
   handleGlobalPrefsFormSubmit = (data) => {
-    let apiURL = process.env.REACT_APP_API_SET_GLOBAL_PREFS;
+    let apiURL = Api.API_SET_GLOBAL_PREFS;
     console.log(data);
     let payload = {
       tempscale: data.tempScale,

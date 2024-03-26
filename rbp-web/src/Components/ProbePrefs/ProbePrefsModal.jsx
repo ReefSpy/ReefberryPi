@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import "./ProbePrefsModal.css";
 import closeCircle from "./close-circle.svg";
 import ClipLoader from "react-spinners/ClipLoader";
+import * as Api from "../Api/Api.js"
 
 const ProbePrefsModal = ({
   isOpen,
@@ -39,7 +40,7 @@ const ProbePrefsModal = ({
   };
 
   useEffect(()=>{
-    fetch(process.env.REACT_APP_API_GET_MCP3008_ENABLE_STATE)
+    fetch(Api.API_GET_MCP3008_ENABLE_STATE)
     .then((response) => {
       if (!response.ok) {
         if (response.status === 404) {
@@ -115,7 +116,7 @@ const ProbePrefsModal = ({
 
    console.log( JSON.stringify(probestates))
 
-    return fetch(process.env.REACT_APP_API_SET_MCP3008_ENABLE_STATE, {
+    return fetch(Api.API_SET_MCP3008_ENABLE_STATE, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -2,19 +2,12 @@ import React, { useState } from "react";
 import "./Login.css";
 import PropTypes from "prop-types";
 import applogo from "../../Images/reefberry-pi-logo.svg";
+import * as Api from "../Api/Api.js"
 
 async function loginUser(credentials) {
-  // return fetch('http://xpi01.local:5000/get_token', {
-  //   method: 'POST',
-  //   headers: {
-  //     'Content-Type': 'application/json'
-  //   },
-  //   body: JSON.stringify(credentials)
-  // })
-  //   .then(data => data.json()  )
 
-  // return fetch("http://xpi01.local:5000/get_token", {
-  return fetch(process.env.REACT_APP_API_GET_TOKEN, {
+  // return fetch(process.env.REACT_APP_API_GET_TOKEN, {
+  return fetch(Api.API_GET_TOKEN, {  
     method: "POST",
     headers: {
       "Content-Type": "application/json",
