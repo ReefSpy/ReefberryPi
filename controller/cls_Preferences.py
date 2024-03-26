@@ -5,7 +5,7 @@ import random
 import string
 
 
-# default values to put into onfig file
+# default values to put into config file
 INFLUXDB_URL = "http://argon1.local:8086"
 INFLUXDB_TOKEN = "lZqJh3rEn6y4jDZqgQG19Vck53e2oryHLgHWd3qhoYZbwqGNJlbCkArZsG643ldFrEWPjmxWRdgnrtBnogp0jw=="
 INFLUXDB_ORG = "reefberrypi"

@@ -494,33 +494,33 @@ def readOutletPrefs_ex(sqlengine, appPrefs, logger):
             if results.rowcount == 0:
                 logger.warn ("Outlet: [" + intoutlet  + "] not found! Creating entry.")
                 
-                outlet.ischanged = "False"
+                outlet.ischanged = "false"
                 outlet.outletid = intoutlet
                 outlet.outletname = "Unnamed"
                 outlet.control_type = "Always"
                 outlet.always_state = "OFF"
-                outlet.enable_log = "False"
+                outlet.enable_log = "true"
                 outlet.heater_probe = ""
                 outlet.heater_on = "25.0"
                 outlet.heater_off = "25.5"
                 outlet.button_state = "OFF"
                 outlet.light_on = "08:00"
                 outlet.light_off = "17:00"
-                outlet.return_enable_feed_a = "False"
+                outlet.return_enable_feed_a = "false"
                 outlet.return_feed_delay_a = "0"
-                outlet.return_enable_feed_b = "False"
+                outlet.return_enable_feed_b = "false"
                 outlet.return_feed_delay_b = "0"
-                outlet.return_enable_feed_c = "False"
+                outlet.return_enable_feed_c = "false"
                 outlet.return_feed_delay_c = "0"
-                outlet.return_enable_feed_d = "False"
+                outlet.return_enable_feed_d = "false"
                 outlet.return_feed_delay_d = "0"
-                outlet.skimmer_enable_feed_a = "False"
+                outlet.skimmer_enable_feed_a = "false"
                 outlet.skimmer_feed_delay_a = "0"
-                outlet.skimmer_enable_feed_b = "False"
+                outlet.skimmer_enable_feed_b = "false"
                 outlet.skimmer_feed_delay_b = "0"
-                outlet.skimmer_enable_feed_c = "False"
+                outlet.skimmer_enable_feed_c = "false"
                 outlet.skimmer_feed_delay_c = "0"
-                outlet.skimmer_enable_feed_d = "False"
+                outlet.skimmer_enable_feed_d = "false"
                 outlet.skimmer_feed_delay_d = "0"
                 outlet.ph_probe = "mcp3008_ch0"
                 outlet.ph_high = "8.0"
@@ -564,7 +564,7 @@ def readOutletPrefs_ex(sqlengine, appPrefs, logger):
             else:
  
                 for row in results:
-                    outlet.ischanged = "False"
+                    outlet.ischanged = "false"
                     outlet.outletid = intoutlet
                     outlet.outletname = row.outletname
                     outlet.control_type = row.control_type
