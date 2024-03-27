@@ -228,7 +228,7 @@ def api_set_column_widget_order(AppPrefs, sqlengine, request):
     with sqlengine.connect() as conn:
         if items1List[0] != "":
             AppPrefs.logger.info("Saving Column 1 widget order")
-            AppPrefs.logger.info(items1List)@
+            AppPrefs.logger.info(items1List)
             i = 0
             for widget in items1List:
                 i = i + 1
