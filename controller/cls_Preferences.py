@@ -6,12 +6,12 @@ import string
 
 
 # default values to put into config file
-INFLUXDB_URL = "http://argon1.local:8086"
-INFLUXDB_TOKEN = "lZqJh3rEn6y4jDZqgQG19Vck53e2oryHLgHWd3qhoYZbwqGNJlbCkArZsG643ldFrEWPjmxWRdgnrtBnogp0jw=="
+INFLUXDB_URL = "http:/localhost:8086"
+INFLUXDB_TOKEN = "ENTER_TOKEN_HERE"
 INFLUXDB_ORG = "reefberrypi"
-MYSQL_HOST = "192.168.4.217"
-MYSQL_USER = "root"
-MYSQL_PASSWORD = "raspberry"
+MYSQL_HOST = "localhost"
+MYSQL_USER = "pi"
+MYSQL_PASSWORD = "reefberry"
 MYSQL_DATABASE = "reefberrypi"
 MYSQL_PORT = "3306"
 
