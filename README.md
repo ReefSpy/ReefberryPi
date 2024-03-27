@@ -163,17 +163,29 @@ sudo systemctl unmask influxdb
 sudo systemctl enable influxdb
 sudo systemctl start influxdb
 ```
-Test by going to:
+Finish setting up InfluxDB by going to:
 ```
 http://<serverip>:8086
 ```
+Fill in fields and click **Continue**:
+```
+Username = pi 
+Password = reefberry
+Initial Organization Name = reefberrypi
+Initial Bucket Name = test
+```
+![InfluxDB Setup](./docs/assets/InfluxDB-1.png)
+
+Copy your API token, then click **Configure Later**. We will use it when configuring the Reefberry Pi controller.  If you lose the token a new one can always be generated later:
+
+![InfluxDB Setup](./docs/assets/InfluxDB-2.png)
 
 ## Install Apache Webserver
 (refer to https://pimylifeup.com/raspberry-pi-apache/)
 ```
 sudo apt install apache2 -y
 ```
-Give privileges to user pi:
+Give privileges to user **pi**:
 ```
 sudo usermod -a -G www-data pi
 sudo chown -R -f www-data:www-data /var/www/html
@@ -181,7 +193,41 @@ sudo chown -R -f www-data:www-data /var/www/html
 ```
 sudo reboot 
 ```
-Test apache is running by going to:
+Test apache is running by going to the url below.  You should see the Apache welcome page:
 ```
 http://<servername>
+```
+
+## Set up Reefberry Pi
+Clone the Reefberry Pi Git repository 
+
+```
+cd ~
+git clone https://github.com/ReefSpy/ReefberryPi.git
+```
+
+### Setup the aquarium controller backend
+
+create installation directory:
+```
+sudo mkdir /usr/local/bin/reefberrypi
+```
+copy source files to installation directory:
+```
+sudo cp ReefberryPi/controller/* /usr/local/bin/reefberrypi
+```
+
+Install Python dependencies from requirements.txt:
+```
+python -m pip install -r ReefberryPi/controller/requirements.txt
+```
+
+create an initial config.ini file:
+```
+sudo nano /usr/local/bin/reefberrypi/config.ini
+```
+
+Give ownership of the installation directory to user **pi**
+```
+sudo chown -R pi: /usr/local/bin/reefberrypi/
 ```
