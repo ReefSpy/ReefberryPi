@@ -1,12 +1,29 @@
 # Reefberry Pi
 
+![dashboard](./docs/assets/Dashboard-1.png)
+
 Reefberry Pi is an aquarium controller built with a Raspberry Pi 
-single board computer
+single board computer.  I started this project to learn new skills and see what I could accomplish with this device and off the shelf components.  It is a work in progress and I have lots of ideas for things I'd like to implement.  Fell free to follow along on this journey! 
+
+# Features
+
+* 4 ds18b20 submersible temperature probes 
+* 1 DHT-22 temerature and humidity sensor
+* 8 relays to control outlets
+* 8 channel mcp3008 analog to digital converter (for things like PH probes)
+* different outlet profiles (Always, Return Pump, Skimmer, Light, PH, Heater)
+* configurable dashboard
+* data logging and graphical displays
+* ability to enable or disbale features as necessary
+* login screen
+* 4 configurable feed modes
+* ability to switch between Celcius or Fahrenheit
 
 # Prerequisites
+Raspberry Pi (tested on 3B) \
 RaspberryPi OS (64-bit) \
 Influx Database 2.0 \
-MySql or MariaDB \
+MariaDB \
 Python 3 \
 Apache Web Server 
 
@@ -40,6 +57,13 @@ Verify with:
 ```
 free -m 
 ```
+# Update Raspberry Pi OS
+It is good practice to update Raspberry Pi OS to ensure latest patches are installed
+
+``` 
+sudo apt update
+sudo apt upgrade
+```
 
 ## Installation of MariaDB
 (refer to https://pimylifeup.com/raspberry-pi-mysql/ )
@@ -48,30 +72,76 @@ free -m
 sudo apt install mariadb-server
 sudo mysql_secure_installation
 ```
-Set password to ‘raspberry’
+when prompted for password, just hit **ENTER** (we will add password later): 
 ```
-sudo mysql -u root -p
+Enter current password for root (enter for none): 
+```
+when prompted for unix_socket authentication, press "**n**"
+
+```
+Switch to unix_socket authentication [Y/n] n
+```
+When prompted to change root password, press "**y**"
+```
+Change the root password? [Y/n] y
 ```
 
-To allow remote access: \
+Set password to ‘**reefberry**’
+```
+Change the root password? [Y/n] y
+New password: 
+Re-enter new password: 
+Password updated successfully!
+```
+When prompted to remove anopnymous users, press "**y**"
+
+```
+Remove anonymous users? [Y/n] y
+```
+
+When prompted to disallow root login remotely, press "**y**" (we will add a remote user later)
+
+```
+Disallow root login remotely? [Y/n] y
+```
+When prompted to remove the test database, press "**y**"
+```
+Remove test database and access to it? [Y/n] y
+```
+When prompted to reload privlege tables, press "**y**"
+
+```
+Reload privilege tables now? [Y/n] y
+```
+Next we will allow **remote access** to  the database \
+(this is helpful while configuring and debugging things remotely): \
 (refer to
 https://webdock.io/en/docs/how-guides/database-guides/how-enable-remote-access-your-mariadbmysql-database )
 ```
 sudo nano /etc/mysql/mariadb.conf.d/50-server.cnf
 ```
-Set to (default was 127.0.0.1): 
+Change the value of bind-address to **0.0.0.0** then save changes (default was 127.0.0.1): 
 ```
 bind-address = 0.0.0.0 
 ```
+
+
+Now login to the database command line as user "root" (use the password we set earlier)
+```
+sudo mysql -u root -p
+```
+We will create a new account fro the aquarium controller and grant full access to DB.  This account will be able to login remotely from all IPs: 
+
+(run this command on MariaDB command line)
+```
+GRANT ALL ON *.* to 'pi'@'%' IDENTIFIED BY 'reefberry' WITH GRANT OPTION;
+```
+
 restart database service:
 ```
 sudo systemctl restart mariadb
 ```
-To grant access to all db for root user from all remote IP’s: \
-(run this command on MariaDB command line)
-```
-GRANT ALL ON *.* to 'root'@'%' IDENTIFIED BY 'raspberry' WITH GRANT OPTION;
-```
+
 
 ## Installation of Influx Database
 (refer to https://pimylifeup.com/raspberry-pi-influxdb/)
