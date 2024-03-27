@@ -1,0 +1,13 @@
+[Unit]
+Description=Reefberry Pi
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/usr/local/bin/reefberrypi/
+ExecStart=/usr/local/bin/reefberrypi/rbp-start.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -7,16 +7,16 @@ single board computer.  I started this project to learn new skills and see what 
 
 # Features
 
-* 4 ds18b20 submersible temperature probes 
-* 1 DHT-22 temerature and humidity sensor
-* 8 relays to control outlets
-* 8 channel mcp3008 analog to digital converter (for things like PH probes)
+* s18b20 submersible temperature probes (maximum 4)
+* DHT-22 temerature and humidity sensor (maximum 1)
+* relays to control outlets (maximum 8)
+* mcp3008 analog to digital converter (for things like PH probes) (8 channels)
 * different outlet profiles (Always, Return Pump, Skimmer, Light, PH, Heater)
 * configurable dashboard
 * data logging and graphical displays
 * ability to enable or disbale features as necessary
 * login screen
-* 4 configurable feed modes
+* configurable feed modes (4 modes)
 * ability to switch between Celcius or Fahrenheit
 
 # Prerequisites
@@ -226,8 +226,80 @@ create an initial config.ini file:
 ```
 sudo nano /usr/local/bin/reefberrypi/config.ini
 ```
+Enter the following values, and save (be sure to add the **InfluxDB API Token** you copied earlier!):
 
-Give ownership of the installation directory to user **pi**
+```
+[global]
+appuid = 
+influxdb_host = http://localhost:8086
+influxdb_org = reefberrypi
+influxdb_token = REPLACE_WITH_YOUR_TOKEN_FROM EARLIER
+mqtt_broker_host = localhost
+mysql_host = localhost
+mysql_user = pi
+mysql_password = reefberry
+mysql_database = reefberrypi
+mysql_port = 3306
+```
+
+Give ownership of the installation directory to user **pi** and make the start script executable:
 ```
 sudo chown -R pi: /usr/local/bin/reefberrypi/
+sudo chmod +x /usr/local/bin/reefberrypi/rbp-start.sh
+```
+
+Setup the Reefberry Pi service:
+```
+ sudo cp /usr/local/bin/reefberrypi/reefberrypi.service /etc/systemd/system/
+ sudo systemctl enable reefberrypi.service
+ sudo systemctl start reefberrypi.service
+```
+
+### Setup Reefberry Pi Front End
+***To save time, it might be better to compile the front end on a more powerful computer such as a Macbook and just copy the output to the Raspberry Pi, but these instructions are writen to do it on the Raspberry Pi***
+
+First we need to install NodeJS and npm:
+```
+sudo apt install nodejs
+sudo apt install npm
+```
+Before we can build the application we need to install the web dependencies (be patient, this part can take a while!):
+```
+cd ReefberryPi/rbp-web/
+sudo npm install
+```
+
+finally, we need to edit the .env file and specify the host name and port the backend Reefberry Pi controller is running Flask on.  
+
+On the raspberry pi that is running the backend, we need the hostname that other computers can resolve.  Some networks append .local or .home suffix to the hostname.   
+
+```
+sudo nano .env
+```
+enter the backend hostname.  If the computer opening the web browser can not resolve this name, it will not connect to the backend! (example reefberry.local) Make changes and save the file.
+
+```
+REACT_APP_API_HOSTNAME = {backend_hostname}
+REACT_APP_API_PORT_NUM = 5000
+```
+
+Now we can build the React application (this can also take considerable time to compile on Raspberry Pi)
+```
+npm run build
+```
+
+copy the build output to the webserver directory
+```
+sudo cp -R build/* /var/www/html/
+```
+
+Installation complete! You can now access the Reefberry Pi web console.  \
+Default credentials are: 
+
+```
+http://<servername>>/
+```
+```
+user: pi 
+password: reefberry
 ```
