@@ -3,13 +3,13 @@
 ![dashboard](./docs/assets/Dashboard-1.png)
 
 Reefberry Pi is an aquarium controller built with a Raspberry Pi 
-single board computer.  I started this project to learn new skills and see what I could accomplish with this device and off the shelf components.  It is a work in progress and I have lots of ideas for things I'd like to implement.  Fell free to follow along on this journey! 
+single board computer.  I started this project to learn new skills and see what I could accomplish with this device and off the shelf components.  It is a work in progress and I have lots of ideas for things I'd like to implement.  Feel free to follow along on this journey! 
 
 # Features
 
-* s18b20 submersible temperature probes (maximum 4)
-* DHT-22 temerature and humidity sensor (maximum 1)
-* relays to control outlets (maximum 8)
+* ds18b20 submersible temperature probes (4 maximum)
+* DHT-22 temerature and humidity sensor (1 maximum)
+* relays to control outlets (8 maximum)
 * mcp3008 analog to digital converter (for things like PH probes) (8 channels)
 * different outlet profiles (Always, Return Pump, Skimmer, Light, PH, Heater)
 * configurable dashboard
@@ -50,8 +50,13 @@ Activate the new swap space by executing following commands:
 ```
 sudo dphys-swapfile setup 
 sudo dphys-swapfile swapon 
+```
+
+Reboot system for changes to take effect:
+```
 sudo reboot 
 ```
+
 
 Verify with: 
 ```
@@ -108,7 +113,7 @@ When prompted to remove the test database, press "**y**"
 ```
 Remove test database and access to it? [Y/n] y
 ```
-When prompted to reload privlege tables, press "**y**"
+When prompted to reload privilege tables, press "**y**"
 
 ```
 Reload privilege tables now? [Y/n] y
@@ -135,6 +140,10 @@ We will create a new account fro the aquarium controller and grant full access t
 (run this command on MariaDB command line)
 ```
 GRANT ALL ON *.* to 'pi'@'%' IDENTIFIED BY 'reefberry' WITH GRANT OPTION;
+```
+Exit the MariaDB command line:
+```
+quit;
 ```
 
 restart database service:
