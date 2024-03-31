@@ -17,6 +17,7 @@ import time
 import numpy
 import ph_sensor
 import defs_outletcontrol
+import version
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 from sqlalchemy import MetaData
@@ -50,6 +51,7 @@ defs_common.initialize_logger(logger, LOG_FILEDIR, LOG_FILENAME,
                               LOGLEVEL_CONSOLE, LOGLEVEL_LOGFILE)
 
 logger.info("*** Reefberry Pi controller startup ***")
+logger.info("version = " + version.CONTROLLER_VERSION)
 
 threadlock = threading.Lock()
 
@@ -1644,28 +1646,16 @@ def set_outlet_params_skimmer(outletid):
 @app.route('/get_global_prefs/', methods=["GET"])
 @cross_origin()
 def get_global_prefs():
-    global logger
 
     try:
         global AppPrefs
-
-        response = {}
-
-        response = jsonify({"msg": 'Global preferences delivered',
-                            "appuid": AppPrefs.appuid,
-                            "tempscale": AppPrefs.temperaturescale,
-                            "dht_enable": AppPrefs.dht_enable,
-                            "feed_CurrentMode": AppPrefs.feed_CurrentMode,
-                            "feed_a_time": AppPrefs.feed_a_time,
-                            "feed_b_time": AppPrefs.feed_b_time,
-                            "feed_c_time": AppPrefs.feed_c_time,
-                            "feed_d_time": AppPrefs.feed_d_time,
-                            })
-
+        globalPrefs = api_flask.api_get_global_prefs(AppPrefs, sqlengine, request)
+     
+        response = globalPrefs
         response.status_code = 200
 
         return response
-
+    
     except Exception as e:
         AppPrefs.logger.error("get_global_prefs: " + str(e))
         response = jsonify({"msg": str(e)})

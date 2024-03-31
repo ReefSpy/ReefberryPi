@@ -6,6 +6,7 @@ from sqlalchemy import update
 from sqlalchemy import delete
 from sqlalchemy import insert
 import defs_mysql
+from flask import jsonify
 
 
 #####################################################################
@@ -148,7 +149,7 @@ def api_get_column_widget_order(AppPrefs, sqlengine, request):
 
     for row in myresult:
         col1_data.append(row.widgetid)
-    
+
     AppPrefs.logger.info("Getting widget order for column 1")
     AppPrefs.logger.info(col1_data)
 
@@ -164,7 +165,7 @@ def api_get_column_widget_order(AppPrefs, sqlengine, request):
 
     for row in myresult:
         col2_data.append(row.widgetid)
-    
+
     AppPrefs.logger.info("Getting widget order for column 2")
     AppPrefs.logger.info(col2_data)
 
@@ -180,7 +181,7 @@ def api_get_column_widget_order(AppPrefs, sqlengine, request):
 
     for row in myresult:
         col3_data.append(row.widgetid)
-    
+
     AppPrefs.logger.info("Getting widget order for column 3")
     AppPrefs.logger.info(col3_data)
 
@@ -235,9 +236,8 @@ def api_set_column_widget_order(AppPrefs, sqlengine, request):
                 stmt = (update(dashtable).where(dashtable.c.appuid == AppPrefs.appuid, dashtable.c.widgetid == widget)
                         .values(
                     column=1, order=i))
-                
+
                 result = conn.execute(stmt)
-              
 
         if items2List[0] != "":
             AppPrefs.logger.info("Saving Column 2 widget order")
@@ -248,9 +248,8 @@ def api_set_column_widget_order(AppPrefs, sqlengine, request):
                 stmt = (update(dashtable).where(dashtable.c.appuid == AppPrefs.appuid, dashtable.c.widgetid == widget)
                         .values(
                     column=2, order=i))
-            
+
                 result = conn.execute(stmt)
-            
 
         if items3List[0] != "":
             AppPrefs.logger.info("Saving Column 3 widget order")
@@ -261,10 +260,34 @@ def api_set_column_widget_order(AppPrefs, sqlengine, request):
                 stmt = (update(dashtable).where(dashtable.c.appuid == AppPrefs.appuid, dashtable.c.widgetid == widget)
                         .values(
                     column=3, order=i))
-                
+
                 result = conn.execute(stmt)
-                
-        
+
         conn.commit()
 
     return
+
+
+#####################################################################
+# api_get_global_prefs/
+# get the global paramters for the controller
+# things like temperature scale, version, etc...
+#####################################################################
+def api_get_global_prefs(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+
+    globalprefs = {}
+
+    globalprefs = jsonify({"msg": 'Global preferences delivered',
+                           "appuid": AppPrefs.appuid,
+                           "tempscale": AppPrefs.temperaturescale,
+                           "dht_enable": AppPrefs.dht_enable,
+                           "feed_CurrentMode": AppPrefs.feed_CurrentMode,
+                           "feed_a_time": AppPrefs.feed_a_time,
+                           "feed_b_time": AppPrefs.feed_b_time,
+                           "feed_c_time": AppPrefs.feed_c_time,
+                           "feed_d_time": AppPrefs.feed_d_time,
+                           "controller_version": AppPrefs.controller_version,
+                           })
+
+    return globalprefs
