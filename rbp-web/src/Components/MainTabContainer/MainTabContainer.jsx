@@ -73,6 +73,7 @@ class MainTabContainer extends Component {
           <Settings
             openGlobalPrefs={this.props.openGlobalPrefs}
             onRefreshRequest={this.handleRefreshRequest}
+            globalPrefs={this.props.globalPrefs}
           />
         ),
         img: cogicon,

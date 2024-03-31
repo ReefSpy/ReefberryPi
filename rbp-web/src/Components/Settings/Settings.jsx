@@ -10,6 +10,8 @@ import ProbePrefsModal from "../ProbePrefs/ProbePrefsModal";
 import TempPrefsModal from "../TempPrefs/TempPrefsModal";
 import appicon from "../../Images/reefberrypi-by-reefspy.svg";
 import * as Api from "../Api/Api.js"
+import * as VERSION from "../Version/Version.js"
+
 
 class Settings extends Component {
   constructor(props) {
@@ -131,9 +133,9 @@ class Settings extends Component {
             <a href="https://github.com/ReefSpy/ReefberryPi" target="_blank" >https://github.com/ReefSpy/ReefberryPi </a>
             <br></br>
             <br></br>
-            Controller Firmware: version 0.0.1
+            Controller Firmware: {this.props.globalPrefs?.controller_version}
             <br></br>
-            Web Interface: version 0.0.1
+            Web Interface: {VERSION.WEB_VERSION}
             <br></br>
             <br></br>
           </div>
