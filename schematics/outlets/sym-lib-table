@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "reefberrypi")(type "KiCad")(uri "/Users/markmc/Desktop/schematics/reefberrypi.kicad_sym")(options "")(descr ""))
+)
