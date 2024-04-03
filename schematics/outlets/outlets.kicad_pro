@@ -251,9 +251,7 @@
   },
   "libraries": {
     "pinned_footprint_libs": [],
-    "pinned_symbol_libs": [
-      "reefberrypi"
-    ]
+    "pinned_symbol_libs": []
   },
   "meta": {
     "filename": "outlets.kicad_pro",
