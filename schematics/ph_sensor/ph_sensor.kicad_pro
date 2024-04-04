@@ -235,7 +235,9 @@
   "legacy": [],
   "libraries": {
     "pinned_footprint_libs": [],
-    "pinned_symbol_libs": []
+    "pinned_symbol_libs": [
+      "reefberrypi"
+    ]
   },
   "meta": {
     "filename": "ph_sensor.kicad_pro",
