@@ -1,8 +1,7 @@
 import RPi.GPIO as GPIO
 
 # GPIO pins
-# dht11 = 14        # for dht11 temp and humidity sensor
-dht11 = 17        # for dht11 temp and humidity sensor
+dht22 = 17        # for dht22 temp and humidity sensor
 # SPICLK = 18       # for MCP3008 ADC
 SPICLK = 11       # for MCP3008 ADC
 # SPIMISO = 23      # for MCP3008 ADC

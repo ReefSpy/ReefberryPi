@@ -10,7 +10,7 @@ import api_flask
 from influxdb_client.client.write_api import SYNCHRONOUS
 import RPi.GPIO as GPIO
 import GPIO_config
-import dht11
+import dht22
 from datetime import datetime, timedelta
 import ds18b20
 import time
@@ -83,8 +83,8 @@ defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, logger)
 # set up the GPIO
 GPIO_config.initGPIO()
 
-# dht11 temperature and humidity sensor
-dht_sensor = dht11.DHT11(pin=GPIO_config.dht11)
+# dht22 temperature and humidity sensor
+dht22_sensor = dht22.DHT22
 
 
 def apploop():
@@ -242,13 +242,15 @@ def apploop():
             logger.error("Error reading ds18b20 temperature! " + str(e))
 
         ###################################################################
-        # dht11 temp and humidity data
+        # dht22 temp and humidity data
         ###################################################################
         if AppPrefs.dht_enable == "true":
-            result = dht_sensor.read()
-            if result.is_valid():
-                temp_c = result.temperature
-                hum = result.humidity
+            try:
+                # result = dht_sensor.read()
+                hum, temp_c = dht22_sensor.read()
+                # if result.is_valid():
+                # temp_c = result.temperature
+                # hum = result.humidity
                 temp_f = float(defs_common.convertCtoF(temp_c))
 
                 if AppPrefs.temperaturescale == "F":
@@ -257,26 +259,24 @@ def apploop():
                     AppPrefs.dhtDict.get("DHT-T").lastValue = str(temp_c)
 
                 AppPrefs.dhtDict.get("DHT-H").lastValue = str(hum)
+            except Exception as e:
+                logger.error(
+                    "Error getting DHT data!" + str(e))
+            try:
+                Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_c", "tags": {
+                    "appuid": AppPrefs.appuid, "probeid": "DHT-T"}, "fields": {"value": float(temp_c)}, "time": datetime.utcnow()}])
 
-                try:
-                    # print("dht11 Temp C = " + str(temp_c) + " C")
-                    Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_c", "tags": {
-                        "appuid": AppPrefs.appuid, "probeid": "DHT-T"}, "fields": {"value": float(temp_c)}, "time": datetime.utcnow()}])
+                Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_f", "tags": {
+                    "appuid": AppPrefs.appuid, "probeid": "DHT-T"}, "fields": {"value": float(temp_f)}, "time": datetime.utcnow()}])
 
-                    # print("dht11 Temp F =  " + str(temp_f) + " F")
-                    Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_f", "tags": {
-                        "appuid": AppPrefs.appuid, "probeid": "DHT-T"}, "fields": {"value": temp_f}, "time": datetime.utcnow()}])
-
-                    # print("dht11 Temp = " + str(temp_c) + "C / " + str(temp_f) + "F")
-                    # print("dht11 Humidity = " + str(hum) + "%")
-                    logger.debug("dht11 Temp = " + str(temp_c) +
-                                 "C / " + str(temp_f) + "F")
-                    logger.debug("dht11 Humidity = " + str(hum) + "%")
-                    Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "humidity", "tags": {
-                        "appuid": AppPrefs.appuid, "probeid": "DHT-H"}, "fields": {"value": hum}, "time": datetime.utcnow()}])
-                except Exception as e:
-                    logger.error(
-                        "Error logging DHT data to InfluxDB!" + str(e))
+                logger.debug("dht22 Temp = " + str(temp_c) +
+                                "C / " + str(temp_f) + "F")
+                logger.debug("dht22 Humidity = " + str(hum) + "%")
+                Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "humidity", "tags": {
+                    "appuid": AppPrefs.appuid, "probeid": "DHT-H"}, "fields": {"value": float(hum)}, "time": datetime.utcnow()}])
+            except Exception as e:
+                logger.error(
+                    "Error logging DHT data to InfluxDB!" + str(e))
 
         ##########################################################################################
         # check if Feed mode is enabled
