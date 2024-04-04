@@ -194,89 +194,16 @@ def apploop():
                     AppPrefs.dv_SamplingTimeSeed = int(
                         round(time.time()*1000))  # convert time to milliseconds
 
-        ###################################################################
-        # read temp probe list
-        ###################################################################
-        # defs_mysql.readTempProbes(mySQLDB, AppPrefs, logger)
-        ###################################################################
-        # ds18b20 Temperture sensor
-        ###################################################################
-        try:
-            for tProbe in AppPrefs.tempProbeDict:
-                try:
-                    # dstempC = float(ds18b20.read_temp(
-                    #     AppPrefs.tempProbeDict.get(tProbe).probeid.split("_")[1], "C"))
 
-                    dstempC = float(ds18b20.read_temp(
-                        AppPrefs.tempProbeDict.get(tProbe).serialnum, "C"))
-            
-                    # dstempC = float(ds18b20.read_temp("111", "C"))
-
-                    # logger.info(str(dstempC) + " C")
-                    # print("ds18b20 " + str(dstempC) + " C")
-                    Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_c", "tags": {
-                        "appuid": AppPrefs.appuid, "probeid": AppPrefs.tempProbeDict.get(tProbe).probeid}, "fields": {"value": dstempC}, "time": datetime.utcnow()}])
-
-                    dstempF = float(defs_common.convertCtoF(dstempC))
-                    # print("ds18b20 " + str(dstempF) + " F")
-                    Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_f", "tags": {
-                        "appuid": AppPrefs.appuid, "probeid": AppPrefs.tempProbeDict.get(tProbe).probeid}, "fields": {"value": dstempF}, "time": datetime.utcnow()}])
-
-                    # print("ds18b20 Temp = " + str(dstempC) + "C / " + str(dstempF) + "F")
-                    logger.debug(AppPrefs.tempProbeDict.get(tProbe).probeid + " Temp = " + str(dstempC) +
-                                "C / " + str(dstempF) + "F")
-
-                    if AppPrefs.temperaturescale == "F":
-                        AppPrefs.tempProbeDict.get(
-                            tProbe).lastTemperature = str(dstempF)
-                    else:
-                        AppPrefs.tempProbeDict.get(
-                            tProbe).lastTemperature = str(dstempC)
-
-                except Exception as e:
-                    logger.error("Unable to read ds18b20 temperature! " + str(e))
-                    AppPrefs.tempProbeDict.get(
-                                tProbe).lastTemperature = ""
-                                
-        except Exception as e:
-            logger.error("Error reading ds18b20 temperature! " + str(e))
-
-        ###################################################################
+        ##########################################################################################
+        # ds18b20 Temperture sensors
+        ##########################################################################################
+        # reading ds18b20 is moved to its own thread DStemploop() which starts down below
+        
+        ##########################################################################################
         # dht22 temp and humidity data
-        ###################################################################
-        if AppPrefs.dht_enable == "true":
-            try:
-                # result = dht_sensor.read()
-                hum, temp_c = dht22_sensor.read()
-                # if result.is_valid():
-                # temp_c = result.temperature
-                # hum = result.humidity
-                temp_f = float(defs_common.convertCtoF(temp_c))
-
-                if AppPrefs.temperaturescale == "F":
-                    AppPrefs.dhtDict.get("DHT-T").lastValue = str(temp_f)
-                else:
-                    AppPrefs.dhtDict.get("DHT-T").lastValue = str(temp_c)
-
-                AppPrefs.dhtDict.get("DHT-H").lastValue = str(hum)
-            except Exception as e:
-                logger.error(
-                    "Error getting DHT data!" + str(e))
-            try:
-                Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_c", "tags": {
-                    "appuid": AppPrefs.appuid, "probeid": "DHT-T"}, "fields": {"value": float(temp_c)}, "time": datetime.utcnow()}])
-
-                Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_f", "tags": {
-                    "appuid": AppPrefs.appuid, "probeid": "DHT-T"}, "fields": {"value": float(temp_f)}, "time": datetime.utcnow()}])
-
-                logger.debug("dht22 Temp = " + str(temp_c) +
-                                "C / " + str(temp_f) + "F")
-                logger.debug("dht22 Humidity = " + str(hum) + "%")
-                Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "humidity", "tags": {
-                    "appuid": AppPrefs.appuid, "probeid": "DHT-H"}, "fields": {"value": float(hum)}, "time": datetime.utcnow()}])
-            except Exception as e:
-                logger.error(
-                    "Error logging DHT data to InfluxDB!" + str(e))
+        ##########################################################################################
+        # reading DHT22 is moved to its own thread DHTloop() which starts down below
 
         ##########################################################################################
         # check if Feed mode is enabled
@@ -372,16 +299,119 @@ def apploop():
         logger.debug("******************************************************")
         logger.debug("End Loop")
         logger.debug("******************************************************")
-        time.sleep(.5)
+        time.sleep(1)
+
+def DStemploop():
+    global AppPrefs
+    global Influx_client 
+    global Influx_write_api 
+
+    while True:
+        try:
+            for tProbe in AppPrefs.tempProbeDict:
+                try:
+                    # dstempC = float(ds18b20.read_temp(
+                    #     AppPrefs.tempProbeDict.get(tProbe).probeid.split("_")[1], "C"))
+
+                    dstempC = float(ds18b20.read_temp(
+                        AppPrefs.tempProbeDict.get(tProbe).serialnum, "C"))
+            
+                    # dstempC = float(ds18b20.read_temp("111", "C"))
+
+                    # logger.info(str(dstempC) + " C")
+                    # print("ds18b20 " + str(dstempC) + " C")
+                    Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_c", "tags": {
+                        "appuid": AppPrefs.appuid, "probeid": AppPrefs.tempProbeDict.get(tProbe).probeid}, "fields": {"value": dstempC}, "time": datetime.utcnow()}])
+
+                    dstempF = float(defs_common.convertCtoF(dstempC))
+                    # print("ds18b20 " + str(dstempF) + " F")
+                    Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_f", "tags": {
+                        "appuid": AppPrefs.appuid, "probeid": AppPrefs.tempProbeDict.get(tProbe).probeid}, "fields": {"value": dstempF}, "time": datetime.utcnow()}])
+
+                    # print("ds18b20 Temp = " + str(dstempC) + "C / " + str(dstempF) + "F")
+                    logger.debug(AppPrefs.tempProbeDict.get(tProbe).probeid + " Temp = " + str(dstempC) +
+                                "C / " + str(dstempF) + "F")
+
+                    if AppPrefs.temperaturescale == "F":
+                        AppPrefs.tempProbeDict.get(
+                            tProbe).lastTemperature = str(dstempF)
+                    else:
+                        AppPrefs.tempProbeDict.get(
+                            tProbe).lastTemperature = str(dstempC)
+
+                except Exception as e:
+                    logger.error("Unable to read ds18b20 temperature! " + str(e))
+                    AppPrefs.tempProbeDict.get(
+                                tProbe).lastTemperature = ""
+                                
+        except Exception as e:
+            logger.error("Error reading ds18b20 temperature! " + str(e))
+
+        # slow down the loop        
+        time.sleep(1)
+
+def DHTloop():
+    global AppPrefs
+    global Influx_client 
+    global Influx_write_api 
+
+    ###################################################################
+    # dht22 temp and humidity data
+    ###################################################################
+    while AppPrefs.dht_enable == "true":
+        try:
+            # result = dht_sensor.read()
+            hum, temp_c = dht22_sensor.read()
+            # if result.is_valid():
+            # temp_c = result.temperature
+            # hum = result.humidity
+            temp_f = float(defs_common.convertCtoF(temp_c))
+
+            if AppPrefs.temperaturescale == "F":
+                AppPrefs.dhtDict.get("DHT-T").lastValue = str(temp_f)
+            else:
+                AppPrefs.dhtDict.get("DHT-T").lastValue = str(temp_c)
+
+            AppPrefs.dhtDict.get("DHT-H").lastValue = str(hum)
+        except Exception as e:
+            logger.error(
+                "Error getting DHT data!" + str(e))
+        try:
+            Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_c", "tags": {
+                "appuid": AppPrefs.appuid, "probeid": "DHT-T"}, "fields": {"value": float(temp_c)}, "time": datetime.utcnow()}])
+
+            Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "temperature_f", "tags": {
+                "appuid": AppPrefs.appuid, "probeid": "DHT-T"}, "fields": {"value": float(temp_f)}, "time": datetime.utcnow()}])
+
+            logger.debug("dht22 Temp = " + str(temp_c) +
+                            "C / " + str(temp_f) + "F")
+            logger.debug("dht22 Humidity = " + str(hum) + "%")
+            Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "humidity", "tags": {
+                "appuid": AppPrefs.appuid, "probeid": "DHT-H"}, "fields": {"value": float(hum)}, "time": datetime.utcnow()}])
+        except Exception as e:
+            logger.error(
+                "Error logging DHT data to InfluxDB!" + str(e))
+        # slow down the loop        
+        time.sleep(1)
+
+#########################################################################
+# THREADS
+#########################################################################
+
+MAINthread = threading.Thread(target=apploop)
+MAINthread.start()
+
+DHTthread = threading.Thread(target=DHTloop)
+DHTthread.start()
+
+DSthread = threading.Thread(target=DStemploop)
+DSthread.start()
 
 
-# apploop()
-# Start the main loop in a separate thread
-thread = threading.Thread(target=apploop)
-thread.start()
-
+#########################################################################
+# FLASK
 # Define the Flask routes
-
+#########################################################################
 
 @app.route('/')
 def index():
