@@ -131,7 +131,7 @@ class AppPrefs():
 
         # we will use this UID if no UID is already present in the prefs file
         uid = ''.join(
-            [random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890") for n in range(8)])
+            [random.choice("ABCDEFGHJKLMNPQRSTUVWXYZ1234567890") for n in range(8)])
 
         ##########################################################################################
         # read these prefs from config file

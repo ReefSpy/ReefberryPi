@@ -286,7 +286,7 @@ def createDB(app_prefs, sqlengine):
                             Column("idprobes", Integer, nullable=False, autoincrement=True, primary_key=True),
                             Column("probeid", String(45), nullable=False, primary_key=True),
                             Column("name", String(45), nullable=False),
-                            Column("appuid", String(45), nullable=False),
+                            Column("appuid", String(45), nullable=False, primary_key=True),
                             Column("probetype", String(45), nullable=False),
                             Column("sensortype", String(45), nullable=False),
                             Column("enabled", String(45), nullable=False),
