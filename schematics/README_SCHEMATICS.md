@@ -1,0 +1,1 @@
+Schematics are created in KiCAD version 8.0

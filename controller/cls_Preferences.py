@@ -3,7 +3,7 @@ import time
 import defs_common
 import random
 import string
-
+import version
 
 # default values to put into config file
 INFLUXDB_URL = "http:/localhost:8086"
@@ -109,6 +109,7 @@ class AppPrefs():
         self.feed_c_time = ""
         self.feed_d_time = ""
         self.dht_enable = ""
+        self.controller_version = version.CONTROLLER_VERSION
 
         self.dv_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds
         # self.dv_SamplingInterval = int(defs_common.readINIfile('mcp3008', 'dv_samplinginterval', "1000", lock=controller.threadlock, logger=controller.logger)) # milliseconds

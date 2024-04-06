@@ -8,7 +8,7 @@ single board computer.  I started this project to learn new skills and see what 
 # Features
 
 * ds18b20 submersible temperature probes (4 maximum)
-* DHT-22 temerature and humidity sensor (1 maximum)
+* DHT-22 temperature and humidity sensor (1 maximum)
 * relays to control outlets (8 maximum)
 * mcp3008 analog to digital converter (for things like PH probes) (8 channels)
 * different outlet profiles (Always, Return Pump, Skimmer, Light, PH, Heater)
