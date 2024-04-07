@@ -372,7 +372,9 @@ def DHTloop():
             else:
                 AppPrefs.dhtDict.get("DHT-T").lastValue = str(temp_c)
 
-            AppPrefs.dhtDict.get("DHT-H").lastValue = str(hum)
+            # sometimes we get an invalid reading for humidity, ignore any obviously bad reading
+            if float(hum) <= 100:
+                AppPrefs.dhtDict.get("DHT-H").lastValue = str(hum)
         except Exception as e:
             logger.error(
                 "Error getting DHT data!" + str(e))
@@ -385,9 +387,13 @@ def DHTloop():
 
             logger.debug("dht22 Temp = " + str(temp_c) +
                             "C / " + str(temp_f) + "F")
-            logger.debug("dht22 Humidity = " + str(hum) + "%")
-            Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "humidity", "tags": {
-                "appuid": AppPrefs.appuid, "probeid": "DHT-H"}, "fields": {"value": float(hum)}, "time": datetime.utcnow()}])
+             # sometimes we get an invalid reading for humidity, ignore any obviously bad reading
+            if float(hum) <= 100:
+                logger.debug("dht22 Humidity = " + str(hum) + "%")
+                Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "humidity", "tags": {
+                    "appuid": AppPrefs.appuid, "probeid": "DHT-H"}, "fields": {"value": float(hum)}, "time": datetime.utcnow()}])
+            else:
+                logger.error("dht22 Humidity out of range, ignoring: " + str(hum) + "%")
         except Exception as e:
             logger.error(
                 "Error logging DHT data to InfluxDB!" + str(e))
