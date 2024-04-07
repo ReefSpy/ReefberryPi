@@ -286,7 +286,7 @@ def createDB(app_prefs, sqlengine):
                             Column("idprobes", Integer, nullable=False, autoincrement=True, primary_key=True),
                             Column("probeid", String(45), nullable=False, primary_key=True),
                             Column("name", String(45), nullable=False),
-                            Column("appuid", String(45), nullable=False),
+                            Column("appuid", String(45), nullable=False, primary_key=True),
                             Column("probetype", String(45), nullable=False),
                             Column("sensortype", String(45), nullable=False),
                             Column("enabled", String(45), nullable=False),
@@ -351,7 +351,7 @@ def readTempProbes_ex(sqlengine, appPrefs, logger):
                         probe_table.c.enabled,
                         ds18b20_table.c.serialnum,
                         ).select_from(probe_table.outerjoin(ds18b20_table, probe_table.c.probeid == ds18b20_table.c.probeid)) \
-                        .where(probe_table.c.probeid == ds18b20_table.c.probeid, probe_table.c.appuid == ds18b20_table.c.appuid, probe_table.c.enabled == "true")
+                        .where(probe_table.c.probeid == ds18b20_table.c.probeid, probe_table.c.appuid == ds18b20_table.c.appuid, probe_table.c.enabled == "true").where(ds18b20_table.c.appuid == appPrefs.appuid)
 
 
     results = conn.execute(stmt).fetchall()
@@ -496,7 +496,7 @@ def readOutletPrefs_ex(sqlengine, appPrefs, logger):
                 
                 outlet.ischanged = "false"
                 outlet.outletid = intoutlet
-                outlet.outletname = "Unnamed"
+                outlet.outletname = intoutlet
                 outlet.control_type = "Always"
                 outlet.always_state = "OFF"
                 outlet.enable_log = "true"
@@ -689,7 +689,7 @@ def readMCP3008Prefs_ex(sqlengine, appPrefs, logger):
                         mcp3008_table.c.numsamples,
                         mcp3008_table.c.sigma,
                         ).select_from(probe_table.outerjoin(mcp3008_table, probe_table.c.probeid == mcp3008_table.c.probeid)) \
-                        .where(probe_table.c.probeid == mcp3008_table.c.probeid, probe_table.c.appuid == mcp3008_table.c.appuid, mcp3008_table.c.chid == ch, probe_table.c.enabled == "true")
+                        .where(probe_table.c.probeid == mcp3008_table.c.probeid, probe_table.c.appuid == mcp3008_table.c.appuid, mcp3008_table.c.chid == ch, probe_table.c.enabled == "true").where(mcp3008_table.c.appuid == appPrefs.appuid)
             
             
             results = conn.execute(stmt)
