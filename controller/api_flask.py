@@ -274,7 +274,7 @@ def api_set_column_widget_order(AppPrefs, sqlengine, request):
 # things like temperature scale, version, etc...
 #####################################################################
 def api_get_global_prefs(AppPrefs, sqlengine, request):
-    AppPrefs.logger.info(request)
+    # AppPrefs.logger.info(request)
 
     globalprefs = {}
 

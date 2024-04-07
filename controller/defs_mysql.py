@@ -202,7 +202,7 @@ def createDB(app_prefs, sqlengine):
                                 metadata_obj,
                                 Column("id", Integer, nullable=False, autoincrement=True, primary_key=True, unique=True),
                                 Column("appuid", String(45), nullable=False, primary_key=True),
-                                Column("widgetid", String(45), unique=True),
+                                Column("widgetid", String(45)),
                                 Column("column", Integer),
                                 Column("order", Integer),
                                 )
