@@ -7,6 +7,8 @@ from sqlalchemy import delete
 from sqlalchemy import insert
 import defs_mysql
 from flask import jsonify
+import time
+import defs_common
 
 
 #####################################################################
@@ -96,7 +98,7 @@ def api_set_connected_temp_probes(AppPrefs, sqlengine, request):
 # api_get_assigned_temp_probes
 # return list of ds18b20 temperature probes that that have been
 # assigned to Probe IDs
-#####################################################################
+####################################################################
 
 
 def api_get_assigned_temp_probes(AppPrefs, sqlengine, request):
@@ -120,6 +122,66 @@ def api_get_assigned_temp_probes(AppPrefs, sqlengine, request):
         json_data.append({row.probeid: row.serialnum})
 
     return json_data
+
+#####################################################################
+# api_get_outlet_list
+# return list of outlets on the internal bus
+#####################################################################
+
+def api_get_outlet_list(AppPrefs, request):
+    AppPrefs.logger.info(request)
+    
+    outletdict = {}
+
+    # loop through each outlet
+    for outlet in AppPrefs.outletDict:
+        #           convert temperature values to F if using Fahrenheit
+        if AppPrefs.temperaturescale == "F":
+            heater_on_x = defs_common.convertCtoF(
+                AppPrefs.outletDict[outlet].heater_on)
+            heater_off_x = defs_common.convertCtoF(
+                AppPrefs.outletDict[outlet].heater_off)
+        else:
+            heater_on_x = AppPrefs.outletDict[outlet].heater_on
+            heater_off_x = AppPrefs.outletDict[outlet].heater_off
+
+        outletdict[outlet] = {"outletid": AppPrefs.outletDict[outlet].outletid,
+                                "outletname": AppPrefs.outletDict[outlet].outletname,
+                                "control_type": AppPrefs.outletDict[outlet].control_type,
+                                "outletstatus": AppPrefs.outletDict[outlet].outletstatus,
+                                "button_state": AppPrefs.outletDict[outlet].button_state,
+                                "heater_on": heater_on_x,
+                                "heater_off": heater_off_x,
+                                "heater_probe": AppPrefs.outletDict[outlet].heater_probe,
+                                "light_on": AppPrefs.outletDict[outlet].light_on,
+                                "light_off": AppPrefs.outletDict[outlet].light_off,
+                                "always_state": AppPrefs.outletDict[outlet].always_state,
+                                "return_enable_feed_a": (AppPrefs.outletDict[outlet].return_enable_feed_a).lower() == "true",
+                                "return_enable_feed_b": (AppPrefs.outletDict[outlet].return_enable_feed_b).lower() == "true",
+                                "return_enable_feed_c": (AppPrefs.outletDict[outlet].return_enable_feed_c).lower() == "true",
+                                "return_enable_feed_d": (AppPrefs.outletDict[outlet].return_enable_feed_d).lower() == "true",
+                                "return_feed_delay_a": AppPrefs.outletDict[outlet].return_feed_delay_a,
+                                "return_feed_delay_b": AppPrefs.outletDict[outlet].return_feed_delay_b,
+                                "return_feed_delay_c": AppPrefs.outletDict[outlet].return_feed_delay_c,
+                                "return_feed_delay_d": AppPrefs.outletDict[outlet].return_feed_delay_d,
+
+                                "skimmer_enable_feed_a": (AppPrefs.outletDict[outlet].skimmer_enable_feed_a).lower() == "true",
+                                "skimmer_enable_feed_b": (AppPrefs.outletDict[outlet].skimmer_enable_feed_b).lower() == "true",
+                                "skimmer_enable_feed_c": (AppPrefs.outletDict[outlet].skimmer_enable_feed_c).lower() == "true",
+                                "skimmer_enable_feed_d": (AppPrefs.outletDict[outlet].skimmer_enable_feed_d).lower() == "true",
+                                "skimmer_feed_delay_a": AppPrefs.outletDict[outlet].skimmer_feed_delay_a,
+                                "skimmer_feed_delay_b": AppPrefs.outletDict[outlet].skimmer_feed_delay_b,
+                                "skimmer_feed_delay_c": AppPrefs.outletDict[outlet].skimmer_feed_delay_c,
+                                "skimmer_feed_delay_d": AppPrefs.outletDict[outlet].skimmer_feed_delay_d,
+
+                                "enabled": AppPrefs.outletDict[outlet].enabled,
+
+                                }
+
+    if len(outletdict) < 8:
+        return "Error getting list"
+    else:
+        return outletdict
 
 
 #####################################################################
@@ -267,6 +329,25 @@ def api_set_column_widget_order(AppPrefs, sqlengine, request):
 
     return
 
+#####################################################################
+# api_set_feed_mode
+# to start a feed mode.  Must specify Feed mode A, B, C, D or Cancel
+#####################################################################
+
+
+def api_set_feed_mode(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+
+    value = str(request.json.get(
+        "feedmode", "CANCEL"))
+    
+    AppPrefs.logger.info("Set feed mode: " + value)
+    AppPrefs.feed_CurrentMode = value
+    AppPrefs.feed_SamplingTimeSeed = int(
+        round(time.time()*1000))  # convert time to milliseconds
+    AppPrefs.feed_PreviousMode = "CANCEL"
+
+    return value
 
 #####################################################################
 # api_get_global_prefs/

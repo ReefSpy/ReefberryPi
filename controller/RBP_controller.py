@@ -50,6 +50,16 @@ LOGLEVEL_LOGFILE = logging.INFO
 defs_common.initialize_logger(logger, LOG_FILEDIR, LOG_FILENAME,
                               LOGLEVEL_CONSOLE, LOGLEVEL_LOGFILE)
 
+logger.info(
+    "====================================================================")
+logger.info("  ___          __ _                        ___ _ ")
+logger.info(" | _ \___ ___ / _| |__  ___ _ _ _ _ _  _  | _ (_)")
+logger.info(" |   / -_) -_)  _| '_ \/ -_) '_| '_| || | |  _/ |")
+logger.info(" |_|_\___\___|_| |_.__/\___|_| |_|  \_, | |_| |_|")
+logger.info("                                    |__/         ")
+logger.info(
+    "====================================================================")
+
 logger.info("*** Reefberry Pi controller startup ***")
 logger.info("version = " + version.CONTROLLER_VERSION)
 
@@ -85,6 +95,8 @@ GPIO_config.initGPIO()
 
 # dht22 temperature and humidity sensor
 dht22_sensor = dht22.DHT22
+
+# MARK: App Loop
 
 
 def apploop():
@@ -147,7 +159,7 @@ def apploop():
                         dv_AvgCountsFiltered = 1
                         # values were 1023
                         logger.error("Error collecting data! " + "mcp3008 ch" +
-                              str(AppPrefs.mcp3008Dict[ch].ch_num))
+                                     str(AppPrefs.mcp3008Dict[ch].ch_num))
 
                     if AppPrefs.mcp3008Dict[ch].ch_type == "ph":
                         # bug, somtimes value is coming back high, like really high, like 22.0.  this is an impossible
@@ -166,7 +178,7 @@ def apploop():
                             "{:.2f}".format(dv_AvgCountsFiltered))
 
                         if dv_AvgCountsFiltered > 14:
-                            logger.error("Invalid PH value: " + str(AppPrefs.mcp3008Dict[ch].ch_probeid) + " " +  str(dv_AvgCountsFiltered) +
+                            logger.error("Invalid PH value: " + str(AppPrefs.mcp3008Dict[ch].ch_probeid) + " " + str(dv_AvgCountsFiltered) +
                                          " " + str(orgval) + " " + str(dv_dvlistfiltered))
 
                     # if enough time has passed (ph_LogInterval) then log the data to file
@@ -183,8 +195,8 @@ def apploop():
                         AppPrefs.mcp3008Dict[ch].LastLogTime = int(
                             round(time.time()*1000))
                     else:
-                        logger.debug (timestamp.strftime("%Y-%m-%d %H:%M:%S") + " dv = "
-                              + "{:.2f}".format(dv_AvgCountsFiltered))
+                        logger.debug(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " dv = "
+                                     + "{:.2f}".format(dv_AvgCountsFiltered))
 
                     AppPrefs.mcp3008Dict[ch].lastValue = str(
                         dv_AvgCountsFiltered)
@@ -194,12 +206,11 @@ def apploop():
                     AppPrefs.dv_SamplingTimeSeed = int(
                         round(time.time()*1000))  # convert time to milliseconds
 
-
         ##########################################################################################
         # ds18b20 Temperture sensors
         ##########################################################################################
         # reading ds18b20 is moved to its own thread DStemploop() which starts down below
-        
+
         ##########################################################################################
         # dht22 temp and humidity data
         ##########################################################################################
@@ -301,10 +312,13 @@ def apploop():
         logger.debug("******************************************************")
         time.sleep(1)
 
+# MARK: DStemploop
+
+
 def DStemploop():
     global AppPrefs
-    global Influx_client 
-    global Influx_write_api 
+    global Influx_client
+    global Influx_write_api
 
     while True:
         try:
@@ -315,7 +329,7 @@ def DStemploop():
 
                     dstempC = float(ds18b20.read_temp(
                         AppPrefs.tempProbeDict.get(tProbe).serialnum, "C"))
-            
+
                     # dstempC = float(ds18b20.read_temp("111", "C"))
 
                     # logger.info(str(dstempC) + " C")
@@ -330,7 +344,7 @@ def DStemploop():
 
                     # print("ds18b20 Temp = " + str(dstempC) + "C / " + str(dstempF) + "F")
                     logger.debug(AppPrefs.tempProbeDict.get(tProbe).probeid + " Temp = " + str(dstempC) +
-                                "C / " + str(dstempF) + "F")
+                                 "C / " + str(dstempF) + "F")
 
                     if AppPrefs.temperaturescale == "F":
                         AppPrefs.tempProbeDict.get(
@@ -340,20 +354,24 @@ def DStemploop():
                             tProbe).lastTemperature = str(dstempC)
 
                 except Exception as e:
-                    logger.error("Unable to read ds18b20 temperature! " + str(e))
+                    logger.error(
+                        "Unable to read ds18b20 temperature! " + str(e))
                     AppPrefs.tempProbeDict.get(
-                                tProbe).lastTemperature = ""
-                                
+                        tProbe).lastTemperature = ""
+
         except Exception as e:
             logger.error("Error reading ds18b20 temperature! " + str(e))
 
-        # slow down the loop        
+        # slow down the loop
         time.sleep(1)
+
+# MARK: DHTloop
+
 
 def DHTloop():
     global AppPrefs
-    global Influx_client 
-    global Influx_write_api 
+    global Influx_client
+    global Influx_write_api
 
     ###################################################################
     # dht22 temp and humidity data
@@ -387,23 +405,25 @@ def DHTloop():
                     "appuid": AppPrefs.appuid, "probeid": "DHT-T"}, "fields": {"value": float(temp_f)}, "time": datetime.utcnow()}])
 
                 logger.debug("dht22 Temp = " + str(temp_c) +
-                                "C / " + str(temp_f) + "F")
+                             "C / " + str(temp_f) + "F")
                 # sometimes we get an invalid reading for humidity, ignore any obviously bad reading
                 if float(hum) <= 100:
                     logger.debug("dht22 Humidity = " + str(hum) + "%")
                     Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "humidity", "tags": {
                         "appuid": AppPrefs.appuid, "probeid": "DHT-H"}, "fields": {"value": float(hum)}, "time": datetime.utcnow()}])
                 else:
-                    logger.error("dht22 Humidity out of range, ignoring: " + str(hum) + "%")
+                    logger.error(
+                        "dht22 Humidity out of range, ignoring: " + str(hum) + "%")
             except Exception as e:
                 logger.error(
                     "Error logging DHT data to InfluxDB!" + str(e))
-            # slow down the loop        
+            # slow down the loop
         time.sleep(1)
 
 #########################################################################
 # THREADS
 #########################################################################
+
 
 MAINthread = threading.Thread(target=apploop)
 MAINthread.start()
@@ -415,46 +435,29 @@ DSthread = threading.Thread(target=DStemploop)
 DSthread.start()
 
 
+# MARK: Flask API
 #########################################################################
 # FLASK
 # Define the Flask routes
 #########################################################################
 
+# just a simple endpoint.  Let people know the service is alive
 @app.route('/')
 def index():
-    return 'Hello, ReefberryPi!'
+    return 'Hello from Reefberry Pi! <br> <br>  ><(((º> '
 
 
-@app.route('/set_var1/<int:value>')
-def set_var1(value):
-    global var1
-    var1 = value
-    return f"var1 set to {value}"
+# @app.route('/reloadprefs/')
+# def reloadprefs():
+#     global AppPrefs
+#     global mySQLDB
+#     global logger
 
+#     defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
+#     defs_mysql.readGlobalPrefs_ex(sqlengine, AppPrefs, logger)
+#     defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+#     return "Reload Prefs"
 
-@app.route('/set_var2/<int:value>')
-def set_var2(value):
-    global var2
-    var2 = value
-    return f"var2 set to {value}"
-
-
-@app.route('/get_vars')
-def get_vars():
-    global var1, var2
-    return jsonify({'var1': var1, 'var2': var2})
-
-
-@app.route('/reloadprefs/')
-def reloadprefs():
-    global AppPrefs
-    global mySQLDB
-    global logger
-
-    defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
-    defs_mysql.readGlobalPrefs_ex(sqlengine, AppPrefs, logger)
-    defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
-    return "Reload Prefs"
 
 #####################################################################
 # set_feedmode
@@ -462,213 +465,122 @@ def reloadprefs():
 #####################################################################
 
 
-@app.route('/set_feedmode/<value>')
+@app.route('/set_feedmode', methods=['POST'])
 @cross_origin()
-def set_feedmode(value):
-    global AppPrefs
-    AppPrefs.logger.info("Set feed mode: " + value)
-    AppPrefs.feed_CurrentMode = value
-    AppPrefs.feed_SamplingTimeSeed = int(
-        round(time.time()*1000))  # convert time to milliseconds
-    AppPrefs.feed_PreviousMode = "CANCEL"
+@jwt_required()
+def set_feedmode():
+    try:
+        global AppPrefs
 
-    response = jsonify({"msg": f'Set Feed Mode {value}',
+        value = api_flask.api_set_feed_mode(AppPrefs, sqlengine, request)
+
+        response = {}
+        response = jsonify({"msg": f'Set Feed Mode {value}',
                         "appuid": AppPrefs.appuid,
                         "feed_SamplingTimeSeed": AppPrefs.feed_SamplingTimeSeed
                         })
+        response.status_code = 200
+        return response
 
-    response.status_code = 200
+    except Exception as e:
+        AppPrefs.logger.error("set_feedmode: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
 
-    return response
-
-
-#####################################################################
-# set_outlet_light
-# set the parameters for a light outlet
-#####################################################################
-@app.route('/set_outlet_light/', methods=['GET'])
-@cross_origin()
-def set_outlet_light():
-    global AppPrefs
-    global sqlengine
-
-    # build table object from table in DB
-    metadata_obj = MetaData()
-    outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-    params = request.args.to_dict()
-
-    print(params)
-
-    AppPrefs.appuid = params["appuid"]
-    AppPrefs.outletDict[params["outletid"]].outletname = params["outletname"]
-    AppPrefs.outletDict[params["outletid"]
-                        ].control_type = params["control_type"]
-    AppPrefs.outletDict[params["outletid"]].enable_log = params["enable_log"]
-    AppPrefs.outletDict[params["outletid"]
-                        ].button_state = params["button_state"]
-    AppPrefs.outletDict[params["outletid"]].light_on = params["light_on"]
-    AppPrefs.outletDict[params["outletid"]].light_off = params["light_off"]
-
-    stmt = (
-        update(outlet_table)
-        .where(outlet_table.c.outletid == AppPrefs.outletDict[params["outletid"]].outletid)
-        .where(outlet_table.c.appuid == AppPrefs.appuid)
-        .values(outletname=AppPrefs.outletDict[params["outletid"]].outletname,
-                control_type=AppPrefs.outletDict[params["outletid"]
-                                                 ].control_type,
-                enable_log=AppPrefs.outletDict[params["outletid"]].enable_log,
-                button_state=AppPrefs.outletDict[params["outletid"]
-                                                 ].button_state,
-                light_on=AppPrefs.outletDict[params["outletid"]].light_on,
-                light_off=AppPrefs.outletDict[params["outletid"]].light_off
-                )
-    )
-    conn = sqlengine.connect()
-
-    conn.execute(stmt)
-    conn.commit()
-
-    return f"Looking for {params}"
 
 #####################################################################
 # get_outlet_list
 # return list of outlets on the internal bus
 #####################################################################
 
-
 @app.route('/get_outlet_list/', methods=['GET'])
 @cross_origin()
-def get_outlet_list():
+@jwt_required()
 
+def get_outlet_list():
     try:
         global AppPrefs
-
-        outletdict = {}
-
-        # loop through each outlet
-        for outlet in AppPrefs.outletDict:
-            #           convert temperature values to F if using Fahrenheit
-            if AppPrefs.temperaturescale == "F":
-                heater_on_x = defs_common.convertCtoF(
-                    AppPrefs.outletDict[outlet].heater_on)
-                heater_off_x = defs_common.convertCtoF(
-                    AppPrefs.outletDict[outlet].heater_off)
-            else:
-                heater_on_x = AppPrefs.outletDict[outlet].heater_on
-                heater_off_x = AppPrefs.outletDict[outlet].heater_off
-
-            outletdict[outlet] = {"outletid": AppPrefs.outletDict[outlet].outletid,
-                                  "outletname": AppPrefs.outletDict[outlet].outletname,
-                                  "control_type": AppPrefs.outletDict[outlet].control_type,
-                                  "outletstatus": AppPrefs.outletDict[outlet].outletstatus,
-                                  "button_state": AppPrefs.outletDict[outlet].button_state,
-                                  "heater_on": heater_on_x,
-                                  "heater_off": heater_off_x,
-                                  "heater_probe": AppPrefs.outletDict[outlet].heater_probe,
-                                  "light_on": AppPrefs.outletDict[outlet].light_on,
-                                  "light_off": AppPrefs.outletDict[outlet].light_off,
-                                  "always_state": AppPrefs.outletDict[outlet].always_state,
-                                  "return_enable_feed_a": (AppPrefs.outletDict[outlet].return_enable_feed_a).lower() == "true",
-                                  "return_enable_feed_b": (AppPrefs.outletDict[outlet].return_enable_feed_b).lower() == "true",
-                                  "return_enable_feed_c": (AppPrefs.outletDict[outlet].return_enable_feed_c).lower() == "true",
-                                  "return_enable_feed_d": (AppPrefs.outletDict[outlet].return_enable_feed_d).lower() == "true",
-                                  "return_feed_delay_a": AppPrefs.outletDict[outlet].return_feed_delay_a,
-                                  "return_feed_delay_b": AppPrefs.outletDict[outlet].return_feed_delay_b,
-                                  "return_feed_delay_c": AppPrefs.outletDict[outlet].return_feed_delay_c,
-                                  "return_feed_delay_d": AppPrefs.outletDict[outlet].return_feed_delay_d,
-
-                                  "skimmer_enable_feed_a": (AppPrefs.outletDict[outlet].skimmer_enable_feed_a).lower() == "true",
-                                  "skimmer_enable_feed_b": (AppPrefs.outletDict[outlet].skimmer_enable_feed_b).lower() == "true",
-                                  "skimmer_enable_feed_c": (AppPrefs.outletDict[outlet].skimmer_enable_feed_c).lower() == "true",
-                                  "skimmer_enable_feed_d": (AppPrefs.outletDict[outlet].skimmer_enable_feed_d).lower() == "true",
-                                  "skimmer_feed_delay_a": AppPrefs.outletDict[outlet].skimmer_feed_delay_a,
-                                  "skimmer_feed_delay_b": AppPrefs.outletDict[outlet].skimmer_feed_delay_b,
-                                  "skimmer_feed_delay_c": AppPrefs.outletDict[outlet].skimmer_feed_delay_c,
-                                  "skimmer_feed_delay_d": AppPrefs.outletDict[outlet].skimmer_feed_delay_d,
-
-                                  "enabled": AppPrefs.outletDict[outlet].enabled,
-
-                                  }
-
-        if len(outletdict) < 8:
-            return "Error getting list"
-        else:
-            return outletdict
+        outletlist = api_flask.api_get_outlet_list(AppPrefs, request)
+        return outletlist
 
     except Exception as e:
         AppPrefs.logger.error("get_outlet_list: " + str(e))
-
-#####################################################################
-# get_tempprobe_list
-# return list of ds18b20 temperature probes
-#####################################################################
-
-
-@app.route('/get_tempprobe_list/', methods=['GET'])
-@cross_origin()
-def get_tempprobe_list():
-
-    try:
-        global AppPrefs
-
-        probedict = {}
-
-        # loop through each section
-        for probe in AppPrefs.tempProbeDict:
-            probedict[probe] = {"probetype": "ds18b20",
-                                "probeid": AppPrefs.tempProbeDict[probe].probeid,
-                                "probename": AppPrefs.tempProbeDict[probe].name,
-                                "sensortype": "temperature",
-                                "lastValue": AppPrefs.tempProbeDict[probe].lastTemperature}
-
-        return probedict
-
-    except Exception as e:
-        AppPrefs.logger.error("get_tempprobe_list: " + str(e))
-
-#####################################################################
-# get_dht_sensor
-# return values of dht temperature/humidity sensor if enabled
-#####################################################################
-
-
-@app.route('/get_dht_sensor/', methods=['GET'])
-@cross_origin()
-def get_dht_sensor():
-
-    try:
-        global AppPrefs
-
-        dhtdict = {}
-        print(dhtdict)
-        if AppPrefs.dht_enable == "true":
-            dhtdict["DHT-T"] = {"sensortype": AppPrefs.dhtDict["DHT-T"].sensortype,
-                                "probename": AppPrefs.dhtDict["DHT-T"].name,
-                                "probeid": AppPrefs.dhtDict["DHT-T"].probeid,
-                                "probetype": "DHT",
-                                "lastValue": AppPrefs.dhtDict["DHT-T"].lastValue}
-            dhtdict["DHT-H"] = {"sensortype": AppPrefs.dhtDict["DHT-H"].sensortype,
-                                "probename": AppPrefs.dhtDict["DHT-H"].name,
-                                "probeid": AppPrefs.dhtDict["DHT-H"].probeid,
-                                "probetype": "DHT",
-                                "lastValue": AppPrefs.dhtDict["DHT-H"].lastValue}
-
-            return dhtdict
-        else:
-            response = jsonify({"msg": 'DHT Disabled',
-                                "dht_enable": 'false'
-                                })
-
-            response.status_code = 200
-
-            return response
-
-    except Exception as e:
-        AppPrefs.logger.error("get_dht_sensor: " + str(e))
         response = jsonify({"msg": str(e)})
         response.status_code = 500
         return response
+    
+
+# #####################################################################
+# # get_tempprobe_list
+# # return list of ds18b20 temperature probes
+# #####################################################################
+
+
+# @app.route('/get_tempprobe_list/', methods=['GET'])
+# @cross_origin()
+# def get_tempprobe_list():
+
+#     try:
+#         global AppPrefs
+
+#         probedict = {}
+
+#         # loop through each section
+#         for probe in AppPrefs.tempProbeDict:
+#             probedict[probe] = {"probetype": "ds18b20",
+#                                 "probeid": AppPrefs.tempProbeDict[probe].probeid,
+#                                 "probename": AppPrefs.tempProbeDict[probe].name,
+#                                 "sensortype": "temperature",
+#                                 "lastValue": AppPrefs.tempProbeDict[probe].lastTemperature}
+
+#         return probedict
+
+#     except Exception as e:
+#         AppPrefs.logger.error("get_tempprobe_list: " + str(e))
+
+# #####################################################################
+# # get_dht_sensor
+# # return values of dht temperature/humidity sensor if enabled
+# #####################################################################
+
+
+# @app.route('/get_dht_sensor/', methods=['GET'])
+# @cross_origin()
+# def get_dht_sensor():
+
+#     try:
+#         global AppPrefs
+
+#         dhtdict = {}
+#         print(dhtdict)
+#         if AppPrefs.dht_enable == "true":
+#             dhtdict["DHT-T"] = {"sensortype": AppPrefs.dhtDict["DHT-T"].sensortype,
+#                                 "probename": AppPrefs.dhtDict["DHT-T"].name,
+#                                 "probeid": AppPrefs.dhtDict["DHT-T"].probeid,
+#                                 "probetype": "DHT",
+#                                 "lastValue": AppPrefs.dhtDict["DHT-T"].lastValue}
+#             dhtdict["DHT-H"] = {"sensortype": AppPrefs.dhtDict["DHT-H"].sensortype,
+#                                 "probename": AppPrefs.dhtDict["DHT-H"].name,
+#                                 "probeid": AppPrefs.dhtDict["DHT-H"].probeid,
+#                                 "probetype": "DHT",
+#                                 "lastValue": AppPrefs.dhtDict["DHT-H"].lastValue}
+
+#             return dhtdict
+#         else:
+#             response = jsonify({"msg": 'DHT Disabled',
+#                                 "dht_enable": 'false'
+#                                 })
+
+#             response.status_code = 200
+
+#             return response
+
+#     except Exception as e:
+#         AppPrefs.logger.error("get_dht_sensor: " + str(e))
+#         response = jsonify({"msg": str(e)})
+#         response.status_code = 500
+#         return response
 
 #####################################################################
 # get_chartdata_24hr
@@ -1143,6 +1055,8 @@ def set_mcp3008_enable_state():
 # set the enable state of the outlet
 # must specify ProbeID and true or false
 #####################################################################
+
+
 @app.route('/set_outlet_enable_state', methods=['POST'])
 @cross_origin()
 def set_outlet_enable_state():
@@ -1165,7 +1079,6 @@ def set_outlet_enable_state():
             "enable_int_outlet_7", None)).lower()
         int_outlet_8_enable = str(request.json.get(
             "enable_int_outlet_8", None)).lower()
-
 
         global AppPrefs
         # build table object from table in DB
@@ -1274,7 +1187,7 @@ def set_outlet_enable_state():
         response = jsonify({"msg": str(e)})
         response.status_code = 500
         return response
-    
+
 #####################################################################
 # set_outlet_params_light/<outletid>
 # set the paramters for outlet of type: Light
@@ -1686,13 +1599,14 @@ def get_global_prefs():
 
     try:
         global AppPrefs
-        globalPrefs = api_flask.api_get_global_prefs(AppPrefs, sqlengine, request)
-     
+        globalPrefs = api_flask.api_get_global_prefs(
+            AppPrefs, sqlengine, request)
+
         response = globalPrefs
         response.status_code = 200
 
         return response
-    
+
     except Exception as e:
         AppPrefs.logger.error("get_global_prefs: " + str(e))
         response = jsonify({"msg": str(e)})
@@ -1952,6 +1866,8 @@ def get_probe_list():
 # get_mcp3008_enable_state
 # return list of mcp3008 probes and their enabled state
 #####################################################################
+
+
 @app.route('/get_mcp3008_enable_state/', methods=['GET'])
 @cross_origin()
 def get_mcp3008_enable_state():
@@ -1980,9 +1896,9 @@ def get_mcp3008_enable_state():
             probedict[row.probeid] = {"sensortype": row.sensortype,
                                       "probename": row.name,
                                       "probeid": row.probeid,
-                                                 "probetype": row.probetype,
-                                                 "enabled": row.enabled,
-                                                 "sensortype": row.sensortype}
+                                      "probetype": row.probetype,
+                                      "enabled": row.enabled,
+                                      "sensortype": row.sensortype}
 
         logger.debug(probedict)
 
@@ -1996,9 +1912,11 @@ def get_mcp3008_enable_state():
 
 #####################################################################
 # get_connected_temp_probes
-# return list of ds18b20 temperature probes that are connected to the 
+# return list of ds18b20 temperature probes that are connected to the
 # system and showing up in '/sys/bus/w1/devices/'
 #####################################################################
+
+
 @app.route('/get_connected_temp_probes/', methods=['GET'])
 @cross_origin()
 def get_connected_temp_probes():
@@ -2013,19 +1931,22 @@ def get_connected_temp_probes():
         response = jsonify({"msg": str(e)})
         response.status_code = 500
         return response
-    
+
 #####################################################################
 # get_assigned_temp_probes
-# return list of ds18b20 temperature probes that that have been 
+# return list of ds18b20 temperature probes that that have been
 # assigned to Probe IDs
 #####################################################################
+
+
 @app.route('/get_assigned_temp_probes/', methods=['GET'])
 @cross_origin()
 def get_assigned_temp_probes():
 
     try:
         global AppPrefs
-        probelist = api_flask.api_get_assigned_temp_probes(AppPrefs, sqlengine, request)
+        probelist = api_flask.api_get_assigned_temp_probes(
+            AppPrefs, sqlengine, request)
         return probelist
 
     except Exception as e:
@@ -2036,8 +1957,10 @@ def get_assigned_temp_probes():
 
 #####################################################################
 # set_connected_temp_probes
-# assign the selected ds18b20 probes to Probe ID 1,2,3,4 
+# assign the selected ds18b20 probes to Probe ID 1,2,3,4
 #####################################################################
+
+
 @app.route('/set_connected_temp_probes', methods=['POST'])
 @cross_origin()
 def set_connected_temp_probes():
@@ -2062,6 +1985,8 @@ def set_connected_temp_probes():
 # set_column_widget_order
 # save the widget order to the column tables
 #####################################################################
+
+
 @app.route('/set_column_widget_order', methods=['POST'])
 @cross_origin()
 def set_column_widget_order():
@@ -2081,11 +2006,13 @@ def set_column_widget_order():
         response = jsonify({"msg": str(e)})
         response.status_code = 500
         return response
-    
+
 #####################################################################
 # get_outlet_enable_state
 # return list of outlets with their enabled state
 #####################################################################
+
+
 @app.route('/get_outlet_enable_state/', methods=['GET'])
 @cross_origin()
 def get_outlet_enable_state():
@@ -2103,7 +2030,8 @@ def get_outlet_enable_state():
 
         conn = sqlengine.connect()
 
-        stmt = select(outlet_table).where(outlet_table.c.appuid == AppPrefs.appuid)
+        stmt = select(outlet_table).where(
+            outlet_table.c.appuid == AppPrefs.appuid)
 
         results = conn.execute(stmt)
         conn.commit()
@@ -2111,8 +2039,8 @@ def get_outlet_enable_state():
         # loop through each row
         for row in results:
             outletdict[row.outletid] = {"outletname": row.outletname,
-                                      "outletid": row.outletid,
-                                      "enabled": row.enabled,}
+                                        "outletid": row.outletid,
+                                        "enabled": row.enabled, }
 
         logger.debug(outletdict)
 
@@ -2186,13 +2114,16 @@ def get_outletchartdata(outletid, timeframe):
 # get_column_widget_order
 # get widget order from th column tables
 #####################################################################
+
+
 @app.route('/get_column_widget_order/', methods=['GET'])
 @cross_origin()
 def get_column_widget_order():
 
     try:
         global AppPrefs
-        widgetlist1, widgetlist2, widgetlist3 = api_flask.api_get_column_widget_order(AppPrefs, sqlengine, request)
+        widgetlist1, widgetlist2, widgetlist3 = api_flask.api_get_column_widget_order(
+            AppPrefs, sqlengine, request)
         return {"column1": widgetlist1, "column2": widgetlist2, "column3": widgetlist3}
 
     except Exception as e:
@@ -2206,4 +2137,4 @@ def get_column_widget_order():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=int(AppPrefs.flask_port))

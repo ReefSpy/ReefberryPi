@@ -14,6 +14,7 @@ MYSQL_USER = "pi"
 MYSQL_PASSWORD = "reefberry"
 MYSQL_DATABASE = "reefberrypi"
 MYSQL_PORT = "3306"
+FLASK_PORT = "5000"
 
 
 class analogChannelClass():
@@ -195,5 +196,11 @@ class AppPrefs():
         self.mysql_port = defs_common.readINIfile('global',
                                                       'mysql_port',
                                                       MYSQL_PORT,
+                                                      lock=self.threadlock,
+                                                      logger=self.logger)
+        
+        self.flask_port = defs_common.readINIfile('global',
+                                                     'flask_port',
+                                                      FLASK_PORT,
                                                       lock=self.threadlock,
                                                       logger=self.logger)

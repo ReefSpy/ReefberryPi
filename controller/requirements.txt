@@ -11,4 +11,4 @@ flask_jwt_extended
 cryptography
 numpy
 Adafruit_DHT
-
+pyinstaller
