@@ -88,24 +88,24 @@ class App extends Component {
     return col2items;
   }
 componentDidUpdate(){
-  if(this.getToken()){
-  let authtoken = JSON.parse(sessionStorage.getItem("token")).token
-    let header = {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + authtoken
-      },
-      
-    }
-
-    this.apiCall(Api.API_GET_OUTLET_LIST, this.setOutletData, header);}
+ 
 }
   async componentDidMount() {
     this.apiCall(Api.API_GET_PROBE_LIST, this.setProbeData);
     
 
-
+    if(this.getToken()){
+      let authtoken = JSON.parse(sessionStorage.getItem("token")).token
+        let header = {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + authtoken
+          },
+          
+        }
+    
+        this.apiCall(Api.API_GET_OUTLET_LIST, this.setOutletData, header);}
 
     // global prefs
     this.apiCall(
