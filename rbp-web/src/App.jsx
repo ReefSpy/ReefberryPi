@@ -32,8 +32,8 @@ class App extends Component {
   }
 
   // generic API call structure
-  apiCall(endpoint, callback) {
-    fetch(endpoint)
+  apiCall(endpoint, callback, header) {
+    fetch(endpoint, header)
       .then((response) => {
         if (!response.ok) {
           if (response.status === 404) {
@@ -87,12 +87,25 @@ class App extends Component {
     }
     return col2items;
   }
+componentDidUpdate(){
+  if(this.getToken()){
+  let authtoken = JSON.parse(sessionStorage.getItem("token")).token
+    let header = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + authtoken
+      },
+      
+    }
 
+    this.apiCall(Api.API_GET_OUTLET_LIST, this.setOutletData, header);}
+}
   async componentDidMount() {
     this.apiCall(Api.API_GET_PROBE_LIST, this.setProbeData);
+    
 
-    // this.apiCall(process.env.REACT_APP_API_GET_OUTLET_LIST, this.setOutletData);
-    this.apiCall(Api.API_GET_OUTLET_LIST, this.setOutletData);
+
 
     // global prefs
     this.apiCall(

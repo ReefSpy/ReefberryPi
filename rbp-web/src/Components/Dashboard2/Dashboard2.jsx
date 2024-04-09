@@ -204,8 +204,17 @@ class Dashboard2 extends React.Component {
 
     // now add outlet widgets
     let outletitems = [];
-    // fetch(process.env.REACT_APP_API_GET_OUTLET_LIST)
-    fetch(Api.API_GET_OUTLET_LIST)
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token
+   
+    let header = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + authtoken
+      },
+      
+    }
+    fetch(Api.API_GET_OUTLET_LIST, header)
       .then((response) => {
         return response.json();
       })
