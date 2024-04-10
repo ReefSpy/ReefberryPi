@@ -572,3 +572,205 @@ def api_put_outlet_buttonstate(AppPrefs, sqlengine, outletid, buttonstate, reque
     response.status_code = 200
 
     return response
+
+#####################################################################
+# api_set_probe_name
+# set the name of the probe
+# must specify ProbeID and Name
+#####################################################################
+def api_set_probe_name(AppPrefs, sqlengine, probeid, probename, request):
+    AppPrefs.logger.info(request)
+
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
+
+    stmt = (
+        update(probe_table)
+        .where(probe_table.c.probeid == probeid)
+        .where(probe_table.c.appuid == AppPrefs.appuid)
+        .values(name=probename)
+    )
+
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
+    defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
+    defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, logger)
+
+    response = {}
+    response = jsonify({"msg": 'Updated probe name',
+                        "probeid": probeid,
+                        "probename": probename,
+                        })
+
+    response.status_code = 200
+    return response
+
+#####################################################################
+# api_set_probe_enable_state
+# set the enable state of the probe
+# must specify ProbeID and true or false
+#####################################################################
+def api_set_probe_enable_state(AppPrefs, sqlengine, probeid, enable, request):
+    AppPrefs.logger.info(request)
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
+
+    stmt = (
+        update(probe_table)
+        .where(probe_table.c.probeid == probeid)
+        .where(probe_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=enable)
+    )
+
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
+    defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
+    defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, logger)
+
+    response = {}
+    response = jsonify({"msg": 'Updated probe enabled state',
+                        "probeid": probeid,
+                        "enabled": enable,
+                        })
+
+    response.status_code = 200
+    return response
+
+#####################################################################
+# api_set_mcp3008_enable_state
+# set the enable state of the probe
+# must specify ProbeID and true or false
+#####################################################################
+def api_set_mcp3008_enable_state(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+
+    ch0_enable = str(request.json.get(
+        "adc_enable_channel_0", None)).lower()
+    ch1_enable = str(request.json.get(
+        "adc_enable_channel_1", None)).lower()
+    ch2_enable = str(request.json.get(
+        "adc_enable_channel_2", None)).lower()
+    ch3_enable = str(request.json.get(
+        "adc_enable_channel_3", None)).lower()
+    ch4_enable = str(request.json.get(
+        "adc_enable_channel_4", None)).lower()
+    ch5_enable = str(request.json.get(
+        "adc_enable_channel_5", None)).lower()
+    ch6_enable = str(request.json.get(
+        "adc_enable_channel_6", None)).lower()
+    ch7_enable = str(request.json.get(
+        "adc_enable_channel_7", None)).lower()
+
+    
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
+
+    # channel 0
+    stmt = (
+        update(probe_table)
+        .where(probe_table.c.probeid == "mcp3008_ch0")
+        .where(probe_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=ch0_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # channel 1
+    stmt = (
+        update(probe_table)
+        .where(probe_table.c.probeid == "mcp3008_ch1")
+        .where(probe_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=ch1_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # channel 2
+    stmt = (
+        update(probe_table)
+        .where(probe_table.c.probeid == "mcp3008_ch2")
+        .where(probe_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=ch2_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # channel 3
+    stmt = (
+        update(probe_table)
+        .where(probe_table.c.probeid == "mcp3008_ch3")
+        .where(probe_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=ch3_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # channel 4
+    stmt = (
+        update(probe_table)
+        .where(probe_table.c.probeid == "mcp3008_ch4")
+        .where(probe_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=ch4_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # channel 5
+    stmt = (
+        update(probe_table)
+        .where(probe_table.c.probeid == "mcp3008_ch5")
+        .where(probe_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=ch5_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # channel 6
+    stmt = (
+        update(probe_table)
+        .where(probe_table.c.probeid == "mcp3008_ch6")
+        .where(probe_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=ch6_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # channel 7
+    stmt = (
+        update(probe_table)
+        .where(probe_table.c.probeid == "mcp3008_ch7")
+        .where(probe_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=ch7_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
+    # defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
+    defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
+
+    response = {}
+    response = jsonify({"msg": 'Updated mcp3008 enabled state',
+                        })
+
+    response.status_code = 200
+    return response
