@@ -128,9 +128,10 @@ def api_get_assigned_temp_probes(AppPrefs, sqlengine, request):
 # return list of outlets on the internal bus
 #####################################################################
 
+
 def api_get_outlet_list(AppPrefs, request):
     AppPrefs.logger.info(request)
-    
+
     outletdict = {}
 
     # loop through each outlet
@@ -146,37 +147,37 @@ def api_get_outlet_list(AppPrefs, request):
             heater_off_x = AppPrefs.outletDict[outlet].heater_off
 
         outletdict[outlet] = {"outletid": AppPrefs.outletDict[outlet].outletid,
-                                "outletname": AppPrefs.outletDict[outlet].outletname,
-                                "control_type": AppPrefs.outletDict[outlet].control_type,
-                                "outletstatus": AppPrefs.outletDict[outlet].outletstatus,
-                                "button_state": AppPrefs.outletDict[outlet].button_state,
-                                "heater_on": heater_on_x,
-                                "heater_off": heater_off_x,
-                                "heater_probe": AppPrefs.outletDict[outlet].heater_probe,
-                                "light_on": AppPrefs.outletDict[outlet].light_on,
-                                "light_off": AppPrefs.outletDict[outlet].light_off,
-                                "always_state": AppPrefs.outletDict[outlet].always_state,
-                                "return_enable_feed_a": (AppPrefs.outletDict[outlet].return_enable_feed_a).lower() == "true",
-                                "return_enable_feed_b": (AppPrefs.outletDict[outlet].return_enable_feed_b).lower() == "true",
-                                "return_enable_feed_c": (AppPrefs.outletDict[outlet].return_enable_feed_c).lower() == "true",
-                                "return_enable_feed_d": (AppPrefs.outletDict[outlet].return_enable_feed_d).lower() == "true",
-                                "return_feed_delay_a": AppPrefs.outletDict[outlet].return_feed_delay_a,
-                                "return_feed_delay_b": AppPrefs.outletDict[outlet].return_feed_delay_b,
-                                "return_feed_delay_c": AppPrefs.outletDict[outlet].return_feed_delay_c,
-                                "return_feed_delay_d": AppPrefs.outletDict[outlet].return_feed_delay_d,
+                              "outletname": AppPrefs.outletDict[outlet].outletname,
+                              "control_type": AppPrefs.outletDict[outlet].control_type,
+                              "outletstatus": AppPrefs.outletDict[outlet].outletstatus,
+                              "button_state": AppPrefs.outletDict[outlet].button_state,
+                              "heater_on": heater_on_x,
+                              "heater_off": heater_off_x,
+                              "heater_probe": AppPrefs.outletDict[outlet].heater_probe,
+                              "light_on": AppPrefs.outletDict[outlet].light_on,
+                              "light_off": AppPrefs.outletDict[outlet].light_off,
+                              "always_state": AppPrefs.outletDict[outlet].always_state,
+                              "return_enable_feed_a": (AppPrefs.outletDict[outlet].return_enable_feed_a).lower() == "true",
+                              "return_enable_feed_b": (AppPrefs.outletDict[outlet].return_enable_feed_b).lower() == "true",
+                              "return_enable_feed_c": (AppPrefs.outletDict[outlet].return_enable_feed_c).lower() == "true",
+                              "return_enable_feed_d": (AppPrefs.outletDict[outlet].return_enable_feed_d).lower() == "true",
+                              "return_feed_delay_a": AppPrefs.outletDict[outlet].return_feed_delay_a,
+                              "return_feed_delay_b": AppPrefs.outletDict[outlet].return_feed_delay_b,
+                              "return_feed_delay_c": AppPrefs.outletDict[outlet].return_feed_delay_c,
+                              "return_feed_delay_d": AppPrefs.outletDict[outlet].return_feed_delay_d,
 
-                                "skimmer_enable_feed_a": (AppPrefs.outletDict[outlet].skimmer_enable_feed_a).lower() == "true",
-                                "skimmer_enable_feed_b": (AppPrefs.outletDict[outlet].skimmer_enable_feed_b).lower() == "true",
-                                "skimmer_enable_feed_c": (AppPrefs.outletDict[outlet].skimmer_enable_feed_c).lower() == "true",
-                                "skimmer_enable_feed_d": (AppPrefs.outletDict[outlet].skimmer_enable_feed_d).lower() == "true",
-                                "skimmer_feed_delay_a": AppPrefs.outletDict[outlet].skimmer_feed_delay_a,
-                                "skimmer_feed_delay_b": AppPrefs.outletDict[outlet].skimmer_feed_delay_b,
-                                "skimmer_feed_delay_c": AppPrefs.outletDict[outlet].skimmer_feed_delay_c,
-                                "skimmer_feed_delay_d": AppPrefs.outletDict[outlet].skimmer_feed_delay_d,
+                              "skimmer_enable_feed_a": (AppPrefs.outletDict[outlet].skimmer_enable_feed_a).lower() == "true",
+                              "skimmer_enable_feed_b": (AppPrefs.outletDict[outlet].skimmer_enable_feed_b).lower() == "true",
+                              "skimmer_enable_feed_c": (AppPrefs.outletDict[outlet].skimmer_enable_feed_c).lower() == "true",
+                              "skimmer_enable_feed_d": (AppPrefs.outletDict[outlet].skimmer_enable_feed_d).lower() == "true",
+                              "skimmer_feed_delay_a": AppPrefs.outletDict[outlet].skimmer_feed_delay_a,
+                              "skimmer_feed_delay_b": AppPrefs.outletDict[outlet].skimmer_feed_delay_b,
+                              "skimmer_feed_delay_c": AppPrefs.outletDict[outlet].skimmer_feed_delay_c,
+                              "skimmer_feed_delay_d": AppPrefs.outletDict[outlet].skimmer_feed_delay_d,
 
-                                "enabled": AppPrefs.outletDict[outlet].enabled,
+                              "enabled": AppPrefs.outletDict[outlet].enabled,
 
-                                }
+                              }
 
     if len(outletdict) < 8:
         return "Error getting list"
@@ -340,7 +341,7 @@ def api_set_feed_mode(AppPrefs, sqlengine, request):
 
     value = str(request.json.get(
         "feedmode", "CANCEL"))
-    
+
     AppPrefs.logger.info("Set feed mode: " + value)
     AppPrefs.feed_CurrentMode = value
     AppPrefs.feed_SamplingTimeSeed = int(
@@ -354,6 +355,8 @@ def api_set_feed_mode(AppPrefs, sqlengine, request):
 # get the global paramters for the controller
 # things like temperature scale, version, etc...
 #####################################################################
+
+
 def api_get_global_prefs(AppPrefs, sqlengine, request):
     # AppPrefs.logger.info(request)
 
@@ -372,3 +375,200 @@ def api_get_global_prefs(AppPrefs, sqlengine, request):
                            })
 
     return globalprefs
+
+#####################################################################
+# api_get_chartdata_24hr
+# return array of chart data with date/time and values
+# must specify ProbeID, and scale (temperature_c,
+# temperature_f, or humidity)
+#####################################################################
+
+
+def api_get_chartdata_24hr(AppPrefs, Influx_client, probeid, unit, request):
+    AppPrefs.logger.info(request)
+    if unit == "temperature":
+        if AppPrefs.temperaturescale == "F":
+            unit = "temperature_f"
+        else:
+            unit = "temperature_c"
+
+    bucket = "reefberrypi_probe_1dy"
+
+    query_api = Influx_client.query_api()
+
+    query = f'from(bucket: "reefberrypi_probe_1dy") \
+    |> range(start: -24h) \
+    |> filter(fn: (r) => r["_measurement"] == "{unit}") \
+    |> filter(fn: (r) => r["_field"] == "value") \
+    |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
+    |> filter(fn: (r) => r["probeid"] == "{probeid}") \
+    |> aggregateWindow(every: 10m, fn: mean, createEmpty: false) \
+    |> yield(name: "mean")'
+
+    result = query_api.query(org=AppPrefs.influxdb_org, query=query)
+
+    results = []
+    for table in result:
+        for record in table.records:
+            results.append((record.get_time(), record.get_value()))
+
+    return results
+
+#####################################################################
+# api_get_chartdata_1hr
+# return array of chart data with date/time and values
+# must specify ProbeID, and scale (temperature_c,
+# temperature_f, or humidity)
+#####################################################################
+
+
+def api_get_chartdata_1hr(AppPrefs, Influx_client, probeid, unit, request):
+    AppPrefs.logger.info(request)
+
+    if unit == "temperature":
+        if AppPrefs.temperaturescale == "F":
+            unit = "temperature_f"
+        else:
+            unit = "temperature_c"
+
+    bucket = "reefberrypi_probe_1hr"
+
+    query_api = Influx_client.query_api()
+
+    query = f'from(bucket: "reefberrypi_probe_1hr") \
+    |> range(start: -1h) \
+    |> filter(fn: (r) => r["_measurement"] == "{unit}") \
+    |> filter(fn: (r) => r["_field"] == "value") \
+    |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
+    |> filter(fn: (r) => r["probeid"] == "{probeid}") \
+    |> aggregateWindow(every: 30s, fn: mean, createEmpty: false) \
+    |> yield(name: "mean")'
+
+    result = query_api.query(org=AppPrefs.influxdb_org, query=query)
+
+    results = []
+    for table in result:
+        for record in table.records:
+            results.append((record.get_time(), record.get_value()))
+
+    return results
+
+#####################################################################
+# api_get_chartdata_1wk
+# return array of chart data with date/time and values
+# must specify ProbeID, and scale (temperature_c,
+# temperature_f, or humidity)
+#####################################################################
+
+
+def api_get_chartdata_1wk(AppPrefs, Influx_client, probeid, unit, request):
+    AppPrefs.logger.info(request)
+
+    if unit == "temperature":
+        if AppPrefs.temperaturescale == "F":
+            unit = "temperature_f"
+        else:
+            unit = "temperature_c"
+
+    bucket = "reefberrypi_probe_1wk"
+
+    query_api = Influx_client.query_api()
+
+    query = f'from(bucket: "reefberrypi_probe_1wk") \
+    |> range(start: -7d) \
+    |> filter(fn: (r) => r["_measurement"] == "{unit}") \
+    |> filter(fn: (r) => r["_field"] == "value") \
+    |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
+    |> filter(fn: (r) => r["probeid"] == "{probeid}") \
+    |> aggregateWindow(every: 15m, fn: mean, createEmpty: false) \
+    |> yield(name: "mean")'
+
+    result = query_api.query(org=AppPrefs.influxdb_org, query=query)
+
+    results = []
+    for table in result:
+        for record in table.records:
+            results.append((record.get_time(), record.get_value()))
+
+    return results
+
+
+#####################################################################
+# api_get_chartdata_1mo
+# return array of chart data with date/time and values
+# must specify ProbeID, and scale (temperature_c,
+# temperature_f, or humidity)
+#####################################################################
+
+
+def api_get_chartdata_1mo(AppPrefs, Influx_client, probeid, unit, request):
+    AppPrefs.logger.info(request)
+
+    if unit == "temperature":
+        if AppPrefs.temperaturescale == "F":
+            unit = "temperature_f"
+        else:
+            unit = "temperature_c"
+
+    bucket = "reefberrypi_probe_1wk"
+
+    query_api = Influx_client.query_api()
+
+    query = f'from(bucket: "reefberrypi_probe_1mo") \
+    |> range(start: -30d) \
+    |> filter(fn: (r) => r["_measurement"] == "{unit}") \
+    |> filter(fn: (r) => r["_field"] == "value") \
+    |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
+    |> filter(fn: (r) => r["probeid"] == "{probeid}") \
+    |> aggregateWindow(every: 1h, fn: mean, createEmpty: false) \
+    |> yield(name: "mean")'
+
+    result = query_api.query(org=AppPrefs.influxdb_org, query=query)
+
+    results = []
+    for table in result:
+        for record in table.records:
+            results.append((record.get_time(), record.get_value()))
+
+    return results
+
+#####################################################################
+# api_put_outlet_buttonstate
+# change the value of button state
+# must specify outlet ID and either ON, OFF, or AUTO
+#####################################################################
+
+def api_put_outlet_buttonstate(AppPrefs, sqlengine, outletid, buttonstate, request):
+    AppPrefs.logger.info(request)
+
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+
+    outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == outletid)
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(button_state=buttonstate)
+    )
+
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+    AppPrefs.outletDict[outletid].button_state = buttonstate
+    AppPrefs.outletDict[outletid].outletstatus = buttonstate
+
+    response = {}
+    response = jsonify({"msg": 'Set outlet button state',
+                        "appuid": AppPrefs.appuid,
+                        "outletid": outletid,
+                        "buttonstate": buttonstate
+                        })
+
+    response.status_code = 200
+
+    return response

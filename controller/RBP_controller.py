@@ -511,77 +511,6 @@ def get_outlet_list():
         return response
     
 
-# #####################################################################
-# # get_tempprobe_list
-# # return list of ds18b20 temperature probes
-# #####################################################################
-
-
-# @app.route('/get_tempprobe_list/', methods=['GET'])
-# @cross_origin()
-# def get_tempprobe_list():
-
-#     try:
-#         global AppPrefs
-
-#         probedict = {}
-
-#         # loop through each section
-#         for probe in AppPrefs.tempProbeDict:
-#             probedict[probe] = {"probetype": "ds18b20",
-#                                 "probeid": AppPrefs.tempProbeDict[probe].probeid,
-#                                 "probename": AppPrefs.tempProbeDict[probe].name,
-#                                 "sensortype": "temperature",
-#                                 "lastValue": AppPrefs.tempProbeDict[probe].lastTemperature}
-
-#         return probedict
-
-#     except Exception as e:
-#         AppPrefs.logger.error("get_tempprobe_list: " + str(e))
-
-# #####################################################################
-# # get_dht_sensor
-# # return values of dht temperature/humidity sensor if enabled
-# #####################################################################
-
-
-# @app.route('/get_dht_sensor/', methods=['GET'])
-# @cross_origin()
-# def get_dht_sensor():
-
-#     try:
-#         global AppPrefs
-
-#         dhtdict = {}
-#         print(dhtdict)
-#         if AppPrefs.dht_enable == "true":
-#             dhtdict["DHT-T"] = {"sensortype": AppPrefs.dhtDict["DHT-T"].sensortype,
-#                                 "probename": AppPrefs.dhtDict["DHT-T"].name,
-#                                 "probeid": AppPrefs.dhtDict["DHT-T"].probeid,
-#                                 "probetype": "DHT",
-#                                 "lastValue": AppPrefs.dhtDict["DHT-T"].lastValue}
-#             dhtdict["DHT-H"] = {"sensortype": AppPrefs.dhtDict["DHT-H"].sensortype,
-#                                 "probename": AppPrefs.dhtDict["DHT-H"].name,
-#                                 "probeid": AppPrefs.dhtDict["DHT-H"].probeid,
-#                                 "probetype": "DHT",
-#                                 "lastValue": AppPrefs.dhtDict["DHT-H"].lastValue}
-
-#             return dhtdict
-#         else:
-#             response = jsonify({"msg": 'DHT Disabled',
-#                                 "dht_enable": 'false'
-#                                 })
-
-#             response.status_code = 200
-
-#             return response
-
-#     except Exception as e:
-#         AppPrefs.logger.error("get_dht_sensor: " + str(e))
-#         response = jsonify({"msg": str(e)})
-#         response.status_code = 500
-#         return response
-
 #####################################################################
 # get_chartdata_24hr
 # return array of chart data with date/time and values
@@ -593,40 +522,12 @@ def get_outlet_list():
 @app.route('/get_chartdata_24hr/<probeid>/<unit>', methods=['GET'])
 @cross_origin()
 def get_chartdata_24hr(probeid, unit):
+    
+    global AppPrefs
 
     try:
-        global AppPrefs
-        if unit == "temperature":
-            if AppPrefs.temperaturescale == "F":
-                unit = "temperature_f"
-            else:
-                unit = "temperature_c"
-
-        bucket = "reefberrypi_probe_1dy"
-
-        query_api = Influx_client.query_api()
-
-        query = f'from(bucket: "reefberrypi_probe_1dy") \
-        |> range(start: -24h) \
-        |> filter(fn: (r) => r["_measurement"] == "{unit}") \
-        |> filter(fn: (r) => r["_field"] == "value") \
-        |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
-        |> filter(fn: (r) => r["probeid"] == "{probeid}") \
-        |> aggregateWindow(every: 10m, fn: mean, createEmpty: false) \
-        |> yield(name: "mean")'
-
-        result = query_api.query(org=AppPrefs.influxdb_org, query=query)
-
-        results = []
-        for table in result:
-            for record in table.records:
-                results.append((record.get_time(), record.get_value()))
-
-        # for result in results:
-        #     format_string = '%Y-%m-%d %H:%M:%S'
-        #     date_string = result[0].strftime(format_string)
-        #     #print(date_string)
-
+        results = api_flask.api_get_chartdata_24hr(AppPrefs, Influx_client, probeid, unit, request)
+       
         return results
 
     except Exception as e:
@@ -643,35 +544,10 @@ def get_chartdata_24hr(probeid, unit):
 @app.route('/get_chartdata_1hr/<probeid>/<unit>', methods=['GET'])
 @cross_origin()
 def get_chartdata_1hr(probeid, unit):
-
+    global AppPrefs
     try:
-        global AppPrefs
-        if unit == "temperature":
-            if AppPrefs.temperaturescale == "F":
-                unit = "temperature_f"
-            else:
-                unit = "temperature_c"
-
-        bucket = "reefberrypi_probe_1hr"
-
-        query_api = Influx_client.query_api()
-
-        query = f'from(bucket: "reefberrypi_probe_1hr") \
-        |> range(start: -1h) \
-        |> filter(fn: (r) => r["_measurement"] == "{unit}") \
-        |> filter(fn: (r) => r["_field"] == "value") \
-        |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
-        |> filter(fn: (r) => r["probeid"] == "{probeid}") \
-        |> aggregateWindow(every: 30s, fn: mean, createEmpty: false) \
-        |> yield(name: "mean")'
-
-        result = query_api.query(org=AppPrefs.influxdb_org, query=query)
-
-        results = []
-        for table in result:
-            for record in table.records:
-                results.append((record.get_time(), record.get_value()))
-
+        results = api_flask.api_get_chartdata_1hr(AppPrefs, Influx_client, probeid, unit, request)
+        
         return results
 
     except Exception as e:
@@ -688,37 +564,12 @@ def get_chartdata_1hr(probeid, unit):
 @app.route('/get_chartdata_1wk/<probeid>/<unit>', methods=['GET'])
 @cross_origin()
 def get_chartdata_1wk(probeid, unit):
-
+    global AppPrefs
     try:
-        global AppPrefs
-        if unit == "temperature":
-            if AppPrefs.temperaturescale == "F":
-                unit = "temperature_f"
-            else:
-                unit = "temperature_c"
-
-        bucket = "reefberrypi_probe_1wk"
-
-        query_api = Influx_client.query_api()
-
-        query = f'from(bucket: "reefberrypi_probe_1wk") \
-        |> range(start: -7d) \
-        |> filter(fn: (r) => r["_measurement"] == "{unit}") \
-        |> filter(fn: (r) => r["_field"] == "value") \
-        |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
-        |> filter(fn: (r) => r["probeid"] == "{probeid}") \
-        |> aggregateWindow(every: 15m, fn: mean, createEmpty: false) \
-        |> yield(name: "mean")'
-
-        result = query_api.query(org=AppPrefs.influxdb_org, query=query)
-
-        results = []
-        for table in result:
-            for record in table.records:
-                results.append((record.get_time(), record.get_value()))
-
+        results = api_flask.api_get_chartdata_1wk(AppPrefs, Influx_client, probeid, unit, request)
+        
         return results
-
+        
     except Exception as e:
         AppPrefs.logger.error("get_chartdata_1wk: " + str(e))
 
@@ -733,36 +584,12 @@ def get_chartdata_1wk(probeid, unit):
 @app.route('/get_chartdata_1mo/<probeid>/<unit>', methods=['GET'])
 @cross_origin()
 def get_chartdata_1mo(probeid, unit):
-
+    global AppPrefs
     try:
-        global AppPrefs
-        if unit == "temperature":
-            if AppPrefs.temperaturescale == "F":
-                unit = "temperature_f"
-            else:
-                unit = "temperature_c"
-
-        bucket = "reefberrypi_probe_1wk"
-
-        query_api = Influx_client.query_api()
-
-        query = f'from(bucket: "reefberrypi_probe_1mo") \
-        |> range(start: -30d) \
-        |> filter(fn: (r) => r["_measurement"] == "{unit}") \
-        |> filter(fn: (r) => r["_field"] == "value") \
-        |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
-        |> filter(fn: (r) => r["probeid"] == "{probeid}") \
-        |> aggregateWindow(every: 1h, fn: mean, createEmpty: false) \
-        |> yield(name: "mean")'
-
-        result = query_api.query(org=AppPrefs.influxdb_org, query=query)
-
-        results = []
-        for table in result:
-            for record in table.records:
-                results.append((record.get_time(), record.get_value()))
-
+        results = api_flask.api_get_chartdata_1mo(AppPrefs, Influx_client, probeid, unit, request)
+        
         return results
+        
 
     except Exception as e:
         AppPrefs.logger.error("get_chartdata_1mo: " + str(e))
@@ -776,41 +603,12 @@ def get_chartdata_1mo(probeid, unit):
 @app.route('/put_outlet_buttonstate/<outletid>/<buttonstate>', methods=['GET', 'PUT'])
 @cross_origin()
 def put_outlet_buttonstate(outletid, buttonstate):
-    global logger
-
+    global AppPrefs
     try:
-        global AppPrefs
-
-        # build table object from table in DB
-        metadata_obj = MetaData()
-
-        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == outletid)
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(button_state=buttonstate)
-        )
-
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
-        AppPrefs.outletDict[outletid].button_state = buttonstate
-        AppPrefs.outletDict[outletid].outletstatus = buttonstate
-
-        response = {}
-        response = jsonify({"msg": 'Set outlet button state',
-                            "appuid": AppPrefs.appuid,
-                            "outletid": outletid,
-                            "buttonstate": buttonstate
-                            })
-
-        response.status_code = 200
-
+       
+        response = api_flask.api_put_outlet_buttonstate(AppPrefs, sqlengine, outletid, buttonstate, request)
         return response
+        
 
     except Exception as e:
         AppPrefs.logger.error("put_outlet_buttonstate: " + str(e))
