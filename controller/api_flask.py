@@ -946,3 +946,279 @@ def api_set_outlet_params_light(AppPrefs, sqlengine, outletid, request):
     defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
 
     return response
+
+#####################################################################
+# api_set_outlet_params_always/<outletid>
+# set the paramters for outlet of type: Always
+# must specify outletid and deliver payload in json
+#####################################################################
+def api_set_outlet_params_always(AppPrefs, sqlengine, outletid, request):
+    AppPrefs.logger.info(request)
+
+    response = {}
+    payload = request.get_json()
+    print(payload)
+    always_state = payload["always_state"]
+    outletname = payload["outletname"]
+    control_type = payload["control_type"]
+
+    response = jsonify({"msg": 'Updated outlet data for type: Always',
+                        "outletid": outletid,
+                        "outletname": outletname,
+                        "control_type": control_type,
+                        "always_state": always_state,
+                        })
+
+    response.status_code = 200
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == outletid)
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(outletname=outletname, always_state=always_state, control_type=control_type)
+    )
+
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
+
+    return response
+
+#####################################################################
+# api_set_outlet_params_heater/<outletid>
+# set the paramters for outlet of type: Heater
+# must specify outletid and deliver payload in json
+#####################################################################
+def api_set_outlet_params_heater(AppPrefs, sqlengine, outletid, request):
+    AppPrefs.logger.info(request)
+
+    response = {}
+    payload = request.get_json()
+    print(payload)
+    heater_on = payload["heater_on"]
+    heater_off = payload["heater_off"]
+    heater_probe = payload["heater_probe"]
+    outletname = payload["outletname"]
+    control_type = payload["control_type"]
+
+    if AppPrefs.temperaturescale == "F":
+        heater_on = defs_common.convertFtoC(heater_on)
+        heater_off = defs_common.convertFtoC(heater_off)
+
+    response = jsonify({"msg": 'Updated outlet data for type: Heater',
+                        "outletid": outletid,
+                        "outletname": outletname,
+                        "control_type": control_type,
+                        "heater_on": heater_on,
+                        "heater_off": heater_off,
+                        "heater_probe": heater_probe,
+                        })
+
+    response.status_code = 200
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == outletid)
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(outletname=outletname, heater_on=heater_on, heater_off=heater_off, heater_probe=heater_probe, control_type=control_type)
+    )
+
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
+
+    return response
+
+#####################################################################
+# api_set_outlet_params_ph/<outletid>
+# set the paramters for outlet of type: PH
+# must specify outletid and deliver payload in json
+#####################################################################
+def api_set_outlet_params_ph(AppPrefs, sqlengine, outletid, request):
+    AppPrefs.logger.info(request)
+
+    response = {}
+    payload = request.get_json()
+    ph_low = payload["ph_low"]
+    ph_high = payload["ph_high"]
+    ph_probe = payload["ph_probe"]
+    ph_onwhen = payload["ph_onwhen"]
+    outletname = payload["outletname"]
+    control_type = payload["control_type"]
+
+    response = jsonify({"msg": 'Updated outlet data for type: PH',
+                        "outletid": outletid,
+                        "outletname": outletname,
+                        "control_type": control_type,
+                        "ph_low": ph_low,
+                        "ph_high": ph_high,
+                        "ph_onwhen": ph_onwhen,
+                        "ph_probe": ph_probe,
+                        })
+
+    response.status_code = 200
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == outletid)
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(outletname=outletname, ph_low=ph_low, ph_high=ph_high, ph_onwhen=ph_onwhen, ph_probe=ph_probe, control_type=control_type)
+    )
+
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
+
+    return response
+
+#####################################################################
+# api_set_outlet_params_return/<outletid>
+# set the paramters for outlet of type: Return
+# must specify outletid and deliver payload in json
+#####################################################################
+def api_set_outlet_params_return(AppPrefs, sqlengine, outletid, request):
+    AppPrefs.logger.info(request)
+
+    response = {}
+    payload = request.get_json()
+  
+    return_enable_feed_a = payload["return_enable_feed_a"]
+    return_enable_feed_b = payload["return_enable_feed_b"]
+    return_enable_feed_c = payload["return_enable_feed_c"]
+    return_enable_feed_d = payload["return_enable_feed_d"]
+    return_feed_delay_a = payload["return_feed_delay_a"]
+    return_feed_delay_b = payload["return_feed_delay_b"]
+    return_feed_delay_c = payload["return_feed_delay_c"]
+    return_feed_delay_d = payload["return_feed_delay_d"]
+    outletname = payload["outletname"]
+    control_type = payload["control_type"]
+
+    response = jsonify({"msg": 'Updated outlet data for type: Return',
+                        "outletid": outletid,
+                        "outletname": outletname,
+                        "control_type": control_type,
+                        "return_enable_feed_a": return_enable_feed_a,
+                        "return_enable_feed_b": return_enable_feed_b,
+                        "return_enable_feed_c": return_enable_feed_c,
+                        "return_enable_feed_d": return_enable_feed_d,
+                        "return_feed_delay_a": return_feed_delay_a,
+                        "return_feed_delay_b": return_feed_delay_b,
+                        "return_feed_delay_c": return_feed_delay_c,
+                        "return_feed_delay_d": return_feed_delay_d,
+                        })
+
+    response.status_code = 200
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == outletid)
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(outletname=outletname,
+                control_type=control_type,
+                return_enable_feed_a=return_enable_feed_a,
+                return_enable_feed_b=return_enable_feed_b,
+                return_enable_feed_c=return_enable_feed_c,
+                return_enable_feed_d=return_enable_feed_d,
+                return_feed_delay_a=return_feed_delay_a,
+                return_feed_delay_b=return_feed_delay_b,
+                return_feed_delay_c=return_feed_delay_c,
+                return_feed_delay_d=return_feed_delay_d,
+                )
+    )
+
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
+
+    return response
+
+#####################################################################
+# api_set_outlet_params_skimmer/<outletid>
+# set the paramters for outlet of type: Skimmer
+# must specify outletid and deliver payload in json
+#####################################################################
+def api_set_outlet_params_skimmer(AppPrefs, sqlengine, outletid, request):
+    AppPrefs.logger.info(request)
+
+    response = {}
+    payload = request.get_json()
+    
+    skimmer_enable_feed_a = payload["skimmer_enable_feed_a"]
+    skimmer_enable_feed_b = payload["skimmer_enable_feed_b"]
+    skimmer_enable_feed_c = payload["skimmer_enable_feed_c"]
+    skimmer_enable_feed_d = payload["skimmer_enable_feed_d"]
+    skimmer_feed_delay_a = payload["skimmer_feed_delay_a"]
+    skimmer_feed_delay_b = payload["skimmer_feed_delay_b"]
+    skimmer_feed_delay_c = payload["skimmer_feed_delay_c"]
+    skimmer_feed_delay_d = payload["skimmer_feed_delay_d"]
+    outletname = payload["outletname"]
+    control_type = payload["control_type"]
+
+    response = jsonify({"msg": 'Updated outlet data for type: Skimmer',
+                        "outletid": outletid,
+                        "outletname": outletname,
+                        "control_type": control_type,
+                        "skimmer_enable_feed_a": skimmer_enable_feed_a,
+                        "skimmer_enable_feed_b": skimmer_enable_feed_b,
+                        "skimmer_enable_feed_c": skimmer_enable_feed_c,
+                        "skimmer_enable_feed_d": skimmer_enable_feed_d,
+                        "skimmer_feed_delay_a": skimmer_feed_delay_a,
+                        "skimmer_feed_delay_b": skimmer_feed_delay_b,
+                        "skimmer_feed_delay_c": skimmer_feed_delay_c,
+                        "skimmer_feed_delay_d": skimmer_feed_delay_d,
+                        })
+
+    response.status_code = 200
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == outletid)
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(outletname=outletname,
+                control_type=control_type,
+                skimmer_enable_feed_a=skimmer_enable_feed_a,
+                skimmer_enable_feed_b=skimmer_enable_feed_b,
+                skimmer_enable_feed_c=skimmer_enable_feed_c,
+                skimmer_enable_feed_d=skimmer_enable_feed_d,
+                skimmer_feed_delay_a=skimmer_feed_delay_a,
+                skimmer_feed_delay_b=skimmer_feed_delay_b,
+                skimmer_feed_delay_c=skimmer_feed_delay_c,
+                skimmer_feed_delay_d=skimmer_feed_delay_d,
+                )
+    )
+
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
+
+    return response
