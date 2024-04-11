@@ -444,7 +444,7 @@ DSthread.start()
 # just a simple endpoint.  Let people know the service is alive
 @app.route('/')
 def index():
-    return 'Hello from Reefberry Pi! <br> <br>  ><(((º> '
+    return ('Hello from Reefberry Pi! <br> <br> controller version: ' + version.CONTROLLER_VERSION + '<br> <br> ><(((º>')
 
 
 # @app.route('/reloadprefs/')
