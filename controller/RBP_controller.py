@@ -476,9 +476,9 @@ def set_feedmode():
 
         response = {}
         response = jsonify({"msg": f'Set Feed Mode {value}',
-                        "appuid": AppPrefs.appuid,
-                        "feed_SamplingTimeSeed": AppPrefs.feed_SamplingTimeSeed
-                        })
+                            "appuid": AppPrefs.appuid,
+                            "feed_SamplingTimeSeed": AppPrefs.feed_SamplingTimeSeed
+                            })
         response.status_code = 200
         return response
 
@@ -497,7 +497,6 @@ def set_feedmode():
 @app.route('/get_outlet_list/', methods=['GET'])
 @cross_origin()
 @jwt_required()
-
 def get_outlet_list():
     try:
         global AppPrefs
@@ -509,7 +508,7 @@ def get_outlet_list():
         response = jsonify({"msg": str(e)})
         response.status_code = 500
         return response
-    
+
 
 #####################################################################
 # get_chartdata_24hr
@@ -522,12 +521,13 @@ def get_outlet_list():
 @app.route('/get_chartdata_24hr/<probeid>/<unit>', methods=['GET'])
 @cross_origin()
 def get_chartdata_24hr(probeid, unit):
-    
+
     global AppPrefs
 
     try:
-        results = api_flask.api_get_chartdata_24hr(AppPrefs, Influx_client, probeid, unit, request)
-       
+        results = api_flask.api_get_chartdata_24hr(
+            AppPrefs, Influx_client, probeid, unit, request)
+
         return results
 
     except Exception as e:
@@ -546,8 +546,9 @@ def get_chartdata_24hr(probeid, unit):
 def get_chartdata_1hr(probeid, unit):
     global AppPrefs
     try:
-        results = api_flask.api_get_chartdata_1hr(AppPrefs, Influx_client, probeid, unit, request)
-        
+        results = api_flask.api_get_chartdata_1hr(
+            AppPrefs, Influx_client, probeid, unit, request)
+
         return results
 
     except Exception as e:
@@ -566,10 +567,11 @@ def get_chartdata_1hr(probeid, unit):
 def get_chartdata_1wk(probeid, unit):
     global AppPrefs
     try:
-        results = api_flask.api_get_chartdata_1wk(AppPrefs, Influx_client, probeid, unit, request)
-        
+        results = api_flask.api_get_chartdata_1wk(
+            AppPrefs, Influx_client, probeid, unit, request)
+
         return results
-        
+
     except Exception as e:
         AppPrefs.logger.error("get_chartdata_1wk: " + str(e))
 
@@ -586,10 +588,10 @@ def get_chartdata_1wk(probeid, unit):
 def get_chartdata_1mo(probeid, unit):
     global AppPrefs
     try:
-        results = api_flask.api_get_chartdata_1mo(AppPrefs, Influx_client, probeid, unit, request)
-        
+        results = api_flask.api_get_chartdata_1mo(
+            AppPrefs, Influx_client, probeid, unit, request)
+
         return results
-        
 
     except Exception as e:
         AppPrefs.logger.error("get_chartdata_1mo: " + str(e))
@@ -605,10 +607,10 @@ def get_chartdata_1mo(probeid, unit):
 def put_outlet_buttonstate(outletid, buttonstate):
     global AppPrefs
     try:
-       
-        response = api_flask.api_put_outlet_buttonstate(AppPrefs, sqlengine, outletid, buttonstate, request)
+
+        response = api_flask.api_put_outlet_buttonstate(
+            AppPrefs, sqlengine, outletid, buttonstate, request)
         return response
-        
 
     except Exception as e:
         AppPrefs.logger.error("put_outlet_buttonstate: " + str(e))
@@ -624,9 +626,9 @@ def put_outlet_buttonstate(outletid, buttonstate):
 def set_probe_name(probeid, probename):
     global AppPrefs
     try:
-        response = api_flask.api_set_probe_name(AppPrefs, sqlengine, probeid, probename, request)
+        response = api_flask.api_set_probe_name(
+            AppPrefs, sqlengine, probeid, probename, request)
         return response
-       
 
     except Exception as e:
         AppPrefs.logger.error("set_probe_name: " + str(e))
@@ -646,9 +648,10 @@ def set_probe_name(probeid, probename):
 def set_probe_enable_state(probeid, enable):
     global AppPrefs
     try:
-        response = api_flask.api_set_probe_enable_state(AppPrefs, sqlengine, probeid, enable, request)
+        response = api_flask.api_set_probe_enable_state(
+            AppPrefs, sqlengine, probeid, enable, request)
         return response
-       
+
     except Exception as e:
         AppPrefs.logger.error("set_probe_enable_state: " + str(e))
         response = jsonify({"msg": str(e)})
@@ -668,9 +671,9 @@ def set_mcp3008_enable_state():
     global AppPrefs
     try:
 
-        response = api_flask.api_set_mcp3008_enable_state(AppPrefs, sqlengine, request)
+        response = api_flask.api_set_mcp3008_enable_state(
+            AppPrefs, sqlengine, request)
         return response
-        
 
     except Exception as e:
         AppPrefs.logger.error("set_mcp3008_enable_state: " + str(e))
@@ -688,126 +691,12 @@ def set_mcp3008_enable_state():
 @app.route('/set_outlet_enable_state', methods=['POST'])
 @cross_origin()
 def set_outlet_enable_state():
+    global AppPrefs
     try:
-        global logger
 
-        int_outlet_1_enable = str(request.json.get(
-            "enable_int_outlet_1", None)).lower()
-        int_outlet_2_enable = str(request.json.get(
-            "enable_int_outlet_2", None)).lower()
-        int_outlet_3_enable = str(request.json.get(
-            "enable_int_outlet_3", None)).lower()
-        int_outlet_4_enable = str(request.json.get(
-            "enable_int_outlet_4", None)).lower()
-        int_outlet_5_enable = str(request.json.get(
-            "enable_int_outlet_5", None)).lower()
-        int_outlet_6_enable = str(request.json.get(
-            "enable_int_outlet_6", None)).lower()
-        int_outlet_7_enable = str(request.json.get(
-            "enable_int_outlet_7", None)).lower()
-        int_outlet_8_enable = str(request.json.get(
-            "enable_int_outlet_8", None)).lower()
+        response = api_flask.api_set_outlet_enable_state(
+            AppPrefs, sqlengine, request)
 
-        global AppPrefs
-        # build table object from table in DB
-        metadata_obj = MetaData()
-        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-        # outlet 1
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_1")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_1_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # outlet 2
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_2")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_2_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # outlet 3
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_3")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_3_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # outlet 4
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_4")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_4_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # outlet 5
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_5")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_5_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # outlet 6
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_6")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_6_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # outlet 7
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_7")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_7_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # outlet 8
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_8")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_8_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
-
-        response = {}
-        response = jsonify({"msg": 'Updated outlet enabled state',
-                            })
-
-        response.status_code = 200
         return response
 
     except Exception as e:
@@ -826,46 +715,11 @@ def set_outlet_enable_state():
 @app.route('/set_outlet_params_light/<outletid>', methods=["PUT", "POST"])
 @cross_origin()
 def set_outlet_params_light(outletid):
-    global logger
-
+    # global logger
+    global AppPrefs
     try:
-        global AppPrefs
-
-        print(outletid)
-        response = {}
-        payload = request.get_json()
-        print(payload)
-        light_on = payload["light_on"]
-        light_off = payload["light_off"]
-        outletname = payload["outletname"]
-        control_type = payload["control_type"]
-
-        response = jsonify({"msg": 'Updated outlet data for type: Light',
-                            "outletid": outletid,
-                            "outletname": outletname,
-                            "control_type": control_type,
-                            "light_on": light_on,
-                            "light_off": light_off,
-                            })
-
-        response.status_code = 200
-
-        # build table object from table in DB
-        metadata_obj = MetaData()
-        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == outletid)
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(outletname=outletname, light_on=light_on, light_off=light_off, control_type=control_type)
-        )
-
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+        response = api_flask.api_set_outlet_params_light(
+            AppPrefs, sqlengine, outletid, request)
 
         return response
 

@@ -597,9 +597,9 @@ def api_set_probe_name(AppPrefs, sqlengine, probeid, probename, request):
         result = conn.execute(stmt)
         conn.commit()
 
-    defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
-    defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
-    defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, logger)
+    defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, AppPrefs.logger)
+    defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, AppPrefs.logger)
+    defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
 
     response = {}
     response = jsonify({"msg": 'Updated probe name',
@@ -633,9 +633,9 @@ def api_set_probe_enable_state(AppPrefs, sqlengine, probeid, enable, request):
         result = conn.execute(stmt)
         conn.commit()
 
-    defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
-    defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
-    defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, logger)
+    defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, AppPrefs.logger)
+    defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, AppPrefs.logger)
+    defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
 
     response = {}
     response = jsonify({"msg": 'Updated probe enabled state',
@@ -773,4 +773,176 @@ def api_set_mcp3008_enable_state(AppPrefs, sqlengine, request):
                         })
 
     response.status_code = 200
+    return response
+
+#####################################################################
+# api_set_outlet_enable_state
+# set the enable state of the outlet
+# must specify ProbeID and true or false
+#####################################################################
+def api_set_outlet_enable_state(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+
+    int_outlet_1_enable = str(request.json.get(
+        "enable_int_outlet_1", None)).lower()
+    int_outlet_2_enable = str(request.json.get(
+        "enable_int_outlet_2", None)).lower()
+    int_outlet_3_enable = str(request.json.get(
+        "enable_int_outlet_3", None)).lower()
+    int_outlet_4_enable = str(request.json.get(
+        "enable_int_outlet_4", None)).lower()
+    int_outlet_5_enable = str(request.json.get(
+        "enable_int_outlet_5", None)).lower()
+    int_outlet_6_enable = str(request.json.get(
+        "enable_int_outlet_6", None)).lower()
+    int_outlet_7_enable = str(request.json.get(
+        "enable_int_outlet_7", None)).lower()
+    int_outlet_8_enable = str(request.json.get(
+        "enable_int_outlet_8", None)).lower()
+
+    
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+
+    # outlet 1
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == "int_outlet_1")
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=int_outlet_1_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # outlet 2
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == "int_outlet_2")
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=int_outlet_2_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # outlet 3
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == "int_outlet_3")
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=int_outlet_3_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # outlet 4
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == "int_outlet_4")
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=int_outlet_4_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # outlet 5
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == "int_outlet_5")
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=int_outlet_5_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # outlet 6
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == "int_outlet_6")
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=int_outlet_6_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # outlet 7
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == "int_outlet_7")
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=int_outlet_7_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    # outlet 8
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == "int_outlet_8")
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(enabled=int_outlet_8_enable)
+    )
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
+
+    response = {}
+    response = jsonify({"msg": 'Updated outlet enabled state',
+                        })
+
+    response.status_code = 200
+    return response
+
+#####################################################################
+# api_set_outlet_params_light/<outletid>
+# set the paramters for outlet of type: Light
+# must specify outletid and deliver payload in json
+#####################################################################
+def api_set_outlet_params_light(AppPrefs, sqlengine, outletid, request):
+    AppPrefs.logger.info(request)
+
+    response = {}
+    payload = request.get_json()
+    print(payload)
+    light_on = payload["light_on"]
+    light_off = payload["light_off"]
+    outletname = payload["outletname"]
+    control_type = payload["control_type"]
+
+    response = jsonify({"msg": 'Updated outlet data for type: Light',
+                        "outletid": outletid,
+                        "outletname": outletname,
+                        "control_type": control_type,
+                        "light_on": light_on,
+                        "light_off": light_off,
+                        })
+
+    response.status_code = 200
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+
+    stmt = (
+        update(outlet_table)
+        .where(outlet_table.c.outletid == outletid)
+        .where(outlet_table.c.appuid == AppPrefs.appuid)
+        .values(outletname=outletname, light_on=light_on, light_off=light_off, control_type=control_type)
+    )
+
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
+
     return response

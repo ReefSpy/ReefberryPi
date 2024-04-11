@@ -294,7 +294,7 @@ def createDB(app_prefs, sqlengine):
 
         metadata_obj.create_all(sqlengine)
 
-    except:
+    except Exception as e:
         app_prefs.logger.error("Error creating database database! " + str(e))
         
 
