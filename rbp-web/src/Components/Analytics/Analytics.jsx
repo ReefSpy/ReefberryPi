@@ -20,6 +20,15 @@ class Analytics extends Component {
     this.handleChartSelectorChange2 =
       this.handleChartSelectorChange2.bind(this);
     this.handleFetchButtonRequest = this.handleFetchButtonRequest.bind(this);
+
+    this.authtoken = JSON.parse(sessionStorage.getItem("token")).token;
+    this.payload = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + this.authtoken,
+      },
+    };
   }
 
   // need to convert timestamp to milliseconds to show up properly in HighCharts
@@ -256,7 +265,7 @@ class Analytics extends Component {
         .concat("/")
         .concat(this.state.selectedunitType1);
       console.log(apiURL1);
-      this.apiCall(apiURL1, this.formatChartData1);
+      this.apiCall(apiURL1, this.payload, this.formatChartData1);
     } else if (this.state.selectedwidgettype1 === "outlet") {
       let outletbaseurl = Api.API_GET_OUTLET_CHART_DATA;
       let apiURL1 = outletbaseurl
@@ -264,7 +273,7 @@ class Analytics extends Component {
         .concat("/")
         .concat(outlettime);
       console.log(apiURL1);
-      this.apiCall(apiURL1, this.formatChartData1);
+      this.apiCall(apiURL1, this.payload, this.formatChartData1);
     }
 
     if (this.state.selectedwidgettype2 === "probe") {
@@ -273,7 +282,7 @@ class Analytics extends Component {
         .concat("/")
         .concat(this.state.selectedunitType2);
       console.log(apiURL2);
-      this.apiCall(apiURL2, this.formatChartData2);
+      this.apiCall(apiURL2,this.payload, this.formatChartData2);
     } else if (this.state.selectedwidgettype2 === "outlet") {
       let outletbaseurl = Api.API_GET_OUTLET_CHART_DATA;
       let apiURL2 = outletbaseurl
@@ -281,13 +290,13 @@ class Analytics extends Component {
         .concat("/")
         .concat(outlettime);
       console.log(apiURL2);
-      this.apiCall(apiURL2, this.formatChartData2);
+      this.apiCall(apiURL2, this.payload, this.formatChartData2);
     }
   }
 
   // generic API call structure
-  apiCall(endpoint, callback) {
-    fetch(endpoint)
+  apiCall(endpoint, payload, callback) {
+    fetch(endpoint, payload)
       .then((response) => {
         if (!response.ok) {
           if (response.status === 404) {
