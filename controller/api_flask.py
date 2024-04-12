@@ -1222,3 +1222,306 @@ def api_set_outlet_params_skimmer(AppPrefs, sqlengine, outletid, request):
     defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
 
     return response
+
+#####################################################################
+# api_set_global_prefs/
+# set the global parameters such as temps scale C or F
+# must specify outletid and deliver payload in json
+#####################################################################
+def api_set_global_prefs(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+
+    response = {}
+    payload = request.get_json()
+    print(payload)
+    tempscale = payload["tempscale"]
+    dht_enable = payload["dht_enable"]
+    feed_a_time = payload["feed_a_time"]
+    feed_b_time = payload["feed_b_time"]
+    feed_c_time = payload["feed_c_time"]
+    feed_d_time = payload["feed_d_time"]
+
+    response = jsonify({"msg": 'Updated Global Prefs',
+                        "tempscale": tempscale,
+                        "dht_enable": dht_enable,
+                        "feed_a_time": feed_a_time,
+                        "feed_b_time": feed_b_time,
+                        "feed_c_time": feed_c_time,
+                        "feed_d_time": feed_d_time,
+                        })
+
+    response.status_code = 200
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    global_table = Table("global", metadata_obj, autoload_with=sqlengine)
+
+    stmt = (
+        update(global_table)
+        .where(global_table.c.appuid == AppPrefs.appuid)
+        .values(tempscale=tempscale,
+                dht_enable=dht_enable,
+                feed_a_time=feed_a_time,
+                feed_b_time=feed_b_time,
+                feed_c_time=feed_c_time,
+                feed_d_time=feed_d_time,
+                )
+    )
+
+    with sqlengine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+
+    defs_mysql.readGlobalPrefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
+
+    return response
+
+#####################################################################
+# api_get_current_probs_stats/
+# get the stats for the specified probe
+# things like last value, probe name, etc....
+#####################################################################
+def api_get_current_probs_stats(AppPrefs, probeid, request):
+    AppPrefs.logger.info(request)
+
+
+    response = {}
+
+    if probeid.startswith("temp_probe_"):
+        response = jsonify({"msg": 'Current probe stats',
+                            "appuid": AppPrefs.appuid,
+                            "probename": AppPrefs.tempProbeDict[probeid].name,
+                            "probeid": AppPrefs.tempProbeDict[probeid].probeid,
+                            "lastValue": AppPrefs.tempProbeDict[probeid].lastTemperature,
+                            "sensortype": "temperature",
+                            "probetype": "ds18b20",
+                            })
+
+        response.status_code = 200
+
+    elif probeid.startswith("DHT"):
+        response = jsonify({"msg": 'Current probe stats',
+                            "appuid": AppPrefs.appuid,
+                            "sensortype": AppPrefs.dhtDict[probeid].sensortype,
+                            "probename": AppPrefs.dhtDict[probeid].name,
+                            "probeid": AppPrefs.dhtDict[probeid].probeid,
+                            "probetype": "DHT",
+                            "lastValue": AppPrefs.dhtDict[probeid].lastValue})
+
+        response.status_code = 200
+
+    elif probeid.startswith("mcp3008"):
+        response = jsonify({"msg": 'Current probe stats',
+                            "appuid": AppPrefs.appuid,
+                            "sensortype": AppPrefs.mcp3008Dict[probeid[-1]].ch_type,
+                            "probename": AppPrefs.mcp3008Dict[probeid[-1]].ch_name,
+                            "probeid": probeid,
+                            "probetype": "analog",
+                            "lastValue": AppPrefs.mcp3008Dict[probeid[-1]].lastValue})
+
+        response.status_code = 200
+
+    return response
+
+#####################################################################
+# api_get_outlet_enable_state
+# return list of outlets with their enabled state
+#####################################################################
+def api_get_outlet_enable_state(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+
+    outletdict = {}
+    response = {}
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+
+    outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    stmt = select(outlet_table).where(
+        outlet_table.c.appuid == AppPrefs.appuid)
+
+    results = conn.execute(stmt)
+    conn.commit()
+
+    # loop through each row
+    for row in results:
+        outletdict[row.outletid] = {"outletname": row.outletname,
+                                    "outletid": row.outletid,
+                                    "enabled": row.enabled, }
+
+    AppPrefs.logger.debug(outletdict)
+
+    return outletdict
+
+#####################################################################
+# api_get_outletchartdata
+# return array of chart data with date/time and values
+# must specify outletID, and time frame (24hr, 1wk, 1mo, etc...)
+#####################################################################
+
+def api_get_outletchartdata(AppPrefs, Influx_client, outletid, timeframe, request):
+    AppPrefs.logger.info(request)
+
+
+    bucket = "reefberrypi_outlet_3mo"
+
+    query_api = Influx_client.query_api()
+
+    query = f'from(bucket: "reefberrypi_outlet_3mo") \
+    |> range(start: -{timeframe}) \
+    |> filter(fn: (r) => r["_measurement"] == "outlet_state") \
+    |> filter(fn: (r) => r["_field"] == "value") \
+    |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
+    |> filter(fn: (r) => r["outletid"] == "{outletid}") \
+    |> yield(name: "last")'
+
+    result = query_api.query(org=AppPrefs.influxdb_org, query=query)
+
+    results = []
+    for table in result:
+        for record in table.records:
+            results.append((record.get_time(), record.get_value()))
+
+    return results
+
+#####################################################################
+# api_get_current_outlet_stats/
+# get the stats for the specified outlet
+# things like last button state, status, etc....
+#####################################################################
+def api_get_current_outlet_stats(AppPrefs, outletid, request):
+    AppPrefs.logger.info(request)
+
+
+    response = {}
+
+    # convert temperature values to F if using Fahrenheit
+    if AppPrefs.temperaturescale == "F":
+        heater_on_x = defs_common.convertCtoF(
+            AppPrefs.outletDict[outletid].heater_on)
+        heater_off_x = defs_common.convertCtoF(
+            AppPrefs.outletDict[outletid].heater_off)
+    else:
+        heater_on_x = AppPrefs.outletDict[outletid].heater_on
+        heater_off_x = AppPrefs.outletDict[outletid].heater_off
+
+    response = jsonify({"msg": 'Current outlet stats',
+                        "appuid": AppPrefs.appuid,
+                        "outletid": AppPrefs.outletDict[outletid].outletid,
+                        "outletname": AppPrefs.outletDict[outletid].outletname,
+                        "control_type": AppPrefs.outletDict[outletid].control_type,
+                        "outletstatus": AppPrefs.outletDict[outletid].outletstatus,
+                        "button_state": AppPrefs.outletDict[outletid].button_state,
+                        "heater_on": heater_on_x,
+                        "heater_off": heater_off_x,
+                        "heater_probe": AppPrefs.outletDict[outletid].heater_probe,
+                        "light_on": AppPrefs.outletDict[outletid].light_on,
+                        "light_off": AppPrefs.outletDict[outletid].light_off,
+                        "always_state": AppPrefs.outletDict[outletid].always_state,
+                        "return_enable_feed_a": (AppPrefs.outletDict[outletid].return_enable_feed_a).lower() == "true",
+                        "return_enable_feed_b": (AppPrefs.outletDict[outletid].return_enable_feed_b).lower() == "true",
+                        "return_enable_feed_c": (AppPrefs.outletDict[outletid].return_enable_feed_c).lower() == "true",
+                        "return_enable_feed_d": (AppPrefs.outletDict[outletid].return_enable_feed_d).lower() == "true",
+                        "return_feed_delay_a": AppPrefs.outletDict[outletid].return_feed_delay_a,
+                        "return_feed_delay_b": AppPrefs.outletDict[outletid].return_feed_delay_b,
+                        "return_feed_delay_c": AppPrefs.outletDict[outletid].return_feed_delay_c,
+                        "return_feed_delay_d": AppPrefs.outletDict[outletid].return_feed_delay_d,
+
+                        "skimmer_enable_feed_a": (AppPrefs.outletDict[outletid].skimmer_enable_feed_a).lower() == "true",
+                        "skimmer_enable_feed_b": (AppPrefs.outletDict[outletid].skimmer_enable_feed_b).lower() == "true",
+                        "skimmer_enable_feed_c": (AppPrefs.outletDict[outletid].skimmer_enable_feed_c).lower() == "true",
+                        "skimmer_enable_feed_d": (AppPrefs.outletDict[outletid].skimmer_enable_feed_d).lower() == "true",
+                        "skimmer_feed_delay_a": AppPrefs.outletDict[outletid].skimmer_feed_delay_a,
+                        "skimmer_feed_delay_b": AppPrefs.outletDict[outletid].skimmer_feed_delay_b,
+                        "skimmer_feed_delay_c": AppPrefs.outletDict[outletid].skimmer_feed_delay_c,
+                        "skimmer_feed_delay_d": AppPrefs.outletDict[outletid].skimmer_feed_delay_d,
+
+                        "ph_probe": AppPrefs.outletDict[outletid].ph_probe,
+                        "ph_low": AppPrefs.outletDict[outletid].ph_low,
+                        "ph_high": AppPrefs.outletDict[outletid].ph_high,
+                        "ph_onwhen": AppPrefs.outletDict[outletid].ph_onwhen,
+                        })
+
+    response.status_code = 200
+
+    return response
+
+#####################################################################
+# api_get_probe_list
+# return list of connected probes
+#####################################################################
+def api_get_probe_list(AppPrefs, request):
+    AppPrefs.logger.info(request)
+ 
+
+    probedict = {}
+
+    # loop through each section
+    for probe in AppPrefs.tempProbeDict:
+        probedict[probe] = {"probetype": "ds18b20",
+                            "probeid": AppPrefs.tempProbeDict[probe].probeid,
+                            "probename": AppPrefs.tempProbeDict[probe].name,
+                            "sensortype": "temperature",
+                            "lastValue": AppPrefs.tempProbeDict[probe].lastTemperature}
+
+    if AppPrefs.dht_enable == "true":
+        probedict["DHT-T"] = {"sensortype": AppPrefs.dhtDict["DHT-T"].sensortype,
+                                "probename": AppPrefs.dhtDict["DHT-T"].name,
+                                "probeid": AppPrefs.dhtDict["DHT-T"].probeid,
+                                "probetype": "DHT",
+                                "lastValue": AppPrefs.dhtDict["DHT-T"].lastValue}
+        probedict["DHT-H"] = {"sensortype": AppPrefs.dhtDict["DHT-H"].sensortype,
+                                "probename": AppPrefs.dhtDict["DHT-H"].name,
+                                "probeid": AppPrefs.dhtDict["DHT-H"].probeid,
+                                "probetype": "DHT",
+                                "lastValue": AppPrefs.dhtDict["DHT-H"].lastValue}
+    for ch in AppPrefs.mcp3008Dict:
+        # logger.info(ch)
+        probedict["mcp3008_ch" + str(ch)] = {"sensortype": AppPrefs.mcp3008Dict[ch].ch_type,
+                                                "probename": AppPrefs.mcp3008Dict[ch].ch_name,
+                                                "probeid": "mcp3008_ch" + str(ch),
+                                                "probetype": "analog",
+                                                "lastValue": AppPrefs.mcp3008Dict[ch].lastValue}
+
+    AppPrefs.logger.debug(probedict)
+    return probedict
+
+#####################################################################
+# api_get_mcp3008_enable_state
+# return list of mcp3008 probes and their enabled state
+#####################################################################
+def api_get_mcp3008_enable_state(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+
+    probedict = {}
+    response = {}
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+
+    probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    stmt = select(probe_table).where(probe_table.c.appuid == AppPrefs.appuid).where(
+        probe_table.c.probetype == "analog")
+
+    results = conn.execute(stmt)
+    conn.commit()
+
+    # loop through each row
+    for row in results:
+        probedict[row.probeid] = {"sensortype": row.sensortype,
+                                    "probename": row.name,
+                                    "probeid": row.probeid,
+                                    "probetype": row.probetype,
+                                    "enabled": row.enabled,
+                                    "sensortype": row.sensortype}
+
+    AppPrefs.logger.debug(probedict)
+
+    return probedict
+
