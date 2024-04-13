@@ -26,6 +26,17 @@ const ProbePrefsModal = ({
 
   const modalRef = useRef(null);
 
+  let authtoken = JSON.parse(sessionStorage.getItem("token")).token
+   
+  let payload = {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + authtoken
+    },
+    
+  }
+
   const handleCloseModal = () => {
     if (onClose) {
       onClose();
@@ -40,7 +51,7 @@ const ProbePrefsModal = ({
   };
 
   useEffect(()=>{
-    fetch(Api.API_GET_MCP3008_ENABLE_STATE)
+    fetch(Api.API_GET_MCP3008_ENABLE_STATE, payload)
     .then((response) => {
       if (!response.ok) {
         if (response.status === 404) {
@@ -116,10 +127,13 @@ const ProbePrefsModal = ({
 
    console.log( JSON.stringify(probestates))
 
+   let authtoken = JSON.parse(sessionStorage.getItem("token")).token
+
     return fetch(Api.API_SET_MCP3008_ENABLE_STATE, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": "Bearer " + authtoken
       },
       body: JSON.stringify(probestates),
     })
