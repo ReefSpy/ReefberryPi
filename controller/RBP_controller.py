@@ -910,6 +910,8 @@ def get_global_prefs():
 
 @app.route('/set_global_prefs/', methods=["PUT", "POST"])
 @cross_origin()
+@jwt_required()
+
 def set_global_prefs():
     global AppPrefs
     try:
@@ -1029,6 +1031,7 @@ def get_mcp3008_enable_state():
 
 @app.route('/get_connected_temp_probes/', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_connected_temp_probes():
 
     try:
@@ -1051,6 +1054,7 @@ def get_connected_temp_probes():
 
 @app.route('/get_assigned_temp_probes/', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_assigned_temp_probes():
 
     try:
@@ -1073,6 +1077,8 @@ def get_assigned_temp_probes():
 
 @app.route('/set_connected_temp_probes', methods=['POST'])
 @cross_origin()
+@jwt_required()
+
 def set_connected_temp_probes():
     try:
         global AppPrefs
@@ -1099,6 +1105,8 @@ def set_connected_temp_probes():
 
 @app.route('/set_column_widget_order', methods=['POST'])
 @cross_origin()
+@jwt_required()
+
 def set_column_widget_order():
     try:
         global AppPrefs
@@ -1125,6 +1133,7 @@ def set_column_widget_order():
 
 @app.route('/get_outlet_enable_state/', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_outlet_enable_state():
     global AppPrefs
 
@@ -1190,6 +1199,7 @@ def get_outletchartdata(outletid, timeframe):
 
 @app.route('/get_column_widget_order/', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_column_widget_order():
     global AppPrefs
     try:
