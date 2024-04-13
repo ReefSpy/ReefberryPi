@@ -133,10 +133,12 @@ const OutletPrefsModal = ({
   function submitForm(outletstates) {
     console.log(JSON.stringify(outletstates));
 
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token
     return fetch(Api.API_SET_OUTLET_ENABLE_STATE, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": "Bearer " + authtoken
       },
       body: JSON.stringify(outletstates),
     })

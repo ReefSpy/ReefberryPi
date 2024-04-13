@@ -4,7 +4,7 @@ let portnum = process.env.REACT_APP_API_PORT_NUM
 
 export const API_GET_TOKEN = `http://${hostname}:${portnum}/get_token`
 export const API_GET_OUTLET_LIST = `http://${hostname}:${portnum}/get_outlet_list/`
-export const API_PUT_OUTLET_BUTTONSTATE = `http://${hostname}:${portnum}/put_outlet_buttonstate/`
+export const API_SET_OUTLET_BUTTONSTATE = `http://${hostname}:${portnum}/set_outlet_buttonstate/`
 export const API_SET_PROBE_NAME = `http://${hostname}:${portnum}/set_probe_name/`
 export const API_GET_CHART_DATA_1HR = `http://${hostname}:${portnum}/get_chartdata_1hr/`
 export const API_GET_CHART_DATA_24HR = `http://${hostname}:${portnum}/get_chartdata_24hr/`

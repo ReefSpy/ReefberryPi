@@ -29,12 +29,15 @@ class App extends Component {
     this.setProbeData = this.setProbeData.bind(this);
     this.setOutletData = this.setOutletData.bind(this);
     this.setGlobalPrefs = this.setGlobalPrefs.bind(this);
+
+
   }
 
   // generic API call structure
-  apiCall(endpoint, callback, header) {
-    fetch(endpoint, header)
+  apiCall(endpoint, payload, callback ) {
+    fetch(endpoint, payload)
       .then((response) => {
+  
         if (!response.ok) {
           if (response.status === 404) {
             throw new Error("Data not found");
@@ -44,6 +47,7 @@ class App extends Component {
             throw new Error("Network response was not ok");
           }
         }
+  
         return response.json();
       })
       .then((data) => {
@@ -51,6 +55,7 @@ class App extends Component {
       })
       .catch((error) => {
         console.error("Error:", error);
+       
       });
   }
 
@@ -91,12 +96,22 @@ componentDidUpdate(){
  
 }
   async componentDidMount() {
-    this.apiCall(Api.API_GET_PROBE_LIST, this.setProbeData);
+
+    let authtoken = JSON.parse(sessionStorage.getItem("token"))?.token
+    let payload =  {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + authtoken
+      },
+    }
+    
+    this.apiCall(Api.API_GET_PROBE_LIST, payload, this.setProbeData);
     
 
     if(this.getToken()){
       let authtoken = JSON.parse(sessionStorage.getItem("token")).token
-        let header = {
+        let payload = {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -105,16 +120,24 @@ componentDidUpdate(){
           
         }
     
-        this.apiCall(Api.API_GET_OUTLET_LIST, this.setOutletData, header);}
+        this.apiCall(Api.API_GET_OUTLET_LIST, payload, this.setOutletData);}
 
     // global prefs
+    let globePayload = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + authtoken
+      }}
     this.apiCall(
       Api.API_GET_GLOBAL_PREFS,
+      globePayload, 
       this.setGlobalPrefs
     );
     this.interval = setInterval(() => {
       this.apiCall(
         Api.API_GET_GLOBAL_PREFS,
+        globePayload,
         this.setGlobalPrefs
       );
     }, 3500);

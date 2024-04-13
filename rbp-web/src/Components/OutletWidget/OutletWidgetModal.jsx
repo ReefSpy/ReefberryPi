@@ -220,10 +220,13 @@ const OutletWidgetModal = ({
   };
 
   // API call structure
+  let authtoken = JSON.parse(sessionStorage.getItem("token")).token
   const apiCall = (endpoint, newdata) => {
     fetch(endpoint, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json",      
+      "Authorization": "Bearer " + authtoken },
+      
       body: JSON.stringify(newdata),
     })
       .then((response) => response.json())

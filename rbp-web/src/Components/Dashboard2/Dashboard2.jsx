@@ -53,7 +53,18 @@ class Dashboard2 extends React.Component {
         //   widgetIds: [],
         // },
       },
+      
     };
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token
+   
+    this.payload = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + authtoken
+      },
+      
+    }
 
     this.reorderWidgets = this.reorderWidgets.bind(this);
   }
@@ -166,7 +177,8 @@ class Dashboard2 extends React.Component {
     let newcol = this.state.columns;
 
     // first add probe widgets
-    fetch(Api.API_GET_PROBE_LIST)
+    
+    fetch(Api.API_GET_PROBE_LIST, this.payload)
       .then((response) => {
         return response.json();
       })
@@ -204,17 +216,8 @@ class Dashboard2 extends React.Component {
 
     // now add outlet widgets
     let outletitems = [];
-    let authtoken = JSON.parse(sessionStorage.getItem("token")).token
-   
-    let header = {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + authtoken
-      },
-      
-    }
-    fetch(Api.API_GET_OUTLET_LIST, header)
+    
+    fetch(Api.API_GET_OUTLET_LIST, this.payload)
       .then((response) => {
         return response.json();
       })
