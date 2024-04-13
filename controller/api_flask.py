@@ -533,12 +533,12 @@ def api_get_chartdata_1mo(AppPrefs, Influx_client, probeid, unit, request):
     return results
 
 #####################################################################
-# api_put_outlet_buttonstate
+# api_set_outlet_buttonstate
 # change the value of button state
 # must specify outlet ID and either ON, OFF, or AUTO
 #####################################################################
 
-def api_put_outlet_buttonstate(AppPrefs, sqlengine, outletid, buttonstate, request):
+def api_set_outlet_buttonstate(AppPrefs, sqlengine, outletid, buttonstate, request):
     AppPrefs.logger.info(request)
 
 
@@ -610,41 +610,41 @@ def api_set_probe_name(AppPrefs, sqlengine, probeid, probename, request):
     response.status_code = 200
     return response
 
-#####################################################################
-# api_set_probe_enable_state
-# set the enable state of the probe
-# must specify ProbeID and true or false
-#####################################################################
-def api_set_probe_enable_state(AppPrefs, sqlengine, probeid, enable, request):
-    AppPrefs.logger.info(request)
+# #####################################################################
+# # api_set_probe_enable_state
+# # set the enable state of the probe
+# # must specify ProbeID and true or false
+# #####################################################################
+# def api_set_probe_enable_state(AppPrefs, sqlengine, probeid, enable, request):
+#     AppPrefs.logger.info(request)
 
-    # build table object from table in DB
-    metadata_obj = MetaData()
-    probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
+#     # build table object from table in DB
+#     metadata_obj = MetaData()
+#     probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
 
-    stmt = (
-        update(probe_table)
-        .where(probe_table.c.probeid == probeid)
-        .where(probe_table.c.appuid == AppPrefs.appuid)
-        .values(enabled=enable)
-    )
+#     stmt = (
+#         update(probe_table)
+#         .where(probe_table.c.probeid == probeid)
+#         .where(probe_table.c.appuid == AppPrefs.appuid)
+#         .values(enabled=enable)
+#     )
 
-    with sqlengine.connect() as conn:
-        result = conn.execute(stmt)
-        conn.commit()
+#     with sqlengine.connect() as conn:
+#         result = conn.execute(stmt)
+#         conn.commit()
 
-    defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, AppPrefs.logger)
-    defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, AppPrefs.logger)
-    defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
+#     defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, AppPrefs.logger)
+#     defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, AppPrefs.logger)
+#     defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
 
-    response = {}
-    response = jsonify({"msg": 'Updated probe enabled state',
-                        "probeid": probeid,
-                        "enabled": enable,
-                        })
+#     response = {}
+#     response = jsonify({"msg": 'Updated probe enabled state',
+#                         "probeid": probeid,
+#                         "enabled": enable,
+#                         })
 
-    response.status_code = 200
-    return response
+#     response.status_code = 200
+#     return response
 
 #####################################################################
 # api_set_mcp3008_enable_state

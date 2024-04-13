@@ -11,7 +11,7 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 import RPi.GPIO as GPIO
 import GPIO_config
 import dht22
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import ds18b20
 import time
 import numpy
@@ -26,13 +26,14 @@ from sqlalchemy import select
 from sqlalchemy import update
 from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, \
     unset_jwt_cookies, jwt_required, JWTManager
+import json
 
 app = Flask(__name__)
 cors = CORS(app)
 
 app.config['CORS_HEADERS'] = 'Content-Type, Authorization'
 app.config["JWT_SECRET_KEY"] = "supersecret-reefberrypi-key"
-# app.config["JWT_ACCESS_TOKEN_EXPIRES"] = datetime.timedelta(hours=1)
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 
 # reduce the Flask logging level to error.  Default is Info
 flog = logging.getLogger('werkzeug')
@@ -441,10 +442,37 @@ DSthread.start()
 # Define the Flask routes
 #########################################################################
 
+#########################################################################
+# refresh tokens
+# Refresh the token after a request is made to a protected endpoint, 
+# this ensures we won't get signed out prematurely
+#########################################################################
+
+@app.after_request
+def refresh_expiring_jwts(response):
+    try:
+        exp_timestamp = get_jwt()["exp"]
+        now = datetime.now(timezone.utc)
+        target_timestamp = datetime.timestamp(now + timedelta(minutes=30))
+        if target_timestamp > exp_timestamp:
+            access_token = create_access_token(identity=get_jwt_identity())
+            data = response.get_json()
+            if type(data) is dict:
+                data["access_token"] = access_token 
+                response.data = json.dumps(data)
+        return response
+    except (RuntimeError, KeyError):
+        # Case where there is not a valid JWT. Just return the original respone
+        return response
+
+###########################################################################
 # just a simple endpoint.  Let people know the service is alive
+###########################################################################
+
 @app.route('/')
 def index():
     return ('Hello from Reefberry Pi! <br> <br> controller version: ' + version.CONTROLLER_VERSION + '<br> <br> ><(((º>')
+
 
 
 #####################################################################
@@ -588,24 +616,25 @@ def get_chartdata_1mo(probeid, unit):
     except Exception as e:
         AppPrefs.logger.error("get_chartdata_1mo: " + str(e))
 #####################################################################
-# put_outlet_buttonstate
+# set_outlet_buttonstate
 # change the value of button state
 # must specify outlet ID and either ON, OFF, or AUTO
 #####################################################################
 
 
-@app.route('/put_outlet_buttonstate/<outletid>/<buttonstate>', methods=['GET', 'PUT'])
+@app.route('/set_outlet_buttonstate/<outletid>/<buttonstate>', methods=['GET', 'PUT'])
 @cross_origin()
-def put_outlet_buttonstate(outletid, buttonstate):
+@jwt_required()
+def set_outlet_buttonstate(outletid, buttonstate):
     global AppPrefs
     try:
 
-        response = api_flask.api_put_outlet_buttonstate(
+        response = api_flask.api_set_outlet_buttonstate(
             AppPrefs, sqlengine, outletid, buttonstate, request)
         return response
 
     except Exception as e:
-        AppPrefs.logger.error("put_outlet_buttonstate: " + str(e))
+        AppPrefs.logger.error("set_outlet_buttonstate: " + str(e))
 
 
 #####################################################################
@@ -629,27 +658,27 @@ def set_probe_name(probeid, probename):
         response.status_code = 500
         return response
 
-#####################################################################
-# set_probe_enable_state
-# set the enable state of the probe
-# must specify ProbeID and true or false
-#####################################################################
+# #####################################################################
+# # set_probe_enable_state
+# # set the enable state of the probe
+# # must specify ProbeID and true or false
+# #####################################################################
 
 
-@app.route('/set_probe_enable_state/<probeid>/<enable>', methods=['PUT'])
-@cross_origin()
-def set_probe_enable_state(probeid, enable):
-    global AppPrefs
-    try:
-        response = api_flask.api_set_probe_enable_state(
-            AppPrefs, sqlengine, probeid, enable, request)
-        return response
+# @app.route('/set_probe_enable_state/<probeid>/<enable>', methods=['PUT'])
+# @cross_origin()
+# def set_probe_enable_state(probeid, enable):
+#     global AppPrefs
+#     try:
+#         response = api_flask.api_set_probe_enable_state(
+#             AppPrefs, sqlengine, probeid, enable, request)
+#         return response
 
-    except Exception as e:
-        AppPrefs.logger.error("set_probe_enable_state: " + str(e))
-        response = jsonify({"msg": str(e)})
-        response.status_code = 500
-        return response
+#     except Exception as e:
+#         AppPrefs.logger.error("set_probe_enable_state: " + str(e))
+#         response = jsonify({"msg": str(e)})
+#         response.status_code = 500
+#         return response
 
 #####################################################################
 # set_mcp3008_enable_state
@@ -660,6 +689,7 @@ def set_probe_enable_state(probeid, enable):
 
 @app.route('/set_mcp3008_enable_state', methods=['POST'])
 @cross_origin()
+@jwt_required()
 def set_mcp3008_enable_state():
     global AppPrefs
     try:
@@ -683,6 +713,7 @@ def set_mcp3008_enable_state():
 
 @app.route('/set_outlet_enable_state', methods=['POST'])
 @cross_origin()
+@jwt_required()
 def set_outlet_enable_state():
     global AppPrefs
     try:
@@ -707,8 +738,8 @@ def set_outlet_enable_state():
 
 @app.route('/set_outlet_params_light/<outletid>', methods=["PUT", "POST"])
 @cross_origin()
+@jwt_required()
 def set_outlet_params_light(outletid):
-    # global logger
     global AppPrefs
     try:
         response = api_flask.api_set_outlet_params_light(
@@ -728,8 +759,8 @@ def set_outlet_params_light(outletid):
 
 @app.route('/set_outlet_params_always/<outletid>', methods=["PUT", "POST"])
 @cross_origin()
+@jwt_required()
 def set_outlet_params_always(outletid):
-    # global logger
     global AppPrefs
     try:
         response = api_flask.api_set_outlet_params_always(AppPrefs, sqlengine, outletid, request)
@@ -749,8 +780,8 @@ def set_outlet_params_always(outletid):
 
 @app.route('/set_outlet_params_heater/<outletid>', methods=["PUT", "POST"])
 @cross_origin()
+@jwt_required()
 def set_outlet_params_heater(outletid):
-    # global logger
     global AppPrefs
     try:
        
@@ -773,6 +804,7 @@ def set_outlet_params_heater(outletid):
 
 @app.route('/set_outlet_params_ph/<outletid>', methods=["PUT", "POST"])
 @cross_origin()
+@jwt_required()
 def set_outlet_params_ph(outletid):
 
     global AppPrefs
@@ -798,6 +830,7 @@ def set_outlet_params_ph(outletid):
 
 @app.route('/set_outlet_params_return/<outletid>', methods=["PUT", "POST"])
 @cross_origin()
+@jwt_required()
 def set_outlet_params_return(outletid):
 
     global AppPrefs
@@ -823,6 +856,7 @@ def set_outlet_params_return(outletid):
 
 @app.route('/set_outlet_params_skimmer/<outletid>', methods=["PUT", "POST"])
 @cross_origin()
+@jwt_required()
 def set_outlet_params_skimmer(outletid):
 
     global AppPrefs
@@ -845,9 +879,10 @@ def set_outlet_params_skimmer(outletid):
 # things like temperature scale, etc...
 #####################################################################
 
-
+# MARK: Fix this one
 @app.route('/get_global_prefs/', methods=["GET"])
 @cross_origin()
+
 def get_global_prefs():
 
     try:
@@ -898,6 +933,7 @@ def set_global_prefs():
 
 @app.route('/get_current_probe_stats/<probeid>', methods=["GET"])
 @cross_origin()
+@jwt_required()
 def get_current_probe_stats(probeid):
 
     global AppPrefs
@@ -923,6 +959,7 @@ def get_current_probe_stats(probeid):
 
 @app.route('/get_current_outlet_stats/<outletid>', methods=["GET"])
 @cross_origin()
+@jwt_required()
 def get_current_outlet_stats(outletid):
     
     global AppPrefs
@@ -947,6 +984,7 @@ def get_current_outlet_stats(outletid):
 
 @app.route('/get_probe_list/', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_probe_list():
     global AppPrefs
     try:
@@ -966,6 +1004,7 @@ def get_probe_list():
 
 @app.route('/get_mcp3008_enable_state/', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_mcp3008_enable_state():
     global AppPrefs
     try:
