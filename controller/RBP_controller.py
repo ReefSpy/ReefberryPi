@@ -33,7 +33,7 @@ cors = CORS(app)
 
 app.config['CORS_HEADERS'] = 'Content-Type, Authorization'
 app.config["JWT_SECRET_KEY"] = "supersecret-reefberrypi-key"
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=8)
 
 # reduce the Flask logging level to error.  Default is Info
 flog = logging.getLogger('werkzeug')
@@ -458,11 +458,11 @@ def refresh_expiring_jwts(response):
             access_token = create_access_token(identity=get_jwt_identity())
             data = response.get_json()
             if type(data) is dict:
-                data["access_token"] = access_token 
+                data["token"] = access_token 
                 response.data = json.dumps(data)
         return response
     except (RuntimeError, KeyError):
-        # Case where there is not a valid JWT. Just return the original respone
+        # Case where there is not a valid JWT. Just return the original response
         return response
 
 ###########################################################################
@@ -879,9 +879,9 @@ def set_outlet_params_skimmer(outletid):
 # things like temperature scale, etc...
 #####################################################################
 
-# MARK: Fix this one
 @app.route('/get_global_prefs/', methods=["GET"])
 @cross_origin()
+@jwt_required()
 
 def get_global_prefs():
 
