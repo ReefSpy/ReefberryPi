@@ -195,6 +195,7 @@ componentDidUpdate(){
   }
 
   handleGlobalPrefsFormSubmit = (data) => {
+   
     let apiURL = Api.API_SET_GLOBAL_PREFS;
     console.log(data);
     let payload = {
@@ -227,9 +228,11 @@ componentDidUpdate(){
 
   // API call structure
   apiCallPut = (endpoint, newdata) => {
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token
     fetch(endpoint, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json",
+      "Authorization": "Bearer " + authtoken },
       body: JSON.stringify(newdata),
     })
       .then((response) => response.json())

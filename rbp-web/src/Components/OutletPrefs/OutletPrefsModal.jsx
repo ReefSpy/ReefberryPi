@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import "./OutletPrefsModal.css";
 import closeCircle from "./close-circle.svg";
 import ClipLoader from "react-spinners/ClipLoader";
-import * as Api from "../Api/Api.js"
+import * as Api from "../Api/Api.js";
 
 const OutletPrefsModal = ({
   isOpen,
@@ -40,7 +40,14 @@ const OutletPrefsModal = ({
   };
 
   useEffect(() => {
-    fetch(Api.API_GET_OUTLET_ENABLE_STATE)
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
+    fetch(Api.API_GET_OUTLET_ENABLE_STATE, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + authtoken,
+      },
+    })
       .then((response) => {
         if (!response.ok) {
           if (response.status === 404) {
@@ -91,7 +98,7 @@ const OutletPrefsModal = ({
             );
           }
         }
-        set_GotOutletResponse(true)
+        set_GotOutletResponse(true);
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -133,12 +140,12 @@ const OutletPrefsModal = ({
   function submitForm(outletstates) {
     console.log(JSON.stringify(outletstates));
 
-    let authtoken = JSON.parse(sessionStorage.getItem("token")).token
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
     return fetch(Api.API_SET_OUTLET_ENABLE_STATE, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + authtoken
+        Authorization: "Bearer " + authtoken,
       },
       body: JSON.stringify(outletstates),
     })
@@ -158,7 +165,7 @@ const OutletPrefsModal = ({
         console.log(data);
         alert("Settings saved successfully.");
         onRefreshRequest();
-       // window.location.reload(false);
+        // window.location.reload(false);
         return data;
       })
       .catch((error) => {

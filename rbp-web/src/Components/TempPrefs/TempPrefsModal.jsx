@@ -100,10 +100,12 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children, onRefre
 
     console.log(JSON.stringify(probeList));
     if (window.confirm("Are you sure you want to save changes?")){
-    return fetch(Api.API_SET_CONNECTED_TEMP_PROBE, {
+      let authtoken = JSON.parse(sessionStorage.getItem("token")).token
+    return fetch(Api.API_SET_CONNECTED_TEMP_PROBES, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": "Bearer " + authtoken 
       },
       body: JSON.stringify(probeList),
     })
@@ -133,9 +135,16 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children, onRefre
       });
     }
   };
-
+  
   useEffect(() => {
-    fetch(Api.API_GET_CONNECTED_TEMP_PROBES)
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token
+    fetch(Api.API_GET_CONNECTED_TEMP_PROBES,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json",      
+        "Authorization": "Bearer " + authtoken },
+      }
+    )
       .then((response) => {
         if (!response.ok) {
           if (response.status === 404) {
@@ -161,7 +170,13 @@ const TempPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children, onRefre
   }, []);
 
   useEffect(() => {
-    fetch(Api.API_GET_ASSIGNED_TEMP_PROBES)
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token
+    fetch(Api.API_GET_ASSIGNED_TEMP_PROBES,
+            {
+      method: "GET",
+      headers: { "Content-Type": "application/json",      
+      "Authorization": "Bearer " + authtoken },
+    })
       .then((response) => {
         if (!response.ok) {
           if (response.status === 404) {
