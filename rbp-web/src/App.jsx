@@ -13,7 +13,7 @@ import OutletPrefsModal from "./Components/OutletPrefs/OutletPrefsModal";
 import "./App.css";
 //import useToken from "./useToken";
 import Login from "./Components/Login/Login";
-import * as Api from "./Components/Api/Api.js"
+import * as Api from "./Components/Api/Api.js";
 
 class App extends Component {
   constructor(props) {
@@ -25,19 +25,22 @@ class App extends Component {
       DragDisabled: true,
       globalPrefs: null,
       col1rawitems: [],
+      loggedin: false,
     };
     this.setProbeData = this.setProbeData.bind(this);
     this.setOutletData = this.setOutletData.bind(this);
     this.setGlobalPrefs = this.setGlobalPrefs.bind(this);
-
-
   }
 
   // generic API call structure
-  apiCall(endpoint, payload, callback ) {
+  apiCall(endpoint, payload, callback) {
     fetch(endpoint, payload)
       .then((response) => {
-  
+        if (response.status === 401) {
+          console.log("Expired Token, logging out");
+          sessionStorage.clear();
+        }
+
         if (!response.ok) {
           if (response.status === 404) {
             throw new Error("Data not found");
@@ -47,7 +50,7 @@ class App extends Component {
             throw new Error("Network response was not ok");
           }
         }
-  
+
         return response.json();
       })
       .then((data) => {
@@ -55,7 +58,6 @@ class App extends Component {
       })
       .catch((error) => {
         console.error("Error:", error);
-       
       });
   }
 
@@ -82,8 +84,9 @@ class App extends Component {
     for (let outlet in outletdata) {
       outletdata[outlet]["id"] = `item-${String(200 + i++)}`;
       outletdata[outlet]["widgetType"] = `outlet`;
-      if( outletdata[outlet]["enabled"] === "true"){
-      col2items.push(outletdata[outlet]);}
+      if (outletdata[outlet]["enabled"] === "true") {
+        col2items.push(outletdata[outlet]);
+      }
     }
 
     if (col2items.length > 0) {
@@ -92,56 +95,48 @@ class App extends Component {
     }
     return col2items;
   }
-componentDidUpdate(){
- 
-}
+  componentDidUpdate() {}
   async componentDidMount() {
-
-    let authtoken = JSON.parse(sessionStorage.getItem("token"))?.token
-    let payload =  {
+    let authtoken = JSON.parse(sessionStorage.getItem("token"))?.token;
+    let payload = {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + authtoken
+        Authorization: "Bearer " + authtoken,
       },
-    }
-    
-    this.apiCall(Api.API_GET_PROBE_LIST, payload, this.setProbeData);
-    
+    };
 
-    if(this.getToken()){
-      let authtoken = JSON.parse(sessionStorage.getItem("token")).token
-        let payload = {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + authtoken
-          },
-          
-        }
-    
-        this.apiCall(Api.API_GET_OUTLET_LIST, payload, this.setOutletData);}
+    if (this.getToken()) {
+    this.apiCall(Api.API_GET_PROBE_LIST, payload, this.setProbeData);
+    }
+    if (this.getToken()) {
+      let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
+      let payload = {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + authtoken,
+        },
+      };
+
+      this.apiCall(Api.API_GET_OUTLET_LIST, payload, this.setOutletData);
+    }
 
     // global prefs
+    if (this.getToken()) {
     let globePayload = {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + authtoken
-      }}
-    this.apiCall(
-      Api.API_GET_GLOBAL_PREFS,
-      globePayload, 
-      this.setGlobalPrefs
-    );
+        Authorization: "Bearer " + authtoken,
+      },
+    };
+    this.apiCall(Api.API_GET_GLOBAL_PREFS, globePayload, this.setGlobalPrefs);
     this.interval = setInterval(() => {
-      this.apiCall(
-        Api.API_GET_GLOBAL_PREFS,
-        globePayload,
-        this.setGlobalPrefs
-      );
+      this.apiCall(Api.API_GET_GLOBAL_PREFS, globePayload, this.setGlobalPrefs);
     }, 3500);
   }
+}
 
   componentWillUnmount() {
     clearInterval(this.interval);
@@ -182,20 +177,19 @@ componentDidUpdate(){
     console.log("Widget Lock Click");
     if (this.state.DragDisabled === true) {
       this.setState({ DragDisabled: false });
-      this.setState({ShouldSaveWidgetOrder: false})
+      this.setState({ ShouldSaveWidgetOrder: false });
     } else {
       this.setState({ DragDisabled: true });
-      this.setState({ShouldSaveWidgetOrder: true})
+      this.setState({ ShouldSaveWidgetOrder: true });
     }
   };
 
   onWidgetSaveComplete = () => {
-    this.setState({ShouldSaveWidgetOrder: false})
-    console.log("Widget Save Complete")
-  }
+    this.setState({ ShouldSaveWidgetOrder: false });
+    console.log("Widget Save Complete");
+  };
 
   handleGlobalPrefsFormSubmit = (data) => {
-   
     let apiURL = Api.API_SET_GLOBAL_PREFS;
     console.log(data);
     let payload = {
@@ -228,11 +222,13 @@ componentDidUpdate(){
 
   // API call structure
   apiCallPut = (endpoint, newdata) => {
-    let authtoken = JSON.parse(sessionStorage.getItem("token")).token
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
     fetch(endpoint, {
       method: "PUT",
-      headers: { "Content-Type": "application/json",
-      "Authorization": "Bearer " + authtoken },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + authtoken,
+      },
       body: JSON.stringify(newdata),
     })
       .then((response) => response.json())
@@ -254,6 +250,7 @@ componentDidUpdate(){
     console.log("settoken");
     if (userToken !== undefined) {
       sessionStorage.setItem("token", JSON.stringify(userToken));
+      window.location.reload()
     }
   }
 
@@ -263,6 +260,7 @@ componentDidUpdate(){
 
   render() {
     if (!this.getToken()) {
+      console.log("render")
       return <Login setToken={this.setToken} />;
     }
     return (
@@ -333,7 +331,7 @@ componentDidUpdate(){
             openGlobalPrefs={this.handleOpenGlobalPrefsModal}
             dragDisabled={this.state.DragDisabled}
             shouldSaveWidgetOrder={this.state.ShouldSaveWidgetOrder}
-            onWidgetSaveComplete ={this.onWidgetSaveComplete}
+            onWidgetSaveComplete={this.onWidgetSaveComplete}
           ></MainTabContainer>
         </div>
 
