@@ -180,6 +180,10 @@ class Dashboard2 extends React.Component {
     
     fetch(Api.API_GET_PROBE_LIST, this.payload)
       .then((response) => {
+        if (response.status === 401) {
+          console.log("Expired Token, logging out")
+          sessionStorage.clear();
+          }
         return response.json();
       })
       .then((data) => {
@@ -219,6 +223,10 @@ class Dashboard2 extends React.Component {
     
     fetch(Api.API_GET_OUTLET_LIST, this.payload)
       .then((response) => {
+        if (response.status === 401) {
+        console.log("Expired Token, logging out")
+        sessionStorage.clear();
+        }
         return response.json();
       })
       .then((data) => {

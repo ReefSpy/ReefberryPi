@@ -1,1 +1,1 @@
-export const WEB_VERSION = "0.0.2 ALPHA"
+export const WEB_VERSION = "0.0.3 ALPHA"

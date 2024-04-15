@@ -123,6 +123,11 @@ export class OutletWidget extends Component {
   apiCall(endpoint, payload, callback) {
     fetch(endpoint, payload)
       .then((response) => {
+        if (response.status === 401) {
+          console.log("Expired Token, logging out")
+          sessionStorage.clear();
+          window.location.reload()
+          }
         if (!response.ok) {
           if (response.status === 404) {
             throw new Error("Data not found");
