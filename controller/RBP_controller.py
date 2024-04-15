@@ -941,7 +941,7 @@ def get_current_probe_stats(probeid):
     global AppPrefs
     try:
         
-        response = api_flask.api_get_current_probs_stats(AppPrefs, probeid, request)
+        response = api_flask.api_get_current_probe_stats(AppPrefs, probeid, request)
         return response
 
 
@@ -1158,15 +1158,24 @@ def get_outlet_enable_state():
 @app.route('/get_token', methods=['POST'])
 @cross_origin()
 def get_token():
-    username = request.json.get("username", None)
-    password = request.json.get("password", None)
-    if username.lower() != "pi" or password != "reefberry":
-        return {"msg": "Wrong username or password"}, 401
+    global AppPrefs
+    # username = request.json.get("username", None)
+    # password = request.json.get("password", None)
+    # if username.lower() != "pi" or password != "reefberry":
+    #     return {"msg": "Wrong username or password"}, 401
 
-    access_token = create_access_token(identity=username)
-    response = {"token": access_token}
+    # access_token = create_access_token(identity=username)
+    # response = {"token": access_token}
 
-    return response
+    # return response
+    try:
+        response = api_flask.api_get_token(AppPrefs, sqlengine, request)
+        return response
+    except Exception as e:
+        AppPrefs.logger.error("get_token: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
 
 #####################################################################
 # get_outletchartdata

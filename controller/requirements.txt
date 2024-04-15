@@ -12,3 +12,4 @@ cryptography
 numpy
 Adafruit_DHT
 pyinstaller
+bcrypt

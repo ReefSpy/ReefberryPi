@@ -16,6 +16,10 @@ MYSQL_DATABASE = "reefberrypi"
 MYSQL_PORT = "3306"
 FLASK_PORT = "5000"
 
+# default Username and Password for newly created databases
+RBP_DEFAULT_USERNAME = "pi"
+RBP_DEFAULT_PASSWORD = "reefberry"
+
 
 class analogChannelClass():
     # class for probes connected to mcp3008 a-d chip

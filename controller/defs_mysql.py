@@ -7,6 +7,8 @@ from sqlalchemy import select
 from sqlalchemy import insert
 from sqlalchemy import and_
 from sqlalchemy_utils import database_exists, create_database
+import cls_Preferences
+import bcrypt
 
 
 # using sql alchemy
@@ -19,6 +21,7 @@ def initMySQL_ex(app_prefs, logger):
         if not database_exists(sqlengine.url):
             app_prefs.logger.warning("Database not found, creating database...")
             createDB(app_prefs, sqlengine)
+            addInitialUser(app_prefs, sqlengine);
        
         logger.info("Verifying database tables...")
         verifyDs18b20Table(app_prefs, sqlengine)
@@ -30,6 +33,38 @@ def initMySQL_ex(app_prefs, logger):
     except Exception as e:
         logger.error("Can not connect to MySQL database! " + str(e))
         exit()
+
+def addInitialUser(app_prefs, sqlengine):
+    app_prefs.logger.info("Adding Initial User")
+
+    metadata_obj = MetaData()
+    user_table = Table("users", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    app_prefs.logger.warn ("Creating entry for user: pi")
+
+###
+    password = cls_Preferences.RBP_DEFAULT_PASSWORD
+  
+# converting password to array of bytes 
+    bytes = password.encode('utf-8') 
+    
+    # generating the salt 
+    salt = bcrypt.gensalt() 
+    
+    # Hashing the password 
+    hash = bcrypt.hashpw(bytes, salt) 
+
+###
+
+
+    stmt = insert(user_table).values(appuid = app_prefs.appuid, 
+                                            username = cls_Preferences.RBP_DEFAULT_USERNAME, pwhash = hash)
+    
+    conn.execute(stmt)
+    conn.commit()
+
 
 def verifyDs18b20Table(app_prefs, sqlengine):
     app_prefs.logger.info("Verifying table: ds18b20")
@@ -197,6 +232,15 @@ def createDB(app_prefs, sqlengine):
         create_database(sqlengine.url)
         metadata_obj = MetaData()
         
+        app_prefs.logger.warning("Creating table users")
+        dashorder_table = Table("users",
+                                metadata_obj,
+                                Column("id", Integer, nullable=False, autoincrement=True, primary_key=True, unique=True),
+                                Column("appuid", String(45), nullable=False, primary_key=True),
+                                Column("username", String(45), nullable=False, primary_key=True),
+                                Column("pwhash", String(255))
+                                )
+
         app_prefs.logger.warning("Creating table dashorder")
         dashorder_table = Table("dashorder",
                                 metadata_obj,

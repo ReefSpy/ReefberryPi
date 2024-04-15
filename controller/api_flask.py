@@ -9,6 +9,8 @@ import defs_mysql
 from flask import jsonify
 import time
 import defs_common
+from flask_jwt_extended import create_access_token
+import bcrypt
 
 
 #####################################################################
@@ -1277,12 +1279,12 @@ def api_set_global_prefs(AppPrefs, sqlengine, request):
     return response
 
 #####################################################################
-# api_get_current_probs_stats/
+# api_get_current_probe_stats/
 # get the stats for the specified probe
 # things like last value, probe name, etc....
 #####################################################################
-def api_get_current_probs_stats(AppPrefs, probeid, request):
-    AppPrefs.logger.info(request)
+def api_get_current_probe_stats(AppPrefs, probeid, request):
+    # AppPrefs.logger.info(request)
 
 
     response = {}
@@ -1393,7 +1395,7 @@ def api_get_outletchartdata(AppPrefs, Influx_client, outletid, timeframe, reques
 # things like last button state, status, etc....
 #####################################################################
 def api_get_current_outlet_stats(AppPrefs, outletid, request):
-    AppPrefs.logger.info(request)
+    # AppPrefs.logger.info(request)
 
 
     response = {}
@@ -1524,4 +1526,65 @@ def api_get_mcp3008_enable_state(AppPrefs, sqlengine, request):
     AppPrefs.logger.debug(probedict)
 
     return probedict
+
+#####################################################################
+# api_get_token
+# return login token
+#####################################################################
+def api_get_token(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+
+    username = request.json.get("username", None).lower()
+    password = request.json.get("password", None)
+
+    response = {}
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+
+    user_table = Table("users", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    stmt = select(user_table).where(user_table.c.appuid == AppPrefs.appuid).where(
+        user_table.c.username == username)
+
+    results = conn.execute(stmt)
+    conn.commit()
+
+    if results.rowcount == 0:
+         AppPrefs.logger.warning("Invalid login attempt!  User: " + username)
+         return {"msg": "Wrong username or password"}, 401
+   
+    else:
+        # loop through each row
+        for row in results:
+            # dbusername = row.username
+            dbhash = row.pwhash
+
+            userPW = password
+            userBytes = userPW.encode('utf-8') 
+            
+            result = bcrypt.checkpw(userBytes, dbhash.encode('utf-8')) 
+
+            if result == True:
+                AppPrefs.logger.info("Sucessful login.  User: " + username)
+                access_token = create_access_token(identity=username)
+                response = {"token": access_token}
+
+                return response
+            else:
+                 return {"msg": "Wrong username or password"}, 401
+
+
+
+
+
+
+
+
+
+    
+
+
 
