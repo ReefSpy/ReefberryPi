@@ -1,6 +1,5 @@
 .App {
   text-align: center;
-
 }
 
 .maingridcontainer {
@@ -25,6 +24,10 @@
 }
 
 .appheader {
+  display: grid;
+  grid-template-columns: 100px auto 100px;
+  grid-template-rows: 60px;
+
   font-family: Arial, Helvetica, sans-serif;
   font-size: 34px;
   font-weight: bold;
@@ -32,17 +35,18 @@
   /* margin-bottom: 5px; */
   background-color: steelblue;
   overflow: hidden;
-  padding: 5px 
+  padding: 5px;
+
   
+  /* justify-content: center; */
 }
 
 .appicon {
   height: 64px;
   width: 64px;
   vertical-align: middle;
-  padding-right: 20px;
-  
-
+  padding-right: 10px;
+  padding-left: 10px;
 }
 
 .headericon {
@@ -72,7 +76,27 @@
   opacity: 50%;
 }
 
+.header-desc {
+  padding-left: 5px;
+  grid-column-start: 2;
+  grid-column-end: 3;
+  grid-row-start: 2;
+  font-size: 20px;
+}
+
+.header-center {
+  /* float: center; */
+  grid-column-start: 2;
+  grid-column-end: 3;
+  grid-row-start: 1;
+  overflow: hidden;
+}
+
 .header-right {
-  float: right;
-  padding-right: 40px;
+  /* float: right; */
+  padding-right: 5px;
+  grid-column-start: 3;
+  grid-column-end: 4;
+  grid-row-start: 1;
+  
 }

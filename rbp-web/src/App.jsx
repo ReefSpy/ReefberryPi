@@ -1,10 +1,7 @@
 import React, { Component } from "react";
 import MainTabContainer from "./Components/MainTabContainer/MainTabContainer";
 import appicon from "./Images/reefberry-pi-logo.svg";
-// import preficon from "./Images/cog-white.svg";
 import logouticon from "./Images/logout-white.svg";
-// import probeIcon from "./Images/probe-white.svg";
-// import outletIcon from "./Images/outlet-white.svg"
 import lockOpenIcon from "./Images/lock-circle-open-round.svg";
 import lockClosedIcon from "./Images/lock-circle-close-round.svg";
 import GlobalPrefsModal from "./Components/GlobalPrefs/GlobalPrefsModal";
@@ -14,6 +11,7 @@ import "./App.css";
 //import useToken from "./useToken";
 import Login from "./Components/Login/Login";
 import * as Api from "./Components/Api/Api.js";
+import ClipLoader from "react-spinners/ClipLoader";
 
 class App extends Component {
   constructor(props) {
@@ -107,7 +105,7 @@ class App extends Component {
     };
 
     if (this.getToken()) {
-    this.apiCall(Api.API_GET_PROBE_LIST, payload, this.setProbeData);
+      this.apiCall(Api.API_GET_PROBE_LIST, payload, this.setProbeData);
     }
     if (this.getToken()) {
       let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
@@ -124,19 +122,23 @@ class App extends Component {
 
     // global prefs
     if (this.getToken()) {
-    let globePayload = {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + authtoken,
-      },
-    };
-    this.apiCall(Api.API_GET_GLOBAL_PREFS, globePayload, this.setGlobalPrefs);
-    this.interval = setInterval(() => {
+      let globePayload = {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + authtoken,
+        },
+      };
       this.apiCall(Api.API_GET_GLOBAL_PREFS, globePayload, this.setGlobalPrefs);
-    }, 3500);
+      this.interval = setInterval(() => {
+        this.apiCall(
+          Api.API_GET_GLOBAL_PREFS,
+          globePayload,
+          this.setGlobalPrefs
+        );
+      }, 3500);
+    }
   }
-}
 
   componentWillUnmount() {
     clearInterval(this.interval);
@@ -195,11 +197,13 @@ class App extends Component {
     let payload = {
       tempscale: data.tempScale,
       dht_enable: data.enableDHT,
+      description: data.description,
       feed_a_time: data.feedA,
       feed_b_time: data.feedB,
       feed_c_time: data.feedC,
       feed_d_time: data.feedD,
     };
+    console.log(payload);
     this.apiCallPut(apiURL, payload);
     this.handleCloseGlobalPrefsModal();
   };
@@ -216,6 +220,7 @@ class App extends Component {
     this.setState({ globalPrefs: data });
     this.setState({ globalTempScale: data.tempscale });
     this.setState({ globalEnableDHT: data.dht_enable });
+    this.setState({ globalAppDescription: data.app_description });
 
     return;
   }
@@ -250,7 +255,7 @@ class App extends Component {
     console.log("settoken");
     if (userToken !== undefined) {
       sessionStorage.setItem("token", JSON.stringify(userToken));
-      window.location.reload()
+      window.location.reload();
     }
   }
 
@@ -260,43 +265,39 @@ class App extends Component {
 
   render() {
     if (!this.getToken()) {
-      console.log("render")
+      console.log("render");
       return <Login setToken={this.setToken} />;
     }
     return (
       <div className="App">
         <div className="appheader">
-          <img className="appicon" src={appicon} alt="logo" />
+          <div className="header-desc">
+            
+            
+            {/* {this.state.globalAppDescription} */}
+            
+            
+            {!this.state.globalAppDescription == "" ? (
+            this.state.globalAppDescription
+          ) : (
+            <ClipLoader
+              color="#ffffff"
+              loading={true}
+              size={20}
+              aria-label="Loading Spinner"
+              data-testid="loader"
+            />
+          )}
+            
+            
+            </div>
+          <div className="header-center">
+            <img className="appicon" src={appicon} alt="logo" />
+            <span>Reefberry Pi</span>
+          </div>
 
-          <span>Reefberry Pi</span>
-
+         
           <div className="header-right">
-            {/* <button className="headericonbtn">
-              <img
-                className="headericon"
-                src={outletIcon}
-                alt="Outlets"
-                onClick={this.handleOpenOutletPrefsModal}
-              ></img>
-            </button>
-
-            <button className="headericonbtn">
-              <img
-                className="headericon"
-                src={probeIcon}
-                alt="Probes"
-                onClick={this.handleOpenProbePrefsModal}
-              ></img>
-            </button> */}
-
-            {/* <button className="headericonbtn">
-              <img
-                className="headericon"
-                src={preficon}
-                alt="Preferences"
-                onClick={this.handleOpenGlobalPrefsModal}
-              ></img>
-            </button> */}
             <button className="headericonbtn">
               <img
                 className="headericon"
@@ -320,6 +321,7 @@ class App extends Component {
               ></img>
             </button>
           </div>
+    
         </div>
 
         <div>
