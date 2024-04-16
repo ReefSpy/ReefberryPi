@@ -1226,7 +1226,56 @@ def get_column_widget_order():
         return response
 
 
+#####################################################################
+# get_user_list
+# return list of users that have access to this instance
+#####################################################################
+
+
+@app.route('/get_user_list/', methods=['GET'])
+@cross_origin()
+# @jwt_required()
+
+def get_user_list():
+    global AppPrefs
+    try:
+        
+        response = api_flask.api_get_user_list(AppPrefs, sqlengine, request)
+
+        return response
+
+    except Exception as e:
+        AppPrefs.logger.error("get_user_list: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+
+#####################################################################
+# set_add_user
+# add new user to have access to this instance
+#####################################################################
+
+
+@app.route('/set_add_user', methods=['POST'])
+@cross_origin()
+# @jwt_required()
+
+def set_add_user():
+    global AppPrefs
+    try:
+        
+        response = api_flask.api_set_add_user(AppPrefs, sqlengine, request)
+
+        return response
+
+    except Exception as e:
+        AppPrefs.logger.error("set_add_user: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+
 ############################################################
+
 
 #MARK: Run Application
 

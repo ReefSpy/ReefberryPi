@@ -541,9 +541,9 @@ def api_get_chartdata_1mo(AppPrefs, Influx_client, probeid, unit, request):
 # must specify outlet ID and either ON, OFF, or AUTO
 #####################################################################
 
+
 def api_set_outlet_buttonstate(AppPrefs, sqlengine, outletid, buttonstate, request):
     AppPrefs.logger.info(request)
-
 
     # build table object from table in DB
     metadata_obj = MetaData()
@@ -581,9 +581,10 @@ def api_set_outlet_buttonstate(AppPrefs, sqlengine, outletid, buttonstate, reque
 # set the name of the probe
 # must specify ProbeID and Name
 #####################################################################
+
+
 def api_set_probe_name(AppPrefs, sqlengine, probeid, probename, request):
     AppPrefs.logger.info(request)
-
 
     # build table object from table in DB
     metadata_obj = MetaData()
@@ -654,6 +655,8 @@ def api_set_probe_name(AppPrefs, sqlengine, probeid, probename, request):
 # set the enable state of the probe
 # must specify ProbeID and true or false
 #####################################################################
+
+
 def api_set_mcp3008_enable_state(AppPrefs, sqlengine, request):
     AppPrefs.logger.info(request)
 
@@ -674,7 +677,6 @@ def api_set_mcp3008_enable_state(AppPrefs, sqlengine, request):
     ch7_enable = str(request.json.get(
         "adc_enable_channel_7", None)).lower()
 
-    
     # build table object from table in DB
     metadata_obj = MetaData()
     probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
@@ -783,6 +785,8 @@ def api_set_mcp3008_enable_state(AppPrefs, sqlengine, request):
 # set the enable state of the outlet
 # must specify ProbeID and true or false
 #####################################################################
+
+
 def api_set_outlet_enable_state(AppPrefs, sqlengine, request):
     AppPrefs.logger.info(request)
 
@@ -803,7 +807,6 @@ def api_set_outlet_enable_state(AppPrefs, sqlengine, request):
     int_outlet_8_enable = str(request.json.get(
         "enable_int_outlet_8", None)).lower()
 
-    
     # build table object from table in DB
     metadata_obj = MetaData()
     outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
@@ -910,6 +913,8 @@ def api_set_outlet_enable_state(AppPrefs, sqlengine, request):
 # set the paramters for outlet of type: Light
 # must specify outletid and deliver payload in json
 #####################################################################
+
+
 def api_set_outlet_params_light(AppPrefs, sqlengine, outletid, request):
     AppPrefs.logger.info(request)
 
@@ -955,6 +960,8 @@ def api_set_outlet_params_light(AppPrefs, sqlengine, outletid, request):
 # set the paramters for outlet of type: Always
 # must specify outletid and deliver payload in json
 #####################################################################
+
+
 def api_set_outlet_params_always(AppPrefs, sqlengine, outletid, request):
     AppPrefs.logger.info(request)
 
@@ -998,6 +1005,8 @@ def api_set_outlet_params_always(AppPrefs, sqlengine, outletid, request):
 # set the paramters for outlet of type: Heater
 # must specify outletid and deliver payload in json
 #####################################################################
+
+
 def api_set_outlet_params_heater(AppPrefs, sqlengine, outletid, request):
     AppPrefs.logger.info(request)
 
@@ -1049,6 +1058,8 @@ def api_set_outlet_params_heater(AppPrefs, sqlengine, outletid, request):
 # set the paramters for outlet of type: PH
 # must specify outletid and deliver payload in json
 #####################################################################
+
+
 def api_set_outlet_params_ph(AppPrefs, sqlengine, outletid, request):
     AppPrefs.logger.info(request)
 
@@ -1097,12 +1108,14 @@ def api_set_outlet_params_ph(AppPrefs, sqlengine, outletid, request):
 # set the paramters for outlet of type: Return
 # must specify outletid and deliver payload in json
 #####################################################################
+
+
 def api_set_outlet_params_return(AppPrefs, sqlengine, outletid, request):
     AppPrefs.logger.info(request)
 
     response = {}
     payload = request.get_json()
-  
+
     return_enable_feed_a = payload["return_enable_feed_a"]
     return_enable_feed_b = payload["return_enable_feed_b"]
     return_enable_feed_c = payload["return_enable_feed_c"]
@@ -1164,12 +1177,14 @@ def api_set_outlet_params_return(AppPrefs, sqlengine, outletid, request):
 # set the paramters for outlet of type: Skimmer
 # must specify outletid and deliver payload in json
 #####################################################################
+
+
 def api_set_outlet_params_skimmer(AppPrefs, sqlengine, outletid, request):
     AppPrefs.logger.info(request)
 
     response = {}
     payload = request.get_json()
-    
+
     skimmer_enable_feed_a = payload["skimmer_enable_feed_a"]
     skimmer_enable_feed_b = payload["skimmer_enable_feed_b"]
     skimmer_enable_feed_c = payload["skimmer_enable_feed_c"]
@@ -1231,6 +1246,8 @@ def api_set_outlet_params_skimmer(AppPrefs, sqlengine, outletid, request):
 # set the global parameters such as temps scale C or F
 # must specify outletid and deliver payload in json
 #####################################################################
+
+
 def api_set_global_prefs(AppPrefs, sqlengine, request):
     AppPrefs.logger.info(request)
 
@@ -1287,9 +1304,10 @@ def api_set_global_prefs(AppPrefs, sqlengine, request):
 # get the stats for the specified probe
 # things like last value, probe name, etc....
 #####################################################################
+
+
 def api_get_current_probe_stats(AppPrefs, probeid, request):
     # AppPrefs.logger.info(request)
-
 
     response = {}
 
@@ -1333,6 +1351,8 @@ def api_get_current_probe_stats(AppPrefs, probeid, request):
 # api_get_outlet_enable_state
 # return list of outlets with their enabled state
 #####################################################################
+
+
 def api_get_outlet_enable_state(AppPrefs, sqlengine, request):
     AppPrefs.logger.info(request)
 
@@ -1368,9 +1388,9 @@ def api_get_outlet_enable_state(AppPrefs, sqlengine, request):
 # must specify outletID, and time frame (24hr, 1wk, 1mo, etc...)
 #####################################################################
 
+
 def api_get_outletchartdata(AppPrefs, Influx_client, outletid, timeframe, request):
     AppPrefs.logger.info(request)
-
 
     bucket = "reefberrypi_outlet_3mo"
 
@@ -1398,9 +1418,10 @@ def api_get_outletchartdata(AppPrefs, Influx_client, outletid, timeframe, reques
 # get the stats for the specified outlet
 # things like last button state, status, etc....
 #####################################################################
+
+
 def api_get_current_outlet_stats(AppPrefs, outletid, request):
     # AppPrefs.logger.info(request)
-
 
     response = {}
 
@@ -1459,9 +1480,10 @@ def api_get_current_outlet_stats(AppPrefs, outletid, request):
 # api_get_probe_list
 # return list of connected probes
 #####################################################################
+
+
 def api_get_probe_list(AppPrefs, request):
     AppPrefs.logger.info(request)
- 
 
     probedict = {}
 
@@ -1475,22 +1497,22 @@ def api_get_probe_list(AppPrefs, request):
 
     if AppPrefs.dht_enable == "true":
         probedict["DHT-T"] = {"sensortype": AppPrefs.dhtDict["DHT-T"].sensortype,
-                                "probename": AppPrefs.dhtDict["DHT-T"].name,
-                                "probeid": AppPrefs.dhtDict["DHT-T"].probeid,
-                                "probetype": "DHT",
-                                "lastValue": AppPrefs.dhtDict["DHT-T"].lastValue}
+                              "probename": AppPrefs.dhtDict["DHT-T"].name,
+                              "probeid": AppPrefs.dhtDict["DHT-T"].probeid,
+                              "probetype": "DHT",
+                              "lastValue": AppPrefs.dhtDict["DHT-T"].lastValue}
         probedict["DHT-H"] = {"sensortype": AppPrefs.dhtDict["DHT-H"].sensortype,
-                                "probename": AppPrefs.dhtDict["DHT-H"].name,
-                                "probeid": AppPrefs.dhtDict["DHT-H"].probeid,
-                                "probetype": "DHT",
-                                "lastValue": AppPrefs.dhtDict["DHT-H"].lastValue}
+                              "probename": AppPrefs.dhtDict["DHT-H"].name,
+                              "probeid": AppPrefs.dhtDict["DHT-H"].probeid,
+                              "probetype": "DHT",
+                              "lastValue": AppPrefs.dhtDict["DHT-H"].lastValue}
     for ch in AppPrefs.mcp3008Dict:
         # logger.info(ch)
         probedict["mcp3008_ch" + str(ch)] = {"sensortype": AppPrefs.mcp3008Dict[ch].ch_type,
-                                                "probename": AppPrefs.mcp3008Dict[ch].ch_name,
-                                                "probeid": "mcp3008_ch" + str(ch),
-                                                "probetype": "analog",
-                                                "lastValue": AppPrefs.mcp3008Dict[ch].lastValue}
+                                             "probename": AppPrefs.mcp3008Dict[ch].ch_name,
+                                             "probeid": "mcp3008_ch" + str(ch),
+                                             "probetype": "analog",
+                                             "lastValue": AppPrefs.mcp3008Dict[ch].lastValue}
 
     AppPrefs.logger.debug(probedict)
     return probedict
@@ -1499,6 +1521,8 @@ def api_get_probe_list(AppPrefs, request):
 # api_get_mcp3008_enable_state
 # return list of mcp3008 probes and their enabled state
 #####################################################################
+
+
 def api_get_mcp3008_enable_state(AppPrefs, sqlengine, request):
     AppPrefs.logger.info(request)
 
@@ -1521,11 +1545,11 @@ def api_get_mcp3008_enable_state(AppPrefs, sqlengine, request):
     # loop through each row
     for row in results:
         probedict[row.probeid] = {"sensortype": row.sensortype,
-                                    "probename": row.name,
-                                    "probeid": row.probeid,
-                                    "probetype": row.probetype,
-                                    "enabled": row.enabled,
-                                    "sensortype": row.sensortype}
+                                  "probename": row.name,
+                                  "probeid": row.probeid,
+                                  "probetype": row.probetype,
+                                  "enabled": row.enabled,
+                                  "sensortype": row.sensortype}
 
     AppPrefs.logger.debug(probedict)
 
@@ -1535,6 +1559,8 @@ def api_get_mcp3008_enable_state(AppPrefs, sqlengine, request):
 # api_get_token
 # return login token
 #####################################################################
+
+
 def api_get_token(AppPrefs, sqlengine, request):
     AppPrefs.logger.info(request)
 
@@ -1557,9 +1583,9 @@ def api_get_token(AppPrefs, sqlengine, request):
     conn.commit()
 
     if results.rowcount == 0:
-         AppPrefs.logger.warning("Invalid login attempt!  User: " + username)
-         return {"msg": "Wrong username or password"}, 401
-   
+        AppPrefs.logger.warning("Invalid login attempt!  User: " + username)
+        return {"msg": "Wrong username or password"}, 401
+
     else:
         # loop through each row
         for row in results:
@@ -1567,9 +1593,9 @@ def api_get_token(AppPrefs, sqlengine, request):
             dbhash = row.pwhash
 
             userPW = password
-            userBytes = userPW.encode('utf-8') 
-            
-            result = bcrypt.checkpw(userBytes, dbhash.encode('utf-8')) 
+            userBytes = userPW.encode('utf-8')
+
+            result = bcrypt.checkpw(userBytes, dbhash.encode('utf-8'))
 
             if result == True:
                 AppPrefs.logger.info("Sucessful login.  User: " + username)
@@ -1578,17 +1604,101 @@ def api_get_token(AppPrefs, sqlengine, request):
 
                 return response
             else:
-                 return {"msg": "Wrong username or password"}, 401
+                return {"msg": "Wrong username or password"}, 401
+
+#####################################################################
+# api_get_user_list
+# return list of users that have access to this instance
+#####################################################################
 
 
+def api_get_user_list(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+
+    response = {}
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+
+    user_table = Table("users", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    stmt = select(user_table).where(user_table.c.appuid == AppPrefs.appuid)
+
+    results = conn.execute(stmt)
+    conn.commit()
+
+    userlist = []
+
+    for row in results:
+        AppPrefs.logger.info(row.username)
+        userlist.append({"username": row.username, "role": row.role})
+
+    response = jsonify({"appuid": AppPrefs.appuid,
+                        "userlist": userlist}
+                       )
+    response.status_code = 200
+
+    return response
+
+#####################################################################
+# api_set_add_user
+# add new user to have access to this instance
+#####################################################################
 
 
+def api_set_add_user(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
 
+    username = request.json.get("username", None).lower()
+    password = request.json.get("password", None)
 
+    response = {}
 
+    # build table object from table in DB
+    metadata_obj = MetaData()
 
+    user_table = Table("users", metadata_obj, autoload_with=sqlengine)
 
-    
+    conn = sqlengine.connect()
 
+    # before adding, check if username exists
+    stmt = select(user_table).where(user_table.c.appuid == AppPrefs.appuid)
+    results = conn.execute(stmt)
+    conn.commit()
+    for row in results:
+        if row.username == username:
+            response = jsonify({"appuid": AppPrefs.appuid,
+                                "msg": "FAIL: User already exists"}
+                               )
+            response.status_code = 500
+            return response
 
+    # since user did not exist, lets add to the table
 
+    # create password hash
+    # converting password to array of bytes
+    bytes = password.encode('utf-8')
+
+    # generating the salt
+    salt = bcrypt.gensalt()
+
+    # Hashing the password
+    hash = bcrypt.hashpw(bytes, salt)
+
+    stmt = insert(user_table).values(appuid=AppPrefs.appuid,
+                                     username=username,
+                                     role="administrator",
+                                     pwhash=hash
+                                     )
+
+    results = conn.execute(stmt)
+    conn.commit()
+
+    response = jsonify({"appuid": AppPrefs.appuid,
+                        "msg": "SUCCESS"}
+                       )
+    response.status_code = 200
+
+    return response
