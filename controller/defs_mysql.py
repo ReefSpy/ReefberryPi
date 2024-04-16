@@ -57,10 +57,10 @@ def addInitialUser(app_prefs, sqlengine):
     hash = bcrypt.hashpw(bytes, salt) 
 
 ###
-
+    role = "administrator"
 
     stmt = insert(user_table).values(appuid = app_prefs.appuid, 
-                                            username = cls_Preferences.RBP_DEFAULT_USERNAME, pwhash = hash)
+                                            username = cls_Preferences.RBP_DEFAULT_USERNAME, pwhash = hash, role = role)
     
     conn.execute(stmt)
     conn.commit()
@@ -238,7 +238,8 @@ def createDB(app_prefs, sqlengine):
                                 Column("id", Integer, nullable=False, autoincrement=True, primary_key=True, unique=True),
                                 Column("appuid", String(45), nullable=False, primary_key=True),
                                 Column("username", String(45), nullable=False, primary_key=True),
-                                Column("pwhash", String(255))
+                                Column("pwhash", String(255)),
+                                Column("role", String(45))
                                 )
 
         app_prefs.logger.warning("Creating table dashorder")
@@ -270,6 +271,7 @@ def createDB(app_prefs, sqlengine):
                             Column("feed_c_time", String(45), default="60") ,
                             Column("feed_d_time", String(45), default="60") ,
                             Column("dht_enable", String(45), default="False") ,
+                            Column("description", String(100), default="Aquarium Controller")
                             )
 
         app_prefs.logger.warning ("Creating table mcp3008" )
@@ -466,6 +468,7 @@ def readGlobalPrefs_ex(sqlengine, appPrefs, logger):
         appPrefs.feed_c_time = "60"
         appPrefs.feed_d_time = "60"
         appPrefs.dht_enable = "false"
+        appPrefs.app_description = "Aquarium Controller"
 
         stmt = insert(global_table).values(appuid = appPrefs.appuid, 
                                                     tempscale = appPrefs.temperaturescale,
@@ -473,7 +476,8 @@ def readGlobalPrefs_ex(sqlengine, appPrefs, logger):
                                                     feed_b_time = appPrefs.feed_b_time,
                                                     feed_c_time = appPrefs.feed_c_time,
                                                     feed_d_time = appPrefs.feed_d_time,
-                                                    dht_enable = appPrefs.dht_enable
+                                                    dht_enable = appPrefs.dht_enable,
+                                                    description = appPrefs.app_description
                                                     )
         results = conn.execute(stmt)
         conn.commit()
@@ -490,13 +494,16 @@ def readGlobalPrefs_ex(sqlengine, appPrefs, logger):
         appPrefs.feed_c_time = row.feed_c_time
         appPrefs.feed_d_time = row.feed_d_time
         appPrefs.dht_enable = row.dht_enable
+        appPrefs.app_description = row.description
 
     logger.info("Using temperature scale: " + appPrefs.temperaturescale)
     logger.info("Read Feed Mode A: " + appPrefs.feed_a_time)  
     logger.info("Read Feed Mode B: " + appPrefs.feed_b_time)
     logger.info("Read Feed Mode C: " + appPrefs.feed_c_time)
     logger.info("Read Feed Mode D: " + appPrefs.feed_d_time)     
-    logger.info("DHT Sensor Enabled: " + appPrefs.dht_enable)           
+    logger.info("DHT Sensor Enabled: " + appPrefs.dht_enable)  
+    logger.info("App Description: " + appPrefs.app_description)  
+
 
 def readOutletPrefs_ex(sqlengine, appPrefs, logger):
     try:

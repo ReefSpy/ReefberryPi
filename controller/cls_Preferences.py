@@ -114,6 +114,7 @@ class AppPrefs():
         self.feed_c_time = ""
         self.feed_d_time = ""
         self.dht_enable = ""
+        self.app_description = ""
         self.controller_version = version.CONTROLLER_VERSION
 
         self.dv_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds

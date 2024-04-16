@@ -373,6 +373,7 @@ def api_get_global_prefs(AppPrefs, sqlengine, request):
                            "feed_b_time": AppPrefs.feed_b_time,
                            "feed_c_time": AppPrefs.feed_c_time,
                            "feed_d_time": AppPrefs.feed_d_time,
+                           "app_description": AppPrefs.app_description,
                            "controller_version": AppPrefs.controller_version,
                            })
 
@@ -1242,6 +1243,7 @@ def api_set_global_prefs(AppPrefs, sqlengine, request):
     feed_b_time = payload["feed_b_time"]
     feed_c_time = payload["feed_c_time"]
     feed_d_time = payload["feed_d_time"]
+    description = payload["description"]
 
     response = jsonify({"msg": 'Updated Global Prefs',
                         "tempscale": tempscale,
@@ -1250,6 +1252,7 @@ def api_set_global_prefs(AppPrefs, sqlengine, request):
                         "feed_b_time": feed_b_time,
                         "feed_c_time": feed_c_time,
                         "feed_d_time": feed_d_time,
+                        "description": description
                         })
 
     response.status_code = 200
@@ -1267,6 +1270,7 @@ def api_set_global_prefs(AppPrefs, sqlengine, request):
                 feed_b_time=feed_b_time,
                 feed_c_time=feed_c_time,
                 feed_d_time=feed_d_time,
+                description=description
                 )
     )
 
