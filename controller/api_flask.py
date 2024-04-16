@@ -1702,3 +1702,140 @@ def api_set_add_user(AppPrefs, sqlengine, request):
     response.status_code = 200
 
     return response
+
+#####################################################################
+# api_set_remove_user
+# delete a user from this instance
+#####################################################################
+
+
+def api_set_remove_user(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+
+    response = {}
+
+    activeuser = request.json.get("activeuser", None)
+    targetuser = request.json.get("targetuser", None)
+
+    # return fail if missing parameter
+    if activeuser == None or activeuser == "":
+        response = jsonify({"appuid": AppPrefs.appuid,
+                            "msg": "FAIL: missing parameter activeuser"}
+                           )
+        response.status_code = 500
+        return response
+    elif targetuser == None or targetuser == "":
+        response = jsonify({"appuid": AppPrefs.appuid,
+                            "msg": "FAIL: missing parameter targetuser"}
+                           )
+        response.status_code = 500
+        return response
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+    user_table = Table("users", metadata_obj, autoload_with=sqlengine)
+    conn = sqlengine.connect()
+
+    # don't let a user delete themself
+    if activeuser.lower() == targetuser.lower():
+        response = jsonify({"appuid": AppPrefs.appuid,
+                            "msg": "FAIL: Users can not remove themselves"}
+                           )
+        response.status_code = 500
+        return response
+
+    # if all the other checks passed, lets remove the user from the table
+    # before adding, check if username exists
+    stmt = delete(user_table).where(user_table.c.appuid == AppPrefs.appuid).where(
+        user_table.c.username == targetuser.lower())
+    results = conn.execute(stmt)
+    conn.commit()
+
+    response = jsonify({"appuid": AppPrefs.appuid,
+                        "msg": "SUCCESS"}
+                       )
+    response.status_code = 200
+
+    AppPrefs.logger.info("User " + targetuser.lower() +
+                         " deleted by " + activeuser.lower())
+
+    return response
+
+#####################################################################
+# api_set_change_password
+# change a user's password
+#####################################################################
+
+
+def api_set_change_password(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+
+    username = request.json.get("username", None).lower()
+    oldpassword = request.json.get("oldpassword", None)
+    newpassword = request.json.get("newpassword", None)
+
+    response = {}
+
+    # build table object from table in DB
+    metadata_obj = MetaData()
+
+    user_table = Table("users", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    stmt = select(user_table).where(user_table.c.appuid == AppPrefs.appuid).where(
+        user_table.c.username == username)
+
+    results = conn.execute(stmt)
+    conn.commit()
+
+    if results.rowcount == 0:
+        AppPrefs.logger.warning("Password change fail.  Invalid login attempt!  User: " + username)
+        return {"msg": "Wrong username or password"}, 401
+
+    else:
+        # loop through each row
+        for row in results:
+            # dbusername = row.username
+            dbhash = row.pwhash
+
+            userPW = oldpassword
+            userBytes = userPW.encode('utf-8')
+
+            result = bcrypt.checkpw(userBytes, dbhash.encode('utf-8'))
+
+            if result == True:
+                bytes = newpassword.encode('utf-8')
+                # generating the salt
+                salt = bcrypt.gensalt()
+                # Hashing the password
+                hash = bcrypt.hashpw(bytes, salt)
+
+                if newpassword == None or newpassword == "":
+                    response = jsonify({"appuid": AppPrefs.appuid,
+                                        "msg": "FAIL: password can not be empty"}
+                                       )
+                    AppPrefs.logger.warning("Password change failed. Password can not be empty")
+                    response.status_code = 500
+                    return response
+
+                stmt = (
+                    update(user_table)
+                    .where(user_table.c.appuid == AppPrefs.appuid)
+                    .where(user_table.c.username == username)
+                    .values(pwhash=hash)
+                )
+                results = conn.execute(stmt)
+                conn.commit()
+
+                AppPrefs.logger.info(
+                    "Password changed sucessfully for user: " + username)
+                response = jsonify({"msg": "Password changed sucessfully!"})
+                response.status_code = 200
+                return response
+            else:
+                AppPrefs.logger.warning("Password change fail.  Incorrect password provided. User = " + username)
+                response = jsonify(
+                    {"msg": "Request denied.  Check credentials and try again."})
+                response.status_code = 401
+                return response

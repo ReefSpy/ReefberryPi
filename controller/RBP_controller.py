@@ -1234,7 +1234,7 @@ def get_column_widget_order():
 
 @app.route('/get_user_list/', methods=['GET'])
 @cross_origin()
-# @jwt_required()
+@jwt_required()
 
 def get_user_list():
     global AppPrefs
@@ -1258,7 +1258,7 @@ def get_user_list():
 
 @app.route('/set_add_user', methods=['POST'])
 @cross_origin()
-# @jwt_required()
+@jwt_required()
 
 def set_add_user():
     global AppPrefs
@@ -1270,6 +1270,54 @@ def set_add_user():
 
     except Exception as e:
         AppPrefs.logger.error("set_add_user: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+
+#####################################################################
+# set_remove_user
+# delete a user from this instance
+#####################################################################
+
+
+@app.route('/set_remove_user', methods=['POST'])
+@cross_origin()
+@jwt_required()
+
+def set_remove_user():
+    global AppPrefs
+    try:
+        
+        response = api_flask.api_set_remove_user(AppPrefs, sqlengine, request)
+
+        return response
+
+    except Exception as e:
+        AppPrefs.logger.error("set_remove_user: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+
+#####################################################################
+# set_change_password
+# change a user's password
+#####################################################################
+
+
+@app.route('/set_change_password', methods=['POST'])
+@cross_origin()
+@jwt_required()
+
+def set_change_password():
+    global AppPrefs
+    try:
+        
+        response = api_flask.api_set_change_password(AppPrefs, sqlengine, request)
+
+        return response
+
+    except Exception as e:
+        AppPrefs.logger.error("set_change_password: " + str(e))
         response = jsonify({"msg": str(e)})
         response.status_code = 500
         return response
