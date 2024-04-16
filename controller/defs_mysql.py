@@ -57,10 +57,10 @@ def addInitialUser(app_prefs, sqlengine):
     hash = bcrypt.hashpw(bytes, salt) 
 
 ###
-
+    role = "administrator"
 
     stmt = insert(user_table).values(appuid = app_prefs.appuid, 
-                                            username = cls_Preferences.RBP_DEFAULT_USERNAME, pwhash = hash)
+                                            username = cls_Preferences.RBP_DEFAULT_USERNAME, pwhash = hash, role = role)
     
     conn.execute(stmt)
     conn.commit()
@@ -238,7 +238,8 @@ def createDB(app_prefs, sqlengine):
                                 Column("id", Integer, nullable=False, autoincrement=True, primary_key=True, unique=True),
                                 Column("appuid", String(45), nullable=False, primary_key=True),
                                 Column("username", String(45), nullable=False, primary_key=True),
-                                Column("pwhash", String(255))
+                                Column("pwhash", String(255)),
+                                Column("role", String(45))
                                 )
 
         app_prefs.logger.warning("Creating table dashorder")
