@@ -86,7 +86,7 @@ const GlobalPrefsModal = ({
         </div>
 
         <div className="form-row">
-          <label htmlFor="description">Desciption</label>
+          <label htmlFor="description">Description</label>
           <input
             ref={focusInputRef}
             type="text"
