@@ -10,7 +10,7 @@
 
 .userscontainer{
     display: grid;
-    grid-template-columns: 8rem 11rem 7rem auto;
+    grid-template-columns: 8rem 8rem 8rem auto;
     grid-template-rows: auto auto auto auto auto;
 
 }
@@ -25,4 +25,22 @@
     grid-column-start: 1;
     grid-row-start: 2;
     grid-row-end: 6;
+}
+
+.adduserbtn{
+    grid-column-start: 1;
+    grid-row-start: 6;
+    grid-row-end: 7;
+}
+
+.deluserbtn{
+    grid-column-start: 2;
+    grid-row-start: 6;
+    grid-row-end: 7;
+}
+
+.chgpwbtn{
+    grid-column-start: 3;
+    grid-row-start: 6;
+    grid-row-end: 7;
 }

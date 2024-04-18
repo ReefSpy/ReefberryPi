@@ -2,17 +2,16 @@ import React, { useRef, useEffect, useState } from "react";
 import "./UserPrefsModal.css";
 import closeCircle from "./close-circle.svg";
 import deleteIcon from "./delete.svg";
+import userAddIcon from "./user-add.svg";
+import keyIcon from "./key.svg"
 import ClipLoader from "react-spinners/ClipLoader";
 import * as Api from "../Api/Api.js"
-import NewUserModal from "./NewUserModal.jsx";
 
 const UserPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children, onRefreshRequest }) => {
   const [isModalOpen, setModalOpen] = useState(isOpen);
 
   const [userList, setUserList] = useState();
   const [selectedUser, setSelectedUser] = useState();
-  const [NewUserModalOpen, setNewUserModalOpen] = useState()
-  const [isNewUserModalOpen, setIsNewUserModalOpen] = useState()
 
 
   const modalRef = useRef(null);
@@ -46,15 +45,7 @@ const UserPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children, onRefre
     }
   }, [isModalOpen]);
 
-  let handleOpenNewUserModal = () => {
-    setNewUserModalOpen(true);
-    setIsNewUserModalOpen(true );
-  };
 
-  let handleCloseNewUserModal = () => {
-    setNewUserModalOpen(false);
-    setIsNewUserModalOpen(false);
-  };
 
   let handleSubmitClick = () => {
 
@@ -133,9 +124,9 @@ const UserPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children, onRefre
           ))}
         </select>
 
-          <button onClick= {handleOpenNewUserModal }>Add User</button>
-          <button> Delete User</button>
-          <button> Change Password</button>
+          <button className = "adduserbtn">Add User</button>
+          <button className = "deluserbtn">Delete User</button>
+          <button className = "chgpwbtn">Change Password</button>
 
 
 
@@ -149,14 +140,7 @@ const UserPrefsModal = ({ isOpen, hasCloseBtn = true, onClose, children, onRefre
           Submit
         </button>
       </div>
-      {isNewUserModalOpen ? (
-        <NewUserModal
-    //   isOpen={this.state.isUserPrefsModalOpen}
-    //   onSubmit={this.handleUserPrefsFormSubmit}
-    //   onClose={this.handleCloseUserPrefsModal}
-    //   onRefreshRequest={this.props.onRefreshRequest}
-    />
-  ) : null}
+      
     </dialog>
 
 
