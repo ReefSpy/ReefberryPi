@@ -8,6 +8,7 @@ import globalicon from "../../Images/global.svg";
 import OutletPrefsModal from "../OutletPrefs/OutletPrefsModal";
 import ProbePrefsModal from "../ProbePrefs/ProbePrefsModal";
 import TempPrefsModal from "../TempPrefs/TempPrefsModal";
+import UserPrefsModal from "../UserPrefs/UserPrefsModal";
 import appicon from "../../Images/reefberrypi-by-reefspy.svg";
 import * as Api from "../Api/Api.js"
 import * as VERSION from "../Version/Version.js"
@@ -57,6 +58,20 @@ class Settings extends Component {
     this.setState({ isProbePrefsModalOpen: false });
   };
 
+  handleUserPrefsFormSubmit = (data) => {
+    this.handleCloseUserPrefsModal();
+  };
+
+  handleOpenUserPrefsModal = () => {
+    this.setState({ setUserPrefsModalOpen: true });
+    this.setState({ isUserPrefsModalOpen: true });
+  };
+
+  handleCloseUserPrefsModal = () => {
+    this.setState({ setUserPrefsModalOpen: false });
+    this.setState({ isUserPrefsModalOpen: false });
+  };
+
   handleTempPrefsFormSubmit = (data) => {
     this.handleCloseTempPrefsModal();
   };
@@ -92,9 +107,9 @@ class Settings extends Component {
               <img src={outleticon} alt="Outlets" className="btnicon"></img>
               Outlets
             </button>
-            {/* <button className="settingsbtn">
+            <button className="settingsbtn" onClick={this.handleOpenUserPrefsModal}>
               <img src={usericon} alt="Users" className="btnicon"></img>Users
-            </button> */}
+            </button>
             <button className="settingsbtn" onClick={this.props.openGlobalPrefs}>
               <img src={globalicon} alt="Global" className="btnicon"></img>{" "}
               Global
@@ -147,6 +162,15 @@ class Settings extends Component {
               isOpen={this.state.isOutletPrefsModalOpen}
               onSubmit={this.handleOutletPrefsFormSubmit}
               onClose={this.handleCloseOutletPrefsModal}
+              onRefreshRequest={this.props.onRefreshRequest}
+            />
+          ) : null}
+
+          {this.state.isUserPrefsModalOpen ? (
+            <UserPrefsModal
+              isOpen={this.state.isUserPrefsModalOpen}
+              onSubmit={this.handleUserPrefsFormSubmit}
+              onClose={this.handleCloseUserPrefsModal}
               onRefreshRequest={this.props.onRefreshRequest}
             />
           ) : null}
