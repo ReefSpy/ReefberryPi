@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import "./UserPrefsModal.css";
+import "./ChangePasswordModal.css";
 import closeCircle from "./close-circle.svg";
 import deleteIcon from "./delete.svg";
 import userAddIcon from "./user-add.svg";
@@ -7,7 +7,7 @@ import keyIcon from "./key.svg";
 import ClipLoader from "react-spinners/ClipLoader";
 import * as Api from "../Api/Api.js";
 
-const UserPrefsModal = ({
+const ChangePasswordModal = ({
   isOpen,
   hasCloseBtn = true,
   onClose,
@@ -93,42 +93,41 @@ const UserPrefsModal = ({
   };
 
   return (
-    <dialog ref={modalRef} onKeyDown={handleKeyDown} className="usermodal">
+    <dialog ref={modalRef} onKeyDown={handleKeyDown} className="passwordmodal">
       {hasCloseBtn && (
         <button className="modal-close-btn" onClick={handleCloseModal}>
           <img src={closeCircle} alt="close" height="24px" width="24px"></img>
         </button>
       )}
       {children}
-      <div className="userscontainer">
-        <label htmlFor="userlist" className="userlistlabel">
-          Users
-        </label>
-        <select
-          className="userslistbox"
-          id="userslistbox"
-          name="userslistbox"
-          required
-          onChange={handleUserChange}
-          value={selectedUser}
-          size="6"
-        >
-          {userList?.map((user, index) => (
-            <option key={index} value={user}>
-              {user}
-            </option>
-          ))}
-        </select>
-        <div className="userBtnRow">
-          <button className="adduserbtn" title="Add User">
-            <img src={userAddIcon} alt="close" height="24px" width="24px"></img>
-          </button>
-          <button className="deluserbtn" title="Delete User">
-            <img src={deleteIcon} alt="close" height="24px" width="24px"></img>
-          </button>
-          
-        </div>
-    
+      <div className="passwordcontainer">
+      
+        <label className="currentPasswordLabel">Current Password</label>
+        <input 
+            className="currentPassword"
+            type="password"
+            id="username"
+            name="username"
+            autoComplete="off"
+          />
+
+<label className="newPasswordLabel">New Password</label>
+        <input 
+            className="newPassword"
+            type="password"
+            id="username"
+            name="username"
+            autoComplete="off"
+          />
+
+<label className="newPasswordConfirmLabel">Password Confirm</label>
+        <input 
+            className="newPasswordConfirm"
+            type="password"
+            id="username"
+            name="username"
+            autoComplete="off"
+          />
 
       </div>
 
@@ -146,4 +145,4 @@ const UserPrefsModal = ({
   );
 };
 
-export default UserPrefsModal;
+export default ChangePasswordModal;

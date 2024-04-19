@@ -24,6 +24,7 @@ class App extends Component {
       globalPrefs: null,
       col1rawitems: [],
       loggedin: false,
+      userName: null,
     };
     this.setProbeData = this.setProbeData.bind(this);
     this.setOutletData = this.setOutletData.bind(this);
@@ -258,6 +259,12 @@ class App extends Component {
       window.location.reload();
     }
   }
+  setUser(userName) {
+    console.log(userName);
+    if (userName !== undefined) {
+      sessionStorage.setItem("userName", JSON.stringify(userName));
+    }
+  }
 
   logout() {
     sessionStorage.clear();
@@ -266,17 +273,12 @@ class App extends Component {
   render() {
     if (!this.getToken()) {
       console.log("render");
-      return <Login setToken={this.setToken} />;
+      return <Login setToken={this.setToken} setUser={this.setUser}/>;
     }
     return (
       <div className="App">
         <div className="appheader">
-          <div className="header-desc">
-            
-            
-            {/* {this.state.globalAppDescription} */}
-            
-            
+          <div className="header-desc">   
             {!this.state.globalAppDescription == "" ? (
             this.state.globalAppDescription
           ) : (
