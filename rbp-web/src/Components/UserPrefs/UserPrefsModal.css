@@ -26,7 +26,10 @@
   grid-row-start: 2;
   grid-row-end: 8;
 }
-
+.userSpinner{
+  place-self: center;
+  margin: 10px;
+}
 .adduserbtn {
   background-color: transparent;
   border-style: none;
@@ -34,6 +37,10 @@
 }
 .adduserbtn:hover {
   background-color: orange;
+}
+
+.adduserbtn:active {
+  background-color: grey;
 }
 
 .deluserbtn {
@@ -44,6 +51,9 @@
 .deluserbtn:hover {
   background-color: orange;
 }
+.deluserbtn:active {
+  background-color: grey;
+}
 
 .chgpwbtn {
   background-color: transparent;
@@ -52,6 +62,9 @@
 }
 .chgpwbtn:hover {
   background-color: orange;
+}
+.chgpwbtn:active {
+  background-color: grey;
 }
 
 .currentPasswordLabel {
@@ -98,4 +111,11 @@
   grid-column-start: 1;
   grid-row-start: 8;
   grid-row-end: 9;
+}
+
+.pwbtndisabled{
+  opacity: 30%;
+  background-color: transparent;
+  border-style: none;
+
 }

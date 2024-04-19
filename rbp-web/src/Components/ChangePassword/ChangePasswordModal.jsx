@@ -15,9 +15,9 @@ const ChangePasswordModal = ({
   onRefreshRequest,
 }) => {
   const [isModalOpen, setModalOpen] = useState(isOpen);
+ 
 
-  const [userList, setUserList] = useState();
-  const [selectedUser, setSelectedUser] = useState();
+
 
   const modalRef = useRef(null);
 
@@ -30,7 +30,7 @@ const ChangePasswordModal = ({
 
   const handleKeyDown = (event) => {
     if (event.key === "Escape") {
-      handleCloseModal();
+       handleCloseModal();
     }
   };
 
@@ -52,45 +52,42 @@ const ChangePasswordModal = ({
 
   let handleSubmitClick = () => {};
 
-  useEffect(() => {
-    let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
-    fetch(Api.API_GET_USER_LIST, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + authtoken,
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error("Data not found");
-          } else if (response.status === 500) {
-            throw new Error("Server error");
-          } else {
-            throw new Error("Network response was not ok");
-          }
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log(data.userlist);
-        // setUserList(data.userlist);
-        let userArray = [];
-        for (let user in data.userlist) {
-          userArray.push(data.userlist[user].username);
-          console.log(data.userlist[user].username);
-        }
-        setUserList(userArray);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
-  }, []);
+  // useEffect(() => {
+  //   let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
+  //   fetch(Api.API_GET_USER_LIST, {
+  //     method: "GET",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //       Authorization: "Bearer " + authtoken,
+  //     },
+  //   })
+  //     .then((response) => {
+  //       if (!response.ok) {
+  //         if (response.status === 404) {
+  //           throw new Error("Data not found");
+  //         } else if (response.status === 500) {
+  //           throw new Error("Server error");
+  //         } else {
+  //           throw new Error("Network response was not ok");
+  //         }
+  //       }
+  //       return response.json();
+  //     })
+  //     .then((data) => {
+  //       console.log(data.userlist);
+  //       // setUserList(data.userlist);
+  //       let userArray = [];
+  //       for (let user in data.userlist) {
+  //         userArray.push(data.userlist[user].username);
+  //         console.log(data.userlist[user].username);
+  //       }
+  //       setUserList(userArray);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error:", error);
+  //     });
+  // }, []);
 
-  let handleUserChange = (event) => {
-    setSelectedUser(event.target.value);
-  };
 
   return (
     <dialog ref={modalRef} onKeyDown={handleKeyDown} className="passwordmodal">
@@ -132,10 +129,16 @@ const ChangePasswordModal = ({
       </div>
 
       
-      <div className="submit_row">
+      <div className="pwbtncontainer">
+      <button
+          className="pwbtncancel"
+          onClick={handleCloseModal}
+        >
+          Cancel
+        </button>
         <button
           type="submit"
-          className="submitbutton"
+          className="pwbtnsubmit"
           onClick={handleSubmitClick}
         >
           Submit

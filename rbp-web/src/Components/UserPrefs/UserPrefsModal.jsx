@@ -12,12 +12,17 @@ const UserPrefsModal = ({
   hasCloseBtn = true,
   onClose,
   children,
+  onAddUser,
+  onChangePW,
   onRefreshRequest,
 }) => {
   const [isModalOpen, setModalOpen] = useState(isOpen);
 
   const [userList, setUserList] = useState();
   const [selectedUser, setSelectedUser] = useState();
+  const [pwButtonDisabled, setPwButtonDisabled] = useState(true)
+  const [delUserButtonDisabled, setDelUserButtonDisabled] = useState(true)
+  
 
   const modalRef = useRef(null);
 
@@ -104,42 +109,57 @@ const UserPrefsModal = ({
         <label htmlFor="userlist" className="userlistlabel">
           Users
         </label>
-        <select
-          className="userslistbox"
-          id="userslistbox"
-          name="userslistbox"
-          required
-          onChange={handleUserChange}
-          value={selectedUser}
-          size="6"
-        >
-          {userList?.map((user, index) => (
-            <option key={index} value={user}>
-              {user}
-            </option>
-          ))}
-        </select>
+        {!userList == "" ? (
+          <select
+            className="userslistbox"
+            id="userslistbox"
+            name="userslistbox"
+            required
+            onChange={handleUserChange}
+            value={selectedUser}
+            size="6"
+          >
+            {userList?.map((user, index) => (
+              <option key={index} value={user}>
+                {user}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <ClipLoader
+          className="userSpinner"
+            color="#000000"
+            loading={true}
+            size={48}
+            aria-label="Loading Spinner"
+            data-testid="loader"
+          />
+        )}{" "}
         <div className="userBtnRow">
-          <button className="adduserbtn" title="Add User">
-            <img src={userAddIcon} alt="close" height="24px" width="24px"></img>
+          <button className="adduserbtn" title="Add User" onClick={onAddUser}>
+            <img src={userAddIcon} alt="Add" height="24px" width="24px"></img>
           </button>
-          <button className="deluserbtn" title="Delete User">
-            <img src={deleteIcon} alt="close" height="24px" width="24px"></img>
+          <button className={!delUserButtonDisabled ? "deluserbtn" : "pwbtndisabled" } title="Delete User">
+            <img src={deleteIcon} alt="Delete" height="24px" width="24px"></img>
           </button>
-          
+          <button
+            className= {!pwButtonDisabled ? "chgpwbtn" : "pwbtndisabled" }
+            title="Change Password"
+            onClick={onChangePW}
+            disabled={ pwButtonDisabled}
+          >
+            <img src={keyIcon} alt="Password" height="24px" width="24px"></img>
+          </button>
         </div>
-    
-
       </div>
 
-      
       <div className="submit_row">
         <button
           type="submit"
           className="submitbutton"
           onClick={handleSubmitClick}
         >
-          Submit
+          Close
         </button>
       </div>
     </dialog>

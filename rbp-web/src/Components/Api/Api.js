@@ -33,3 +33,4 @@ export const API_GET_ASSIGNED_TEMP_PROBES = `http://${hostname}:${portnum}/get_a
 export const API_SET_COLUMN_WIDGET_ORDER = `http://${hostname}:${portnum}/set_column_widget_order`;
 export const API_GET_COLUMN_WIDGET_ORDER = `http://${hostname}:${portnum}/get_column_widget_order/`;
 export const API_GET_USER_LIST = `http://${hostname}:${portnum}/get_user_list/`;
+export const API_SET_CHANGE_PASSWORD = `http://${hostname}:${portnum}/set_change_password`;

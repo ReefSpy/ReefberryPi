@@ -25,6 +25,7 @@ class Settings extends Component {
     };
   }
 
+  // Outlet Prefs Modal
   handleOpenOutletPrefsModal = () => {
     this.setState({ setOutletPrefsModalOpen: true });
     this.setState({ isOutletPrefsModalOpen: true });
@@ -39,7 +40,7 @@ class Settings extends Component {
     this.handleCloseOutletPrefsModal();
   };
 
-
+// Change Password Modal
   handleOpenChangePasswordModal = () => {
     this.setState({ setChangePasswordModalOpen: true });
     this.setState({ isChangePasswordModalOpen: true });
@@ -48,22 +49,22 @@ class Settings extends Component {
   handleCloseChangePasswordModal = () => {
     this.setState({ setChangePasswordModalOpen: false });
     this.setState({ isChangePasswordModalOpen: false });
+    this.handleOpenUserPrefsModal()
+    
   };
 
   handleChangePasswordSubmit = (data) => {
     this.handleCloseChangePasswordModal();
   };
 
-
+// Global Prefs Modal
   handleGlobalPrefsFormSubmit = (data) => {
     console.log(data);
     this.handleCloseGlobalPrefsModal();
   };
 
-  handleProbePrefsFormSubmit = (data) => {
-    this.handleCloseProbePrefsModal();
-  };
 
+  // Probe Prefs Modal
   handleOpenProbePrefsModal = () => {
     this.setState({ setProbePrefsModalOpen: true });
     this.setState({ isProbePrefsModalOpen: true });
@@ -74,8 +75,21 @@ class Settings extends Component {
     this.setState({ isProbePrefsModalOpen: false });
   };
 
-  handleUserPrefsFormSubmit = (data) => {
-    this.handleCloseUserPrefsModal();
+  handleProbePrefsFormSubmit = (data) => {
+    this.handleCloseProbePrefsModal();
+  };
+
+  // User Prefs Modal
+  handleChangePwBtnClick= () => {
+    this.handleCloseUserPrefsModal()
+    this.handleOpenChangePasswordModal()
+  };
+
+ 
+
+  handleAddUserBtnClick= () => {
+  //  this.handleCloseUserPrefsModal()
+   // this.handleOpenChangePasswordModal()
   };
 
   handleOpenUserPrefsModal = () => {
@@ -88,6 +102,12 @@ class Settings extends Component {
     this.setState({ isUserPrefsModalOpen: false });
   };
 
+  handleUserPrefsFormSubmit = (data) => {
+    this.handleCloseUserPrefsModal();
+  };
+
+
+  // Temperature Probe Prefs Modal
   handleTempPrefsFormSubmit = (data) => {
     this.handleCloseTempPrefsModal();
   };
@@ -123,12 +143,12 @@ class Settings extends Component {
               <img src={outleticon} alt="Outlets" className="btnicon"></img>
               Outlets
             </button>
-            {/* <button className="settingsbtn" onClick={this.handleOpenUserPrefsModal}>
+            <button className="settingsbtn" onClick={this.handleOpenUserPrefsModal}>
               <img src={usericon} alt="Users" className="btnicon"></img>Users
-            </button> */}
-            <button className="settingsbtn" onClick={this.handleOpenChangePasswordModal}>
-              <img src={keyicon} alt="Password" className="btnicon"></img>Change Password
             </button>
+            {/* <button className="settingsbtn" onClick={this.handleOpenChangePasswordModal}>
+              <img src={keyicon} alt="Password" className="btnicon"></img>Change Password
+            </button> */}
             <button className="settingsbtn" onClick={this.props.openGlobalPrefs}>
               <img src={globalicon} alt="Global" className="btnicon"></img>{" "}
               Global
@@ -189,6 +209,8 @@ class Settings extends Component {
             <UserPrefsModal
               isOpen={this.state.isUserPrefsModalOpen}
               onSubmit={this.handleUserPrefsFormSubmit}
+              onAddUser={this.handleAddUserBtnClick}
+              onChangePW = {this.handleChangePwBtnClick}
               onClose={this.handleCloseUserPrefsModal}
               onRefreshRequest={this.props.onRefreshRequest}
             />
