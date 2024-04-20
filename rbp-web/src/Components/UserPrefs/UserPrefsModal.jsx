@@ -20,9 +20,9 @@ const UserPrefsModal = ({
 
   const [userList, setUserList] = useState();
   const [selectedUser, setSelectedUser] = useState();
-  const [pwButtonDisabled, setPwButtonDisabled] = useState(true)
-  const [delUserButtonDisabled, setDelUserButtonDisabled] = useState(true)
-  
+  const [pwButtonDisabled, setPwButtonDisabled] = useState(true);
+  const [delUserButtonDisabled, setDelUserButtonDisabled] = useState(true);
+  const [loggedInUser, setLoggedInUser] = useState(sessionStorage.getItem("userName"));
 
   const modalRef = useRef(null);
 
@@ -37,6 +37,30 @@ const UserPrefsModal = ({
     if (event.key === "Escape") {
       handleCloseModal();
     }
+  };
+
+  useEffect(() => {
+
+    if(selectedUser===undefined){
+     
+      setDelUserButtonDisabled(true);
+      setPwButtonDisabled(true);
+      return
+    }
+    if (selectedUser === loggedInUser) {
+      setDelUserButtonDisabled(true);
+      setPwButtonDisabled(false);
+
+    } else {
+      setDelUserButtonDisabled(false);
+      setPwButtonDisabled(true);
+    }
+  }, [selectedUser]);
+
+  let handleUserChange = (event) => {
+
+    setSelectedUser(event.target.value);
+
   };
 
   useEffect(() => {
@@ -93,10 +117,6 @@ const UserPrefsModal = ({
       });
   }, []);
 
-  let handleUserChange = (event) => {
-    setSelectedUser(event.target.value);
-  };
-
   return (
     <dialog ref={modalRef} onKeyDown={handleKeyDown} className="usermodal">
       {hasCloseBtn && (
@@ -127,7 +147,7 @@ const UserPrefsModal = ({
           </select>
         ) : (
           <ClipLoader
-          className="userSpinner"
+            className="userSpinner"
             color="#000000"
             loading={true}
             size={48}
@@ -139,14 +159,17 @@ const UserPrefsModal = ({
           <button className="adduserbtn" title="Add User" onClick={onAddUser}>
             <img src={userAddIcon} alt="Add" height="24px" width="24px"></img>
           </button>
-          <button className={!delUserButtonDisabled ? "deluserbtn" : "pwbtndisabled" } title="Delete User">
+          <button
+            className={!delUserButtonDisabled ? "deluserbtn" : "pwbtndisabled"}
+            title="Delete User"
+          >
             <img src={deleteIcon} alt="Delete" height="24px" width="24px"></img>
           </button>
           <button
-            className= {!pwButtonDisabled ? "chgpwbtn" : "pwbtndisabled" }
+            className={!pwButtonDisabled ? "chgpwbtn" : "pwbtndisabled"}
             title="Change Password"
             onClick={onChangePW}
-            disabled={ pwButtonDisabled}
+            disabled={pwButtonDisabled}
           >
             <img src={keyIcon} alt="Password" height="24px" width="24px"></img>
           </button>

@@ -15,6 +15,8 @@ const ChangePasswordModal = ({
   onRefreshRequest,
 }) => {
   const [isModalOpen, setModalOpen] = useState(isOpen);
+  const focusInputRef = useRef(null);
+  const [formState, setFormState] = useState();
  
 
 
@@ -50,7 +52,60 @@ const ChangePasswordModal = ({
     }
   }, [isModalOpen]);
 
-  let handleSubmitClick = () => {};
+  let handleSubmitClick = () => {
+
+    if(formState.newpassword !== formState.confirmpassword){
+      alert ("Password mismatch!")
+      return
+    } 
+
+
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
+    fetch(Api.API_SET_CHANGE_PASSWORD, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + authtoken,
+      },
+      body: JSON.stringify( {username: sessionStorage.getItem("userName"),
+      oldpassword: formState.currentpassword,
+      newpassword: formState.newpassword
+    })
+    })
+      .then((response) => {
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Data not found");
+          } else if (response.status === 500) {
+            throw new Error("Server error");
+          } else if (response.status === 401){
+            alert("Unathorized.  Check password and try again.")
+          }
+          
+           else {
+            throw new Error("Network response was not ok");
+          }
+        }
+        return response.json();
+      })
+      .then((data) => {
+       
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+
+  
+
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setFormState((prevFormData) => ({
+      ...prevFormData,
+      [name]: value,
+    }));
+  };
 
   // useEffect(() => {
   //   let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
@@ -101,28 +156,34 @@ const ChangePasswordModal = ({
       
         <label className="currentPasswordLabel">Current Password</label>
         <input 
+        ref={focusInputRef}
+        onChange={handleInputChange}
             className="currentPassword"
             type="password"
-            id="username"
-            name="username"
+            id="currentpassword"
+            name="currentpassword"
             autoComplete="off"
           />
 
 <label className="newPasswordLabel">New Password</label>
         <input 
+        ref={focusInputRef}
+        onChange={handleInputChange}
             className="newPassword"
             type="password"
-            id="username"
-            name="username"
+            id="newpassword"
+            name="newpassword"
             autoComplete="off"
           />
 
 <label className="newPasswordConfirmLabel">Password Confirm</label>
         <input 
+        ref={focusInputRef}
+        onChange={handleInputChange}
             className="newPasswordConfirm"
             type="password"
-            id="username"
-            name="username"
+            id="confirmpassword"
+            name="confirmpassword"
             autoComplete="off"
           />
 
