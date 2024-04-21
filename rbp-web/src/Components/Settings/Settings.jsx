@@ -11,6 +11,7 @@ import ProbePrefsModal from "../ProbePrefs/ProbePrefsModal";
 import TempPrefsModal from "../TempPrefs/TempPrefsModal";
 import UserPrefsModal from "../UserPrefs/UserPrefsModal";
 import ChangePasswordModal from "../ChangePassword/ChangePasswordModal"
+import AddUserModal from "../AddUser/AddUserModal";
 import appicon from "../../Images/reefberrypi-by-reefspy.svg";
 import * as Api from "../Api/Api.js"
 import * as VERSION from "../Version/Version.js"
@@ -57,6 +58,23 @@ class Settings extends Component {
     this.handleCloseChangePasswordModal();
   };
 
+  // Add User Modal
+  handleOpenAddUserModal = () => {
+    this.setState({ setAddUserModalOpen: true });
+    this.setState({ isAddUserModalOpen: true });
+  };
+
+  handleCloseAddUserModal = () => {
+    this.setState({ setAddUserModalOpen: false });
+    this.setState({ isAddUserModalOpen: false });
+    this.handleOpenUserPrefsModal()
+    
+  };
+
+  handleAddUserSubmit = (data) => {
+    this.handleCloseAddUserModal();
+  };
+
 // Global Prefs Modal
   handleGlobalPrefsFormSubmit = (data) => {
     console.log(data);
@@ -88,8 +106,8 @@ class Settings extends Component {
  
 
   handleAddUserBtnClick= () => {
-  //  this.handleCloseUserPrefsModal()
-   // this.handleOpenChangePasswordModal()
+   this.handleCloseUserPrefsModal()
+   this.handleOpenAddUserModal()
   };
 
   handleOpenUserPrefsModal = () => {
@@ -221,6 +239,15 @@ class Settings extends Component {
               isOpen={this.state.isChangePasswordModalOpen}
               onSubmit={this.handleChangePasswordSubmit}
               onClose={this.handleCloseChangePasswordModal}
+              onRefreshRequest={this.props.onRefreshRequest}
+            />
+          ) : null}
+
+{this.state.isAddUserModalOpen ? (
+            <AddUserModal
+              isOpen={this.state.isAddUserModalOpen}
+              onSubmit={this.handleAddUserSubmit}
+              onClose={this.handleCloseAddUserModal}
               onRefreshRequest={this.props.onRefreshRequest}
             />
           ) : null}

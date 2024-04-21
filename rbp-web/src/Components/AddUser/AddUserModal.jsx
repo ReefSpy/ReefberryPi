@@ -1,10 +1,11 @@
 import React, { useRef, useEffect, useState } from "react";
-import "./ChangePasswordModal.css";
+import "./AddUserModal.css";
 import closeCircle from "./close-circle.svg";
+
 import ClipLoader from "react-spinners/ClipLoader";
 import * as Api from "../Api/Api.js";
 
-const ChangePasswordModal = ({
+const AddUserModal = ({
   isOpen,
   hasCloseBtn = true,
   onClose,
@@ -13,8 +14,8 @@ const ChangePasswordModal = ({
 }) => {
   const [isModalOpen, setModalOpen] = useState(isOpen);
   const focusInputRef = useRef(null);
-  const [formState, setFormState] = useState({currentpassword: "",
-                                              newpassword: "",
+  const [formState, setFormState] = useState({username: "",
+                                              password: "",
                                               confirmpassord: ""});
  
 
@@ -30,9 +31,12 @@ const ChangePasswordModal = ({
   };
 
   const handleKeyDown = (event) => {
+    console.log(event.key)
     if (event.key === "Escape") {
        handleCloseModal();
     }
+    if (event.code === 'Space') 
+    {event.preventDefault()}
   };
 
   useEffect(() => {
@@ -53,27 +57,31 @@ const ChangePasswordModal = ({
 
   let handleSubmitClick = () => {
 
-    if(formState.newpassword === ""){
-      alert ("Password can not be empty.")
+    if(formState.username === ""){
+      alert ("User name can not be empty.")
       return
     } 
 
-    if(formState.newpassword !== formState.confirmpassword){
+    if(formState.password === ""){
+        alert ("Password can not be empty.")
+        return
+      } 
+
+    if(formState.password !== formState.confirmpassword){
       alert ("Password mismatch!")
       return
     } 
 
 
     let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
-    fetch(Api.API_SET_CHANGE_PASSWORD, {
+    fetch(Api.API_SET_ADD_USER, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + authtoken,
       },
-      body: JSON.stringify( {username: sessionStorage.getItem("userName"),
-      oldpassword: formState.currentpassword,
-      newpassword: formState.newpassword
+      body: JSON.stringify( {username: formState.username,
+      password: formState.password,
     })
     })
       .then((response) => {
@@ -81,11 +89,14 @@ const ChangePasswordModal = ({
           if (response.status === 404) {
             throw new Error("Data not found");
           } else if (response.status === 500) {
+            alert("Error adding user.")
             throw new Error("Server error");
           } else if (response.status === 401){
             alert("Unathorized.  Check password and try again.")
             throw new Error("Unauthorized access.")
-            
+          }
+         else if (response.status === 5000) {
+            throw new Error("Server error");
           }
           
            else {
@@ -95,7 +106,7 @@ const ChangePasswordModal = ({
         return response.json();
       })
       .then((data) => {
-       alert("Password changed successfully.")
+       alert("User added successfully.")
        handleCloseModal()
       })
       .catch((error) => {
@@ -107,69 +118,38 @@ const ChangePasswordModal = ({
 
 
   const handleInputChange = (event) => {
+
+
     const { name, value } = event.target;
     setFormState((prevFormData) => ({
       ...prevFormData,
-      [name]: value,
+      [name]: value.replace(" ", ""),
     }));
   };
 
-  // useEffect(() => {
-  //   let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
-  //   fetch(Api.API_GET_USER_LIST, {
-  //     method: "GET",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //       Authorization: "Bearer " + authtoken,
-  //     },
-  //   })
-  //     .then((response) => {
-  //       if (!response.ok) {
-  //         if (response.status === 404) {
-  //           throw new Error("Data not found");
-  //         } else if (response.status === 500) {
-  //           throw new Error("Server error");
-  //         } else {
-  //           throw new Error("Network response was not ok");
-  //         }
-  //       }
-  //       return response.json();
-  //     })
-  //     .then((data) => {
-  //       console.log(data.userlist);
-  //       // setUserList(data.userlist);
-  //       let userArray = [];
-  //       for (let user in data.userlist) {
-  //         userArray.push(data.userlist[user].username);
-  //         console.log(data.userlist[user].username);
-  //       }
-  //       setUserList(userArray);
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error:", error);
-  //     });
-  // }, []);
+  
 
 
   return (
-    <dialog ref={modalRef} onKeyDown={handleKeyDown} className="passwordmodal">
+    <dialog ref={modalRef} onKeyDown={handleKeyDown} className="addusermodal">
       {hasCloseBtn && (
         <button className="modal-close-btn" onClick={handleCloseModal}>
           <img src={closeCircle} alt="close" height="24px" width="24px"></img>
         </button>
       )}
       {children}
-      <div className="passwordcontainer">
+      <div className="addusercontainer">
       
-        <label className="currentPasswordLabel">Current Password</label>
+        <label className="userNameLabel">User Name</label>
         <input 
         ref={focusInputRef}
         onChange={handleInputChange}
-            className="currentPassword"
-            type="password"
-            id="currentpassword"
-            name="currentpassword"
+            className="userName"
+          // type="password"
+            id="username"
+            name="username"
             autoComplete="off"
+            onKeyDown={handleKeyDown}
           />
 
 <label className="newPasswordLabel">New Password</label>
@@ -178,8 +158,8 @@ const ChangePasswordModal = ({
         onChange={handleInputChange}
             className="newPassword"
             type="password"
-            id="newpassword"
-            name="newpassword"
+            id="password"
+            name="password"
             autoComplete="off"
           />
 
@@ -197,16 +177,16 @@ const ChangePasswordModal = ({
       </div>
 
       
-      <div className="pwbtncontainer">
+      <div className="adduserbtncontainer">
       <button
-          className="pwbtncancel"
+          className="adduserbtncancel"
           onClick={handleCloseModal}
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="pwbtnsubmit"
+          className="adduserbtnsubmit"
           onClick={handleSubmitClick}
         >
           Submit
@@ -216,4 +196,4 @@ const ChangePasswordModal = ({
   );
 };
 
-export default ChangePasswordModal;
+export default AddUserModal;

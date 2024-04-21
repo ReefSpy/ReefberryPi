@@ -178,9 +178,9 @@ const UserPrefsModal = ({
 
       <div className="submit_row">
         <button
-          type="submit"
+         // type="submit"
           className="submitbutton"
-          onClick={handleSubmitClick}
+          onClick={handleCloseModal}
         >
           Close
         </button>
