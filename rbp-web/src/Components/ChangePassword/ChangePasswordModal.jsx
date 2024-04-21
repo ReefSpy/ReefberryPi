@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import "./ChangePasswordModal.css";
 import closeCircle from "./close-circle.svg";
-import ClipLoader from "react-spinners/ClipLoader";
+// import ClipLoader from "react-spinners/ClipLoader";
 import * as Api from "../Api/Api.js";
 
 const ChangePasswordModal = ({

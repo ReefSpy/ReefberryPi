@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import "./AddUserModal.css";
 import closeCircle from "./close-circle.svg";
 
-import ClipLoader from "react-spinners/ClipLoader";
+// import ClipLoader from "react-spinners/ClipLoader";
 import * as Api from "../Api/Api.js";
 
 const AddUserModal = ({
@@ -106,7 +106,7 @@ const AddUserModal = ({
         return response.json();
       })
       .then((data) => {
-       alert("User added successfully.")
+       //alert("User added successfully.")
        handleCloseModal()
       })
       .catch((error) => {

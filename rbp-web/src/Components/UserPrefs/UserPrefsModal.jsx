@@ -49,8 +49,10 @@ const UserPrefsModal = ({
         "Content-Type": "application/json",
         "Authorization": "Bearer " + authtoken 
       },
-      body:{activeuser: loggedInUser,
-      targetuser: selectedUser},
+
+      body: JSON.stringify( {activeuser: loggedInUser,
+        targetuser: selectedUser,
+      })
     })
       .then((response) => {
         if (!response.ok) {
@@ -65,12 +67,9 @@ const UserPrefsModal = ({
         return response.json();
       })
       .then((data) => {
-        console.log(data);
-        alert("Settings saved successfully.");
-        setModalOpen(false);
-        onClose();
+
+        populateUserList();
         onRefreshRequest();
-        //window.location.reload(false);
         return data;
       })
       .catch((error) => {
@@ -120,42 +119,49 @@ const UserPrefsModal = ({
     }
   }, [isModalOpen]);
 
-  let handleSubmitClick = () => {};
+let populateUserList = () => {
+  setPwButtonDisabled(true);
+  setDelUserButtonDisabled(true);
+  setSelectedUser(undefined)
+
+  let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
+  fetch(Api.API_GET_USER_LIST, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + authtoken,
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Data not found");
+        } else if (response.status === 500) {
+          throw new Error("Server error");
+        } else {
+          throw new Error("Network response was not ok");
+        }
+      }
+      return response.json();
+    })
+    .then((data) => {
+      console.log(data.userlist);
+      // setUserList(data.userlist);
+      let userArray = [];
+      for (let user in data.userlist) {
+        userArray.push(data.userlist[user].username);
+        console.log(data.userlist[user].username);
+      }
+      setUserList(userArray);
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
+}
 
   useEffect(() => {
-    let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
-    fetch(Api.API_GET_USER_LIST, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + authtoken,
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error("Data not found");
-          } else if (response.status === 500) {
-            throw new Error("Server error");
-          } else {
-            throw new Error("Network response was not ok");
-          }
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log(data.userlist);
-        // setUserList(data.userlist);
-        let userArray = [];
-        for (let user in data.userlist) {
-          userArray.push(data.userlist[user].username);
-          console.log(data.userlist[user].username);
-        }
-        setUserList(userArray);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
+    populateUserList()
+    
   }, []);
 
   return (

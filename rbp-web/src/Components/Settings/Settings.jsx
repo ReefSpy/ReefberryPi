@@ -5,7 +5,6 @@ import outleticon from "../../Images/outlet.svg";
 import usericon from "../../Images/user.svg";
 import analogicon from "../../Images/analog.svg";
 import globalicon from "../../Images/global.svg";
-import keyicon from "../../Images/key.svg"
 import OutletPrefsModal from "../OutletPrefs/OutletPrefsModal";
 import ProbePrefsModal from "../ProbePrefs/ProbePrefsModal";
 import TempPrefsModal from "../TempPrefs/TempPrefsModal";
@@ -13,7 +12,6 @@ import UserPrefsModal from "../UserPrefs/UserPrefsModal";
 import ChangePasswordModal from "../ChangePassword/ChangePasswordModal"
 import AddUserModal from "../AddUser/AddUserModal";
 import appicon from "../../Images/reefberrypi-by-reefspy.svg";
-import * as Api from "../Api/Api.js"
 import * as VERSION from "../Version/Version.js"
 
 
