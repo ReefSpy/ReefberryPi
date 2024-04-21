@@ -24,6 +24,7 @@ class App extends Component {
       globalPrefs: null,
       col1rawitems: [],
       loggedin: false,
+      userName: null,
     };
     this.setProbeData = this.setProbeData.bind(this);
     this.setOutletData = this.setOutletData.bind(this);
@@ -258,6 +259,12 @@ class App extends Component {
       window.location.reload();
     }
   }
+  setUser(userName) {
+    console.log(userName);
+    if (userName !== undefined) {
+      sessionStorage.setItem("userName", userName.toLowerCase());
+    }
+  }
 
   logout() {
     sessionStorage.clear();
@@ -266,37 +273,31 @@ class App extends Component {
   render() {
     if (!this.getToken()) {
       console.log("render");
-      return <Login setToken={this.setToken} />;
+      return <Login setToken={this.setToken} setUser={this.setUser} />;
     }
     return (
       <div className="App">
         <div className="appheader">
           <div className="header-desc">
-            
-            
-            {/* {this.state.globalAppDescription} */}
-            
-            
             {!this.state.globalAppDescription == "" ? (
-            this.state.globalAppDescription
-          ) : (
-            <ClipLoader
-              color="#ffffff"
-              loading={true}
-              size={20}
-              aria-label="Loading Spinner"
-              data-testid="loader"
-            />
-          )}
-            
-            
-            </div>
+              this.state.globalAppDescription
+            ) : (
+              <ClipLoader
+                color="#ffffff"
+                loading={true}
+                size={20}
+                aria-label="Loading Spinner"
+                data-testid="loader"
+              />
+            )}
+
+          </div>
+
           <div className="header-center">
             <img className="appicon" src={appicon} alt="logo" />
             <span>Reefberry Pi</span>
           </div>
 
-         
           <div className="header-right">
             <button className="headericonbtn">
               <img
@@ -321,7 +322,6 @@ class App extends Component {
               ></img>
             </button>
           </div>
-    
         </div>
 
         <div>
