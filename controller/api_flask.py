@@ -1673,6 +1673,7 @@ def api_set_add_user(AppPrefs, sqlengine, request):
                                 "msg": "FAIL: User already exists"}
                                )
             response.status_code = 500
+            AppPrefs.logger.error("Add user failed.  User already exists in database: " + username)
             return response
 
     # since user did not exist, lets add to the table
