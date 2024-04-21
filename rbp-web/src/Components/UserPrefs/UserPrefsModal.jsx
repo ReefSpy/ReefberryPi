@@ -39,6 +39,47 @@ const UserPrefsModal = ({
     }
   };
 
+  let handleDeleteClick = () => {
+ 
+    if (window.confirm("Are you sure you want to delete user?")){
+      let authtoken = JSON.parse(sessionStorage.getItem("token")).token
+    return fetch(Api.API_SET_REMOVE_USER, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + authtoken 
+      },
+      body:{activeuser: loggedInUser,
+      targetuser: selectedUser},
+    })
+      .then((response) => {
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Data not found");
+          } else if (response.status === 500) {
+            throw new Error("Server error");
+          } else {
+            throw new Error("Network response was not ok");
+          }
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+        alert("Settings saved successfully.");
+        setModalOpen(false);
+        onClose();
+        onRefreshRequest();
+        //window.location.reload(false);
+        return data;
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+    }
+  };
+
+
   useEffect(() => {
 
     if(selectedUser===undefined){
@@ -162,6 +203,7 @@ const UserPrefsModal = ({
           <button
             className={!delUserButtonDisabled ? "deluserbtn" : "pwbtndisabled"}
             title="Delete User"
+            onClick={handleDeleteClick}
           >
             <img src={deleteIcon} alt="Delete" height="24px" width="24px"></img>
           </button>
