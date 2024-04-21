@@ -34,3 +34,5 @@ export const API_SET_COLUMN_WIDGET_ORDER = `http://${hostname}:${portnum}/set_co
 export const API_GET_COLUMN_WIDGET_ORDER = `http://${hostname}:${portnum}/get_column_widget_order/`;
 export const API_GET_USER_LIST = `http://${hostname}:${portnum}/get_user_list/`;
 export const API_SET_CHANGE_PASSWORD = `http://${hostname}:${portnum}/set_change_password`;
+export const API_SET_REMOVE_USER = `http://${hostname}:${portnum}/set_remove_user`;
+export const API_SET_ADD_USER = `http://${hostname}:${portnum}/set_add_user`;
