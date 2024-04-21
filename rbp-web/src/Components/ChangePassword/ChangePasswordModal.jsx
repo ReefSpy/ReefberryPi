@@ -80,6 +80,7 @@ const ChangePasswordModal = ({
             throw new Error("Server error");
           } else if (response.status === 401){
             alert("Unathorized.  Check password and try again.")
+            return
           }
           
            else {
@@ -89,7 +90,8 @@ const ChangePasswordModal = ({
         return response.json();
       })
       .then((data) => {
-       
+       alert("Password changed successfully.")
+       handleCloseModal()
       })
       .catch((error) => {
         console.error("Error:", error);
