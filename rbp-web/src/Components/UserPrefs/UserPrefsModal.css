@@ -1,0 +1,121 @@
+.usermodal {
+  max-width: 10rem;
+  padding: 2rem;
+  border: 0;
+  border-radius: 0.5rem;
+  position: relative;
+  box-shadow: hsl(0 0% 0% / 10%) 0 0 0.5rem 0.25rem;
+  width: auto;
+}
+
+.userscontainer {
+  display: grid;
+  grid-template-columns: 10rem;
+  grid-template-rows: auto auto auto auto auto auto auto auto;
+}
+
+.userlistlabel {
+  grid-column-start: 1;
+  grid-row-start: 1;
+  font-weight: bold;
+}
+
+.userslistbox {
+  grid-column-start: 1;
+  grid-column-end: 2;
+  grid-row-start: 2;
+  grid-row-end: 8;
+}
+.userSpinner{
+  place-self: center;
+  margin: 10px;
+}
+.adduserbtn {
+  background-color: transparent;
+  border-style: none;
+  border-radius: 5px;
+}
+.adduserbtn:hover {
+  background-color: orange;
+}
+
+.adduserbtn:active {
+  background-color: grey;
+}
+
+.deluserbtn {
+  background-color: transparent;
+  border-style: none;
+  border-radius: 5px;
+}
+.deluserbtn:hover {
+  background-color: orange;
+}
+.deluserbtn:active {
+  background-color: grey;
+}
+
+.chgpwbtn {
+  background-color: transparent;
+  border-style: none;
+  border-radius: 5px;
+}
+.chgpwbtn:hover {
+  background-color: orange;
+}
+.chgpwbtn:active {
+  background-color: grey;
+}
+
+.currentPasswordLabel {
+  grid-column-start: 2;
+  grid-row-start: 2;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.currentPassword {
+  grid-column-start: 2;
+  grid-row-start: 3;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.newPasswordLabel {
+  grid-column-start: 2;
+  grid-row-start: 4;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+.newPassword {
+  grid-column-start: 2;
+  grid-row-start: 5;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.newPasswordConfirmLabel {
+  grid-column-start: 2;
+  grid-row-start: 6;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+.newPasswordConfirm {
+  grid-column-start: 2;
+  grid-row-start: 7;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.userBtnRow {
+  grid-column-start: 1;
+  grid-row-start: 8;
+  grid-row-end: 9;
+}
+
+.pwbtndisabled{
+  opacity: 30%;
+  background-color: transparent;
+  border-style: none;
+
+}

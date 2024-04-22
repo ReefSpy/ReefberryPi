@@ -35,7 +35,7 @@ async function loginUser(credentials) {
     });
 }
 
-export default function Login({ setToken }) {
+export default function Login({ setToken, setUser }) {
   const [username, setUserName] = useState();
   const [password, setPassword] = useState();
   const [isInvalidLogin, setIsInvalidLogin] = useState();
@@ -53,7 +53,9 @@ export default function Login({ setToken }) {
       setIsInvalidLogin(true);
     }
 
+    setUser(username)
     setToken(token);
+    
   };
 
   const updateUserCredentials = (e) => {

@@ -19,7 +19,9 @@ const GlobalPrefsModal = ({
     feedB: globalPrefs.feed_b_time,
     feedC: globalPrefs.feed_c_time,
     feedD: globalPrefs.feed_d_time,
+    description: globalPrefs.app_description
   });
+  const focusInputRef = useRef(null);
 
   const modalRef = useRef(null);
 
@@ -81,6 +83,21 @@ const GlobalPrefsModal = ({
         <div className="form-row">
           <label htmlFor="appuid">Application UID</label>
           <span className="plainlabel">{globalPrefs.appuid}</span>
+        </div>
+
+        <div className="form-row">
+          <label htmlFor="description">Description</label>
+          <input
+            ref={focusInputRef}
+            type="text"
+            id="description"
+            name="description"
+            Value={formState.description}
+            autocomplete="off"
+            onChange={handleInputChange}
+            required
+            //placeholder="Unnamed"
+          />
         </div>
 
         <div className="form-row">

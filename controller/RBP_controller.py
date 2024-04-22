@@ -11,7 +11,7 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 import RPi.GPIO as GPIO
 import GPIO_config
 import dht22
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import ds18b20
 import time
 import numpy
@@ -26,13 +26,14 @@ from sqlalchemy import select
 from sqlalchemy import update
 from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, \
     unset_jwt_cookies, jwt_required, JWTManager
+import json
 
 app = Flask(__name__)
 cors = CORS(app)
 
 app.config['CORS_HEADERS'] = 'Content-Type, Authorization'
 app.config["JWT_SECRET_KEY"] = "supersecret-reefberrypi-key"
-# app.config["JWT_ACCESS_TOKEN_EXPIRES"] = datetime.timedelta(hours=1)
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=8)
 
 # reduce the Flask logging level to error.  Default is Info
 flog = logging.getLogger('werkzeug')
@@ -49,6 +50,16 @@ LOGLEVEL_LOGFILE = logging.INFO
 
 defs_common.initialize_logger(logger, LOG_FILEDIR, LOG_FILENAME,
                               LOGLEVEL_CONSOLE, LOGLEVEL_LOGFILE)
+
+logger.info(
+    "====================================================================")
+logger.info("  ___          __ _                        ___ _ ")
+logger.info(" | _ \___ ___ / _| |__  ___ _ _ _ _ _  _  | _ (_)")
+logger.info(" |   / -_) -_)  _| '_ \/ -_) '_| '_| || | |  _/ |")
+logger.info(" |_|_\___\___|_| |_.__/\___|_| |_|  \_, | |_| |_|")
+logger.info("                                    |__/         ")
+logger.info(
+    "====================================================================")
 
 logger.info("*** Reefberry Pi controller startup ***")
 logger.info("version = " + version.CONTROLLER_VERSION)
@@ -85,6 +96,8 @@ GPIO_config.initGPIO()
 
 # dht22 temperature and humidity sensor
 dht22_sensor = dht22.DHT22
+
+# MARK: App Loop
 
 
 def apploop():
@@ -147,7 +160,7 @@ def apploop():
                         dv_AvgCountsFiltered = 1
                         # values were 1023
                         logger.error("Error collecting data! " + "mcp3008 ch" +
-                              str(AppPrefs.mcp3008Dict[ch].ch_num))
+                                     str(AppPrefs.mcp3008Dict[ch].ch_num))
 
                     if AppPrefs.mcp3008Dict[ch].ch_type == "ph":
                         # bug, somtimes value is coming back high, like really high, like 22.0.  this is an impossible
@@ -166,7 +179,7 @@ def apploop():
                             "{:.2f}".format(dv_AvgCountsFiltered))
 
                         if dv_AvgCountsFiltered > 14:
-                            logger.error("Invalid PH value: " + str(AppPrefs.mcp3008Dict[ch].ch_probeid) + " " +  str(dv_AvgCountsFiltered) +
+                            logger.error("Invalid PH value: " + str(AppPrefs.mcp3008Dict[ch].ch_probeid) + " " + str(dv_AvgCountsFiltered) +
                                          " " + str(orgval) + " " + str(dv_dvlistfiltered))
 
                     # if enough time has passed (ph_LogInterval) then log the data to file
@@ -183,8 +196,8 @@ def apploop():
                         AppPrefs.mcp3008Dict[ch].LastLogTime = int(
                             round(time.time()*1000))
                     else:
-                        logger.debug (timestamp.strftime("%Y-%m-%d %H:%M:%S") + " dv = "
-                              + "{:.2f}".format(dv_AvgCountsFiltered))
+                        logger.debug(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " dv = "
+                                     + "{:.2f}".format(dv_AvgCountsFiltered))
 
                     AppPrefs.mcp3008Dict[ch].lastValue = str(
                         dv_AvgCountsFiltered)
@@ -194,12 +207,11 @@ def apploop():
                     AppPrefs.dv_SamplingTimeSeed = int(
                         round(time.time()*1000))  # convert time to milliseconds
 
-
         ##########################################################################################
         # ds18b20 Temperture sensors
         ##########################################################################################
         # reading ds18b20 is moved to its own thread DStemploop() which starts down below
-        
+
         ##########################################################################################
         # dht22 temp and humidity data
         ##########################################################################################
@@ -301,10 +313,13 @@ def apploop():
         logger.debug("******************************************************")
         time.sleep(1)
 
+# MARK: DStemploop
+
+
 def DStemploop():
     global AppPrefs
-    global Influx_client 
-    global Influx_write_api 
+    global Influx_client
+    global Influx_write_api
 
     while True:
         try:
@@ -315,7 +330,7 @@ def DStemploop():
 
                     dstempC = float(ds18b20.read_temp(
                         AppPrefs.tempProbeDict.get(tProbe).serialnum, "C"))
-            
+
                     # dstempC = float(ds18b20.read_temp("111", "C"))
 
                     # logger.info(str(dstempC) + " C")
@@ -330,7 +345,7 @@ def DStemploop():
 
                     # print("ds18b20 Temp = " + str(dstempC) + "C / " + str(dstempF) + "F")
                     logger.debug(AppPrefs.tempProbeDict.get(tProbe).probeid + " Temp = " + str(dstempC) +
-                                "C / " + str(dstempF) + "F")
+                                 "C / " + str(dstempF) + "F")
 
                     if AppPrefs.temperaturescale == "F":
                         AppPrefs.tempProbeDict.get(
@@ -340,20 +355,24 @@ def DStemploop():
                             tProbe).lastTemperature = str(dstempC)
 
                 except Exception as e:
-                    logger.error("Unable to read ds18b20 temperature! " + str(e))
+                    logger.error(
+                        "Unable to read ds18b20 temperature! " + str(e))
                     AppPrefs.tempProbeDict.get(
-                                tProbe).lastTemperature = ""
-                                
+                        tProbe).lastTemperature = ""
+
         except Exception as e:
             logger.error("Error reading ds18b20 temperature! " + str(e))
 
-        # slow down the loop        
+        # slow down the loop
         time.sleep(1)
+
+# MARK: DHTloop
+
 
 def DHTloop():
     global AppPrefs
-    global Influx_client 
-    global Influx_write_api 
+    global Influx_client
+    global Influx_write_api
 
     ###################################################################
     # dht22 temp and humidity data
@@ -387,23 +406,25 @@ def DHTloop():
                     "appuid": AppPrefs.appuid, "probeid": "DHT-T"}, "fields": {"value": float(temp_f)}, "time": datetime.utcnow()}])
 
                 logger.debug("dht22 Temp = " + str(temp_c) +
-                                "C / " + str(temp_f) + "F")
+                             "C / " + str(temp_f) + "F")
                 # sometimes we get an invalid reading for humidity, ignore any obviously bad reading
                 if float(hum) <= 100:
                     logger.debug("dht22 Humidity = " + str(hum) + "%")
                     Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "humidity", "tags": {
                         "appuid": AppPrefs.appuid, "probeid": "DHT-H"}, "fields": {"value": float(hum)}, "time": datetime.utcnow()}])
                 else:
-                    logger.error("dht22 Humidity out of range, ignoring: " + str(hum) + "%")
+                    logger.error(
+                        "dht22 Humidity out of range, ignoring: " + str(hum) + "%")
             except Exception as e:
                 logger.error(
                     "Error logging DHT data to InfluxDB!" + str(e))
-            # slow down the loop        
+            # slow down the loop
         time.sleep(1)
 
 #########################################################################
 # THREADS
 #########################################################################
+
 
 MAINthread = threading.Thread(target=apploop)
 MAINthread.start()
@@ -415,46 +436,44 @@ DSthread = threading.Thread(target=DStemploop)
 DSthread.start()
 
 
+# MARK: Flask API
 #########################################################################
 # FLASK
 # Define the Flask routes
 #########################################################################
 
+#########################################################################
+# refresh tokens
+# Refresh the token after a request is made to a protected endpoint, 
+# this ensures we won't get signed out prematurely
+#########################################################################
+
+@app.after_request
+def refresh_expiring_jwts(response):
+    try:
+        exp_timestamp = get_jwt()["exp"]
+        now = datetime.now(timezone.utc)
+        target_timestamp = datetime.timestamp(now + timedelta(minutes=30))
+        if target_timestamp > exp_timestamp:
+            access_token = create_access_token(identity=get_jwt_identity())
+            data = response.get_json()
+            if type(data) is dict:
+                data["token"] = access_token 
+                response.data = json.dumps(data)
+        return response
+    except (RuntimeError, KeyError):
+        # Case where there is not a valid JWT. Just return the original response
+        return response
+
+###########################################################################
+# just a simple endpoint.  Let people know the service is alive
+###########################################################################
+
 @app.route('/')
 def index():
-    return 'Hello, ReefberryPi!'
+    return ('Hello from Reefberry Pi! <br> <br> controller version: ' + version.CONTROLLER_VERSION + '<br> <br> ><(((º>')
 
 
-@app.route('/set_var1/<int:value>')
-def set_var1(value):
-    global var1
-    var1 = value
-    return f"var1 set to {value}"
-
-
-@app.route('/set_var2/<int:value>')
-def set_var2(value):
-    global var2
-    var2 = value
-    return f"var2 set to {value}"
-
-
-@app.route('/get_vars')
-def get_vars():
-    global var1, var2
-    return jsonify({'var1': var1, 'var2': var2})
-
-
-@app.route('/reloadprefs/')
-def reloadprefs():
-    global AppPrefs
-    global mySQLDB
-    global logger
-
-    defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
-    defs_mysql.readGlobalPrefs_ex(sqlengine, AppPrefs, logger)
-    defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
-    return "Reload Prefs"
 
 #####################################################################
 # set_feedmode
@@ -462,213 +481,50 @@ def reloadprefs():
 #####################################################################
 
 
-@app.route('/set_feedmode/<value>')
+@app.route('/set_feedmode', methods=['POST'])
 @cross_origin()
-def set_feedmode(value):
-    global AppPrefs
-    AppPrefs.logger.info("Set feed mode: " + value)
-    AppPrefs.feed_CurrentMode = value
-    AppPrefs.feed_SamplingTimeSeed = int(
-        round(time.time()*1000))  # convert time to milliseconds
-    AppPrefs.feed_PreviousMode = "CANCEL"
+@jwt_required()
+def set_feedmode():
+    try:
+        global AppPrefs
 
-    response = jsonify({"msg": f'Set Feed Mode {value}',
-                        "appuid": AppPrefs.appuid,
-                        "feed_SamplingTimeSeed": AppPrefs.feed_SamplingTimeSeed
-                        })
+        value = api_flask.api_set_feed_mode(AppPrefs, sqlengine, request)
 
-    response.status_code = 200
+        response = {}
+        response = jsonify({"msg": f'Set Feed Mode {value}',
+                            "appuid": AppPrefs.appuid,
+                            "feed_SamplingTimeSeed": AppPrefs.feed_SamplingTimeSeed
+                            })
+        response.status_code = 200
+        return response
 
-    return response
+    except Exception as e:
+        AppPrefs.logger.error("set_feedmode: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
 
-
-#####################################################################
-# set_outlet_light
-# set the parameters for a light outlet
-#####################################################################
-@app.route('/set_outlet_light/', methods=['GET'])
-@cross_origin()
-def set_outlet_light():
-    global AppPrefs
-    global sqlengine
-
-    # build table object from table in DB
-    metadata_obj = MetaData()
-    outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-    params = request.args.to_dict()
-
-    print(params)
-
-    AppPrefs.appuid = params["appuid"]
-    AppPrefs.outletDict[params["outletid"]].outletname = params["outletname"]
-    AppPrefs.outletDict[params["outletid"]
-                        ].control_type = params["control_type"]
-    AppPrefs.outletDict[params["outletid"]].enable_log = params["enable_log"]
-    AppPrefs.outletDict[params["outletid"]
-                        ].button_state = params["button_state"]
-    AppPrefs.outletDict[params["outletid"]].light_on = params["light_on"]
-    AppPrefs.outletDict[params["outletid"]].light_off = params["light_off"]
-
-    stmt = (
-        update(outlet_table)
-        .where(outlet_table.c.outletid == AppPrefs.outletDict[params["outletid"]].outletid)
-        .where(outlet_table.c.appuid == AppPrefs.appuid)
-        .values(outletname=AppPrefs.outletDict[params["outletid"]].outletname,
-                control_type=AppPrefs.outletDict[params["outletid"]
-                                                 ].control_type,
-                enable_log=AppPrefs.outletDict[params["outletid"]].enable_log,
-                button_state=AppPrefs.outletDict[params["outletid"]
-                                                 ].button_state,
-                light_on=AppPrefs.outletDict[params["outletid"]].light_on,
-                light_off=AppPrefs.outletDict[params["outletid"]].light_off
-                )
-    )
-    conn = sqlengine.connect()
-
-    conn.execute(stmt)
-    conn.commit()
-
-    return f"Looking for {params}"
 
 #####################################################################
 # get_outlet_list
 # return list of outlets on the internal bus
 #####################################################################
 
-
 @app.route('/get_outlet_list/', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_outlet_list():
-
     try:
         global AppPrefs
-
-        outletdict = {}
-
-        # loop through each outlet
-        for outlet in AppPrefs.outletDict:
-            #           convert temperature values to F if using Fahrenheit
-            if AppPrefs.temperaturescale == "F":
-                heater_on_x = defs_common.convertCtoF(
-                    AppPrefs.outletDict[outlet].heater_on)
-                heater_off_x = defs_common.convertCtoF(
-                    AppPrefs.outletDict[outlet].heater_off)
-            else:
-                heater_on_x = AppPrefs.outletDict[outlet].heater_on
-                heater_off_x = AppPrefs.outletDict[outlet].heater_off
-
-            outletdict[outlet] = {"outletid": AppPrefs.outletDict[outlet].outletid,
-                                  "outletname": AppPrefs.outletDict[outlet].outletname,
-                                  "control_type": AppPrefs.outletDict[outlet].control_type,
-                                  "outletstatus": AppPrefs.outletDict[outlet].outletstatus,
-                                  "button_state": AppPrefs.outletDict[outlet].button_state,
-                                  "heater_on": heater_on_x,
-                                  "heater_off": heater_off_x,
-                                  "heater_probe": AppPrefs.outletDict[outlet].heater_probe,
-                                  "light_on": AppPrefs.outletDict[outlet].light_on,
-                                  "light_off": AppPrefs.outletDict[outlet].light_off,
-                                  "always_state": AppPrefs.outletDict[outlet].always_state,
-                                  "return_enable_feed_a": (AppPrefs.outletDict[outlet].return_enable_feed_a).lower() == "true",
-                                  "return_enable_feed_b": (AppPrefs.outletDict[outlet].return_enable_feed_b).lower() == "true",
-                                  "return_enable_feed_c": (AppPrefs.outletDict[outlet].return_enable_feed_c).lower() == "true",
-                                  "return_enable_feed_d": (AppPrefs.outletDict[outlet].return_enable_feed_d).lower() == "true",
-                                  "return_feed_delay_a": AppPrefs.outletDict[outlet].return_feed_delay_a,
-                                  "return_feed_delay_b": AppPrefs.outletDict[outlet].return_feed_delay_b,
-                                  "return_feed_delay_c": AppPrefs.outletDict[outlet].return_feed_delay_c,
-                                  "return_feed_delay_d": AppPrefs.outletDict[outlet].return_feed_delay_d,
-
-                                  "skimmer_enable_feed_a": (AppPrefs.outletDict[outlet].skimmer_enable_feed_a).lower() == "true",
-                                  "skimmer_enable_feed_b": (AppPrefs.outletDict[outlet].skimmer_enable_feed_b).lower() == "true",
-                                  "skimmer_enable_feed_c": (AppPrefs.outletDict[outlet].skimmer_enable_feed_c).lower() == "true",
-                                  "skimmer_enable_feed_d": (AppPrefs.outletDict[outlet].skimmer_enable_feed_d).lower() == "true",
-                                  "skimmer_feed_delay_a": AppPrefs.outletDict[outlet].skimmer_feed_delay_a,
-                                  "skimmer_feed_delay_b": AppPrefs.outletDict[outlet].skimmer_feed_delay_b,
-                                  "skimmer_feed_delay_c": AppPrefs.outletDict[outlet].skimmer_feed_delay_c,
-                                  "skimmer_feed_delay_d": AppPrefs.outletDict[outlet].skimmer_feed_delay_d,
-
-                                  "enabled": AppPrefs.outletDict[outlet].enabled,
-
-                                  }
-
-        if len(outletdict) < 8:
-            return "Error getting list"
-        else:
-            return outletdict
+        outletlist = api_flask.api_get_outlet_list(AppPrefs, request)
+        return outletlist
 
     except Exception as e:
         AppPrefs.logger.error("get_outlet_list: " + str(e))
-
-#####################################################################
-# get_tempprobe_list
-# return list of ds18b20 temperature probes
-#####################################################################
-
-
-@app.route('/get_tempprobe_list/', methods=['GET'])
-@cross_origin()
-def get_tempprobe_list():
-
-    try:
-        global AppPrefs
-
-        probedict = {}
-
-        # loop through each section
-        for probe in AppPrefs.tempProbeDict:
-            probedict[probe] = {"probetype": "ds18b20",
-                                "probeid": AppPrefs.tempProbeDict[probe].probeid,
-                                "probename": AppPrefs.tempProbeDict[probe].name,
-                                "sensortype": "temperature",
-                                "lastValue": AppPrefs.tempProbeDict[probe].lastTemperature}
-
-        return probedict
-
-    except Exception as e:
-        AppPrefs.logger.error("get_tempprobe_list: " + str(e))
-
-#####################################################################
-# get_dht_sensor
-# return values of dht temperature/humidity sensor if enabled
-#####################################################################
-
-
-@app.route('/get_dht_sensor/', methods=['GET'])
-@cross_origin()
-def get_dht_sensor():
-
-    try:
-        global AppPrefs
-
-        dhtdict = {}
-        print(dhtdict)
-        if AppPrefs.dht_enable == "true":
-            dhtdict["DHT-T"] = {"sensortype": AppPrefs.dhtDict["DHT-T"].sensortype,
-                                "probename": AppPrefs.dhtDict["DHT-T"].name,
-                                "probeid": AppPrefs.dhtDict["DHT-T"].probeid,
-                                "probetype": "DHT",
-                                "lastValue": AppPrefs.dhtDict["DHT-T"].lastValue}
-            dhtdict["DHT-H"] = {"sensortype": AppPrefs.dhtDict["DHT-H"].sensortype,
-                                "probename": AppPrefs.dhtDict["DHT-H"].name,
-                                "probeid": AppPrefs.dhtDict["DHT-H"].probeid,
-                                "probetype": "DHT",
-                                "lastValue": AppPrefs.dhtDict["DHT-H"].lastValue}
-
-            return dhtdict
-        else:
-            response = jsonify({"msg": 'DHT Disabled',
-                                "dht_enable": 'false'
-                                })
-
-            response.status_code = 200
-
-            return response
-
-    except Exception as e:
-        AppPrefs.logger.error("get_dht_sensor: " + str(e))
         response = jsonify({"msg": str(e)})
         response.status_code = 500
         return response
+
 
 #####################################################################
 # get_chartdata_24hr
@@ -680,40 +536,14 @@ def get_dht_sensor():
 
 @app.route('/get_chartdata_24hr/<probeid>/<unit>', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_chartdata_24hr(probeid, unit):
 
+    global AppPrefs
+
     try:
-        global AppPrefs
-        if unit == "temperature":
-            if AppPrefs.temperaturescale == "F":
-                unit = "temperature_f"
-            else:
-                unit = "temperature_c"
-
-        bucket = "reefberrypi_probe_1dy"
-
-        query_api = Influx_client.query_api()
-
-        query = f'from(bucket: "reefberrypi_probe_1dy") \
-        |> range(start: -24h) \
-        |> filter(fn: (r) => r["_measurement"] == "{unit}") \
-        |> filter(fn: (r) => r["_field"] == "value") \
-        |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
-        |> filter(fn: (r) => r["probeid"] == "{probeid}") \
-        |> aggregateWindow(every: 10m, fn: mean, createEmpty: false) \
-        |> yield(name: "mean")'
-
-        result = query_api.query(org=AppPrefs.influxdb_org, query=query)
-
-        results = []
-        for table in result:
-            for record in table.records:
-                results.append((record.get_time(), record.get_value()))
-
-        # for result in results:
-        #     format_string = '%Y-%m-%d %H:%M:%S'
-        #     date_string = result[0].strftime(format_string)
-        #     #print(date_string)
+        results = api_flask.api_get_chartdata_24hr(
+            AppPrefs, Influx_client, probeid, unit, request)
 
         return results
 
@@ -730,35 +560,12 @@ def get_chartdata_24hr(probeid, unit):
 
 @app.route('/get_chartdata_1hr/<probeid>/<unit>', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_chartdata_1hr(probeid, unit):
-
+    global AppPrefs
     try:
-        global AppPrefs
-        if unit == "temperature":
-            if AppPrefs.temperaturescale == "F":
-                unit = "temperature_f"
-            else:
-                unit = "temperature_c"
-
-        bucket = "reefberrypi_probe_1hr"
-
-        query_api = Influx_client.query_api()
-
-        query = f'from(bucket: "reefberrypi_probe_1hr") \
-        |> range(start: -1h) \
-        |> filter(fn: (r) => r["_measurement"] == "{unit}") \
-        |> filter(fn: (r) => r["_field"] == "value") \
-        |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
-        |> filter(fn: (r) => r["probeid"] == "{probeid}") \
-        |> aggregateWindow(every: 30s, fn: mean, createEmpty: false) \
-        |> yield(name: "mean")'
-
-        result = query_api.query(org=AppPrefs.influxdb_org, query=query)
-
-        results = []
-        for table in result:
-            for record in table.records:
-                results.append((record.get_time(), record.get_value()))
+        results = api_flask.api_get_chartdata_1hr(
+            AppPrefs, Influx_client, probeid, unit, request)
 
         return results
 
@@ -775,35 +582,12 @@ def get_chartdata_1hr(probeid, unit):
 
 @app.route('/get_chartdata_1wk/<probeid>/<unit>', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_chartdata_1wk(probeid, unit):
-
+    global AppPrefs
     try:
-        global AppPrefs
-        if unit == "temperature":
-            if AppPrefs.temperaturescale == "F":
-                unit = "temperature_f"
-            else:
-                unit = "temperature_c"
-
-        bucket = "reefberrypi_probe_1wk"
-
-        query_api = Influx_client.query_api()
-
-        query = f'from(bucket: "reefberrypi_probe_1wk") \
-        |> range(start: -7d) \
-        |> filter(fn: (r) => r["_measurement"] == "{unit}") \
-        |> filter(fn: (r) => r["_field"] == "value") \
-        |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
-        |> filter(fn: (r) => r["probeid"] == "{probeid}") \
-        |> aggregateWindow(every: 15m, fn: mean, createEmpty: false) \
-        |> yield(name: "mean")'
-
-        result = query_api.query(org=AppPrefs.influxdb_org, query=query)
-
-        results = []
-        for table in result:
-            for record in table.records:
-                results.append((record.get_time(), record.get_value()))
+        results = api_flask.api_get_chartdata_1wk(
+            AppPrefs, Influx_client, probeid, unit, request)
 
         return results
 
@@ -820,88 +604,37 @@ def get_chartdata_1wk(probeid, unit):
 
 @app.route('/get_chartdata_1mo/<probeid>/<unit>', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_chartdata_1mo(probeid, unit):
-
+    global AppPrefs
     try:
-        global AppPrefs
-        if unit == "temperature":
-            if AppPrefs.temperaturescale == "F":
-                unit = "temperature_f"
-            else:
-                unit = "temperature_c"
-
-        bucket = "reefberrypi_probe_1wk"
-
-        query_api = Influx_client.query_api()
-
-        query = f'from(bucket: "reefberrypi_probe_1mo") \
-        |> range(start: -30d) \
-        |> filter(fn: (r) => r["_measurement"] == "{unit}") \
-        |> filter(fn: (r) => r["_field"] == "value") \
-        |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
-        |> filter(fn: (r) => r["probeid"] == "{probeid}") \
-        |> aggregateWindow(every: 1h, fn: mean, createEmpty: false) \
-        |> yield(name: "mean")'
-
-        result = query_api.query(org=AppPrefs.influxdb_org, query=query)
-
-        results = []
-        for table in result:
-            for record in table.records:
-                results.append((record.get_time(), record.get_value()))
+        results = api_flask.api_get_chartdata_1mo(
+            AppPrefs, Influx_client, probeid, unit, request)
 
         return results
 
     except Exception as e:
         AppPrefs.logger.error("get_chartdata_1mo: " + str(e))
 #####################################################################
-# put_outlet_buttonstate
+# set_outlet_buttonstate
 # change the value of button state
 # must specify outlet ID and either ON, OFF, or AUTO
 #####################################################################
 
 
-@app.route('/put_outlet_buttonstate/<outletid>/<buttonstate>', methods=['GET', 'PUT'])
+@app.route('/set_outlet_buttonstate/<outletid>/<buttonstate>', methods=['GET', 'PUT'])
 @cross_origin()
-def put_outlet_buttonstate(outletid, buttonstate):
-    global logger
-
+@jwt_required()
+def set_outlet_buttonstate(outletid, buttonstate):
+    global AppPrefs
     try:
-        global AppPrefs
 
-        # build table object from table in DB
-        metadata_obj = MetaData()
-
-        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == outletid)
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(button_state=buttonstate)
-        )
-
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
-        AppPrefs.outletDict[outletid].button_state = buttonstate
-        AppPrefs.outletDict[outletid].outletstatus = buttonstate
-
-        response = {}
-        response = jsonify({"msg": 'Set outlet button state',
-                            "appuid": AppPrefs.appuid,
-                            "outletid": outletid,
-                            "buttonstate": buttonstate
-                            })
-
-        response.status_code = 200
-
+        response = api_flask.api_set_outlet_buttonstate(
+            AppPrefs, sqlengine, outletid, buttonstate, request)
         return response
 
     except Exception as e:
-        AppPrefs.logger.error("put_outlet_buttonstate: " + str(e))
+        AppPrefs.logger.error("set_outlet_buttonstate: " + str(e))
 
 
 #####################################################################
@@ -911,37 +644,12 @@ def put_outlet_buttonstate(outletid, buttonstate):
 #####################################################################
 @app.route('/set_probe_name/<probeid>/<probename>', methods=['GET', 'PUT'])
 @cross_origin()
+@jwt_required()
 def set_probe_name(probeid, probename):
-    global logger
-
+    global AppPrefs
     try:
-        global AppPrefs
-        # build table object from table in DB
-        metadata_obj = MetaData()
-        probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
-
-        stmt = (
-            update(probe_table)
-            .where(probe_table.c.probeid == probeid)
-            .where(probe_table.c.appuid == AppPrefs.appuid)
-            .values(name=probename)
-        )
-
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
-        defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
-        defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, logger)
-
-        response = {}
-        response = jsonify({"msg": 'Updated probe name',
-                            "probeid": probeid,
-                            "probename": probename,
-                            })
-
-        response.status_code = 200
+        response = api_flask.api_set_probe_name(
+            AppPrefs, sqlengine, probeid, probename, request)
         return response
 
     except Exception as e:
@@ -950,53 +658,27 @@ def set_probe_name(probeid, probename):
         response.status_code = 500
         return response
 
-#####################################################################
-# set_probe_enable_state
-# set the enable state of the probe
-# must specify ProbeID and true or false
-#####################################################################
+# #####################################################################
+# # set_probe_enable_state
+# # set the enable state of the probe
+# # must specify ProbeID and true or false
+# #####################################################################
 
 
-@app.route('/set_probe_enable_state/<probeid>/<enable>', methods=['PUT'])
-@cross_origin()
-def set_probe_enable_state(probeid, enable):
-    global logger
+# @app.route('/set_probe_enable_state/<probeid>/<enable>', methods=['PUT'])
+# @cross_origin()
+# def set_probe_enable_state(probeid, enable):
+#     global AppPrefs
+#     try:
+#         response = api_flask.api_set_probe_enable_state(
+#             AppPrefs, sqlengine, probeid, enable, request)
+#         return response
 
-    try:
-        global AppPrefs
-        # build table object from table in DB
-        metadata_obj = MetaData()
-        probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
-
-        stmt = (
-            update(probe_table)
-            .where(probe_table.c.probeid == probeid)
-            .where(probe_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=enable)
-        )
-
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
-        defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
-        defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, logger)
-
-        response = {}
-        response = jsonify({"msg": 'Updated probe enabled state',
-                            "probeid": probeid,
-                            "enabled": enable,
-                            })
-
-        response.status_code = 200
-        return response
-
-    except Exception as e:
-        AppPrefs.logger.error("set_probe_enable_state: " + str(e))
-        response = jsonify({"msg": str(e)})
-        response.status_code = 500
-        return response
+#     except Exception as e:
+#         AppPrefs.logger.error("set_probe_enable_state: " + str(e))
+#         response = jsonify({"msg": str(e)})
+#         response.status_code = 500
+#         return response
 
 #####################################################################
 # set_mcp3008_enable_state
@@ -1007,129 +689,13 @@ def set_probe_enable_state(probeid, enable):
 
 @app.route('/set_mcp3008_enable_state', methods=['POST'])
 @cross_origin()
+@jwt_required()
 def set_mcp3008_enable_state():
+    global AppPrefs
     try:
-        global logger
 
-        ch0_enable = str(request.json.get(
-            "adc_enable_channel_0", None)).lower()
-        ch1_enable = str(request.json.get(
-            "adc_enable_channel_1", None)).lower()
-        ch2_enable = str(request.json.get(
-            "adc_enable_channel_2", None)).lower()
-        ch3_enable = str(request.json.get(
-            "adc_enable_channel_3", None)).lower()
-        ch4_enable = str(request.json.get(
-            "adc_enable_channel_4", None)).lower()
-        ch5_enable = str(request.json.get(
-            "adc_enable_channel_5", None)).lower()
-        ch6_enable = str(request.json.get(
-            "adc_enable_channel_6", None)).lower()
-        ch7_enable = str(request.json.get(
-            "adc_enable_channel_7", None)).lower()
-
-        global AppPrefs
-        # build table object from table in DB
-        metadata_obj = MetaData()
-        probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
-
-        # channel 0
-        stmt = (
-            update(probe_table)
-            .where(probe_table.c.probeid == "mcp3008_ch0")
-            .where(probe_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=ch0_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # channel 1
-        stmt = (
-            update(probe_table)
-            .where(probe_table.c.probeid == "mcp3008_ch1")
-            .where(probe_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=ch1_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # channel 2
-        stmt = (
-            update(probe_table)
-            .where(probe_table.c.probeid == "mcp3008_ch2")
-            .where(probe_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=ch2_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # channel 3
-        stmt = (
-            update(probe_table)
-            .where(probe_table.c.probeid == "mcp3008_ch3")
-            .where(probe_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=ch3_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # channel 4
-        stmt = (
-            update(probe_table)
-            .where(probe_table.c.probeid == "mcp3008_ch4")
-            .where(probe_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=ch4_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # channel 5
-        stmt = (
-            update(probe_table)
-            .where(probe_table.c.probeid == "mcp3008_ch5")
-            .where(probe_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=ch5_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # channel 6
-        stmt = (
-            update(probe_table)
-            .where(probe_table.c.probeid == "mcp3008_ch6")
-            .where(probe_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=ch6_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # channel 7
-        stmt = (
-            update(probe_table)
-            .where(probe_table.c.probeid == "mcp3008_ch7")
-            .where(probe_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=ch7_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # defs_mysql.readTempProbes_ex(sqlengine, AppPrefs, logger)
-        # defs_mysql.readDHTSensor_ex(sqlengine, AppPrefs, logger)
-        defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, logger)
-
-        response = {}
-        response = jsonify({"msg": 'Updated mcp3008 enabled state',
-                            })
-
-        response.status_code = 200
+        response = api_flask.api_set_mcp3008_enable_state(
+            AppPrefs, sqlengine, request)
         return response
 
     except Exception as e:
@@ -1143,130 +709,18 @@ def set_mcp3008_enable_state():
 # set the enable state of the outlet
 # must specify ProbeID and true or false
 #####################################################################
+
+
 @app.route('/set_outlet_enable_state', methods=['POST'])
 @cross_origin()
+@jwt_required()
 def set_outlet_enable_state():
+    global AppPrefs
     try:
-        global logger
 
-        int_outlet_1_enable = str(request.json.get(
-            "enable_int_outlet_1", None)).lower()
-        int_outlet_2_enable = str(request.json.get(
-            "enable_int_outlet_2", None)).lower()
-        int_outlet_3_enable = str(request.json.get(
-            "enable_int_outlet_3", None)).lower()
-        int_outlet_4_enable = str(request.json.get(
-            "enable_int_outlet_4", None)).lower()
-        int_outlet_5_enable = str(request.json.get(
-            "enable_int_outlet_5", None)).lower()
-        int_outlet_6_enable = str(request.json.get(
-            "enable_int_outlet_6", None)).lower()
-        int_outlet_7_enable = str(request.json.get(
-            "enable_int_outlet_7", None)).lower()
-        int_outlet_8_enable = str(request.json.get(
-            "enable_int_outlet_8", None)).lower()
+        response = api_flask.api_set_outlet_enable_state(
+            AppPrefs, sqlengine, request)
 
-
-        global AppPrefs
-        # build table object from table in DB
-        metadata_obj = MetaData()
-        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-        # outlet 1
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_1")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_1_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # outlet 2
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_2")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_2_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # outlet 3
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_3")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_3_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # outlet 4
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_4")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_4_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # outlet 5
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_5")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_5_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # outlet 6
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_6")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_6_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # outlet 7
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_7")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_7_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # outlet 8
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == "int_outlet_8")
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(enabled=int_outlet_8_enable)
-        )
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
-
-        response = {}
-        response = jsonify({"msg": 'Updated outlet enabled state',
-                            })
-
-        response.status_code = 200
         return response
 
     except Exception as e:
@@ -1274,7 +728,7 @@ def set_outlet_enable_state():
         response = jsonify({"msg": str(e)})
         response.status_code = 500
         return response
-    
+
 #####################################################################
 # set_outlet_params_light/<outletid>
 # set the paramters for outlet of type: Light
@@ -1284,47 +738,12 @@ def set_outlet_enable_state():
 
 @app.route('/set_outlet_params_light/<outletid>', methods=["PUT", "POST"])
 @cross_origin()
+@jwt_required()
 def set_outlet_params_light(outletid):
-    global logger
-
+    global AppPrefs
     try:
-        global AppPrefs
-
-        print(outletid)
-        response = {}
-        payload = request.get_json()
-        print(payload)
-        light_on = payload["light_on"]
-        light_off = payload["light_off"]
-        outletname = payload["outletname"]
-        control_type = payload["control_type"]
-
-        response = jsonify({"msg": 'Updated outlet data for type: Light',
-                            "outletid": outletid,
-                            "outletname": outletname,
-                            "control_type": control_type,
-                            "light_on": light_on,
-                            "light_off": light_off,
-                            })
-
-        response.status_code = 200
-
-        # build table object from table in DB
-        metadata_obj = MetaData()
-        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == outletid)
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(outletname=outletname, light_on=light_on, light_off=light_off, control_type=control_type)
-        )
-
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
+        response = api_flask.api_set_outlet_params_light(
+            AppPrefs, sqlengine, outletid, request)
 
         return response
 
@@ -1340,47 +759,14 @@ def set_outlet_params_light(outletid):
 
 @app.route('/set_outlet_params_always/<outletid>', methods=["PUT", "POST"])
 @cross_origin()
+@jwt_required()
 def set_outlet_params_always(outletid):
-    global logger
-
+    global AppPrefs
     try:
-        global AppPrefs
-
-        print(outletid)
-        response = {}
-        payload = request.get_json()
-        print(payload)
-        always_state = payload["always_state"]
-        outletname = payload["outletname"]
-        control_type = payload["control_type"]
-
-        response = jsonify({"msg": 'Updated outlet data for type: Always',
-                            "outletid": outletid,
-                            "outletname": outletname,
-                            "control_type": control_type,
-                            "always_state": always_state,
-                            })
-
-        response.status_code = 200
-
-        # build table object from table in DB
-        metadata_obj = MetaData()
-        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == outletid)
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(outletname=outletname, always_state=always_state, control_type=control_type)
-        )
-
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
-
+        response = api_flask.api_set_outlet_params_always(AppPrefs, sqlengine, outletid, request)
+        
         return response
+
 
     except Exception as e:
         AppPrefs.logger.error("set_outlet_params_always: " + str(e))
@@ -1394,55 +780,14 @@ def set_outlet_params_always(outletid):
 
 @app.route('/set_outlet_params_heater/<outletid>', methods=["PUT", "POST"])
 @cross_origin()
+@jwt_required()
 def set_outlet_params_heater(outletid):
-    global logger
-
+    global AppPrefs
     try:
-        global AppPrefs
-
-        print(outletid)
-        response = {}
-        payload = request.get_json()
-        print(payload)
-        heater_on = payload["heater_on"]
-        heater_off = payload["heater_off"]
-        heater_probe = payload["heater_probe"]
-        outletname = payload["outletname"]
-        control_type = payload["control_type"]
-
-        if AppPrefs.temperaturescale == "F":
-            heater_on = defs_common.convertFtoC(heater_on)
-            heater_off = defs_common.convertFtoC(heater_off)
-
-        response = jsonify({"msg": 'Updated outlet data for type: Heater',
-                            "outletid": outletid,
-                            "outletname": outletname,
-                            "control_type": control_type,
-                            "heater_on": heater_on,
-                            "heater_off": heater_off,
-                            "heater_probe": heater_probe,
-                            })
-
-        response.status_code = 200
-
-        # build table object from table in DB
-        metadata_obj = MetaData()
-        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == outletid)
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(outletname=outletname, heater_on=heater_on, heater_off=heater_off, heater_probe=heater_probe, control_type=control_type)
-        )
-
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
-
-        return response
+       
+        response = api_flask.api_set_outlet_params_heater(AppPrefs, sqlengine, outletid, request)
+        return response 
+    
 
     except Exception as e:
         AppPrefs.logger.error("set_outlet_params_heater: " + str(e))
@@ -1459,51 +804,16 @@ def set_outlet_params_heater(outletid):
 
 @app.route('/set_outlet_params_ph/<outletid>', methods=["PUT", "POST"])
 @cross_origin()
+@jwt_required()
 def set_outlet_params_ph(outletid):
-    global logger
 
+    global AppPrefs
     try:
-        global AppPrefs
-
-        response = {}
-        payload = request.get_json()
-        ph_low = payload["ph_low"]
-        ph_high = payload["ph_high"]
-        ph_probe = payload["ph_probe"]
-        ph_onwhen = payload["ph_onwhen"]
-        outletname = payload["outletname"]
-        control_type = payload["control_type"]
-
-        response = jsonify({"msg": 'Updated outlet data for type: PH',
-                            "outletid": outletid,
-                            "outletname": outletname,
-                            "control_type": control_type,
-                            "ph_low": ph_low,
-                            "ph_high": ph_high,
-                            "ph_onwhen": ph_onwhen,
-                            "ph_probe": ph_probe,
-                            })
-
-        response.status_code = 200
-
-        # build table object from table in DB
-        metadata_obj = MetaData()
-        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == outletid)
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(outletname=outletname, ph_low=ph_low, ph_high=ph_high, ph_onwhen=ph_onwhen, ph_probe=ph_probe, control_type=control_type)
-        )
-
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
-
+        
+        response = api_flask.api_set_outlet_params_ph(AppPrefs, sqlengine, outletid, request)
+        
         return response
+        
 
     except Exception as e:
         AppPrefs.logger.error("set_outlet_params_ph: " + str(e))
@@ -1520,71 +830,16 @@ def set_outlet_params_ph(outletid):
 
 @app.route('/set_outlet_params_return/<outletid>', methods=["PUT", "POST"])
 @cross_origin()
+@jwt_required()
 def set_outlet_params_return(outletid):
-    global logger
 
+    global AppPrefs
     try:
-        global AppPrefs
-
-        print(outletid)
-        response = {}
-        payload = request.get_json()
-        print(payload)
-        return_enable_feed_a = payload["return_enable_feed_a"]
-        return_enable_feed_b = payload["return_enable_feed_b"]
-        return_enable_feed_c = payload["return_enable_feed_c"]
-        return_enable_feed_d = payload["return_enable_feed_d"]
-        return_feed_delay_a = payload["return_feed_delay_a"]
-        return_feed_delay_b = payload["return_feed_delay_b"]
-        return_feed_delay_c = payload["return_feed_delay_c"]
-        return_feed_delay_d = payload["return_feed_delay_d"]
-        outletname = payload["outletname"]
-        control_type = payload["control_type"]
-
-        response = jsonify({"msg": 'Updated outlet data for type: Return',
-                            "outletid": outletid,
-                            "outletname": outletname,
-                            "control_type": control_type,
-                            "return_enable_feed_a": return_enable_feed_a,
-                            "return_enable_feed_b": return_enable_feed_b,
-                            "return_enable_feed_c": return_enable_feed_c,
-                            "return_enable_feed_d": return_enable_feed_d,
-                            "return_feed_delay_a": return_feed_delay_a,
-                            "return_feed_delay_b": return_feed_delay_b,
-                            "return_feed_delay_c": return_feed_delay_c,
-                            "return_feed_delay_d": return_feed_delay_d,
-                            })
-
-        response.status_code = 200
-
-        # build table object from table in DB
-        metadata_obj = MetaData()
-        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == outletid)
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(outletname=outletname,
-                    control_type=control_type,
-                    return_enable_feed_a=return_enable_feed_a,
-                    return_enable_feed_b=return_enable_feed_b,
-                    return_enable_feed_c=return_enable_feed_c,
-                    return_enable_feed_d=return_enable_feed_d,
-                    return_feed_delay_a=return_feed_delay_a,
-                    return_feed_delay_b=return_feed_delay_b,
-                    return_feed_delay_c=return_feed_delay_c,
-                    return_feed_delay_d=return_feed_delay_d,
-                    )
-        )
-
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
-
+        
+        response = api_flask.api_set_outlet_params_return(AppPrefs, sqlengine, outletid, request)
+        
         return response
+        
 
     except Exception as e:
         AppPrefs.logger.error("set_outlet_params_return: " + str(e))
@@ -1601,71 +856,16 @@ def set_outlet_params_return(outletid):
 
 @app.route('/set_outlet_params_skimmer/<outletid>', methods=["PUT", "POST"])
 @cross_origin()
+@jwt_required()
 def set_outlet_params_skimmer(outletid):
-    global logger
 
+    global AppPrefs
     try:
-        global AppPrefs
-
-        print(outletid)
-        response = {}
-        payload = request.get_json()
-        print(payload)
-        skimmer_enable_feed_a = payload["skimmer_enable_feed_a"]
-        skimmer_enable_feed_b = payload["skimmer_enable_feed_b"]
-        skimmer_enable_feed_c = payload["skimmer_enable_feed_c"]
-        skimmer_enable_feed_d = payload["skimmer_enable_feed_d"]
-        skimmer_feed_delay_a = payload["skimmer_feed_delay_a"]
-        skimmer_feed_delay_b = payload["skimmer_feed_delay_b"]
-        skimmer_feed_delay_c = payload["skimmer_feed_delay_c"]
-        skimmer_feed_delay_d = payload["skimmer_feed_delay_d"]
-        outletname = payload["outletname"]
-        control_type = payload["control_type"]
-
-        response = jsonify({"msg": 'Updated outlet data for type: Skimmer',
-                            "outletid": outletid,
-                            "outletname": outletname,
-                            "control_type": control_type,
-                            "skimmer_enable_feed_a": skimmer_enable_feed_a,
-                            "skimmer_enable_feed_b": skimmer_enable_feed_b,
-                            "skimmer_enable_feed_c": skimmer_enable_feed_c,
-                            "skimmer_enable_feed_d": skimmer_enable_feed_d,
-                            "skimmer_feed_delay_a": skimmer_feed_delay_a,
-                            "skimmer_feed_delay_b": skimmer_feed_delay_b,
-                            "skimmer_feed_delay_c": skimmer_feed_delay_c,
-                            "skimmer_feed_delay_d": skimmer_feed_delay_d,
-                            })
-
-        response.status_code = 200
-
-        # build table object from table in DB
-        metadata_obj = MetaData()
-        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-        stmt = (
-            update(outlet_table)
-            .where(outlet_table.c.outletid == outletid)
-            .where(outlet_table.c.appuid == AppPrefs.appuid)
-            .values(outletname=outletname,
-                    control_type=control_type,
-                    skimmer_enable_feed_a=skimmer_enable_feed_a,
-                    skimmer_enable_feed_b=skimmer_enable_feed_b,
-                    skimmer_enable_feed_c=skimmer_enable_feed_c,
-                    skimmer_enable_feed_d=skimmer_enable_feed_d,
-                    skimmer_feed_delay_a=skimmer_feed_delay_a,
-                    skimmer_feed_delay_b=skimmer_feed_delay_b,
-                    skimmer_feed_delay_c=skimmer_feed_delay_c,
-                    skimmer_feed_delay_d=skimmer_feed_delay_d,
-                    )
-        )
-
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        defs_mysql.readOutletPrefs_ex(sqlengine, AppPrefs, logger)
-
+        
+        response = api_flask.api_set_outlet_params_skimmer(AppPrefs, sqlengine, outletid, request)
+       
         return response
+       
 
     except Exception as e:
         AppPrefs.logger.error("set_outlet_params_skimmer: " + str(e))
@@ -1679,20 +879,22 @@ def set_outlet_params_skimmer(outletid):
 # things like temperature scale, etc...
 #####################################################################
 
-
 @app.route('/get_global_prefs/', methods=["GET"])
 @cross_origin()
+@jwt_required()
+
 def get_global_prefs():
 
     try:
         global AppPrefs
-        globalPrefs = api_flask.api_get_global_prefs(AppPrefs, sqlengine, request)
-     
+        globalPrefs = api_flask.api_get_global_prefs(
+            AppPrefs, sqlengine, request)
+
         response = globalPrefs
         response.status_code = 200
 
         return response
-    
+
     except Exception as e:
         AppPrefs.logger.error("get_global_prefs: " + str(e))
         response = jsonify({"msg": str(e)})
@@ -1708,57 +910,16 @@ def get_global_prefs():
 
 @app.route('/set_global_prefs/', methods=["PUT", "POST"])
 @cross_origin()
+@jwt_required()
+
 def set_global_prefs():
-    global logger
-
+    global AppPrefs
     try:
-        global AppPrefs
-
-        response = {}
-        payload = request.get_json()
-        print(payload)
-        tempscale = payload["tempscale"]
-        dht_enable = payload["dht_enable"]
-        feed_a_time = payload["feed_a_time"]
-        feed_b_time = payload["feed_b_time"]
-        feed_c_time = payload["feed_c_time"]
-        feed_d_time = payload["feed_d_time"]
-
-        response = jsonify({"msg": 'Updated Global Prefs',
-                            "tempscale": tempscale,
-                            "dht_enable": dht_enable,
-                            "feed_a_time": feed_a_time,
-                            "feed_b_time": feed_b_time,
-                            "feed_c_time": feed_c_time,
-                            "feed_d_time": feed_d_time,
-                            })
-
-        response.status_code = 200
-
-        # build table object from table in DB
-        metadata_obj = MetaData()
-        global_table = Table("global", metadata_obj, autoload_with=sqlengine)
-
-        stmt = (
-            update(global_table)
-            .where(global_table.c.appuid == AppPrefs.appuid)
-            .values(tempscale=tempscale,
-                    dht_enable=dht_enable,
-                    feed_a_time=feed_a_time,
-                    feed_b_time=feed_b_time,
-                    feed_c_time=feed_c_time,
-                    feed_d_time=feed_d_time,
-                    )
-        )
-
-        with sqlengine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        defs_mysql.readGlobalPrefs_ex(sqlengine, AppPrefs, logger)
-
+        
+        response = api_flask.api_set_global_prefs(AppPrefs, sqlengine, request)
         return response
-
+    
+       
     except Exception as e:
         AppPrefs.logger.error("set_global_prefs: " + str(e))
         response = jsonify({"msg": str(e)})
@@ -1774,49 +935,15 @@ def set_global_prefs():
 
 @app.route('/get_current_probe_stats/<probeid>', methods=["GET"])
 @cross_origin()
+@jwt_required()
 def get_current_probe_stats(probeid):
-    global logger
 
+    global AppPrefs
     try:
-        global AppPrefs
-
-        response = {}
-
-        if probeid.startswith("temp_probe_"):
-            response = jsonify({"msg": 'Current probe stats',
-                                "appuid": AppPrefs.appuid,
-                                "probename": AppPrefs.tempProbeDict[probeid].name,
-                                "probeid": AppPrefs.tempProbeDict[probeid].probeid,
-                                "lastValue": AppPrefs.tempProbeDict[probeid].lastTemperature,
-                                "sensortype": "temperature",
-                                "probetype": "ds18b20",
-                                })
-
-            response.status_code = 200
-
-        elif probeid.startswith("DHT"):
-            response = jsonify({"msg": 'Current probe stats',
-                                "appuid": AppPrefs.appuid,
-                                "sensortype": AppPrefs.dhtDict[probeid].sensortype,
-                                "probename": AppPrefs.dhtDict[probeid].name,
-                                "probeid": AppPrefs.dhtDict[probeid].probeid,
-                                "probetype": "DHT",
-                                "lastValue": AppPrefs.dhtDict[probeid].lastValue})
-
-            response.status_code = 200
-
-        elif probeid.startswith("mcp3008"):
-            response = jsonify({"msg": 'Current probe stats',
-                                "appuid": AppPrefs.appuid,
-                                "sensortype": AppPrefs.mcp3008Dict[probeid[-1]].ch_type,
-                                "probename": AppPrefs.mcp3008Dict[probeid[-1]].ch_name,
-                                "probeid": probeid,
-                                "probetype": "analog",
-                                "lastValue": AppPrefs.mcp3008Dict[probeid[-1]].lastValue})
-
-            response.status_code = 200
-
+        
+        response = api_flask.api_get_current_probe_stats(AppPrefs, probeid, request)
         return response
+
 
     except Exception as e:
         AppPrefs.logger.error("get_current_probe_stats: " + str(e))
@@ -1834,64 +961,15 @@ def get_current_probe_stats(probeid):
 
 @app.route('/get_current_outlet_stats/<outletid>', methods=["GET"])
 @cross_origin()
+@jwt_required()
 def get_current_outlet_stats(outletid):
-    global logger
-
+    
+    global AppPrefs
     try:
-        global AppPrefs
-
-        response = {}
-
-        # convert temperature values to F if using Fahrenheit
-        if AppPrefs.temperaturescale == "F":
-            heater_on_x = defs_common.convertCtoF(
-                AppPrefs.outletDict[outletid].heater_on)
-            heater_off_x = defs_common.convertCtoF(
-                AppPrefs.outletDict[outletid].heater_off)
-        else:
-            heater_on_x = AppPrefs.outletDict[outletid].heater_on
-            heater_off_x = AppPrefs.outletDict[outletid].heater_off
-
-        response = jsonify({"msg": 'Current outlet stats',
-                            "appuid": AppPrefs.appuid,
-                            "outletid": AppPrefs.outletDict[outletid].outletid,
-                            "outletname": AppPrefs.outletDict[outletid].outletname,
-                            "control_type": AppPrefs.outletDict[outletid].control_type,
-                            "outletstatus": AppPrefs.outletDict[outletid].outletstatus,
-                            "button_state": AppPrefs.outletDict[outletid].button_state,
-                            "heater_on": heater_on_x,
-                            "heater_off": heater_off_x,
-                            "heater_probe": AppPrefs.outletDict[outletid].heater_probe,
-                            "light_on": AppPrefs.outletDict[outletid].light_on,
-                            "light_off": AppPrefs.outletDict[outletid].light_off,
-                            "always_state": AppPrefs.outletDict[outletid].always_state,
-                            "return_enable_feed_a": (AppPrefs.outletDict[outletid].return_enable_feed_a).lower() == "true",
-                            "return_enable_feed_b": (AppPrefs.outletDict[outletid].return_enable_feed_b).lower() == "true",
-                            "return_enable_feed_c": (AppPrefs.outletDict[outletid].return_enable_feed_c).lower() == "true",
-                            "return_enable_feed_d": (AppPrefs.outletDict[outletid].return_enable_feed_d).lower() == "true",
-                            "return_feed_delay_a": AppPrefs.outletDict[outletid].return_feed_delay_a,
-                            "return_feed_delay_b": AppPrefs.outletDict[outletid].return_feed_delay_b,
-                            "return_feed_delay_c": AppPrefs.outletDict[outletid].return_feed_delay_c,
-                            "return_feed_delay_d": AppPrefs.outletDict[outletid].return_feed_delay_d,
-
-                            "skimmer_enable_feed_a": (AppPrefs.outletDict[outletid].skimmer_enable_feed_a).lower() == "true",
-                            "skimmer_enable_feed_b": (AppPrefs.outletDict[outletid].skimmer_enable_feed_b).lower() == "true",
-                            "skimmer_enable_feed_c": (AppPrefs.outletDict[outletid].skimmer_enable_feed_c).lower() == "true",
-                            "skimmer_enable_feed_d": (AppPrefs.outletDict[outletid].skimmer_enable_feed_d).lower() == "true",
-                            "skimmer_feed_delay_a": AppPrefs.outletDict[outletid].skimmer_feed_delay_a,
-                            "skimmer_feed_delay_b": AppPrefs.outletDict[outletid].skimmer_feed_delay_b,
-                            "skimmer_feed_delay_c": AppPrefs.outletDict[outletid].skimmer_feed_delay_c,
-                            "skimmer_feed_delay_d": AppPrefs.outletDict[outletid].skimmer_feed_delay_d,
-
-                            "ph_probe": AppPrefs.outletDict[outletid].ph_probe,
-                            "ph_low": AppPrefs.outletDict[outletid].ph_low,
-                            "ph_high": AppPrefs.outletDict[outletid].ph_high,
-                            "ph_onwhen": AppPrefs.outletDict[outletid].ph_onwhen,
-                            })
-
-        response.status_code = 200
-
+       
+        response = api_flask.api_get_current_outlet_stats(AppPrefs, outletid, request)
         return response
+        
 
     except Exception as e:
         AppPrefs.logger.error("get_current_outlet_stats: " + str(e))
@@ -1908,41 +986,13 @@ def get_current_outlet_stats(outletid):
 
 @app.route('/get_probe_list/', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_probe_list():
-
+    global AppPrefs
     try:
-        global AppPrefs
-
-        probedict = {}
-
-        # loop through each section
-        for probe in AppPrefs.tempProbeDict:
-            probedict[probe] = {"probetype": "ds18b20",
-                                "probeid": AppPrefs.tempProbeDict[probe].probeid,
-                                "probename": AppPrefs.tempProbeDict[probe].name,
-                                "sensortype": "temperature",
-                                "lastValue": AppPrefs.tempProbeDict[probe].lastTemperature}
-
-        if AppPrefs.dht_enable == "true":
-            probedict["DHT-T"] = {"sensortype": AppPrefs.dhtDict["DHT-T"].sensortype,
-                                  "probename": AppPrefs.dhtDict["DHT-T"].name,
-                                  "probeid": AppPrefs.dhtDict["DHT-T"].probeid,
-                                  "probetype": "DHT",
-                                  "lastValue": AppPrefs.dhtDict["DHT-T"].lastValue}
-            probedict["DHT-H"] = {"sensortype": AppPrefs.dhtDict["DHT-H"].sensortype,
-                                  "probename": AppPrefs.dhtDict["DHT-H"].name,
-                                  "probeid": AppPrefs.dhtDict["DHT-H"].probeid,
-                                  "probetype": "DHT",
-                                  "lastValue": AppPrefs.dhtDict["DHT-H"].lastValue}
-        for ch in AppPrefs.mcp3008Dict:
-            # logger.info(ch)
-            probedict["mcp3008_ch" + str(ch)] = {"sensortype": AppPrefs.mcp3008Dict[ch].ch_type,
-                                                 "probename": AppPrefs.mcp3008Dict[ch].ch_name,
-                                                 "probeid": "mcp3008_ch" + str(ch),
-                                                 "probetype": "analog",
-                                                 "lastValue": AppPrefs.mcp3008Dict[ch].lastValue}
-
-        logger.debug(probedict)
+     
+        probedict = api_flask.api_get_probe_list(AppPrefs, request)
+        
         return probedict
 
     except Exception as e:
@@ -1952,41 +1002,19 @@ def get_probe_list():
 # get_mcp3008_enable_state
 # return list of mcp3008 probes and their enabled state
 #####################################################################
+
+
 @app.route('/get_mcp3008_enable_state/', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_mcp3008_enable_state():
-
+    global AppPrefs
     try:
-        global AppPrefs
-
-        probedict = {}
-        response = {}
-
-        # build table object from table in DB
-        metadata_obj = MetaData()
-
-        probe_table = Table("probes", metadata_obj, autoload_with=sqlengine)
-
-        conn = sqlengine.connect()
-
-        stmt = select(probe_table).where(probe_table.c.appuid == AppPrefs.appuid).where(
-            probe_table.c.probetype == "analog")
-
-        results = conn.execute(stmt)
-        conn.commit()
-
-        # loop through each row
-        for row in results:
-            probedict[row.probeid] = {"sensortype": row.sensortype,
-                                      "probename": row.name,
-                                      "probeid": row.probeid,
-                                                 "probetype": row.probetype,
-                                                 "enabled": row.enabled,
-                                                 "sensortype": row.sensortype}
-
-        logger.debug(probedict)
+       
+        probedict = api_flask.api_get_mcp3008_enable_state(AppPrefs, sqlengine, request)
 
         return probedict
+
 
     except Exception as e:
         AppPrefs.logger.error("get_mcp3008_enable_state: " + str(e))
@@ -1996,11 +1024,14 @@ def get_mcp3008_enable_state():
 
 #####################################################################
 # get_connected_temp_probes
-# return list of ds18b20 temperature probes that are connected to the 
+# return list of ds18b20 temperature probes that are connected to the
 # system and showing up in '/sys/bus/w1/devices/'
 #####################################################################
+
+
 @app.route('/get_connected_temp_probes/', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_connected_temp_probes():
 
     try:
@@ -2013,19 +1044,23 @@ def get_connected_temp_probes():
         response = jsonify({"msg": str(e)})
         response.status_code = 500
         return response
-    
+
 #####################################################################
 # get_assigned_temp_probes
-# return list of ds18b20 temperature probes that that have been 
+# return list of ds18b20 temperature probes that that have been
 # assigned to Probe IDs
 #####################################################################
+
+
 @app.route('/get_assigned_temp_probes/', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_assigned_temp_probes():
 
     try:
         global AppPrefs
-        probelist = api_flask.api_get_assigned_temp_probes(AppPrefs, sqlengine, request)
+        probelist = api_flask.api_get_assigned_temp_probes(
+            AppPrefs, sqlengine, request)
         return probelist
 
     except Exception as e:
@@ -2036,10 +1071,14 @@ def get_assigned_temp_probes():
 
 #####################################################################
 # set_connected_temp_probes
-# assign the selected ds18b20 probes to Probe ID 1,2,3,4 
+# assign the selected ds18b20 probes to Probe ID 1,2,3,4
 #####################################################################
+
+
 @app.route('/set_connected_temp_probes', methods=['POST'])
 @cross_origin()
+@jwt_required()
+
 def set_connected_temp_probes():
     try:
         global AppPrefs
@@ -2062,8 +1101,12 @@ def set_connected_temp_probes():
 # set_column_widget_order
 # save the widget order to the column tables
 #####################################################################
+
+
 @app.route('/set_column_widget_order', methods=['POST'])
 @cross_origin()
+@jwt_required()
+
 def set_column_widget_order():
     try:
         global AppPrefs
@@ -2081,42 +1124,24 @@ def set_column_widget_order():
         response = jsonify({"msg": str(e)})
         response.status_code = 500
         return response
-    
+
 #####################################################################
 # get_outlet_enable_state
 # return list of outlets with their enabled state
 #####################################################################
+
+
 @app.route('/get_outlet_enable_state/', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_outlet_enable_state():
+    global AppPrefs
 
     try:
-        global AppPrefs
-
-        outletdict = {}
-        response = {}
-
-        # build table object from table in DB
-        metadata_obj = MetaData()
-
-        outlet_table = Table("outlets", metadata_obj, autoload_with=sqlengine)
-
-        conn = sqlengine.connect()
-
-        stmt = select(outlet_table).where(outlet_table.c.appuid == AppPrefs.appuid)
-
-        results = conn.execute(stmt)
-        conn.commit()
-
-        # loop through each row
-        for row in results:
-            outletdict[row.outletid] = {"outletname": row.outletname,
-                                      "outletid": row.outletid,
-                                      "enabled": row.enabled,}
-
-        logger.debug(outletdict)
-
-        return outletdict
+        
+        response = api_flask.api_get_outlet_enable_state(AppPrefs, sqlengine, request)
+        return response
+    
 
     except Exception as e:
         AppPrefs.logger.error("get_outlet_enable_state: " + str(e))
@@ -2133,15 +1158,24 @@ def get_outlet_enable_state():
 @app.route('/get_token', methods=['POST'])
 @cross_origin()
 def get_token():
-    username = request.json.get("username", None)
-    password = request.json.get("password", None)
-    if username.lower() != "pi" or password != "reefberry":
-        return {"msg": "Wrong username or password"}, 401
+    global AppPrefs
+    # username = request.json.get("username", None)
+    # password = request.json.get("password", None)
+    # if username.lower() != "pi" or password != "reefberry":
+    #     return {"msg": "Wrong username or password"}, 401
 
-    access_token = create_access_token(identity=username)
-    response = {"token": access_token}
+    # access_token = create_access_token(identity=username)
+    # response = {"token": access_token}
 
-    return response
+    # return response
+    try:
+        response = api_flask.api_get_token(AppPrefs, sqlengine, request)
+        return response
+    except Exception as e:
+        AppPrefs.logger.error("get_token: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
 
 #####################################################################
 # get_outletchartdata
@@ -2152,29 +1186,13 @@ def get_token():
 
 @app.route('/get_outletchartdata/<outletid>/<timeframe>', methods=['GET'])
 @cross_origin()
+@jwt_required()
+
 def get_outletchartdata(outletid, timeframe):
-
+    global AppPrefs
     try:
-        global AppPrefs
-
-        bucket = "reefberrypi_outlet_3mo"
-
-        query_api = Influx_client.query_api()
-
-        query = f'from(bucket: "reefberrypi_outlet_3mo") \
-        |> range(start: -{timeframe}) \
-        |> filter(fn: (r) => r["_measurement"] == "outlet_state") \
-        |> filter(fn: (r) => r["_field"] == "value") \
-        |> filter(fn: (r) => r["appuid"] == "{AppPrefs.appuid}") \
-        |> filter(fn: (r) => r["outletid"] == "{outletid}") \
-        |> yield(name: "last")'
-
-        result = query_api.query(org=AppPrefs.influxdb_org, query=query)
-
-        results = []
-        for table in result:
-            for record in table.records:
-                results.append((record.get_time(), record.get_value()))
+        
+        results = api_flask.api_get_outletchartdata(AppPrefs, Influx_client, outletid, timeframe, request)
 
         return results
 
@@ -2186,13 +1204,19 @@ def get_outletchartdata(outletid, timeframe):
 # get_column_widget_order
 # get widget order from th column tables
 #####################################################################
+
+
 @app.route('/get_column_widget_order/', methods=['GET'])
 @cross_origin()
+@jwt_required()
 def get_column_widget_order():
-
+    global AppPrefs
     try:
-        global AppPrefs
-        widgetlist1, widgetlist2, widgetlist3 = api_flask.api_get_column_widget_order(AppPrefs, sqlengine, request)
+        
+        widgetlist1, widgetlist2, widgetlist3 = api_flask.api_get_column_widget_order(
+            AppPrefs, sqlengine, request)
+        
+
         return {"column1": widgetlist1, "column2": widgetlist2, "column3": widgetlist3}
 
     except Exception as e:
@@ -2202,8 +1226,106 @@ def get_column_widget_order():
         return response
 
 
+#####################################################################
+# get_user_list
+# return list of users that have access to this instance
+#####################################################################
+
+
+@app.route('/get_user_list/', methods=['GET'])
+@cross_origin()
+@jwt_required()
+
+def get_user_list():
+    global AppPrefs
+    try:
+        
+        response = api_flask.api_get_user_list(AppPrefs, sqlengine, request)
+
+        return response
+
+    except Exception as e:
+        AppPrefs.logger.error("get_user_list: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+
+#####################################################################
+# set_add_user
+# add new user to have access to this instance
+#####################################################################
+
+
+@app.route('/set_add_user', methods=['POST'])
+@cross_origin()
+@jwt_required()
+
+def set_add_user():
+    global AppPrefs
+    try:
+        
+        response = api_flask.api_set_add_user(AppPrefs, sqlengine, request)
+
+        return response
+
+    except Exception as e:
+        AppPrefs.logger.error("set_add_user: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+
+#####################################################################
+# set_remove_user
+# delete a user from this instance
+#####################################################################
+
+
+@app.route('/set_remove_user', methods=['POST'])
+@cross_origin()
+@jwt_required()
+
+def set_remove_user():
+    global AppPrefs
+    try:
+        
+        response = api_flask.api_set_remove_user(AppPrefs, sqlengine, request)
+
+        return response
+
+    except Exception as e:
+        AppPrefs.logger.error("set_remove_user: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+
+#####################################################################
+# set_change_password
+# change a user's password
+#####################################################################
+
+
+@app.route('/set_change_password', methods=['POST'])
+@cross_origin()
+@jwt_required()
+
+def set_change_password():
+    global AppPrefs
+    try:
+        
+        response = api_flask.api_set_change_password(AppPrefs, sqlengine, request)
+
+        return response
+
+    except Exception as e:
+        AppPrefs.logger.error("set_change_password: " + str(e))
+        response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+
 ############################################################
 
+
+#MARK: Run Application
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(AppPrefs.flask_port))

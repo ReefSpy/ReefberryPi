@@ -1,10 +1,7 @@
 import React, { Component } from "react";
 import MainTabContainer from "./Components/MainTabContainer/MainTabContainer";
 import appicon from "./Images/reefberry-pi-logo.svg";
-// import preficon from "./Images/cog-white.svg";
 import logouticon from "./Images/logout-white.svg";
-// import probeIcon from "./Images/probe-white.svg";
-// import outletIcon from "./Images/outlet-white.svg"
 import lockOpenIcon from "./Images/lock-circle-open-round.svg";
 import lockClosedIcon from "./Images/lock-circle-close-round.svg";
 import GlobalPrefsModal from "./Components/GlobalPrefs/GlobalPrefsModal";
@@ -13,7 +10,8 @@ import OutletPrefsModal from "./Components/OutletPrefs/OutletPrefsModal";
 import "./App.css";
 //import useToken from "./useToken";
 import Login from "./Components/Login/Login";
-import * as Api from "./Components/Api/Api.js"
+import * as Api from "./Components/Api/Api.js";
+import ClipLoader from "react-spinners/ClipLoader";
 
 class App extends Component {
   constructor(props) {
@@ -25,6 +23,8 @@ class App extends Component {
       DragDisabled: true,
       globalPrefs: null,
       col1rawitems: [],
+      loggedin: false,
+      userName: null,
     };
     this.setProbeData = this.setProbeData.bind(this);
     this.setOutletData = this.setOutletData.bind(this);
@@ -32,9 +32,14 @@ class App extends Component {
   }
 
   // generic API call structure
-  apiCall(endpoint, callback) {
-    fetch(endpoint)
+  apiCall(endpoint, payload, callback) {
+    fetch(endpoint, payload)
       .then((response) => {
+        if (response.status === 401) {
+          console.log("Expired Token, logging out");
+          sessionStorage.clear();
+        }
+
         if (!response.ok) {
           if (response.status === 404) {
             throw new Error("Data not found");
@@ -44,6 +49,7 @@ class App extends Component {
             throw new Error("Network response was not ok");
           }
         }
+
         return response.json();
       })
       .then((data) => {
@@ -77,8 +83,9 @@ class App extends Component {
     for (let outlet in outletdata) {
       outletdata[outlet]["id"] = `item-${String(200 + i++)}`;
       outletdata[outlet]["widgetType"] = `outlet`;
-      if( outletdata[outlet]["enabled"] === "true"){
-      col2items.push(outletdata[outlet]);}
+      if (outletdata[outlet]["enabled"] === "true") {
+        col2items.push(outletdata[outlet]);
+      }
     }
 
     if (col2items.length > 0) {
@@ -87,24 +94,51 @@ class App extends Component {
     }
     return col2items;
   }
-
+  componentDidUpdate() {}
   async componentDidMount() {
-    this.apiCall(Api.API_GET_PROBE_LIST, this.setProbeData);
+    let authtoken = JSON.parse(sessionStorage.getItem("token"))?.token;
+    let payload = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + authtoken,
+      },
+    };
 
-    // this.apiCall(process.env.REACT_APP_API_GET_OUTLET_LIST, this.setOutletData);
-    this.apiCall(Api.API_GET_OUTLET_LIST, this.setOutletData);
+    if (this.getToken()) {
+      this.apiCall(Api.API_GET_PROBE_LIST, payload, this.setProbeData);
+    }
+    if (this.getToken()) {
+      let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
+      let payload = {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + authtoken,
+        },
+      };
+
+      this.apiCall(Api.API_GET_OUTLET_LIST, payload, this.setOutletData);
+    }
 
     // global prefs
-    this.apiCall(
-      Api.API_GET_GLOBAL_PREFS,
-      this.setGlobalPrefs
-    );
-    this.interval = setInterval(() => {
-      this.apiCall(
-        Api.API_GET_GLOBAL_PREFS,
-        this.setGlobalPrefs
-      );
-    }, 3500);
+    if (this.getToken()) {
+      let globePayload = {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + authtoken,
+        },
+      };
+      this.apiCall(Api.API_GET_GLOBAL_PREFS, globePayload, this.setGlobalPrefs);
+      this.interval = setInterval(() => {
+        this.apiCall(
+          Api.API_GET_GLOBAL_PREFS,
+          globePayload,
+          this.setGlobalPrefs
+        );
+      }, 3500);
+    }
   }
 
   componentWillUnmount() {
@@ -146,17 +180,17 @@ class App extends Component {
     console.log("Widget Lock Click");
     if (this.state.DragDisabled === true) {
       this.setState({ DragDisabled: false });
-      this.setState({ShouldSaveWidgetOrder: false})
+      this.setState({ ShouldSaveWidgetOrder: false });
     } else {
       this.setState({ DragDisabled: true });
-      this.setState({ShouldSaveWidgetOrder: true})
+      this.setState({ ShouldSaveWidgetOrder: true });
     }
   };
 
   onWidgetSaveComplete = () => {
-    this.setState({ShouldSaveWidgetOrder: false})
-    console.log("Widget Save Complete")
-  }
+    this.setState({ ShouldSaveWidgetOrder: false });
+    console.log("Widget Save Complete");
+  };
 
   handleGlobalPrefsFormSubmit = (data) => {
     let apiURL = Api.API_SET_GLOBAL_PREFS;
@@ -164,11 +198,13 @@ class App extends Component {
     let payload = {
       tempscale: data.tempScale,
       dht_enable: data.enableDHT,
+      description: data.description,
       feed_a_time: data.feedA,
       feed_b_time: data.feedB,
       feed_c_time: data.feedC,
       feed_d_time: data.feedD,
     };
+    console.log(payload);
     this.apiCallPut(apiURL, payload);
     this.handleCloseGlobalPrefsModal();
   };
@@ -185,15 +221,20 @@ class App extends Component {
     this.setState({ globalPrefs: data });
     this.setState({ globalTempScale: data.tempscale });
     this.setState({ globalEnableDHT: data.dht_enable });
+    this.setState({ globalAppDescription: data.app_description });
 
     return;
   }
 
   // API call structure
   apiCallPut = (endpoint, newdata) => {
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token;
     fetch(endpoint, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + authtoken,
+      },
       body: JSON.stringify(newdata),
     })
       .then((response) => response.json())
@@ -215,6 +256,13 @@ class App extends Component {
     console.log("settoken");
     if (userToken !== undefined) {
       sessionStorage.setItem("token", JSON.stringify(userToken));
+      window.location.reload();
+    }
+  }
+  setUser(userName) {
+    console.log(userName);
+    if (userName !== undefined) {
+      sessionStorage.setItem("userName", userName.toLowerCase());
     }
   }
 
@@ -224,42 +272,33 @@ class App extends Component {
 
   render() {
     if (!this.getToken()) {
-      return <Login setToken={this.setToken} />;
+      console.log("render");
+      return <Login setToken={this.setToken} setUser={this.setUser} />;
     }
     return (
       <div className="App">
         <div className="appheader">
-          <img className="appicon" src={appicon} alt="logo" />
+          <div className="header-desc">
+            {!this.state.globalAppDescription == "" ? (
+              this.state.globalAppDescription
+            ) : (
+              <ClipLoader
+                color="#ffffff"
+                loading={true}
+                size={20}
+                aria-label="Loading Spinner"
+                data-testid="loader"
+              />
+            )}
 
-          <span>Reefberry Pi</span>
+          </div>
+
+          <div className="header-center">
+            <img className="appicon" src={appicon} alt="logo" />
+            <span>Reefberry Pi</span>
+          </div>
 
           <div className="header-right">
-            {/* <button className="headericonbtn">
-              <img
-                className="headericon"
-                src={outletIcon}
-                alt="Outlets"
-                onClick={this.handleOpenOutletPrefsModal}
-              ></img>
-            </button>
-
-            <button className="headericonbtn">
-              <img
-                className="headericon"
-                src={probeIcon}
-                alt="Probes"
-                onClick={this.handleOpenProbePrefsModal}
-              ></img>
-            </button> */}
-
-            {/* <button className="headericonbtn">
-              <img
-                className="headericon"
-                src={preficon}
-                alt="Preferences"
-                onClick={this.handleOpenGlobalPrefsModal}
-              ></img>
-            </button> */}
             <button className="headericonbtn">
               <img
                 className="headericon"
@@ -294,7 +333,7 @@ class App extends Component {
             openGlobalPrefs={this.handleOpenGlobalPrefsModal}
             dragDisabled={this.state.DragDisabled}
             shouldSaveWidgetOrder={this.state.ShouldSaveWidgetOrder}
-            onWidgetSaveComplete ={this.onWidgetSaveComplete}
+            onWidgetSaveComplete={this.onWidgetSaveComplete}
           ></MainTabContainer>
         </div>
 

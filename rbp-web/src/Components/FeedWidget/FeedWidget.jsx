@@ -13,28 +13,28 @@ export class FeedWidget extends Component {
     };
   }
 
-  // generic API call structure
-  apiCall(endpoint, callback) {
-    fetch(endpoint)
-      .then((response) => {
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error("Data not found");
-          } else if (response.status === 500) {
-            throw new Error("Server error");
-          } else {
-            throw new Error("Network response was not ok");
-          }
-        }
-        return response.json();
-      })
-      .then((data) => {
-        callback(data);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
-  }
+  // // generic API call structure
+  // apiCall(endpoint, callback) {
+  //   fetch(endpoint)
+  //     .then((response) => {
+  //       if (!response.ok) {
+  //         if (response.status === 404) {
+  //           throw new Error("Data not found");
+  //         } else if (response.status === 500) {
+  //           throw new Error("Server error");
+  //         } else {
+  //           throw new Error("Network response was not ok");
+  //         }
+  //       }
+  //       return response.json();
+  //     })
+  //     .then((data) => {
+  //       callback(data);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error:", error);
+  //     });
+  // }
 
   componentDidMount() {}
 
@@ -70,14 +70,47 @@ export class FeedWidget extends Component {
       this.setState({feedtimer: this.props.globalPrefs.feed_d_time})
     } else { this.setState({feedtimer: "0"})}
     
-    let apiURL = Api.API_SET_FEEDMODE.concat(mode);
-    this.apiCall(apiURL ,() => this.setFeedState(mode));
+    // let apiURL = Api.API_SET_FEEDMODE.concat(mode);
+    // this.apiCall(apiURL ,() => this.setFeedState(mode));
+
+    this.setFeedMode(mode)
   };
 
-setFeedState(mode){
-  console.log(mode)
-return
-}
+// setFeedState(mode){
+//   console.log(mode)
+// return
+// }
+
+setFeedMode = (feedmode) => {
+  console.log(JSON.stringify(feedmode));
+  let authtoken = JSON.parse(sessionStorage.getItem("token")).token
+  return fetch(Api.API_SET_FEEDMODE, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + authtoken
+    },
+    body: JSON.stringify({ feedmode: feedmode }),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Data not found");
+        } else if (response.status === 500) {
+          throw new Error("Server error");
+        } else {
+          throw new Error("Network response was not ok");
+        }
+      }
+      return response.json();
+    })
+    .then((data) => {
+      return data;
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
+};
 
   render() {
     return (

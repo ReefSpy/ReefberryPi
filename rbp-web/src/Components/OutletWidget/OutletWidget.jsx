@@ -29,6 +29,15 @@ export class OutletWidget extends Component {
   constructor(props) {
     super(props);
     this.state = { buttonstateidx: undefined, shouldBtnChange: false };
+
+    this.authtoken = JSON.parse(sessionStorage.getItem("token")).token;
+    this.payload = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + this.authtoken,
+      },
+    };
   }
 
   onToggleSelect = (value) => {
@@ -47,11 +56,11 @@ export class OutletWidget extends Component {
     newOutLetData.ischanged = true;
     this.setState({ OutletData: newOutLetData });
 
-    let apiURL = Api.API_PUT_OUTLET_BUTTONSTATE.concat(outletid)
+    let apiURL = Api.API_SET_OUTLET_BUTTONSTATE.concat(outletid)
       .concat("/")
       .concat(val);
     console.log(apiURL);
-    this.apiCall(apiURL, this.handleOutletButtonClick);
+    this.apiCall(apiURL, this.payload, this.handleOutletButtonClick);
   }
 
   handleOutletButtonClick(retData) {
@@ -65,10 +74,10 @@ export class OutletWidget extends Component {
     let ApiGetStats = Api.API_GET_CURRENT_OUTLET_STATS.concat(
       this.props.data.outletid
     );
-    this.apiCall(ApiGetStats, this.SetOutletData);
+    this.apiCall(ApiGetStats, this.payload, this.SetOutletData);
 
     this.interval2 = setInterval(() => {
-      this.apiCall(ApiGetStats, this.SetOutletData);
+      this.apiCall(ApiGetStats, this.payload, this.SetOutletData);
     }, 3000);
   }
 
@@ -111,9 +120,14 @@ export class OutletWidget extends Component {
   };
 
   // generic API call structure
-  apiCall(endpoint, callback) {
-    fetch(endpoint)
+  apiCall(endpoint, payload, callback) {
+    fetch(endpoint, payload)
       .then((response) => {
+        if (response.status === 401) {
+          console.log("Expired Token, logging out")
+          sessionStorage.clear();
+          window.location.reload()
+          }
         if (!response.ok) {
           if (response.status === 404) {
             throw new Error("Data not found");
@@ -123,6 +137,7 @@ export class OutletWidget extends Component {
             throw new Error("Network response was not ok");
           }
         }
+       
         return response.json();
       })
       .then((data) => {

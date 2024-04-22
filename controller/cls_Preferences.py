@@ -16,6 +16,10 @@ MYSQL_DATABASE = "reefberrypi"
 MYSQL_PORT = "3306"
 FLASK_PORT = "5000"
 
+# default Username and Password for newly created databases
+RBP_DEFAULT_USERNAME = "pi"
+RBP_DEFAULT_PASSWORD = "reefberry"
+
 
 class analogChannelClass():
     # class for probes connected to mcp3008 a-d chip
@@ -110,6 +114,7 @@ class AppPrefs():
         self.feed_c_time = ""
         self.feed_d_time = ""
         self.dht_enable = ""
+        self.app_description = ""
         self.controller_version = version.CONTROLLER_VERSION
 
         self.dv_SamplingTimeSeed = int(round(time.time()*1000)) #convert time to milliseconds

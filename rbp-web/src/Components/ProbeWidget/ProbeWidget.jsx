@@ -19,6 +19,14 @@ export class ProbeWidget extends Component {
       setProbePrefsFormData: null,
       LastValue: "",
     };
+    this.authtoken = JSON.parse(sessionStorage.getItem("token")).token;
+    this.payload = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + this.authtoken,
+      },
+    };
   }
 
   handleOpenProbePrefsModal = () => {
@@ -39,7 +47,7 @@ export class ProbeWidget extends Component {
     let updateApiURL = Api.API_SET_PROBE_NAME.concat(data.probeid)
       .concat("/")
       .concat(data.probename);
-    this.apiCall(updateApiURL, this.setNameCallback);
+    this.apiCall(updateApiURL, this.payload, this.setNameCallback);
   };
 
   setNameCallback() {
@@ -47,9 +55,14 @@ export class ProbeWidget extends Component {
   }
 
   // generic API call structure
-  apiCall(endpoint, callback) {
-    fetch(endpoint)
+  apiCall(endpoint, payload, callback) {
+    fetch(endpoint, payload)
       .then((response) => {
+        if (response.status === 401) {
+          console.log("Expired Token, logging out")
+          sessionStorage.clear();
+          window.location.reload()
+          }
         if (!response.ok) {
           if (response.status === 404) {
             throw new Error("Data not found");
@@ -80,26 +93,25 @@ export class ProbeWidget extends Component {
     }
 
     //console.log(this.props.probename)
-    let apiURL = Api.API_GET_CHART_DATA_24HR.concat(
-      this.props.data.probeid
-    )
+    let apiURL = Api.API_GET_CHART_DATA_24HR.concat(this.props.data.probeid)
       .concat("/")
       .concat(unit_type);
-    this.apiCall(apiURL, this.GetChartData);
+
+    this.apiCall(apiURL, this.payload, this.GetChartData);
 
     // chart data
     this.interval = setInterval(() => {
-      this.apiCall(apiURL, this.GetChartData);
+      this.apiCall(apiURL, this.payload, this.GetChartData);
     }, 600000);
 
     // update stats
     let ApiGetStats = Api.API_GET_CURRENT_PROBE_STATS.concat(
       this.props.data.probeid
     );
-    this.apiCall(ApiGetStats, this.SetProbeData);
+    this.apiCall(ApiGetStats, this.payload, this.SetProbeData);
 
     this.interval2 = setInterval(() => {
-      this.apiCall(ApiGetStats, this.SetProbeData);
+      this.apiCall(ApiGetStats, this.payload, this.SetProbeData);
     }, 2000);
   }
 

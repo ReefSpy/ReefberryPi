@@ -53,7 +53,18 @@ class Dashboard2 extends React.Component {
         //   widgetIds: [],
         // },
       },
+      
     };
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token
+   
+    this.payload = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + authtoken
+      },
+      
+    }
 
     this.reorderWidgets = this.reorderWidgets.bind(this);
   }
@@ -125,7 +136,7 @@ class Dashboard2 extends React.Component {
 
   async getSavedWidgetOrder() {
     // first add probe widgets
-    fetch(Api.API_GET_COLUMN_WIDGET_ORDER)
+    fetch(Api.API_GET_COLUMN_WIDGET_ORDER, this.payload)
       .then((response) => {
         return response.json();
       })
@@ -166,8 +177,13 @@ class Dashboard2 extends React.Component {
     let newcol = this.state.columns;
 
     // first add probe widgets
-    fetch(Api.API_GET_PROBE_LIST)
+    
+    fetch(Api.API_GET_PROBE_LIST, this.payload)
       .then((response) => {
+        if (response.status === 401) {
+          console.log("Expired Token, logging out")
+          sessionStorage.clear();
+          }
         return response.json();
       })
       .then((data) => {
@@ -204,9 +220,13 @@ class Dashboard2 extends React.Component {
 
     // now add outlet widgets
     let outletitems = [];
-    // fetch(process.env.REACT_APP_API_GET_OUTLET_LIST)
-    fetch(Api.API_GET_OUTLET_LIST)
+    
+    fetch(Api.API_GET_OUTLET_LIST, this.payload)
       .then((response) => {
+        if (response.status === 401) {
+        console.log("Expired Token, logging out")
+        sessionStorage.clear();
+        }
         return response.json();
       })
       .then((data) => {
@@ -316,10 +336,12 @@ class Dashboard2 extends React.Component {
 
   saveColumnOrder1 = (widgets) => {
     console.log(JSON.stringify(widgets));
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token
     return fetch(Api.API_SET_COLUMN_WIDGET_ORDER, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": "Bearer " + authtoken 
       },
       body: JSON.stringify({ column1: widgets }),
     })
@@ -344,11 +366,13 @@ class Dashboard2 extends React.Component {
   };
 
   saveColumnOrder2 = (widgets) => {
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token
     console.log(JSON.stringify(widgets));
     return fetch(Api.API_SET_COLUMN_WIDGET_ORDER, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": "Bearer " + authtoken 
       },
       body: JSON.stringify({ column2: widgets }),
     })
@@ -373,11 +397,13 @@ class Dashboard2 extends React.Component {
   };
 
   saveColumnOrder3 = (widgets) => {
+    let authtoken = JSON.parse(sessionStorage.getItem("token")).token
     console.log(JSON.stringify(widgets));
     return fetch(Api.API_SET_COLUMN_WIDGET_ORDER, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": "Bearer " + authtoken 
       },
       body: JSON.stringify({ column3: widgets }),
     })
