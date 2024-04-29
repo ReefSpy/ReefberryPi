@@ -1,6 +1,6 @@
 .probecontainer {
   grid-template-columns: 120px 180px;
-  grid-template-rows: 24px 60px 22px;
+  grid-template-rows: 24px 60px 23px;
 
   display: grid;
   justify-content: center;
