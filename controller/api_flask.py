@@ -1840,3 +1840,26 @@ def api_set_change_password(AppPrefs, sqlengine, request):
                     {"msg": "Request denied.  Check credentials and try again."})
                 response.status_code = 401
                 return response
+
+#####################################################################
+# api_get_analog_cal_stats
+# return stats that are used for calibration of an analog probe
+# connected to tghe mcp3008 analog to digital converter
+#####################################################################
+
+
+def api_get_analog_cal_stats(AppPrefs, sqlengine, request, channelid):
+    AppPrefs.logger.info(request)
+    AppPrefs.logger.info("Got calibration request for analog channel: " + channelid)
+
+    response = {}
+
+    response = jsonify({"appuid": AppPrefs.appuid,
+                        "channelid": channelid,
+                        "meanvalue": AppPrefs.mcp3008Dict[channelid].ch_dvcalFilteredMean,
+                        "std_deviation": AppPrefs.mcp3008Dict[channelid].ch_dvcalFilteredSD,
+                        "datapoints": AppPrefs.mcp3008Dict[channelid].ch_dvcallist
+                       })
+    response.status_code = 200
+
+    return response

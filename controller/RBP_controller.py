@@ -127,6 +127,22 @@ def apploop():
                 logger.debug(
                     "CH" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " = " + str(dv))
                 AppPrefs.mcp3008Dict[ch].ch_dvlist.append(dv)
+######
+                AppPrefs.mcp3008Dict[ch].ch_dvcallist.append(dv)
+
+                if len(AppPrefs.mcp3008Dict[ch].ch_dvcallist) >= 120:
+                    truncated_list = slice (1, 120) 
+                    AppPrefs.mcp3008Dict[ch].ch_dvcallist = AppPrefs.mcp3008Dict[ch].ch_dvcallist[truncated_list]
+                    AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredCounts = numpy.array(AppPrefs.mcp3008Dict[ch].ch_dvcallist)
+                    AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredMean = numpy.mean(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredCounts, axis=0)
+                    AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredSD = numpy.std(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredCounts, axis=0)
+
+                    AppPrefs.logger.debug("mean = {:.2f}".format(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredMean))
+                    AppPrefs.logger.debug("std. dev. = {:.2f}".format(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredSD))
+
+                    AppPrefs.logger.debug(AppPrefs.mcp3008Dict[ch].ch_dvcallist)
+
+#####      
                 # once we hit our desired sample size of ph_numsamples (ie: 120)
                 # then calculate the average value
                 if len(AppPrefs.mcp3008Dict[ch].ch_dvlist) >= int(AppPrefs.mcp3008Dict[ch].ch_numsamples):
@@ -421,6 +437,8 @@ def DHTloop():
             # slow down the loop
         time.sleep(1)
 
+
+
 #########################################################################
 # THREADS
 #########################################################################
@@ -434,6 +452,7 @@ DHTthread.start()
 
 DSthread = threading.Thread(target=DStemploop)
 DSthread.start()
+
 
 
 # MARK: Flask API
@@ -1319,6 +1338,32 @@ def set_change_password():
     except Exception as e:
         AppPrefs.logger.error("set_change_password: " + str(e))
         response = jsonify({"msg": str(e)})
+        response.status_code = 500
+        return response
+
+#####################################################################
+# get_analog_cal_stats
+# return stats that are used for calibration of an analog probe
+# connected to tghe mcp3008 analog to digital converter
+#####################################################################
+
+
+@app.route('/get_analog_cal_stats/<channelid>', methods=['GET'])
+@cross_origin()
+#@jwt_required()
+
+def get_analog_cal_stats(channelid):
+    global AppPrefs
+    try:
+        
+        response = api_flask.api_get_analog_cal_stats(AppPrefs, sqlengine, request, channelid)
+
+        return response
+
+    except Exception as e:
+        errString = str(type(e).__name__) + " – " + str(e)
+        AppPrefs.logger.error("get_analog_cal_stats: " + errString)
+        response = jsonify({"msg": "get_analog_cal_stats: " + errString})
         response.status_code = 500
         return response
 
