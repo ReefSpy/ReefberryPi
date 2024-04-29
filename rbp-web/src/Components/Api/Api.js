@@ -36,3 +36,4 @@ export const API_GET_USER_LIST = `http://${hostname}:${portnum}/get_user_list/`;
 export const API_SET_CHANGE_PASSWORD = `http://${hostname}:${portnum}/set_change_password`;
 export const API_SET_REMOVE_USER = `http://${hostname}:${portnum}/set_remove_user`;
 export const API_SET_ADD_USER = `http://${hostname}:${portnum}/set_add_user`;
+export const API_GET_ANALOG_CAL_STATS = `http://${hostname}:${portnum}/get_analog_cal_stats/`;

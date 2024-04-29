@@ -167,3 +167,17 @@ width: 200px;
 .modal-close-btn:active {
   opacity: 100%;
 }
+
+.calbutton{
+  font-weight: bold;
+}
+
+.modalcal {
+  max-width: auto;
+  padding: 2rem;
+  border: 0;
+  border-radius: 0.5rem;
+  position: relative;
+  box-shadow: hsl(0 0% 0% / 10%) 0 0 0.5rem 0.25rem;
+width: auto;
+}

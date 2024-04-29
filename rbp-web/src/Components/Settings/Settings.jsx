@@ -162,9 +162,7 @@ class Settings extends Component {
             <button className="settingsbtn" onClick={this.handleOpenUserPrefsModal}>
               <img src={usericon} alt="Users" className="btnicon"></img>Users
             </button>
-            {/* <button className="settingsbtn" onClick={this.handleOpenChangePasswordModal}>
-              <img src={keyicon} alt="Password" className="btnicon"></img>Change Password
-            </button> */}
+   
             <button className="settingsbtn" onClick={this.props.openGlobalPrefs}>
               <img src={globalicon} alt="Global" className="btnicon"></img>{" "}
               Global
