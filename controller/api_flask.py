@@ -1849,8 +1849,8 @@ def api_set_change_password(AppPrefs, sqlengine, request):
 
 
 def api_get_analog_cal_stats(AppPrefs, sqlengine, request, channelid):
-    AppPrefs.logger.info(request)
-    AppPrefs.logger.info("Got calibration request for analog channel: " + channelid)
+    # AppPrefs.logger.info(request)
+    # AppPrefs.logger.info("Got calibration request for analog channel: " + channelid)
 
     response = {}
 
@@ -1862,6 +1862,70 @@ def api_get_analog_cal_stats(AppPrefs, sqlengine, request, channelid):
                         "ph_low_point": AppPrefs.mcp3008Dict[channelid].ch_ph_low,
                         "ph_mid_point": AppPrefs.mcp3008Dict[channelid].ch_ph_med,
                         "ph_high_point": AppPrefs.mcp3008Dict[channelid].ch_ph_high,
+                       })
+
+    response.status_code = 200
+
+    return response
+
+#####################################################################
+# api_set_analog_ph_cal
+# set low, mid, or high target value for ph cal
+#####################################################################
+
+def api_set_analog_ph_cal(AppPrefs, sqlengine, request):
+    AppPrefs.logger.info(request)
+
+    caltype = request.json.get("caltype", None).lower()
+    targetval = request.json.get("targetval", None)
+    probeid = request.json.get("probeid", None)
+
+ # build table object from table in DB
+    metadata_obj = MetaData()
+
+    mcp3008_table = Table("mcp3008", metadata_obj, autoload_with=sqlengine)
+
+    conn = sqlengine.connect()
+
+    if caltype == "low":
+        stmt = (
+            update(mcp3008_table)
+            .where(mcp3008_table.c.appuid == AppPrefs.appuid)
+            .where(mcp3008_table.c.probeid == probeid)
+            .values(ph_low=targetval)
+        )
+    elif caltype == "mid":
+        stmt = (
+        update(mcp3008_table)
+        .where(mcp3008_table.c.appuid == AppPrefs.appuid)
+        .where(mcp3008_table.c.probeid == probeid)
+        .values(ph_med=targetval)
+        )
+    elif caltype == "high":
+        stmt = (
+        update(mcp3008_table)
+        .where(mcp3008_table.c.appuid == AppPrefs.appuid)
+        .where(mcp3008_table.c.probeid == probeid)
+        .values(ph_high=targetval)
+        )
+    else:
+        response = jsonify({"appuid": AppPrefs.appuid,
+                        "probeid": probeid,
+                        "msg": "Invalid calibration parameter"
+                       })
+        AppPrefs.logger.error("Ph calibration failed.  Invalid cal parameter")
+        return response
+
+    results = conn.execute(stmt)
+    conn.commit()
+
+    defs_mysql.readMCP3008Prefs_ex(sqlengine, AppPrefs, AppPrefs.logger)
+
+    response = {}
+
+    response = jsonify({"appuid": AppPrefs.appuid,
+                        "probeid": probeid,
+                        "msg": "Successfully applied calibration parameter"
                        })
 
     response.status_code = 200

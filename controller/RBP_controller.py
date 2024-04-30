@@ -1350,7 +1350,7 @@ def set_change_password():
 
 @app.route('/get_analog_cal_stats/<channelid>', methods=['GET'])
 @cross_origin()
-#@jwt_required()
+@jwt_required()
 
 def get_analog_cal_stats(channelid):
     global AppPrefs
@@ -1367,6 +1367,33 @@ def get_analog_cal_stats(channelid):
         response.status_code = 500
         return response
 
+
+#####################################################################
+# set_analog_ph_cal
+# set low, mid, or high target value for ph cal
+#####################################################################
+
+
+@app.route('/set_analog_ph_cal', methods=['POST'])
+@cross_origin()
+#@jwt_required()
+
+def set_analog_ph_cal():
+    global AppPrefs
+    try:
+        
+        response = api_flask.api_set_analog_ph_cal(AppPrefs, sqlengine, request)
+
+        return response
+
+    except Exception as e:
+        errString = str(type(e).__name__) + " – " + str(e)
+        AppPrefs.logger.error("set_analog_ph_cal: " + errString)
+        response = jsonify({"msg": "set_analog_ph_cal: " + errString})
+        response.status_code = 500
+        return response
+
+        
 ############################################################
 
 
