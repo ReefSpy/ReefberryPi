@@ -134,11 +134,11 @@ def apploop():
                     truncated_list = slice (1, 120) 
                     AppPrefs.mcp3008Dict[ch].ch_dvcallist = AppPrefs.mcp3008Dict[ch].ch_dvcallist[truncated_list]
                     AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredCounts = numpy.array(AppPrefs.mcp3008Dict[ch].ch_dvcallist)
-                    AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredMean = numpy.mean(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredCounts, axis=0)
-                    AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredSD = numpy.std(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredCounts, axis=0)
+                    AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredMean = int(numpy.mean(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredCounts, axis=0))
+                    AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredSD = "{:.2f}".format(float(numpy.std(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredCounts, axis=0)))
 
                     AppPrefs.logger.debug("mean = {:.2f}".format(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredMean))
-                    AppPrefs.logger.debug("std. dev. = {:.2f}".format(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredSD))
+                    AppPrefs.logger.debug("std. dev. = {:.2f}".format(float(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredSD)))
 
                     AppPrefs.logger.debug(AppPrefs.mcp3008Dict[ch].ch_dvcallist)
 

@@ -1858,8 +1858,12 @@ def api_get_analog_cal_stats(AppPrefs, sqlengine, request, channelid):
                         "channelid": channelid,
                         "meanvalue": AppPrefs.mcp3008Dict[channelid].ch_dvcalFilteredMean,
                         "std_deviation": AppPrefs.mcp3008Dict[channelid].ch_dvcalFilteredSD,
-                        "datapoints": AppPrefs.mcp3008Dict[channelid].ch_dvcallist
+                        "datapoints": AppPrefs.mcp3008Dict[channelid].ch_dvcallist,
+                        "ph_low_point": AppPrefs.mcp3008Dict[channelid].ch_ph_low,
+                        "ph_mid_point": AppPrefs.mcp3008Dict[channelid].ch_ph_med,
+                        "ph_high_point": AppPrefs.mcp3008Dict[channelid].ch_ph_high,
                        })
+
     response.status_code = 200
 
     return response
