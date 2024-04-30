@@ -213,47 +213,7 @@ width: auto;
   margin-left: 5px;
 }
 
-.phcalcontainer{
-  grid-template-columns: auto auto auto;
-  grid-template-rows: auto auto auto;
 
-  margin-top: 10px;
-  display: grid;
-  justify-content: center;
-}
 
-.phcalbutton{
-  margin-top:5px;
-  margin-left: 20px;
-  margin-bottom: 10px;
-  margin-right: 20px;
-  border-radius: 10px;
-  border-style: solid;
-  border-width: 2px;
-  height: 40px;
-  color: black;
-  font-weight: bold;
-  border-color: #85868c;
-}
 
-.phcalbutton:hover{
-background-color: orange;
-}
 
-.phcalbutton:active{
-background-color:  grey;
-}
-
-.phtargetlabel{
-  margin-top:5px;
-  margin-left: 20px;
-  margin-right: 20px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  border-style: solid;
-  border-width: 2px;
-  height: 40px;
-  color: black;
-  font-weight: bold;
-  border-color: #85868c;
-}

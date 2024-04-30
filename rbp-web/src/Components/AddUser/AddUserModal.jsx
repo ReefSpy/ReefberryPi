@@ -92,7 +92,7 @@ const AddUserModal = ({
             alert("Error adding user.")
             throw new Error("Server error");
           } else if (response.status === 401){
-            alert("Unathorized.  Check password and try again.")
+            alert("Unauthorized.  Check password and try again.")
             throw new Error("Unauthorized access.")
           }
          else if (response.status === 5000) {

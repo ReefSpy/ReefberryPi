@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import "./ProbeWidget.css";
 import closeCircle from "./close-circle.svg";
 import CalChartWrapper from "./ProbeCalChart.jsx";
+import PhCal from "../PhCal/PhCal.jsx";
 import * as Api from "../Api/Api.js";
 
 const ProbeWidgetCal = ({
@@ -88,6 +89,14 @@ const ProbeWidgetCal = ({
       });
   };
 
+let onSubmitCal = () =>{
+  setFormState({
+    stdDev: "",
+    dvList: [],
+    meanVal: "",
+  });
+}
+
   useEffect(() => {
     getCalData();
     const interval = setInterval(() => {
@@ -119,29 +128,15 @@ const ProbeWidgetCal = ({
       Standard Deviation:{" "}
       <label className="calTargetLabel">{formState.stdDev} </label>
       <br />
-      <div className="phcalcontainer">
-        <button className="phcalbutton" gridColumnStart="1">
-          Save Low Cal
-        </button>
-        <button className="phcalbutton" gridColumnStart="2">
-          Save Mid Cal
-        </button>
-        <button className="phcalbutton" gridColumnStart="3">
-          Save High Cal
-        </button>
-        <label classname="phtargetlabel" gridColumnStart="1">
-          Reference PH: 4.0
-        </label>{" "}
-        <label classname="phtargetlabel" gridColumnStart="2">
-        Reference PH: 7.0
-        </label>{" "}
-        <label classname="phtargetlabel" gridColumnStart="3">
-        Reference PH: 10.0
-        </label>
-        <label classname="phtargetlabel">Current Value: {formState.phCalLowCurrent}</label>{" "}
-        <label classname="phtargetlabel">Current Value: {formState.phCalMidCurrent}</label>{" "}
-        <label classname="phtargetlabel">Current Value: {formState.phCalHighCurrent}</label>
-      </div>
+      
+      <PhCal phCalLowCurrent = {formState.phCalLowCurrent}
+      phCalMidCurrent = {formState.phCalMidCurrent}
+      phCalHighCurrent = {formState.phCalHighCurrent}
+      stdDev={formState.stdDev}
+      mean={formState.meanVal}
+      probeid={ProbeID} 
+      onSubmitCal = {onSubmitCal}
+      />
     </dialog>
   );
 };

@@ -10,7 +10,7 @@ const CalChartWrapper = (props) => {
     chart: {
        type: "spline",
       //type: "area",
-      //   height: 400,
+      //   height: 200,
       //   width: 720,
       borderColor: "#85868c",
       borderWidth: 2,
