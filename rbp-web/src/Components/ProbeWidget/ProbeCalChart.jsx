@@ -36,7 +36,7 @@ const CalChartWrapper = (props) => {
     //    // format: "{value:%H:%M:%S}",
     //   },
     // },
-    yAxis: [{ title: { enabled: true, text: props.unitType  }, 
+    yAxis: [{ title: { enabled: true, text: "digital value"  }, 
     
 
           
@@ -92,7 +92,7 @@ const CalChartWrapper = (props) => {
     
     }],
 
-    series: [{ name: props.probename, data: props.chartdata, color: "orange", yAxis: 0, zIndex: 1}, ],
+    series: [{ name:props.probeid, data: props.chartdata, color: "orange", yAxis: 0, zIndex: 1}, ],
 
     plotOptions: {
       series: {

@@ -108,6 +108,7 @@ const ProbeWidgetCal = ({
       <br></br>
       <CalChartWrapper
         probename={ProbeName}
+        probeid={ProbeID} 
         stdDev={formState.stdDev}
         mean={formState.meanVal}
         chartdata={formState.dvList}
@@ -129,13 +130,13 @@ const ProbeWidgetCal = ({
           Save High Cal
         </button>
         <label classname="phtargetlabel" gridColumnStart="1">
-          Target PH: 4.0
+          Reference PH: 4.0
         </label>{" "}
         <label classname="phtargetlabel" gridColumnStart="2">
-          Target PH: 7.0
+        Reference PH: 7.0
         </label>{" "}
         <label classname="phtargetlabel" gridColumnStart="3">
-          Target PH: 10.0
+        Reference PH: 10.0
         </label>
         <label classname="phtargetlabel">Current Value: {formState.phCalLowCurrent}</label>{" "}
         <label classname="phtargetlabel">Current Value: {formState.phCalMidCurrent}</label>{" "}
