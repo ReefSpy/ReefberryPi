@@ -1376,7 +1376,7 @@ def get_analog_cal_stats(channelid):
 
 @app.route('/set_analog_ph_cal', methods=['POST'])
 @cross_origin()
-#@jwt_required()
+@jwt_required()
 
 def set_analog_ph_cal():
     global AppPrefs
@@ -1393,7 +1393,7 @@ def set_analog_ph_cal():
         response.status_code = 500
         return response
 
-        
+
 ############################################################
 
 
