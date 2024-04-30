@@ -3,7 +3,7 @@ import HighchartsWrapper from "./ProbeChart";
 import "./ProbeWidget.css";
 import cogicon from "./cog.svg";
 import ProbeWidgetModal from "./ProbeWidgetModal";
-import ProbeWidgetPhCal from "./ProbeWidgetPhCal.jsx";
+import ProbeWidgetCal from "./ProbeWidgetCal.jsx";
 import ClipLoader from "react-spinners/ClipLoader";
 import * as Api from "../Api/Api.js";
 
@@ -200,9 +200,8 @@ export class ProbeWidget extends Component {
         ) : null}
 
         {this.state.isPhCalOpen ? (
-          <ProbeWidgetPhCal
+          <ProbeWidgetCal
             isOpen={this.state.isPhCalOpen}
-            // onSubmit={this.handleProbePrefsFormSubmit}
             onClose={this.handleClosePhCal}
             ProbeName={this.state.ProbeName}
             ProbeID={this.props.data.probeid}

@@ -116,12 +116,13 @@ const ProbeWidgetModal = ({
 
         <div className="form-row">
           <label htmlFor="probeid">Sensor Type</label>
-          <span className="plainlabel">{SensorType}</span>
+          <span className="plainlabel">{SensorType}       {(JSON.stringify({SensorType}["SensorType"]).replace(/"/g, "") === "ph") ? 
+          <button className = "calbutton" onClick={handleCalClick} type="button">calibrate</button> : null}</span>
+          
           </div>
  
  
-          {(JSON.stringify({SensorType}["SensorType"]).replace(/"/g, "") === "ph") ? 
-          <button className = "calbutton" onClick={handleCalClick} type="button">cal</button> : null}
+    
           
      
 

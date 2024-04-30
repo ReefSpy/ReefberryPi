@@ -169,8 +169,25 @@ width: 200px;
 }
 
 .calbutton{
+  margin-top:5px;
+  margin-left: 20px;
+  border-radius: 10px;
+  border-style: solid;
+  border-width: 2px;
+  width: 100px;
+  height: auto;
+  color: black;
   font-weight: bold;
+  /* background-color: orange; */
+  border-color: #85868c;
 }
+
+.calbutton:hover{
+background-color:lightgray;
+}
+.calbutton:active{
+  background-color:gray;
+  }
 
 .modalcal {
   max-width: auto;
@@ -180,4 +197,63 @@ width: 200px;
   position: relative;
   box-shadow: hsl(0 0% 0% / 10%) 0 0 0.5rem 0.25rem;
 width: auto;
+}
+
+.calTitle{
+  font-weight: bold;
+  font-size:24pt;
+}
+.calChannel{
+  font-size: medium;
+}
+
+.calTargetLabel{
+  font-size: 18pt;
+  margin-right: 20px;
+  margin-left: 5px;
+}
+
+.phcalcontainer{
+  grid-template-columns: auto auto auto;
+  grid-template-rows: auto auto auto;
+
+  margin-top: 10px;
+  display: grid;
+  justify-content: center;
+}
+
+.phcalbutton{
+  margin-top:5px;
+  margin-left: 20px;
+  margin-bottom: 10px;
+  margin-right: 20px;
+  border-radius: 10px;
+  border-style: solid;
+  border-width: 2px;
+  height: 40px;
+  color: black;
+  font-weight: bold;
+  border-color: #85868c;
+}
+
+.phcalbutton:hover{
+background-color: orange;
+}
+
+.phcalbutton:active{
+background-color:  grey;
+}
+
+.phtargetlabel{
+  margin-top:5px;
+  margin-left: 20px;
+  margin-right: 20px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border-style: solid;
+  border-width: 2px;
+  height: 40px;
+  color: black;
+  font-weight: bold;
+  border-color: #85868c;
 }

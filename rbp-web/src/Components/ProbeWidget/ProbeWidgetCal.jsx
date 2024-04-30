@@ -1,10 +1,10 @@
 import React, { useRef, useEffect, useState } from "react";
 import "./ProbeWidget.css";
 import closeCircle from "./close-circle.svg";
-import CalChartWrapper from "./ProbeCalChart";
+import CalChartWrapper from "./ProbeCalChart.jsx";
 import * as Api from "../Api/Api.js";
 
-const ProbeWidgetPhCal = ({
+const ProbeWidgetCal = ({
   onSubmit,
   isOpen,
   hasCloseBtn = true,
@@ -17,7 +17,7 @@ const ProbeWidgetPhCal = ({
   const [isModalOpen, setModalOpen] = useState(isOpen);
   const [dvList, setDvList] = useState();
   const [stdDev, setStdDev] = useState();
-  const [formState, setFormState] = useState({dvList: []});
+  const [formState, setFormState] = useState({ dvList: [] });
   const modalRef = useRef(null);
 
   const formRef = useRef(null);
@@ -78,6 +78,9 @@ const ProbeWidgetPhCal = ({
           stdDev: data.std_deviation,
           dvList: data.datapoints,
           meanVal: data.meanvalue,
+          phCalLowCurrent: data.ph_low_point,
+          phCalMidCurrent: data.ph_mid_point,
+          phCalHighCurrent: data.ph_high_point,
         });
       })
       .catch((error) => {
@@ -100,20 +103,46 @@ const ProbeWidgetPhCal = ({
           <img src={closeCircle} alt="close" height="24px" width="24px"></img>
         </button>
       )}
-      Calibrate: {ProbeName} <br></br>
-      {ProbeID} <br></br>
-      {SensorType} <br/>
-      MeanVal: {formState.meanVal} <br/>
-      StdDev: {formState.stdDev} <br/>
+      <span className="calTitle">Calibrate: {ProbeName} </span> <br />
+      <span className="calChannel">channel: {ProbeID} </span> <br />
       <br></br>
-      <CalChartWrapper probename={ProbeName}
-       stdDev={formState.stdDev} 
-       mean={formState.meanVal} 
-       chartdata={formState.dvList}>
-
-       </CalChartWrapper>
+      <CalChartWrapper
+        probename={ProbeName}
+        stdDev={formState.stdDev}
+        mean={formState.meanVal}
+        chartdata={formState.dvList}
+      ></CalChartWrapper>
+      <br />
+      Calibration Type: <label className="calTargetLabel">{SensorType}</label>
+      Mean: <label className="calTargetLabel">{formState.meanVal}</label>
+      Standard Deviation:{" "}
+      <label className="calTargetLabel">{formState.stdDev} </label>
+      <br />
+      <div className="phcalcontainer">
+        <button className="phcalbutton" gridColumnStart="1">
+          Save Low Cal
+        </button>
+        <button className="phcalbutton" gridColumnStart="2">
+          Save Mid Cal
+        </button>
+        <button className="phcalbutton" gridColumnStart="3">
+          Save High Cal
+        </button>
+        <label classname="phtargetlabel" gridColumnStart="1">
+          Target PH: 4.0
+        </label>{" "}
+        <label classname="phtargetlabel" gridColumnStart="2">
+          Target PH: 7.0
+        </label>{" "}
+        <label classname="phtargetlabel" gridColumnStart="3">
+          Target PH: 10.0
+        </label>
+        <label classname="phtargetlabel">Current Value: {formState.phCalLowCurrent}</label>{" "}
+        <label classname="phtargetlabel">Current Value: {formState.phCalMidCurrent}</label>{" "}
+        <label classname="phtargetlabel">Current Value: {formState.phCalHighCurrent}</label>
+      </div>
     </dialog>
   );
 };
 
-export default ProbeWidgetPhCal;
+export default ProbeWidgetCal;

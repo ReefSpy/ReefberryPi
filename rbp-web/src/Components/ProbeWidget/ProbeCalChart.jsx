@@ -55,7 +55,7 @@ const CalChartWrapper = (props) => {
         {
             color: 'steelblue',
             width: 2,
-            value: props.mean + props.stdDev,
+            value: parseFloat(props.mean) + parseFloat(props.stdDev),
             dashStyle: "dash",
             label: { 
                 text: "+1σ", // Content of the label. 
@@ -63,10 +63,11 @@ const CalChartWrapper = (props) => {
                 x: +10, // Amount of pixels the label will be repositioned according to the alignment. 
               }
         },
+       
         {
             color: 'steelblue',
             width: 2,
-            value: props.mean - props.stdDev,
+            value: parseFloat(props.mean) - parseFloat(props.stdDev),
             dashStyle: "dash",
             label: { 
                 text: "-1σ", // Content of the label. 
