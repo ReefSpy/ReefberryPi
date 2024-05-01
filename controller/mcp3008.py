@@ -1,11 +1,10 @@
-from gpiozero import Device, MCP3008
-from gpiozero.pins.native import NativeFactory
+from gpiozero import MCP3008
 
+#pin factory is initialized to NativeFactory in GPIO_config.py
 
 # read SPI data from MCP3008 chip, 8 possible adc's (0 thru 7)
 def readadc(adcnum, clockpin, mosipin, misopin, cspin):
 
-    Device.pin_factory = NativeFactory()
     dv = int(MCP3008(channel = adcnum, 
             clock_pin = clockpin, 
             mosi_pin = mosipin, 

@@ -1,4 +1,6 @@
 import RPi.GPIO as GPIO
+from gpiozero.pins.native import NativeFactory
+from gpiozero import Device
 
 # GPIO pins
 dht22 = 17        # for dht22 temp and humidity sensor
@@ -55,3 +57,6 @@ def initGPIO():
     GPIO.setup(int_outletpins.get("int_outlet_6"), GPIO.OUT)
     GPIO.setup(int_outletpins.get("int_outlet_7"), GPIO.OUT)
     GPIO.setup(int_outletpins.get("int_outlet_8"), GPIO.OUT)
+
+    # init gpiozero library
+    Device.pin_factory = NativeFactory()
