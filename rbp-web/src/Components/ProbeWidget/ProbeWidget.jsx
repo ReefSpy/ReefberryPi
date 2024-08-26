@@ -3,6 +3,7 @@ import HighchartsWrapper from "./ProbeChart";
 import "./ProbeWidget.css";
 import cogicon from "./cog.svg";
 import ProbeWidgetModal from "./ProbeWidgetModal";
+import ProbeWidgetCal from "./ProbeWidgetCal.jsx";
 import ClipLoader from "react-spinners/ClipLoader";
 import * as Api from "../Api/Api.js";
 
@@ -39,6 +40,16 @@ export class ProbeWidget extends Component {
     this.setState({ isProbePrefsModalOpen: false });
   };
 
+  handleOpenPhCal = () => {
+    this.setState({ setPhCalOpen: true });
+    this.setState({ isPhCalOpen: true });
+  };
+
+  handleClosePhCal = () => {
+    this.setState({ setPhCalOpen: false });
+    this.setState({ isPhCalOpen: false });
+  };
+
   handleProbePrefsFormSubmit = (data) => {
     this.setState({ setProbePrefsFormData: data });
     this.handleCloseProbePrefsModal();
@@ -59,10 +70,10 @@ export class ProbeWidget extends Component {
     fetch(endpoint, payload)
       .then((response) => {
         if (response.status === 401) {
-          console.log("Expired Token, logging out")
+          console.log("Expired Token, logging out");
           sessionStorage.clear();
-          window.location.reload()
-          }
+          window.location.reload();
+        }
         if (!response.ok) {
           if (response.status === 404) {
             throw new Error("Data not found");
@@ -174,16 +185,30 @@ export class ProbeWidget extends Component {
             />
           </button>
         </div>
+        
+        {this.state.isProbePrefsModalOpen ? (
+          <ProbeWidgetModal
+            isOpen={this.state.isProbePrefsModalOpen}
+            onSubmit={this.handleProbePrefsFormSubmit}
+            onClose={this.handleCloseProbePrefsModal}
+            ProbeName={this.state.ProbeName}
+            ProbeID={this.props.data.probeid}
+            SensorType={this.props.data.sensortype}
+            Model={this.props.data.probetype}
+            onPhCalClick={this.handleOpenPhCal}
+          />
+        ) : null}
 
-        <ProbeWidgetModal
-          isOpen={this.state.isProbePrefsModalOpen}
-          onSubmit={this.handleProbePrefsFormSubmit}
-          onClose={this.handleCloseProbePrefsModal}
-          ProbeName={this.state.ProbeName}
-          ProbeID={this.props.data.probeid}
-          SensorType={this.props.data.sensortype}
-          Model={this.props.data.probetype}
-        />
+        {this.state.isPhCalOpen ? (
+          <ProbeWidgetCal
+            isOpen={this.state.isPhCalOpen}
+            onClose={this.handleClosePhCal}
+            ProbeName={this.state.ProbeName}
+            ProbeID={this.props.data.probeid}
+            SensorType={this.props.data.sensortype}
+            Model={this.props.data.probetype}
+          />
+        ) : null}
       </div>
     );
   }

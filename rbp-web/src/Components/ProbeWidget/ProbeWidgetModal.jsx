@@ -13,6 +13,7 @@ const ProbeWidgetModal = ({
   isOpen,
   hasCloseBtn = true,
   onClose,
+  onPhCalClick,
   ProbeName,
   ProbeID,
   SensorType,
@@ -37,6 +38,13 @@ const ProbeWidgetModal = ({
     if (event.key === "Escape") {
       handleCloseModal();
     }
+  };
+
+  function handleCalClick(){
+    console.log("Calibration button click");
+    onPhCalClick()
+    handleCloseModal()
+    // return false
   };
 
   useEffect(() => {
@@ -83,6 +91,7 @@ const ProbeWidgetModal = ({
           <img src={closeCircle} alt="close" height="24px" width="24px"></img>
         </button>
       )}
+          
       <form onSubmit={handleSubmit} ref={formRef}>
         <div className="form-row">
           <label htmlFor="probename">Probe Name</label>
@@ -102,12 +111,20 @@ const ProbeWidgetModal = ({
         <div className="form-row">
           <label htmlFor="probeid">Probe ID</label>
           <span className="plainlabel">{ProbeID}</span>
+          
         </div>
 
         <div className="form-row">
           <label htmlFor="probeid">Sensor Type</label>
-          <span className="plainlabel">{SensorType}</span>
-        </div>
+          <span className="plainlabel">{SensorType}       {(JSON.stringify({SensorType}["SensorType"]).replace(/"/g, "") === "ph") ? 
+          <button className = "calbutton" onClick={handleCalClick} type="button">calibrate</button> : null}</span>
+          
+          </div>
+ 
+ 
+    
+          
+     
 
         <div className="form-row">
           <label htmlFor="model">Model</label>
@@ -120,7 +137,9 @@ const ProbeWidgetModal = ({
           </button>
         </div>
       </form>
+
     </dialog>
+    
   );
 };
 

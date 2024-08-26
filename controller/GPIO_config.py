@@ -1,18 +1,15 @@
 import RPi.GPIO as GPIO
+from gpiozero.pins.native import NativeFactory
+from gpiozero import Device
 
 # GPIO pins
 dht22 = 17        # for dht22 temp and humidity sensor
-# SPICLK = 18       # for MCP3008 ADC
 SPICLK = 11       # for MCP3008 ADC
-# SPIMISO = 23      # for MCP3008 ADC
 SPIMISO = 9       # for MCP3008 ADC
-# SPIMOSI = 24      # for MCP3008 ADC
 SPIMOSI = 10      # for MCP3008 ADC
-# SPICS = 25        # for MCP3008 ADC
 SPICS = 22        # for MCP3008 ADC
-relay_1 = 19
-# int_outlet_1 = 19
-# int_outlet_2 = 13
+# relay_1 = 19
+
 
 int_outletpins = {
     "int_outlet_1": 19,
@@ -60,3 +57,6 @@ def initGPIO():
     GPIO.setup(int_outletpins.get("int_outlet_6"), GPIO.OUT)
     GPIO.setup(int_outletpins.get("int_outlet_7"), GPIO.OUT)
     GPIO.setup(int_outletpins.get("int_outlet_8"), GPIO.OUT)
+
+    # init gpiozero library
+    Device.pin_factory = NativeFactory()

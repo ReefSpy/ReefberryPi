@@ -32,11 +32,16 @@ class analogChannelClass():
     ch_ph_high = ""
     # list to hold the raw digital values
     ch_dvlist = []
+   
     ch_numsamples = ""
     ch_sigma = ""
     ch_probeid=""
     LastLogTime = ""
     lastValue = ""
+    ch_dvcallist = []
+    ch_dvcalFilteredMean = ""
+    ch_dvcalFilteredSD = ""
+    ch_dvcalFilteredCounts = []
 
 
 class tempProbeClass():
@@ -94,6 +99,7 @@ class outletPrefs():
     ph_onwhen = ""
     outletstatus = ""
     enabled = ""
+
 
 
 class AppPrefs():

@@ -1,6 +1,6 @@
 .probecontainer {
   grid-template-columns: 120px 180px;
-  grid-template-rows: 24px 60px 22px;
+  grid-template-rows: 24px 60px 23px;
 
   display: grid;
   justify-content: center;
@@ -167,3 +167,53 @@ width: 200px;
 .modal-close-btn:active {
   opacity: 100%;
 }
+
+.calbutton{
+  margin-top:5px;
+  margin-left: 20px;
+  border-radius: 10px;
+  border-style: solid;
+  border-width: 2px;
+  width: 100px;
+  height: auto;
+  color: black;
+  font-weight: bold;
+  /* background-color: orange; */
+  border-color: #85868c;
+}
+
+.calbutton:hover{
+background-color:lightgray;
+}
+.calbutton:active{
+  background-color:gray;
+  }
+
+.modalcal {
+  max-width: auto;
+  padding: 2rem;
+  border: 0;
+  border-radius: 0.5rem;
+  position: relative;
+  box-shadow: hsl(0 0% 0% / 10%) 0 0 0.5rem 0.25rem;
+width: auto;
+}
+
+.calTitle{
+  font-weight: bold;
+  font-size:24pt;
+}
+.calChannel{
+  font-size: medium;
+}
+
+.calTargetLabel{
+  font-size: 18pt;
+  margin-right: 20px;
+  margin-left: 5px;
+}
+
+
+
+
+

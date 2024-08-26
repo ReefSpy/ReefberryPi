@@ -13,3 +13,4 @@ numpy
 Adafruit_DHT
 pyinstaller
 bcrypt
+gpiozero

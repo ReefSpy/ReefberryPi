@@ -116,17 +116,34 @@ def apploop():
         # channels (0-7)
         ##########################################################################################
         # only read the data at every ph_SamplingInterval (ie: 500ms or 1000ms)
-        if (int(round(time.time()*1000)) - AppPrefs.dv_SamplingTimeSeed) > AppPrefs.dv_SamplingInterval:
-            # for x in range (0,8):
+        # if (int(round(time.time()*1000)) - AppPrefs.dv_SamplingTimeSeed) > AppPrefs.dv_SamplingInterval:
+        # for x in range (0,8):
+        try:
             for ch in AppPrefs.mcp3008Dict:
                 # if AppPrefs.mcp3008Dict[ch].ch_enabled.lower() == "true":
                 logger.debug("mcp3008 ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " " + str(
                     AppPrefs.mcp3008Dict[ch].ch_name) + " = " + str(AppPrefs.mcp3008Dict[ch].lastValue))
                 dv = mcp3008.readadc(int(AppPrefs.mcp3008Dict[ch].ch_num), GPIO_config.SPICLK, GPIO_config.SPIMOSI,
-                                     GPIO_config.SPIMISO, GPIO_config.SPICS)
+                                        GPIO_config.SPIMISO, GPIO_config.SPICS)
                 logger.debug(
                     "CH" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " = " + str(dv))
                 AppPrefs.mcp3008Dict[ch].ch_dvlist.append(dv)
+    ######
+                AppPrefs.mcp3008Dict[ch].ch_dvcallist.append(dv)
+
+                if len(AppPrefs.mcp3008Dict[ch].ch_dvcallist) >= 120:
+                    truncated_list = slice (1, 120) 
+                    AppPrefs.mcp3008Dict[ch].ch_dvcallist = AppPrefs.mcp3008Dict[ch].ch_dvcallist[truncated_list]
+                    AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredCounts = numpy.array(AppPrefs.mcp3008Dict[ch].ch_dvcallist)
+                    AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredMean = int(numpy.mean(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredCounts, axis=0))
+                    AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredSD = "{:.2f}".format(float(numpy.std(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredCounts, axis=0)))
+
+                    AppPrefs.logger.debug("mean = {:.2f}".format(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredMean))
+                    AppPrefs.logger.debug("std. dev. = {:.2f}".format(float(AppPrefs.mcp3008Dict[ch].ch_dvcalFilteredSD)))
+
+                    AppPrefs.logger.debug(AppPrefs.mcp3008Dict[ch].ch_dvcallist)
+
+    #####      
                 # once we hit our desired sample size of ph_numsamples (ie: 120)
                 # then calculate the average value
                 if len(AppPrefs.mcp3008Dict[ch].ch_dvlist) >= int(AppPrefs.mcp3008Dict[ch].ch_numsamples):
@@ -137,22 +154,24 @@ def apploop():
                     # do not affect our results
                     logger.debug("mcp3008 ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " raw data " + str(
                         AppPrefs.mcp3008Dict[ch].ch_name) + " " + str(AppPrefs.mcp3008Dict[ch].ch_dvlist))
-                    dv_FilteredCounts = numpy.array(
-                        AppPrefs.mcp3008Dict[ch].ch_dvlist)
-                    dv_FilteredMean = numpy.mean(dv_FilteredCounts, axis=0)
-                    dv_FlteredSD = numpy.std(dv_FilteredCounts, axis=0)
-                    dv_dvlistfiltered = [x for x in dv_FilteredCounts if
-                                         (x > dv_FilteredMean - float(AppPrefs.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
-                    dv_dvlistfiltered = [x for x in dv_dvlistfiltered if
-                                         (x < dv_FilteredMean + float(AppPrefs.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
+                    # dv_FilteredCounts = numpy.array(
+                    #     AppPrefs.mcp3008Dict[ch].ch_dvlist)
+                    # dv_FilteredMean = numpy.mean(dv_FilteredCounts, axis=0)
+                    # dv_FlteredSD = numpy.std(dv_FilteredCounts, axis=0)
+                    # dv_dvlistfiltered = [x for x in dv_FilteredCounts if
+                    #                         (x > dv_FilteredMean - float(AppPrefs.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
+                    # dv_dvlistfiltered = [x for x in dv_dvlistfiltered if
+                    #                         (x < dv_FilteredMean + float(AppPrefs.mcp3008Dict[ch].ch_sigma) * dv_FlteredSD)]
 
-                    logger.debug("mcp3008 ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " filtered " + str(
-                        AppPrefs.mcp3008Dict[ch].ch_name) + " " + str(dv_dvlistfiltered))
+                    # logger.debug("mcp3008 ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " filtered " + str(
+                    #     AppPrefs.mcp3008Dict[ch].ch_name) + " " + str(dv_dvlistfiltered))
 
                     # calculate the average of our filtered list
                     try:
+                        # dv_AvgCountsFiltered = int(
+                        #     sum(dv_dvlistfiltered)/len(dv_dvlistfiltered))
                         dv_AvgCountsFiltered = int(
-                            sum(dv_dvlistfiltered)/len(dv_dvlistfiltered))
+                            sum(AppPrefs.mcp3008Dict[ch].ch_dvlist)/len(AppPrefs.mcp3008Dict[ch].ch_dvlist))
                         # delete this line
                         logger.debug("{:.2f}".format(dv_AvgCountsFiltered))
                     except:
@@ -160,7 +179,7 @@ def apploop():
                         dv_AvgCountsFiltered = 1
                         # values were 1023
                         logger.error("Error collecting data! " + "mcp3008 ch" +
-                                     str(AppPrefs.mcp3008Dict[ch].ch_num))
+                                        str(AppPrefs.mcp3008Dict[ch].ch_num))
 
                     if AppPrefs.mcp3008Dict[ch].ch_type == "ph":
                         # bug, somtimes value is coming back high, like really high, like 22.0.  this is an impossible
@@ -179,8 +198,10 @@ def apploop():
                             "{:.2f}".format(dv_AvgCountsFiltered))
 
                         if dv_AvgCountsFiltered > 14:
+                            # logger.error("Invalid PH value: " + str(AppPrefs.mcp3008Dict[ch].ch_probeid) + " " + str(dv_AvgCountsFiltered) +
+                            #                 " " + str(orgval) + " " + str(dv_dvlistfiltered))
                             logger.error("Invalid PH value: " + str(AppPrefs.mcp3008Dict[ch].ch_probeid) + " " + str(dv_AvgCountsFiltered) +
-                                         " " + str(orgval) + " " + str(dv_dvlistfiltered))
+                                            " " + str(orgval) + " " )
 
                     # if enough time has passed (ph_LogInterval) then log the data to file
                     # otherwise just print it to console
@@ -188,7 +209,7 @@ def apploop():
                     if (int(round(time.time()*1000)) - AppPrefs.mcp3008Dict[ch].LastLogTime) > AppPrefs.dv_LogInterval:
                         # sometimes a high value, like 22.4 gets recorded, i need to fix this, but for now don't log that
                         # if ph_AvgFiltered < 14.0:
-                       #         defs_common.logprobedata("mcp3008_ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + "_", "{:.2f}".format(dv_AvgCountsFiltered))
+                        #         defs_common.logprobedata("mcp3008_ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + "_", "{:.2f}".format(dv_AvgCountsFiltered))
                         logger.debug("mcp3008_ch" + str(AppPrefs.mcp3008Dict[ch].ch_num) + " = " + str(
                             "{:.2f}".format(dv_AvgCountsFiltered)))
                         Influx_write_api.write(defs_Influx.INFLUXDB_PROBE_BUCKET_1HR, AppPrefs.influxdb_org, [{"measurement": "ph", "tags": {
@@ -197,7 +218,7 @@ def apploop():
                             round(time.time()*1000))
                     else:
                         logger.debug(timestamp.strftime("%Y-%m-%d %H:%M:%S") + " dv = "
-                                     + "{:.2f}".format(dv_AvgCountsFiltered))
+                                        + "{:.2f}".format(dv_AvgCountsFiltered))
 
                     AppPrefs.mcp3008Dict[ch].lastValue = str(
                         dv_AvgCountsFiltered)
@@ -206,6 +227,12 @@ def apploop():
                     # record the new sampling time
                     AppPrefs.dv_SamplingTimeSeed = int(
                         round(time.time()*1000))  # convert time to milliseconds
+        except KeyboardInterrupt as e:
+            errString = str(type(e).__name__) + " – " + str(e)
+            AppPrefs.logger.error("Reefberry Pi terminated with CTRL-C: " + errString)
+        except Exception as e:
+            errString = str(type(e).__name__) + " – " + str(e)
+            AppPrefs.logger.error("Error reading ADC channels: " + errString)
 
         ##########################################################################################
         # ds18b20 Temperture sensors
@@ -220,46 +247,49 @@ def apploop():
         ##########################################################################################
         # check if Feed mode is enabled
         ##########################################################################################
-
-        if AppPrefs.feed_CurrentMode == "A":
-            AppPrefs.feed_ModeTotaltime = AppPrefs.feed_a_time
-        elif AppPrefs.feed_CurrentMode == "B":
-            AppPrefs.feed_ModeTotaltime = AppPrefs.feed_b_time
-        elif AppPrefs.feed_CurrentMode == "C":
-            AppPrefs.feed_ModeTotaltime = AppPrefs.feed_c_time
-        elif AppPrefs.feed_CurrentMode == "D":
-            AppPrefs.feed_ModeTotaltime = AppPrefs.feed_d_time
-        else:
-            AppPrefs.feed_ModeTotaltime = "0"
-
-        if AppPrefs.feed_CurrentMode != "CANCEL":
-            AppPrefs.logger.info(
-                "Feed Mode " + AppPrefs.feed_CurrentMode + " enabled")
-            AppPrefs.feedTimeLeft = (int(AppPrefs.feed_ModeTotaltime)*1000) - (
-                int(round(time.time()*1000)) - AppPrefs.feed_SamplingTimeSeed)
-
-            if AppPrefs.feedTimeLeft <= 0:
-                # print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-                #         " Feed Mode: " + self.AppPrefs.feed_CurrentMode + " COMPLETE" + Style.RESET_ALL)
-                logging.info("Feed Mode " +
-                             AppPrefs.feed_CurrentMode + " Complete")
-                AppPrefs.feed_CurrentMode = "CANCEL"
-                # timestamp = datetime.now()
-
-                # self.broadcastFeedStatus(self.AppPrefs.feed_CurrentMode, self.AppPrefs.feedTimeLeft)
-
-                AppPrefs.feed_ExtraTimeSeed = int(round(time.time()*1000))
-                print("Extra time starts at: " + str(AppPrefs.feed_ExtraTimeSeed) +
-                      " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        try:
+            if AppPrefs.feed_CurrentMode == "A":
+                AppPrefs.feed_ModeTotaltime = AppPrefs.feed_a_time
+            elif AppPrefs.feed_CurrentMode == "B":
+                AppPrefs.feed_ModeTotaltime = AppPrefs.feed_b_time
+            elif AppPrefs.feed_CurrentMode == "C":
+                AppPrefs.feed_ModeTotaltime = AppPrefs.feed_c_time
+            elif AppPrefs.feed_CurrentMode == "D":
+                AppPrefs.feed_ModeTotaltime = AppPrefs.feed_d_time
             else:
-                # print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
-                #         " Feed Mode: " + self.AppPrefs.feed_CurrentMode + " (" + self.AppPrefs.feed_ModeTotaltime + "s) " + "Time Remaining: " + str(round(self.AppPrefs.feedTimeLeft/1000)) + "s"
-                #         + Style.RESET_ALL)
-                # timestamp = datetime.now()
-                logging.info("Feed Mode: " + AppPrefs.feed_CurrentMode + " (" + AppPrefs.feed_ModeTotaltime +
-                             "s) " + "Time Remaining: " + str(round(AppPrefs.feedTimeLeft/1000)) + "s")
+                AppPrefs.feed_ModeTotaltime = "0"
 
-                # self.broadcastFeedStatus(self.AppPrefs.feed_CurrentMode, round(self.AppPrefs.feedTimeLeft/1000))
+            if AppPrefs.feed_CurrentMode != "CANCEL":
+                AppPrefs.logger.info(
+                    "Feed Mode " + AppPrefs.feed_CurrentMode + " enabled")
+                AppPrefs.feedTimeLeft = (int(AppPrefs.feed_ModeTotaltime)*1000) - (
+                    int(round(time.time()*1000)) - AppPrefs.feed_SamplingTimeSeed)
+
+                if AppPrefs.feedTimeLeft <= 0:
+                    # print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                    #         " Feed Mode: " + self.AppPrefs.feed_CurrentMode + " COMPLETE" + Style.RESET_ALL)
+                    logging.info("Feed Mode " +
+                                AppPrefs.feed_CurrentMode + " Complete")
+                    AppPrefs.feed_CurrentMode = "CANCEL"
+                    # timestamp = datetime.now()
+
+                    # self.broadcastFeedStatus(self.AppPrefs.feed_CurrentMode, self.AppPrefs.feedTimeLeft)
+
+                    AppPrefs.feed_ExtraTimeSeed = int(round(time.time()*1000))
+                    print("Extra time starts at: " + str(AppPrefs.feed_ExtraTimeSeed) +
+                        " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                else:
+                    # print (Fore.WHITE + Style.BRIGHT + datetime.now().strftime("%Y-%m-%d %H:%M:%S") +
+                    #         " Feed Mode: " + self.AppPrefs.feed_CurrentMode + " (" + self.AppPrefs.feed_ModeTotaltime + "s) " + "Time Remaining: " + str(round(self.AppPrefs.feedTimeLeft/1000)) + "s"
+                    #         + Style.RESET_ALL)
+                    # timestamp = datetime.now()
+                    logging.info("Feed Mode: " + AppPrefs.feed_CurrentMode + " (" + AppPrefs.feed_ModeTotaltime +
+                                "s) " + "Time Remaining: " + str(round(AppPrefs.feedTimeLeft/1000)) + "s")
+
+                    # self.broadcastFeedStatus(self.AppPrefs.feed_CurrentMode, round(self.AppPrefs.feedTimeLeft/1000))
+        except Exception as e:
+            errString = str(type(e).__name__) + " – " + str(e)
+            AppPrefs.logger.error("Error executing feed mode: " + errString)
 
         ##########################################################################################
         # Handle Outlets
@@ -303,7 +333,9 @@ def apploop():
                         AppPrefs, outlet, AppPrefs.outletDict.get(outlet).button_state, pin)
 
         except Exception as e:
-            logger.error("Error reading outlet data! " + str(e))
+            errString = str(type(e).__name__) + " – " + str(e)
+            AppPrefs.logger.error("Error reading outlet data! " + errString + " " + outlet)
+
 
         ##########################################################################################
         # pause to slow down the loop
@@ -353,18 +385,25 @@ def DStemploop():
                     else:
                         AppPrefs.tempProbeDict.get(
                             tProbe).lastTemperature = str(dstempC)
+                        
+                except KeyboardInterrupt as e:
+                    errString = str(type(e).__name__) + " – " + str(e)
+                    AppPrefs.logger.error("Reefberry Pi terminated with CTRL-C: " + errString)
 
                 except Exception as e:
+                    errString = str(type(e).__name__) + " – " + str(e)
                     logger.error(
-                        "Unable to read ds18b20 temperature! " + str(e))
-                    AppPrefs.tempProbeDict.get(
-                        tProbe).lastTemperature = ""
+                        "Unable to read ds18b20 temperature! " + errString)
+                    # AppPrefs.tempProbeDict.get(
+                    #     tProbe).lastTemperature = ""
 
         except Exception as e:
-            logger.error("Error reading ds18b20 temperature! " + str(e))
+            errString = str(type(e).__name__) + " – " + str(e)
+            logger.error("Error reading ds18b20 temperature! " + errString)
 
         # slow down the loop
         time.sleep(1)
+
 
 # MARK: DHTloop
 
@@ -415,11 +454,17 @@ def DHTloop():
                 else:
                     logger.error(
                         "dht22 Humidity out of range, ignoring: " + str(hum) + "%")
+
+            except KeyboardInterrupt as e:
+                errString = str(type(e).__name__) + " – " + str(e)
+                AppPrefs.logger.error("Reefberry Pi terminated with CTRL-C: " + errString)
             except Exception as e:
                 logger.error(
                     "Error logging DHT data to InfluxDB!" + str(e))
             # slow down the loop
         time.sleep(1)
+
+
 
 #########################################################################
 # THREADS
@@ -434,6 +479,7 @@ DHTthread.start()
 
 DSthread = threading.Thread(target=DStemploop)
 DSthread.start()
+
 
 
 # MARK: Flask API
@@ -1321,6 +1367,59 @@ def set_change_password():
         response = jsonify({"msg": str(e)})
         response.status_code = 500
         return response
+
+#####################################################################
+# get_analog_cal_stats
+# return stats that are used for calibration of an analog probe
+# connected to tghe mcp3008 analog to digital converter
+#####################################################################
+
+
+@app.route('/get_analog_cal_stats/<channelid>', methods=['GET'])
+@cross_origin()
+@jwt_required()
+
+def get_analog_cal_stats(channelid):
+    global AppPrefs
+    try:
+        
+        response = api_flask.api_get_analog_cal_stats(AppPrefs, sqlengine, request, channelid)
+
+        return response
+
+    except Exception as e:
+        errString = str(type(e).__name__) + " – " + str(e)
+        AppPrefs.logger.error("get_analog_cal_stats: " + errString)
+        response = jsonify({"msg": "get_analog_cal_stats: " + errString})
+        response.status_code = 500
+        return response
+
+
+#####################################################################
+# set_analog_ph_cal
+# set low, mid, or high target value for ph cal
+#####################################################################
+
+
+@app.route('/set_analog_ph_cal', methods=['POST'])
+@cross_origin()
+@jwt_required()
+
+def set_analog_ph_cal():
+    global AppPrefs
+    try:
+        
+        response = api_flask.api_set_analog_ph_cal(AppPrefs, sqlengine, request)
+
+        return response
+
+    except Exception as e:
+        errString = str(type(e).__name__) + " – " + str(e)
+        AppPrefs.logger.error("set_analog_ph_cal: " + errString)
+        response = jsonify({"msg": "set_analog_ph_cal: " + errString})
+        response.status_code = 500
+        return response
+
 
 ############################################################
 
