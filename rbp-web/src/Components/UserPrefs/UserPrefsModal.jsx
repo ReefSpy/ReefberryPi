@@ -40,7 +40,9 @@ const UserPrefsModal = ({
   };
 
   let handleDeleteClick = () => {
- 
+    if (delUserButtonDisabled === true) {
+      return
+    } else {
     if (window.confirm("Are you sure you want to delete user?")){
       let authtoken = JSON.parse(sessionStorage.getItem("token")).token
     return fetch(Api.API_SET_REMOVE_USER, {
@@ -76,6 +78,7 @@ const UserPrefsModal = ({
         console.error("Error:", error);
       });
     }
+  }
   };
 
 
