@@ -1,13 +1,14 @@
 import influxdb_client
 from influxdb_client.client.write_api import SYNCHRONOUS
 from datetime import datetime
+import os
+
 
 bucket = "reefberrypi_probe_1dy"
-org = "reefberrypi"
-token = "lZqJh3rEn6y4jDZqgQG19Vck53e2oryHLgHWd3qhoYZbwqGNJlbCkArZsG643ldFrEWPjmxWRdgnrtBnogp0jw=="
-# Store the URL of your InfluxDB instance
-url="http://argon1.local:8086"
-
+#Environment variables are used for the fields below
+org = os.environ.get("INFLUXDB_ORG")
+token = os.environ.get("INFLUXDB_TOKEN")
+url=os.environ.get("INFLUXDB_URL")
 
 client = influxdb_client.InfluxDBClient(
     url=url,
